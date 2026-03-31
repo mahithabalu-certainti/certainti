@@ -1,7 +1,7 @@
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { Sequelize, where } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 
 class RdFormMapperSchemaService {
@@ -285,7 +285,21 @@ class RdFormMapperSchemaService {
   }
 
   /**
-   * Fetch field value from reference table dynamically
+   * Fetch field value from a reference table dynamically.
+   *
+   * All WHERE conditions are built from `where_filters` on the
+   * data_mapper_objects row — no table names are hardcoded here.
+   *
+   *  mapperMeta field  │ data_mapper_objects column │ purpose
+   *  ──────────────────┼────────────────────────────┼────────────────────────────────────
+   *  db_source         │ db_source        VARCHAR   │ "org" (default) | "main"
+   *  schema_override   │ schema_override   VARCHAR   │ fixed schema override
+   *  where_filters     │ where_filters     JSONB     │ [{ column, context_key }]
+   *
+   * where_filters drives the WHERE clause for every path (JSON / non-JSON /
+   * fetchDynamicFieldValues), so where_column and is_state_table are not needed.
+   *
+   * Legacy hardcoded fallbacks remain for unmigrated rows (NULL mapperMeta).
    */
   async fetchFieldValueFromRefTable(
     refTable: string,
@@ -293,193 +307,181 @@ class RdFormMapperSchemaService {
     is_json: boolean,
     case_rid: string,
     schemaName: string,
+    account_rid: string,
     stateRid?: string,
+    mapperMeta?: {
+      db_source?: "org" | "main" | null;
+      where_filters?: Array<{ column: string; context_key: string }> | null;
+    },
   ): Promise<any> {
-    const orgDb = await this.getOrgDb();
-    logMessage(
-      `Fetching field: ${fieldName} from ${refTable} (JSON: ${is_json})`,
-    );
+    const orgDb  = await this.getOrgDb();
+    const mainDb = await this.getMainDb();
+    logMessage(`Fetching field: ${fieldName} from ${refTable} (JSON: ${is_json})`);
 
-    let query: string;
+    // ── DB / schema resolution ────────────────────────────────────────────────
+    const dbSource        = mapperMeta?.db_source ?? (refTable === "account" ? "main" : "org");
+    const effectiveSchema = (mapperMeta?.db_source != null)
+      ? (mapperMeta.db_source === "main" ? MAIN_SCHEMA_NAME : schemaName)
+      : (refTable === "account" ? MAIN_SCHEMA_NAME : schemaName);
+
+    const db = dbSource === "main" ? mainDb : orgDb;
+
+    // ── context_key → runtime value ───────────────────────────────────────────
+    const contextMap: Record<string, any> = {
+      case_rid,
+      account_rid,
+      state_rid: stateRid,
+      rid:       account_rid,
+    };
+
+    /**
+     * Build { replacements, whereClause } from where_filters.
+     *
+     * Each filter element: { column: "t.case_rid", context_key: "case_rid" }
+     * Only filters whose runtime value is non-empty are included.
+     *
+     * Falls back to legacy per-table bindings for unmigrated rows.
+     */
+    const buildWhereAndReplacements = (): {
+      whereClause: string;
+      replacements: Record<string, any>;
+    } => {
+      if (mapperMeta?.where_filters && mapperMeta.where_filters.length > 0) {
+        const conditions: string[] = [];
+        const replacements: Record<string, any> = {};
+
+        for (const f of mapperMeta.where_filters) {
+          const value = contextMap[f.context_key];
+          if (value !== undefined && value !== null && value !== "") {
+            // where_filters columns are stored with "t." prefix for fetchTableValues
+            // (which aliases the table as "t"). Strip it here since this query
+            // selects directly from the table with no alias.
+            const col = f.column.replace(/^t\./, "");
+            conditions.push(`${col} = :${f.context_key}`);
+            replacements[f.context_key] = value;
+          }
+        }
+
+        return {
+          whereClause:  conditions.join(" AND "),
+          replacements,
+        };
+      }
+
+      // ── Legacy fallback (unmigrated rows) ─────────────────────────────────
+      // if (refTable === "account") {
+      //   return {
+      //     whereClause:  "t.rid = :rid",
+      //     replacements: { rid: account_rid },
+      //   };
+      // }
+      // if (refTable === "rd_credit_country_calculations") {
+      //   return {
+      //     whereClause:  "t.case_rid = :case_rid",
+      //     replacements: { case_rid },
+      //   };
+      // }
+      // if (refTable === "rd_credit_state_calculations") {
+      //   return {
+      //     whereClause:  "t.case_rid = :case_rid AND t.state_rid = :state_rid",
+      //     replacements: { case_rid, state_rid: stateRid },
+      //   };
+      // }
+      // default
+      return {
+        whereClause:  "",
+        replacements: {  },
+      };
+    };
+
+    const { whereClause, replacements } = buildWhereAndReplacements();
 
     if (is_json) {
-      // Normalize leading path segments
       let jsonPath = fieldName
         .replace(/^\$\.computed_fields\.computed_fields\./, "$.computed_fields.")
         .replace(/^\$\.computed_fields\./, "$.computed_fields.");
 
-      // Quote only property names, leave filters/wildcards untouched
-      function quoteJsonPath(path: string): string {
-        const parts: string[] = [];
-        let buffer = "";
-        let bracketDepth = 0;
-        let inQuotes = false;
-        let quoteChar = "";
+      // Determine JSON column (computed_fields vs config_json)
+      const usesConfigJson  = jsonPath.startsWith("$.config_json");
+      const jsonColumn      = usesConfigJson ? "config_json" : "computed_fields";
+      const normalizedPath  = usesConfigJson
+        ? `$.${jsonPath.replace(/^\$\.config_json\.?/, "")}`
+        : jsonPath;
 
-        // Remove leading $. if present
-        let processPath = path.startsWith("$.") ? path.substring(2) : path;
+      const buildJsonQuery = (quotedPath: string) => `
+        SELECT jsonb_path_query_first(${jsonColumn}, '${quotedPath}')::text AS field_value
+        FROM ${effectiveSchema}.${refTable}
+        WHERE ${whereClause}
+        LIMIT 1`;
 
-        for (let i = 0; i < processPath.length; i++) {
-          const ch = processPath[i];
-
-          if ((ch === '"' || ch === "'") && !inQuotes) {
-            inQuotes = true;
-            quoteChar = ch;
-            buffer += ch;
-            continue;
-          }
-
-          if (ch === quoteChar && inQuotes) {
-            inQuotes = false;
-            quoteChar = "";
-            buffer += ch;
-            continue;
-          }
-
-          if (ch === "[") bracketDepth++;
-          if (ch === "]") bracketDepth--;
-
-          if (ch === "." && bracketDepth === 0 && !inQuotes) {
-            if (buffer) {
-              parts.push(buffer);
-              buffer = "";
-            }
-          } else {
-            buffer += ch;
-          }
-        }
-        if (buffer) parts.push(buffer);
-
-        const quotedParts = parts.map((part) => {
-          // Leave filters/wildcards untouched
-          if (part.startsWith("[")) return part;
-          // Already quoted
-          if (
-            (part.startsWith('"') && part.endsWith('"')) ||
-            (part.startsWith("'") && part.endsWith("'"))
-          )
-            return part;
-          // Quote names with spaces/special chars
-          if (/[^a-zA-Z0-9_]/.test(part)) return `"${part}"`;
-          return part;
-        });
-
-        const filteredParts = quotedParts.filter((part) => part.length > 0);
-        return "$." + filteredParts.join(".");
-      }
-
-      // First, try direct value retrieval
-      const quotedJsonPath = quoteJsonPath(jsonPath);
-
-      // Execute the direct query first
+      // Direct attempt
       try {
-        const [directResults] = await orgDb.query(
-          rawQueries.fetchDynamicFieldValues(
-            schemaName,
-            refTable,
-            quotedJsonPath,
-            stateRid,
-          ),
-          {
-            replacements: { case_rid, state_rid: stateRid },
-            raw: true,
-          },
+        const quotedPath = this.quoteJsonPath(normalizedPath);
+        const [directResults] = await db.query(
+          buildJsonQuery(quotedPath),
+          { replacements, raw: true },
         );
         const directResultsArray = directResults as any[];
-        const directValue =
-          directResultsArray.length > 0
-            ? directResultsArray[0].field_value
-            : null;
+        const directValue = directResultsArray.length > 0
+          ? directResultsArray[0].field_value
+          : null;
 
-        // If direct value found and not null, return it
-        if (
-          directValue !== null &&
-          directValue !== "null" &&
-          directValue !== undefined
-        ) {
-          logMessage(
-            `Direct field retrieval successful for ${refTable}.${fieldName}: ${directValue}`,
-          );
+        if (directValue !== null && directValue !== "null" && directValue !== undefined) {
+          logMessage(`Direct field retrieval successful for ${refTable}.${fieldName}: ${directValue}`);
           return directValue;
         }
 
-        // If direct value is null, attempt fallback without computed_fields prefix
+        // Fallback: strip computed_fields prefix and retry
         if (directValue === null || directValue === "null") {
-          const fallbackPath = jsonPath.replace(/^\$\.computed_fields\./, "$." );
-          if (fallbackPath !== jsonPath) {
-            const quotedFallbackPath = quoteJsonPath(fallbackPath);
-            const [fallbackResults] = await orgDb.query(
-              rawQueries.fetchDynamicFieldValues(
-                schemaName,
-                refTable,
-                quotedFallbackPath,
-                stateRid,
-              ),
-              {
-                replacements: { case_rid, state_rid: stateRid },
-                raw: true,
-              },
+          const fallbackPath = normalizedPath.replace(/^\$\.computed_fields\./, "$.");
+          if (fallbackPath !== normalizedPath) {
+            const [fallbackResults] = await db.query(
+              buildJsonQuery(this.quoteJsonPath(fallbackPath)),
+              { replacements, raw: true },
             );
             const fallbackResultsArray = fallbackResults as any[];
-            const fallbackValue =
-              fallbackResultsArray.length > 0
-                ? fallbackResultsArray[0].field_value
-                : null;
+            const fallbackValue = fallbackResultsArray.length > 0
+              ? fallbackResultsArray[0].field_value
+              : null;
 
-            if (
-              fallbackValue !== null &&
-              fallbackValue !== "null" &&
-              fallbackValue !== undefined
-            ) {
-              logMessage(
-                `Fallback field retrieval successful for ${refTable}.${fieldName}: ${fallbackValue}`,
-              );
+            if (fallbackValue !== null && fallbackValue !== "null" && fallbackValue !== undefined) {
+              logMessage(`Fallback field retrieval successful for ${refTable}.${fieldName}: ${fallbackValue}`);
               return fallbackValue;
             }
           }
-
-          logMessage(
-            `Field ${fieldName} has null value, returning empty string`,
-          );
+          logMessage(`Field ${fieldName} has null value, returning empty string`);
           return "";
         }
       } catch (error) {
-        logMessage(
-          `Direct query failed for ${fieldName}: ${error}`,
-        );
+        logMessage(`Direct query failed for ${fieldName}: ${error}`);
       }
 
-      const quotedJsonPathFallback = quoteJsonPath(jsonPath);
-      query = rawQueries.fetchJsonbFieldValue(
-        schemaName,
-        refTable,
-        quotedJsonPathFallback,
-        refTable === "rd_credit_state_calculations",
-      );
-    } else {
-      // Regular field
-      const whereColumn =
-        refTable === "rd_credit_country_calculations" ? "case_rid" : "rid";
-      query = rawQueries.fetchRegularFieldValue(
-        schemaName,
-        refTable,
-        fieldName,
-        whereColumn,
-        refTable === "rd_credit_state_calculations",
-      );
+      // Final fallback query (re-used if try block above threw)
+      const fallbackQuery = buildJsonQuery(this.quoteJsonPath(normalizedPath));
+      try {
+        const [results] = await db.query(fallbackQuery, { replacements, raw: true });
+        const resultsArray = results as any[];
+        logMessage(`Query results from ${refTable}.${fieldName}: ${JSON.stringify(resultsArray)}`);
+        const fieldValue = resultsArray.length > 0 ? resultsArray[0].field_value : null;
+        return fieldValue !== null && fieldValue !== undefined ? fieldValue : "";
+      } catch (error) {
+        console.error(`Error fetching from ${refTable}.${fieldName}:`, error);
+        return "";
+      }
     }
 
+    // ── Non-JSON (regular column) ─────────────────────────────────────────────
+    const query = `
+      SELECT ${fieldName} AS field_value
+      FROM ${effectiveSchema}.${refTable}
+      WHERE ${whereClause}
+      LIMIT 1`;
+
     try {
-      const [results] = await orgDb.query(query, {
-        replacements: { case_rid, state_rid: stateRid },
-        raw: true,
-      });
+      const [results] = await db.query(query, { replacements, raw: true });
       const resultsArray = results as any[];
-      logMessage(
-        `Query results from ${refTable}.${fieldName}: ${JSON.stringify(resultsArray)}`,
-      );
-      const fieldValue =
-        resultsArray.length > 0 ? resultsArray[0].field_value : null;
+      logMessage(`Query results from ${refTable}.${fieldName}: ${JSON.stringify(resultsArray)}`);
+      const fieldValue = resultsArray.length > 0 ? resultsArray[0].field_value : null;
       return fieldValue !== null && fieldValue !== undefined ? fieldValue : "";
     } catch (error) {
       console.error(`Error fetching from ${refTable}.${fieldName}:`, error);
@@ -553,123 +555,205 @@ class RdFormMapperSchemaService {
   }
 
   /**
-   * Fetch all values from a table field as a list
-   * For table field types, this method returns all rows of data for the specified column
+   * Fetch all values from a table field as a list (used for Table-Item field types).
+   *
+   * WHERE / JOIN / fiscal-year behaviour is fully driven by four JSONB/VARCHAR
+   * columns on the data_mapper_objects row — no table names are hardcoded here.
+   *
+   *  param               │ data_mapper_objects column  │ description
+   *  ────────────────────┼─────────────────────────────┼──────────────────────────────────────────
+   *  where_filters       │ where_filters     JSONB      │ [{ column, context_key }] — WHERE bindings
+   *  joins               │ joins             JSONB      │ [{ join_table, join_condition, join_alias?, join_type? }]
+   *  extra_filters       │ extra_filters     JSONB      │ ["raw SQL condition", ...] — appended with AND
+   *  fiscal_year_column  │ fiscal_year_column VARCHAR   │ full col ref, e.g. "pf.fiscal_year"
+   *  db_source           │ db_source         VARCHAR    │ "org" (default) | "main"
+   *  schema_override     │ schema_override   VARCHAR    │ fixed schema override
    */
-async fetchTableValues(
-  refTable: string,
-  fieldName: string,
-  is_json: boolean,
-  data_order_by: string,
-  account_rid: string,
-  case_rid: string,
-  schemaName: string,
-  stateRid: string,
-  fiscalYear?: string,
-): Promise<any[]> {
-  const orgDb = await this.getOrgDb();
-  logMessage(
-    `Fetching table values for field: ${fieldName} from ${refTable} (JSON: ${is_json}, Fiscal Year: ${fiscalYear})`,
-  );
+  async fetchTableValues(
+    refTable: string,
+    fieldName: string,
+    is_json: boolean,
+    data_order_by: string,
+    account_rid: string,
+    case_rid: string,
+    schemaName: string,
+    stateRid: string,
+    fiscalYear?: string,
+    where_filters?: Array<{ column: string; context_key: string }> | null,
+    joins?: Array<{
+      join_table: string;
+      join_condition: string;
+      join_alias?: string;
+      join_type?: string;
+    }> | null,
+    extra_filters?: string[] | null,
+    fiscal_year_column?: string | null,
+    db_source?: "org" | "main" | null
+  ): Promise<any[]> {
+    const orgDb  = await this.getOrgDb();
+    const mainDb = await this.getMainDb();
+    logMessage(
+      `Fetching table values for field: ${fieldName} from ${refTable} (JSON: ${is_json}, Fiscal Year: ${fiscalYear})`,
+    );
 
-  let query: string;
-  let results: any[] = [];
+    // ── DB and schema resolution (data-driven, legacy fallback retained) ──────
+    const dbSource        = db_source        ?? (refTable === "account" ? "main" : "org");
+    const effectiveSchema = (db_source != null)
+      ? db_source === "main" ? MAIN_SCHEMA_NAME : schemaName
+      : (refTable === "account" ? MAIN_SCHEMA_NAME : schemaName);
+    const db = dbSource === "main" ? mainDb : orgDb;
 
-  // Helper to build WHERE clause and replacements based on refTable
-  const buildWhereClause = (refTable: string) => {
-    if (refTable === "case_history_submission") {
-      return {
-        whereClause: `WHERE t.account_rid = :account_rid AND t.state_rid = :state_rid`,
-        replacements: { account_rid, state_rid: stateRid } as any,
-      };
-    }
-    if (refTable === "account") {
-      return {
-        whereClause: `WHERE t.rid = :account_rid`,
-        replacements: { account_rid } as any,
-      };
-    }
-    if (refTable === "case_projects") {
-      let whereClause = `WHERE t.case_rid = :case_rid AND pf.is_qualified = true`;
-      const replacements: any = { case_rid };
-      if (fiscalYear) {
-        whereClause += ` AND pf.fiscal_year = :fiscalYear`;
+    // ── Runtime context — maps context_key → actual value ─────────────────────
+    const contextMap: Record<string, any> = {
+      case_rid,
+      account_rid,
+      state_rid: stateRid,
+      rid: account_rid,   // "rid" → account PK (account table)
+    };
+
+    // ── Build WHERE clause ────────────────────────────────────────────────────
+    const buildWhereClause = (): { whereClause: string; replacements: Record<string, any> } => {
+      const conditions: string[] = [];
+      const replacements: Record<string, any> = {};
+
+      // Context-bound filters from where_filters
+      if (where_filters && where_filters.length > 0) {
+        for (const f of where_filters) {
+          const value = contextMap[f.context_key];
+          if (value !== undefined && value !== null && value !== "") {
+            conditions.push(`${f.column} = :${f.context_key}`);
+            replacements[f.context_key] = value;
+          }
+        }
+      }
+
+      // Raw static conditions from extra_filters
+      if (extra_filters && extra_filters.length > 0) {
+        for (const raw of extra_filters) {
+          conditions.push(raw);
+        }
+      }
+
+      // Fiscal year filter — only applied when fiscal_year_column is explicitly
+      // set on the data_mapper_objects row. Tables like case_history_submission
+      // that filter by account_rid/state_rid must leave fiscal_year_column NULL
+      // so this block is skipped entirely for them.
+      if (fiscalYear && fiscal_year_column) {
+        conditions.push(`${fiscal_year_column} = :fiscalYear`);
         replacements.fiscalYear = fiscalYear;
       }
-      return { whereClause, replacements };
+
+      return {
+        whereClause: conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "",
+        replacements,
+      };
+    };
+
+    // ── Build FROM + JOIN clauses ──────────────────────────────────────────────
+    const buildFromClause = (): string => {
+      let from = `FROM ${effectiveSchema}.${refTable} t`;
+
+      if (joins && joins.length > 0) {
+        for (const j of joins) {
+          const joinType  = j.join_type  ?? "INNER JOIN";
+          const joinAlias = j.join_alias ?? j.join_table;
+          from += `\n        ${joinType} ${effectiveSchema}.${j.join_table} ${joinAlias}`;
+          from += `\n          ON ${j.join_condition}`;
+        }
+      }
+
+      return from;
+    };
+
+    try {
+      const { whereClause, replacements } = buildWhereClause();
+      const fromClause   = buildFromClause();
+      const orderByField = data_order_by || "created_datetime";
+
+      let query: string;
+
+      if (is_json) {
+        const jsonPath       = fieldName.replace(/^\$\.computed_fields\./, "$.");
+        const quotedJsonPath = this.quoteJsonPath(jsonPath);
+        query = `
+          SELECT
+            jsonb_path_query(t.computed_fields, '${quotedJsonPath}')::text AS field_value,
+            ROW_NUMBER() OVER (ORDER BY t.${orderByField} ASC) AS row_index
+          ${fromClause}
+          ${whereClause}
+          ORDER BY t.${orderByField} ASC`;
+      } else {
+        query = `
+          SELECT
+            t.${fieldName} AS field_value,
+            ROW_NUMBER() OVER (ORDER BY t.${orderByField} ASC) AS row_index
+          ${fromClause}
+          ${whereClause}
+          ORDER BY t.${orderByField} ASC`;
+      }
+
+      logMessage(`Executing query: ${query}`);
+      logMessage(`Replacements: ${JSON.stringify(replacements)}`);
+
+      const [queryResults] = await db.query(query, { replacements, raw: true });
+
+      // Special handling for industry_rid: resolve RID → human-readable name
+      if (fieldName === "industry_rid") {
+        const rawRows   = queryResults as any[];
+        const uniqueRids = [
+          ...new Set(
+            rawRows
+              .map((r: any) => r.field_value)
+              .filter((v: any) => v !== null && v !== undefined && v !== ""),
+          ),
+        ] as string[];
+
+        const ridToName: Record<string, string> = {};
+        if (uniqueRids.length > 0) {
+          try {
+            const placeholders    = uniqueRids.map((_: string, i: number) => `:rid_${i}`).join(", ");
+            const ridReplacements: Record<string, string> = {};
+            uniqueRids.forEach((rid: string, i: number) => { ridReplacements[`rid_${i}`] = rid; });
+
+            const industryQuery = `
+              SELECT rid, industry_name
+              FROM ${MAIN_SCHEMA_NAME}.industry
+              WHERE rid IN (${placeholders})
+            `;
+            const [industryRows] = await mainDb.query(industryQuery, {
+              replacements: ridReplacements,
+              raw: true,
+            });
+            (industryRows as any[]).forEach((row: any) => {
+              if (row.rid && row.industry_name) ridToName[row.rid] = row.industry_name;
+            });
+            logMessage(`Resolved ${Object.keys(ridToName).length} industry name(s) for industry_rid field`);
+          } catch (err) {
+            logMessage(`Error resolving industry names for industry_rid: ${err}`);
+          }
+        }
+
+        const results = rawRows.map((row: any, index: number) => ({
+          value:      ridToName[row.field_value] ?? row.field_value,
+          index:      index + 1,
+          row_number: index + 1,
+        }));
+        logMessage(`Retrieved ${results.length} table values for ${refTable}.${fieldName}`);
+        return results;
+      }
+
+      const results = (queryResults as any[]).map((row: any, index: number) => ({
+        value:      row.field_value,
+        index:      index + 1,
+        row_number: index + 1,
+      }));
+      logMessage(`Retrieved ${results.length} table values for ${refTable}.${fieldName}`);
+      return results;
+    } catch (error) {
+      logMessage(`Error fetching table values from ${refTable}.${fieldName}: ${JSON.stringify(error)}`);
+      return [];
     }
-    // Default
-    let whereClause = `WHERE t.case_rid = :case_rid`;
-    const replacements: any = { case_rid };
-    if (fiscalYear) {
-      whereClause += ` AND t.fiscal_year = :fiscalYear`;
-      replacements.fiscalYear = fiscalYear;
-    }
-    return { whereClause, replacements };
-  };
-
-  // Build JOIN clause for case_projects
-  const buildFromClause = (refTable: string, schemaName: string) => {
-    if (refTable === "case_projects") {
-      return `
-        FROM ${schemaName}.case_projects t
-        INNER JOIN ${schemaName}.project_fiscal pf
-          ON pf.rid = t.project_fiscal_rid`;
-    }
-    return `FROM ${schemaName}.${refTable} t`;
-  };
-
-  try {
-    const { whereClause, replacements } = buildWhereClause(refTable);
-    const fromClause = buildFromClause(refTable, schemaName);
-    const orderByField = data_order_by || "created_datetime";
-
-    if (is_json) {
-      let jsonPath = fieldName.replace(/^\$\.computed_fields\./, "$.");
-      const quotedJsonPath = this.quoteJsonPath(jsonPath);
-
-      query = `
-        SELECT
-          jsonb_path_query(t.computed_fields, '${quotedJsonPath}')::text AS field_value,
-          ROW_NUMBER() OVER (ORDER BY t.${orderByField} ASC) AS row_index
-        ${fromClause}
-        ${whereClause}
-        ORDER BY t.${orderByField} ASC`;
-    } else {
-      query = `
-        SELECT
-          t.${fieldName} AS field_value,
-          ROW_NUMBER() OVER (ORDER BY t.${orderByField} ASC) AS row_index
-        ${fromClause}
-        ${whereClause}
-        ORDER BY t.${orderByField} ASC`;
-    }
-
-    logMessage(`Executing query: ${query}`);
-    logMessage(`Replacements: ${JSON.stringify(replacements)}`);
-
-    const [queryResults] = await orgDb.query(query, {
-      replacements,
-      raw: true,
-    });
-
-    results = (queryResults as any[]).map((row: any, index: number) => ({
-      value: row.field_value,
-      index: index + 1,
-      row_number: index + 1,
-    }));
-
-    logMessage(
-      `Retrieved ${results.length} table values for ${refTable}.${fieldName}`,
-    );
-    return results;
-  } catch (error) {
-    logMessage(
-      `Error fetching table values from ${refTable}.${fieldName}: ${JSON.stringify(error)}`,
-    );
-    return [];
   }
-}
 
 // Extracted as a private method — was previously defined inline
 private quoteJsonPath(path: string): string {

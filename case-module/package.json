@@ -32,6 +32,7 @@
     "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "fast-xml-parser": "^5.5.8",
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
     "graphql-tools": "^9.0.16",

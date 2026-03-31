@@ -210,20 +210,6 @@ async function listFinancialHighlightsProjects(req: Request, res: Response) {
                 ).toFixed(2),
                 claim_rd_credits_total: result.data.state_wise.rd_credits_total,
             });
-            claimJurisdictionArray.push({
-                rid: uuid(),
-                name: result.data.grand_total.name,
-                claim_rd_credits_fte: Number(
-                    result.data.grand_total.rd_credits_fte
-                ).toFixed(2),
-                claim_rd_credits_subcon: Number(
-                    result.data.grand_total.rd_credits_subcon
-                ).toFixed(2),
-                claim_rd_credits_nonlabor: Number(
-                    result.data.grand_total.rd_credits_nonlabor
-                ).toFixed(2),
-                claim_rd_credits_total: result.data.grand_total.rd_credits_total,
-            });
             let finalData = {
                 account_rid: data.account_rid,
                 fiscal_year: data.fiscal_year,

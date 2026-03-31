@@ -14,6 +14,7 @@ export interface ConfigJson {
     rrc_qre_addition: number;
     qre_threshold_amount: number;
     fixed_base_percentage: number;
+    sub_con_percent: number;
 }
 export class RdCreditCalculatorForAZ {
 
@@ -74,18 +75,20 @@ export class RdCreditCalculatorForAZ {
         const line10 = 0;
 
         //---- Line 11: wages
-        const line11 = currentYearQREs.wages || 0;
+        const line11 = new Decimal(currentYearQREs.wages ?? 0.00)
 
         //---- Line 12: supplies
-        const line12 = currentYearQREs.supplies || 0;
+        const line12 = new Decimal(currentYearQREs.supplies ?? 0.00)
 
         //---- Line 13: cost to rent
-        const line13 = caseData.lease_costs_of_computers || 0;
+        const line13 = new Decimal(caseData.lease_costs_of_computers_az ?? 0.00);
 
         //---- Line 14: contract
-        const line14 = currentYearQREs.contract || 0;
+        let line14 = new Decimal(0);
+        line14 = this.round2(new Decimal(currentYearQREs.contract || 0).mul(new Decimal((config.sub_con_percent ?? 0) / 100)));
+        
 
-        const totalCurrentYearQRE = new Decimal(line11 || 0).plus(line12 || 0).plus(line14 || 0).plus(line13 || 0);
+        const totalCurrentYearQRE = line11.plus(line12).plus(line14).plus(line13);
         //---- Line 15: total QRE
         const line15 = totalCurrentYearQRE;
 
@@ -136,7 +139,7 @@ export class RdCreditCalculatorForAZ {
             wages: line11,
             supplies: line12,
             cost_to_rent: this.round2(line13) || 0.00,
-            contract: line14,
+            contract: this.round2(line14) || 0.00,
             total_current_year_qre: this.round2(line15) || 0.00,
             average_gross_receipts: this.round2(line16) || 0.00,
             fixed_base_percentage: line17,
@@ -172,10 +175,10 @@ export class RdCreditCalculatorForAZ {
         const line79 = new Decimal(currentYearQREs.supplies || 0);
 
         //---- Line 80: cost to rent
-        const line80 = new Decimal(caseData.lease_costs_of_computers || 0);
+        const line80 = new Decimal(caseData.lease_costs_of_computers_az || 0);
 
         //---- Line 81: contract
-        const line81 = new Decimal(currentYearQREs.contract || 0);
+        const line81 = this.round2(new Decimal(currentYearQREs.contract || 0).mul(new Decimal((config.sub_con_percent ?? 0) / 100)));
 
         //---- Line 82: total QRE
         const line82 = new Decimal(line78.plus(line79).plus(line80).plus(line81))
@@ -217,7 +220,7 @@ export class RdCreditCalculatorForAZ {
                 wages: this.round2(line78),
                 supplies: this.round2(line79),
                 lease_computers : this.round2(line80),
-                contract: this.round2(line81),
+                contract: this.round2(line81) || 0.00,
                 total_current_year_qre: this.round2(line82) || 0.00,
                 total_prior_3years_qre: this.round2(line83)|| 0.00,
                 adjusted_base_amount: this.round2(line84) || 0.00,
@@ -303,8 +306,8 @@ export class RdCreditCalculatorForAZ {
     async buildComputedFields(creditASC: any, creditRRC: any, config : ConfigJson) {
 
         let rrc ={
-            "[11] Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)": creditRRC.wages,
-            "[12] Cost of supplies": creditRRC.supplies,
+            "[11] Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)": this.round2(creditRRC.wages),
+            "[12] Cost of supplies": this.round2(creditRRC.supplies),
             "[13] Cost to rent or lease computers": creditRRC.cost_to_rent,
             "[14] Contract research expenses: See instructions": creditRRC.contract,
             "[15] Total qualified research expenses. Add line 11 through line 14": creditRRC.total_current_year_qre,

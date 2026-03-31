@@ -1190,10 +1190,16 @@ export const fetchProjectAttachmentsRids = (schemaName: string) => {
   return query;
 };
 
-export const fetchProjectInteractionRid = (schemaName: string) => {
+export const fetchProjectInteractionRid = (schemaName: string, statusRid?: string) => {
   let query = `
-    SELECT account_rid, project_fiscal_rid FROM ${schemaName}.interactions WHERE is_ai_processed = false
-    `;
+              SELECT account_rid,
+                project_fiscal_rid,
+                is_ai_processed
+          FROM ${schemaName}.interactions
+          WHERE is_ai_processed = false`;
+  if (statusRid) {
+    query += ` AND status_rid = '${statusRid}'`;
+  }
   return query;
 };
 
@@ -1497,7 +1503,7 @@ export const fetchFourPartAssessment = (page : number, limit : number, sort : st
   counted_results AS (
   SELECT *, COUNT(*) OVER() AS total_results FROM fetch_fpa_data
   )
-  SELECT * FROM counted_results ${pagination}
+  SELECT * FROM counted_results ${doPagination}
   `
   return query;
 }
@@ -1577,6 +1583,7 @@ export const fetchFpaDetails = (rid : string, schemaName : string) => {
   jsonb_build_object(
   'interaction_rid', ii.interaction_rid,
   'r_number', i.r_number,
+  'project_fiscal_rid', ii.project_fiscal_rid,
   'question_details', array_agg(jsonb_build_object(
     'question_seq_num', ii.question_seq_num,
     'question', ii.question
@@ -1589,7 +1596,7 @@ export const fetchFpaDetails = (rid : string, schemaName : string) => {
   WHERE
   f.rid = '${rid}'
   GROUP BY
-  ii.interaction_rid, i.r_number)
+  ii.interaction_rid, i.r_number, ii.project_fiscal_rid)
 
   SELECT 
   jsonb_build_object(

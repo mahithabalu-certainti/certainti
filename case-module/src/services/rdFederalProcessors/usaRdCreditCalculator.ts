@@ -2,7 +2,6 @@ import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import { Decimal } from "decimal.js";
 import { AnnualGrossReceipt, QRE, FederalRDData } from "../rdComputation/rdCreditTypes";
-import { FederalMockDataLoadMap } from "../rdComputation/rdDataLoadMockService";
 import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
@@ -159,14 +158,18 @@ export class RdCreditCalculatorForUSA {
         //---- Line 6: fixedBasePercentage
 
         //---- Line 7: Average Gross Receipts
-        const line7 = prior4YearsGrossReceiptsTotal.div(priorYearsCount); // usually 4
-
+        // Ensure valid inputs to prevent NaN
+        const validYearsCount = priorYearsCount > 0 ? priorYearsCount : 1;
+        const validGrossReceipts = Decimal.isDecimal(prior4YearsGrossReceiptsTotal) ? prior4YearsGrossReceiptsTotal : new Decimal(0);
+        const line7 = validGrossReceipts.div(validYearsCount); // usually 4
+        logMessage(`RRC Line 7 (Average Annual Gross Receipts): ${line7}`);
         //---- Line 8: Multiply line 7 by percentage on line 6 (configRRC.fixedBasePercentage)
-        const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage/100));
+        const line8 = line7.mul(new Decimal((configRRC.fixed_base_percentage ?? 0.16)/100));
 
         //---- Line 9: Subtract line 8 from line 5
-        const line9 = currentYearQRE.minus(line8)
-        const maxLine9 = Decimal.max(line9, 0)
+        const line9 = currentYearQRE.minus(line8);
+        const maxLine9 = Decimal.max(line9, 0);
+        logMessage(`RRC Line 9 (QRE - Base): ${maxLine9}`);
 
         //---- Line 10: Multiply line 5 by 50%
         const line10 = currentYearQRE.mul(configRRC.rrc_qre_credit_percentage/100 || 0.5);
@@ -318,9 +321,9 @@ export class RdCreditCalculatorForUSA {
             "Average Annual Gross Receipts" : priorYearGross,
             "Total Qualified Research Expenses" : priorYearsQre,
             "qreSummary" : {
-                "Wages" : currentYearQREs.wages,
-                "Supplies" : currentYearQREs.supplies,
-                [`${metadata.subConPercent}% Contract Expenses`] : currentYearQREs.contract
+                "Wages" : this.round2(currentYearQREs.wages ?? 0.00),
+                "Supplies" : this.round2(currentYearQREs.supplies ?? 0.00),
+                [`${metadata.subConPercent}% Contract Expenses`] : this.round2(currentYearQREs.contract ?? 0.00)
             }
         };
 

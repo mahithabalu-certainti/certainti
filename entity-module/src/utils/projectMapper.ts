@@ -57,6 +57,7 @@ export class ProjectMapper {
       created_datetime: new Date(),
       created_by: userId,
       modified_by: projectData.modified_by || null,
+      is_assesed: projectData.is_assesed ?? false,
       comments: projectData.comments || null,
     };
   }
@@ -182,6 +183,7 @@ export class ProjectMapper {
 
       interaction_cc_list: null,
       assessment_status: data.assessment_status || null,
+      is_assesed: data.is_assesed ?? false,
       claim_status: null,
 
       comments: data.comments || null,
@@ -249,6 +251,7 @@ export class ProjectMapper {
       blended_rate_subcon: projectData.blended_rate_subcon || null,
 
       project_description: projectData.project_description || null,
+      is_assesed: projectData.is_assesed ?? false,
       comments: projectData.comments || null,
 
       is_rd_qualified: projectData.is_rd_qualified ?? false,
@@ -388,6 +391,7 @@ export class ProjectMapper {
 
       interaction_cc_list: null,
       assessment_status: null,
+      is_assesed: projectData.is_assesed ?? false,
       claim_status: null,
 
       project_point_of_contact: projectPointOfContact,
@@ -479,6 +483,7 @@ export class ProjectMapper {
     currency_rid: data.currency_rid || null,
     project_description: data.project_description || null,
     country_rid: data.country_rid || null,
+    is_assesed: data.is_assesed ?? false,
     comments: data.comments || "",
  
     total_fte_prj: data.total_fte || 0,
@@ -527,6 +532,7 @@ export class ProjectMapper {
       country_rid: projectData.country_rid || null,
       region_rid: projectData.region_rid || null,
       currency_rid: projectData.currency_rid || null,
+      is_assesed: projectData.is_assesed ?? false,
       comments: projectData.comments || null,
       project_description: projectData.project_description || null,
 

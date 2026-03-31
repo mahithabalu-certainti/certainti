@@ -42,6 +42,7 @@ export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",
   ACCOUNT_FISCAL: "ACF",
+  ACCOUNT_TIMELINE: "ACT",
   PROJECT: "PRJ",
   PROJECT_FISCAL: "PFI",
   PROJECT_FISCAL_REGION: "PFIR",
@@ -91,7 +92,7 @@ export const entityTypes = {
   TAG: "Tag",
   SETTINGS: "Settings",
   QRE_PERCENT: "QRE Percent",
-  AUTO_RD_ASSESSMENT:"Auto RD Assessment",
+  AUTO_RD_ASSESSMENT: "Auto RD Assessment",
 };
 
 export const eventNames = {
@@ -836,6 +837,15 @@ export const rawQueries = {
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
+  findResourceByRid(schemaName: string, resource_rid: string) {
+    return `SELECT resource_code FROM ${schemaName}.resources WHERE rid = '${resource_rid}'`;
+  },
+  findProjectResourceByRid(schemaName: string, project_resource_rid: string) {
+    return `SELECT resource_rid FROM ${schemaName}.project_resource WHERE rid = '${project_resource_rid}'`;
+  },
+  findProjectFiscalByRid(schemaName: string, project_fiscal_rid: string) {
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${project_fiscal_rid}'`;
+  },
   fetchAccountById: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   updateTemplate(url: string, templateId: string, userId: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.templates
@@ -1176,6 +1186,38 @@ export const rawQueries = {
       rid = '${data.rid}'
     `;
   },
+  updateProjectResourceFiscalQre(schemaName: string, data: any) {
+    return `
+    UPDATE ${schemaName}.project_resource_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      project_fiscal_rid = '${data.project_fiscal_rid}'
+    `;
+  },
+  updateCaseProjectResourceFiscalQre(schemaName: string, data: any) {
+    return `
+    UPDATE ${schemaName}.case_project_resource_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      project_fiscal_rid = '${data.project_fiscal_rid}'
+    `;
+  },
   updateProjectFiscalSummaryQre(data: any) {
     return `
     UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary
@@ -1192,6 +1234,23 @@ export const rawQueries = {
     WHERE
       project_fiscal_rid = '${data.rid}'
     `;
+  },
+  checkIsProjectMapped (projectFiscalRid : string, closedCaseStatusId : string, schemaName : string) {
+    return `
+    SELECT c.rid, cp.project_fiscal_rid 
+    FROM 
+    ${schemaName}.cases c
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
+    WHERE
+    cp.project_fiscal_rid = '${projectFiscalRid}'
+    AND
+    c.status_rid = '${closedCaseStatusId}'
+    GROUP BY
+    c.rid, cp.project_fiscal_rid
+    `
+  },
+  fetchCaseClosedStatus() {
+    return `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.case_status where status_name ILIKE '%closed%'`;
   },
   fetchProjecTaskType() {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_type`;
@@ -2037,7 +2096,8 @@ export const rawQueries = {
           COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
           COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
           pfs.rd_percent_final,
-          pfs.is_rd_claim_qualified
+          pfs.is_rd_claim_qualified,
+          pfs.is_assesed
         FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -2092,7 +2152,8 @@ export const rawQueries = {
             pfs.project_rid, 
             pfs.project_fiscal_rid, 
             pfs.r_number, 
-            pfs.account_rid
+            pfs.account_rid,
+            pfs.is_assesed
           FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
           INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid

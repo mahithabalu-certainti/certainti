@@ -224,7 +224,9 @@ export const STATUS_MESSAGE = {
   activityCompleted: "Meeting completed successfully",
   activityCompletionFailed: "Meeting completion failed",
   caseClosedSuccess: "Case Closed Successfully",
-  computedDataFetchedSuccess: "Computed data fetched successfully"
+  computedDataFetchedSuccess: "Computed data fetched successfully",
+  revokedSuccessfully : "Approval revoked successfully",
+  dossierFormFetchedSuccess: "Dossier Form fetched successfully",
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
@@ -343,6 +345,7 @@ export const eventNames = {
   REMOVED: "removed",
   SENT: "sent",
   SIGNOFF: "approved",
+  REVOKED: "revoked"
 }
 
 export const eventTypes = {
@@ -363,9 +366,9 @@ export const rawQueries = {
     } else {
       return `
       with fetch_account_details AS (
-      SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      SELECT rid, r_number, parent_account_rid, currency_rid, account_name AS child_account_name FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent, a.currency_rid, a.storage_type
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent, a.currency_rid, a.storage_type, ad.child_account_name
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -875,19 +878,19 @@ export const rawQueries = {
   insertTimeLine(schemaName: string, tableName: string) {
     return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name, created_datetime
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,NOW()
           )
           RETURNING *;
         `
   },
-  insertProjectTimeLine(schemaName: string, tableName: string) {
+  insertProjectTimeLine(schemaName: string, tableName: string) { 
     return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,project_rid,created_datetime
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:project_rid,NOW()
           )
           RETURNING *;
         `
@@ -895,9 +898,9 @@ export const rawQueries = {
   insertCaseTimeLine(schemaName: string, tableName: string) {
     return `
           INSERT INTO "${schemaName}".${tableName} (
-            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid,created_datetime
           ) VALUES (
-            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name,:case_rid,NOW()
           )
           RETURNING *;
         `
@@ -1158,11 +1161,12 @@ export const rawQueries = {
   fetchCaseById(schemaName: string) {
     return `
     SELECT rid,r_number,case_name,account_rid ,fiscal_year, material_software_cost, heat_light_power, total_nonlabor_cost,
-    employers_pension_contribution,other, total_expenses, other, sub_contracts, cloud_software, unpaid_amounts_paid,
+    employers_pension_contribution,other_can, total_expenses, other_on,other_uk, other_irl, sub_contracts, cloud_software, unpaid_amounts_paid,
     unpaid_amounts, aggregated_turnover, taxable_income, export_sales_revenue,
-    lease_costs_of_computers, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
-    basic_research_payments, qualified_computer_rental_time_expenses,credit_carry_forward_py,current_year_gross_receipts,other_credits_total,
-    rrc_credit_280_c, asc_credit_280_c
+    lease_costs_of_computers_nj, lease_costs_of_computers_il, lease_costs_of_computers_ca,
+    lease_costs_of_computers_az, lease_costs_of_computers_id, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
+    basic_research_payments_ma, basic_research_payments_id, qualified_computer_rental_time_expenses,credit_carry_forward_py_ga, credit_carry_forward_py_sc, credit_carry_forward_py_tx,current_year_gross_receipts,other_credits_total_ga,
+    other_credits_total_sc, rrc_credit_280_c, asc_credit_280_c
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
@@ -1457,6 +1461,7 @@ export const rawQueries = {
     WHERE ct.case_rid = '${caseRid}'
     AND ct.role_rid = '${roleRid}'
     AND ct.status_rid = '${statusActiveRid}'
+    and ct.is_primary = true
     `;
   },
   fetchEmailRecipientsByRids(userRids: string[]) {
@@ -1861,14 +1866,15 @@ export const rawQueries = {
                     pfr.region_rid as state_rid,
                     COUNT(DISTINCT cp.project_fiscal_rid) as total_projects,
                     COUNT(DISTINCT pr.rid) as total_resources,
-                    SUM(pfr.total_cost_fte_from_prj_res + pfr.total_cost_nonlabor_from_prj_res + pfr.total_cost_subcon_from_prj_res) as total_qre
+                    SUM(pfr.total_cost_pro_res) as total_qre
                 FROM ${schemaName}.case_projects cp
                 JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
-                JOIN ${schemaName}.project_fiscal_region pfr ON pf.rid = pfr.project_fiscal_rid
+                JOIN ${schemaName}.project_resource_fiscal pfr ON pf.rid = pfr.project_fiscal_rid
                 LEFT JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid 
                     AND pr.region_rid = pfr.region_rid
                 WHERE cp.case_rid = :case_rid 
                     AND pf.fiscal_year = cp.fiscal_year
+                    AND pf.is_qualified = true
                     AND pfr.region_rid IN (:stateRids)
                 GROUP BY pfr.region_rid
             `
@@ -1931,14 +1937,14 @@ WHERE dmf.country_rid = '${countryRid}'
   saveFederalFilledFormUrl(schemaName: string) {
     return `
           UPDATE ${schemaName}.rd_credit_country_calculations
-          SET rd_form_url = :filledFormUrl
+          SET rd_form_url = :filledFormUrl, form_error_message = NULL
           WHERE case_rid = :caseRid
           and country_rid  =:countryRid`
   },
   saveStateFilledFormUrl(schemaName: string) {
     return `
            UPDATE ${schemaName}.rd_credit_state_calculations
-      SET rd_form_url = :filledFormUrl
+      SET rd_form_url = :filledFormUrl, form_error_message = NULL
       WHERE case_rid = :caseRid
       and state_rid  =:stateRid`
   },
@@ -1989,17 +1995,22 @@ WHERE dmf.country_rid = '${countryRid}'
       ORDER BY dmo.field_label
     `;
   },
-  getDatamapperObjectById() {
-    return `
-      SELECT 
-        dmo.rid,
-        dmo.ref_table,
-        dmo.field_name,
-        dmo.is_json
-      FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
-      WHERE dmo.rid = :rid
-      LIMIT 1`
-  },
+ getDatamapperObjectById() {
+  return `
+    SELECT
+      dmo.rid,
+      dmo.ref_table,
+      dmo.field_name,
+      dmo.is_json,
+      dmo.where_filters,
+      dmo.joins,
+      dmo.extra_filters,
+      dmo.fiscal_year_column,
+      dmo.db_source
+    FROM ${MAIN_SCHEMA_NAME}.data_mapper_objects dmo
+    WHERE dmo.rid = :rid
+    LIMIT 1`;
+},
   fetchConfiguration(schemaName: string, caseRid: string) {
     return `
       SELECT is_federal_level, is_state_level, states FROM ${schemaName}.jurisdictions WHERE entity_rid = '${caseRid}' LIMIT 1;
@@ -2022,43 +2033,39 @@ WHERE dmf.country_rid = '${countryRid}'
           WHERE case_rid = :case_rid${stateRid ? " AND state_rid = :state_rid" : ""}
           LIMIT 1`
   },
-  fetchJsonbFieldValue(
-    schemaName: string,
-    refTable: string,
-    quotedJsonPath: string,
-    includeStateRid: boolean,
-  ) {
-    const usesConfigJson = quotedJsonPath.startsWith("$.config_json");
-    const jsonPath = usesConfigJson
-      ? `$.${quotedJsonPath.replace(/^\$\.config_json\.?/, "")}`
-      : quotedJsonPath;
-    const jsonColumn = usesConfigJson ? "config_json" : "computed_fields";
-    return `
-          SELECT jsonb_path_query_first(${jsonColumn}, '${jsonPath}')::text AS field_value
-          FROM ${schemaName}.${refTable}
-          WHERE case_rid = :case_rid${includeStateRid ? " AND state_rid = :state_rid" : ""}
-          LIMIT 1`;
-  },
-  fetchRegularFieldValue(
-    schemaName: string,
-    refTable: string,
-    fieldName: string,
-    whereColumn: string,
-    includeStateRid: boolean,
-  ) {
-    if (includeStateRid) {
-      return `
-        SELECT ${fieldName} AS field_value
-        FROM ${schemaName}.${refTable}
-        WHERE case_rid = :case_rid AND state_rid = :state_rid
-        LIMIT 1`;
-    }
-    return `
-        SELECT ${fieldName} AS field_value
-        FROM ${schemaName}.${refTable}
-        WHERE ${whereColumn} = :case_rid
-        LIMIT 1`;
-  },
+ fetchJsonbFieldValue(
+  schemaName: string,
+  refTable: string,
+  quotedJsonPath: string,
+  // ← includeStateRid REMOVED — WHERE is driven by where_filters in schemaService
+) {
+  const usesConfigJson = quotedJsonPath.startsWith("$.config_json");
+  const jsonPath   = usesConfigJson
+    ? `$.${quotedJsonPath.replace(/^\$\.config_json\.?/, "")}`
+    : quotedJsonPath;
+  const jsonColumn = usesConfigJson ? "config_json" : "computed_fields";
+
+  return `
+    SELECT jsonb_path_query_first(${jsonColumn}, '${jsonPath}')::text AS field_value
+    FROM ${schemaName}.${refTable}
+    WHERE case_rid = :case_rid
+    LIMIT 1`;
+},
+
+fetchRegularFieldValue(
+  schemaName: string,
+  refTable: string,
+  fieldName: string,
+  whereColumn: string,
+  // ← includeStateRid REMOVED — WHERE is driven by where_filters in schemaService
+  // ← refTable === 'account' check REMOVED — whereColumn already carries "rid" from where_column
+) {
+  return `
+    SELECT ${fieldName} AS field_value
+    FROM ${schemaName}.${refTable}
+    WHERE ${whereColumn} = :case_rid
+    LIMIT 1`;
+},
   fetchAssignedProjectIds(caseRid: string, schemaName: string, type?: string) {
     if (type === DOSSIER_NAME) {
       return `SELECT pf.rid AS project_fiscal_rid 
@@ -2150,8 +2157,48 @@ WHERE dmf.country_rid = '${countryRid}'
   },
   getCaseTaskCompletedStatus () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%Completed%'`
+  },
+  revokRdFormSignOff(schemaName: string, caseRid: string) {
+    return `UPDATE ${schemaName}.cases SET rd_form_signoff = false WHERE rid = '${caseRid}'`
+  },
+  revokeClaimQualifiedInCaseProject(caseRid: string, projectFiscalRids: string[], accountRid: string, schemaName: string) {
+    return `UPDATE ${schemaName}.case_projects SET is_rd_claim_qualified = false WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' AND project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')})`
+  },
+  revokeClaimQualifiedInProjectFiscal(projectFiscalRids: string[], accountRid: string, schemaName: string) {
+    return `UPDATE ${schemaName}.project_fiscal SET is_rd_claim_qualified = false WHERE rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  },
+  revokeClaimQualifiedInProjectFiscalSummary(projectFiscalRids: string[], accountRid: string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET is_rd_claim_qualified = false WHERE project_fiscal_rid IN (${projectFiscalRids.map((d: any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  },
+  revokeDossierFormInitiateStatus(schemaName: string, caseRid : string) {
+    return `UPDATE ${schemaName}.dossier_form
+    SET is_initiated = false
+    WHERE
+    rid = (select rid FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' ORDER BY dossier_version DESC LIMIT 1)`
+  },
+  revokeClaimQualifiedInCaseProjectFiscalRegion(ProjectRegionIds: any[], accountRid: string, schemaName: string) {
+    let ids = ProjectRegionIds.filter((d: any) => d.region_rid !== null)
+    let validIds;
+    validIds = ids.map((d: any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
+    let finalQuery;
+    if (validIds === '') {
+      finalQuery = ''
+    } else {
+      finalQuery = `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = false WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
+    }
+    return finalQuery;
+  },
+  fetchAllActiveCountries() {
+    return `
+      SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE status = 'active'`;
+  },
+  fetchAllActiveStates() {
+    return `
+        SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE status = 'active'`;
+  },
+  updateStatusForWorkFlowConnector(statusRid : string, templateRid : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.workflow_connector_mapping SET status_rid = '${statusRid}' WHERE source_rid = '${templateRid}' OR target_rid = '${templateRid}'`
   }
-
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -2481,6 +2528,7 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+  dossierCreated: "Dossier Event",
   dossierPackageCreated: "Dossier Package",
 }
 
@@ -2601,3 +2649,16 @@ export const FormExtractionFieldTypes = {
   TABLE_ITEM: "Table-Item"
 }
 
+export const filterColumnsDossierForm = {
+  dossier_version: `d.dossier_version`,
+  created_datetime: `d.created_datetime`,
+  document_name: `d.document_name`,
+  r_number: `d.r_number`
+}
+
+export const filterColumnsDossierFormTypes : any = {
+  dossier_version: `number`,
+  created_datetime: `date`,
+  document_name: `string`,
+  r_number: `string`
+}

@@ -129,7 +129,7 @@ export class KafkaConsumerService {
                 try {
 
                     const markInProgress = await this.rdCreditSchemaService.markAsInProgress(payload.accountNumber, key, 'dossier-form');
-                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key, payload.timezone);
+                    await this.childCaseService.processDossierForm(payload.accountNumber, payload.caseRid, payload.accountRid, payload.userId, key, payload.timezone, payload.fetchParentNumber);
                    const mainDb = await initMainDbSequelize()
                     const [caseInfo]: any[] = await mainDb.query(
                             rawQueries.fetchCasesInfo(payload.caseRid),
@@ -137,15 +137,22 @@ export class KafkaConsumerService {
                               replacements: { case_rid: payload.caseRid },
                               type: "SELECT"
                             });
+                    const [userInfo]:any[] = await mainDb.query(
+                        rawQueries.fetchUserDetails(payload.userId),
+                        {
+                          replacements: { rid: payload.userId },
+                          type: "SELECT"
+                        }
+                    );
                           
                     let ruleEnginePayload = {
                             entityName: caseInfo.case_name,
                             entity: entityNames.case,
-                            eventName: ruleNames.caseCreated,
+                            eventName: ruleNames.dossierCreated,
                             userId: payload.userId,
                             accountRid: payload.accountRid,
-                            targetUserID: caseInfo.case_owner_rid,
-                            targetEmail: caseInfo.email || "",
+                            targetUserID:payload.userId,
+                            targetEmail: userInfo.email || "",
                             entityRid: payload.caseRid,
                             ruleScope: ruleNames.dossierPackageCreated,
                             caseName: caseInfo.case_name || "",

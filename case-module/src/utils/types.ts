@@ -16,9 +16,14 @@ export interface ICreateCases {
   status_rid?: string;
   heat_light_power?: number;
   total_nonlabor_cost?: number;
-  tax_liability?: number;
+  tax_liability_sc?: number;
+  tax_liability_ct? : number;
+  tax_liability_ga? : number;
   employers_pension_contribution?: number
-  other?: number
+  other_can? : number
+  other_on? : number
+  other_uk? : number
+  other_irl? : number
   material_software_cost?: number;
   sub_contracts?: number;
   cloud_software?: number;
@@ -28,15 +33,41 @@ export interface ICreateCases {
   total_expenses?: number;
   taxable_income?: number;
   export_sales_revenue?: number;
-  lease_costs_of_computers?: number;
+  lease_costs_of_computers_nj: number,
+  lease_costs_of_computers_il: number,
+  lease_costs_of_computers_ca: number,
+  lease_costs_of_computers_az: number,
+  lease_costs_of_computers_id: number,
   illinois_rd_credit_partnership_corp?: number
   illinois_research_payments_corp_only?: number
-  basic_research_payments?: number
+  basic_research_payments_ma?: number;
+  basic_research_payments_id?: number;
   qualified_computer_rental_time_expenses?: number
-  credit_carry_forward_py?: number
+  credit_carry_forward_py_ga? : number
+  credit_carry_forward_py_sc? : number
+  credit_carry_forward_py_tx? : number
   current_year_gross_receipts?: number
-  other_credits_total?: number
+  other_credits_total_sc?: number
+  other_credits_total_ga? : number
   parent_case_rid?: string;
+  amendment_case_info?: Array<{
+    fiscal_year: number;
+    total_project: number;
+    total_qualified_project: number;
+    total_project_cost: number;
+    total_qualified_project_cost: number;
+    total_nonlabor_cost: number;
+    total_subcon_cost: number;
+    total_fte_cost: number;
+    total_qre: number;
+    total_rd_credits: number;
+    annual_gross_receipts: number;
+    action_type: "add" | "edit" | "delete";
+    country_rid: string;
+    state_rid?: string;
+    state_name?: string;
+    is_federal: boolean;
+  }>;
 }
 
 export type CaseHeadersColumns = {
@@ -79,7 +110,9 @@ export type CaseHeadersColumns = {
   is_state_available: boolean
   state_rid: string | null,
   state_name: string | null
-  financial_working_signoff: boolean
+  financial_working_signoff: boolean,
+  effective_progress: number | null,
+  case_progress: string | null
 }
 
 export type FilingType = {
@@ -1030,7 +1063,10 @@ export interface CaseData {
   total_nonlabor_cost: number | null;
 
   employers_pension_contribution: number | null;
-  other: number | null;
+  other_can : number | null;
+  other_on : number | null;
+  other_uk : number | null;
+  other_irl : number | null;
 
   total_expenses: number | null;
   sub_contracts: number | null;
@@ -1043,17 +1079,25 @@ export interface CaseData {
   taxable_income: number | null;
   export_sales_revenue: number | null;
 
-  lease_costs_of_computers: number | null;
+  lease_costs_of_computers_nj: number | null,
+  lease_costs_of_computers_il: number | null,
+  lease_costs_of_computers_ca: number | null,
+  lease_costs_of_computers_az: number | null,
+  lease_costs_of_computers_id: number | null,
 
   illinois_rd_credit_partnership_corp: number | null;
   illinois_research_payments_corp_only: number | null;
-  basic_research_payments: number | null;
+  basic_research_payments_ma: number | null;
+  basic_research_payments_id : number | null;
 
   qualified_computer_rental_time_expenses: number | null;
 
-  credit_carry_forward_py: number | null;
+  credit_carry_forward_py_ga? : number
+  credit_carry_forward_py_sc? : number
+  credit_carry_forward_py_tx? : number
   current_year_gross_receipts: number | null;
-  other_credits_total: number | null;
+  other_credits_total_ga: number | null;
+  other_credits_total_sc: number | null;
 }
 
 interface RdCreditsCountry {
@@ -1118,4 +1162,20 @@ export interface CaseCountryComputedType {
   country_rid : string
   final_credit : string
   country_name : string
+}
+export interface RevokeSignoffRequest {
+  case_rid : string
+  account_rid : string
+  type : string
+  userId : string
+}
+export interface DossierFormResponse {
+  rid : string
+  r_number : string
+  created_by : string
+  created_by_name : string
+  created_datetime : Date
+  dossier_version : number
+  document_name : string
+  total_result : string
 }

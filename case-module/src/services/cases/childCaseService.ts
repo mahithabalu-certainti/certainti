@@ -4,8 +4,8 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, entityTypes, ENV_PREFIX, eventNames, eventTypes, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
-import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, StateType } from "../../utils/types";
-import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
+import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
+import { fetchDossierForm, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
 import { ENV, kafka } from "../../config/kafka";
@@ -22,6 +22,8 @@ import { calculateCostForCaseSubmissionCurrentYear, calculateStateCostForCaseSub
 import { CaseHistorySubmissionCreationAttributes } from "../../models/caseHistorySubmissionModel";
 import Decimal from "decimal.js";
 import { generatePdfBuffer } from "../../utils/generatePdf";
+import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
+import { truncate } from "node:fs";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -233,6 +235,7 @@ export class ChildCaseService extends CaseService {
             message: STATUS_MESSAGE.caseDetailsFetchedSuccess,
             data: { cases: closedCases.map(d => ({
                 rid: d.rid,
+                fiscal_year: d.fiscal_year,
                 case_full_name: accountInfo.account_name + '-' + accountInfo.country_code + '-' + d.fiscal_year + '-' + d.case_name
             })) },
           };
@@ -278,7 +281,7 @@ async getCaseClosureRemarks (data : any) {
                         signoff_type_name : mapSignOffTypesWithName.get(s.signoff_type_rid) || null,
                         signoff_at : s.created_datetime
                     }
-                }).sort((a, b) => a.signoff_at.localeCompare(b.signoff_at))
+                })
             }
         })
         if(isSortingRestricted) {
@@ -323,15 +326,16 @@ async initiateCreateDossierForm (data : any) {
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,token : data.accessToken})}],
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,accessToken : data.accessToken, fetchParentNumber})}],
         
     })
     console.log(`Message : ${JSON.stringify(result)}`)
     console.log(`Message published to ID : ${processingRid}`);
     return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
 }
-async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string, timez : string) {
+async processDossierForm (accountNumber : string, caseRid : string, accountRid : string, userId : string, key : string, timez : string,fetchParentNumber : any) {
     const orgDb = await this.getOrgDb()
+    const mainDB = await this.getMainDb()
     let schemaName = rawQueries.fetchSchemaName(accountNumber)
     const {DossierFormModel} = await this.getModels(schemaName)
     const [caseDetails] = await orgDb.query<CaseData>(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
@@ -357,7 +361,6 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     caseClosingPayload.sort_by = 'ASC';
     caseClosingPayload.timezone = timez
     const closingRemarksData = await this.exportCaseClosingRemarks(caseClosingPayload);
-
     const fetchCountryUrl : any = await orgDb.query(fetchRdFormUrlForCountry(schemaName, caseRid));
     const fetchStateUrl : any = await orgDb.query(fetchRdFormUrlForState(schemaName, caseRid));
     let countryUrlData = fetchCountryUrl[0].filter((c : any) => c.country_url !== null);
@@ -365,21 +368,22 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     let stateUrls : string[];
     let countryUrls : string;
     if(countryUrlData.length > 0) {
-      countryUrlData = await Promise.all(countryUrlData.map(async (c : any) => {
+      countryUrlData = countryUrlData.map((c : any) => {
       return {
-        url : await generateSasUrl(c.country_url)
+        url : c.country_url
       }
-    }))
+    })
     countryUrls = countryUrlData[0].url
     } else {
       countryUrls = ''
     }
     if(stateUrlData.length > 0) {
-      stateUrlData = await Promise.all(stateUrlData.map(async (s : any) => {
+      stateUrlData = stateUrlData.map((s : any) => {
       return {
-        url : await generateSasUrl(s.state_url)
+        
+        url : s.state_url
       }
-    }))
+    })
     stateUrls = stateUrlData.map((d : any) => d.url)
     } else {
       stateUrls = []
@@ -397,15 +401,17 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     exportedUrls = exportedAttachments?.map((d : any) => d.url) || []
 
     const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
-    const finalStructuredData = techSummary.technicalSummary.length < 1 ? [''] : await generatePdfBuffer(techSummary.technicalSummary)
+    const finalStructuredData = techSummary.technicalSummary.length < 1 ? [] : await generatePdfBuffer(techSummary.technicalSummary)
     const files: any[] = [
     {
       name: "Qualified Projects",
+      project_code : null,
       buffer: generateQualifiedProjectsCSV,
       extension: ".xlsx"
     },
     {
       name: "Resource Summary",
+      project_code : null,
       buffer: generateResourceSummaryCSV,
       extension: ".xlsx"
     },
@@ -415,6 +421,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     },
     {
       name: "Approval Status",
+      project_code : null,
       buffer: closingRemarksData,
       extension: ".xlsx"
     },
@@ -428,46 +435,126 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     }
   ];
   if (Array.isArray(finalStructuredData)) {
-    finalStructuredData.forEach((pdf, index) => {
-      files.push({
-        name: `Technical Summary ${index + 1}`,
-        buffer: pdf,
-        extension: ".pdf"
+    if(finalStructuredData.length > 0) {
+        finalStructuredData.forEach((pdf, index) => {
+        files.push({
+          name: `Technical Summary`,
+          project_code : pdf.projectCode,
+          buffer: pdf.base64,
+          extension: ".pdf"
+        });
       });
-    });
+    }
   }
   const jsonToString = JSON.stringify(files)
   const findData = await DossierFormModel.findOne({
     where : {
       case_rid : caseRid,
       account_rid : accountRid
-    }, raw : true
+    }, raw : true,
+    order : [['created_datetime', 'DESC']]
   })
-
+  let dossierVersion;
+  let now = new Date();
   if(findData) {
+    dossierVersion = Number(findData.dossier_version ?? 0) + 1
     await DossierFormModel.update({
-      modified_by : userId,
-      dossier_metadata : jsonToString,
-      modified_datetime : new Date()
+      is_initiated : true
     }, {
-     where : {
-      case_rid : caseRid,
-      account_rid : accountRid
-    }
+      where : {
+        rid : findData.rid
+      }
     })
   } else {
-    await DossierFormModel.create({
-      account_rid : accountRid,
-      case_rid : caseRid,
-      browse_url : '',
-      created_by : userId,
-      document_name : '',
-      extension : '',
-      size : '',
-      created_datetime : new Date(),
-      dossier_metadata : jsonToString
-    });
+    dossierVersion = 1
   }
+  await DossierFormModel.create({
+    account_rid : accountRid,
+    case_rid : caseRid,
+    browse_url : '',
+    created_by : userId,
+    document_name : `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${dossierVersion}-${now.toISOString().split('T')[0]}`,
+    extension : '',
+    size : '',
+    created_datetime : now,
+    dossier_metadata : jsonToString,
+    dossier_version : dossierVersion,
+    is_initiated : true
+  });
+  await this.cloneTechnicalSummaryForDossierForm(accountNumber, caseRid, accountRid, userId, schemaName);
+}
+
+private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid: string, accountRid: string, userId: string, schemaName: string) {
+  if (caseRid !== undefined && caseRid !== '') {
+  const orgDb = await this.getOrgDb();
+  const {  CaseTechnicalSummaryModel } = await this.getModels(schemaName);
+
+  // First, delete any existing technical summaries for this case
+  await CaseTechnicalSummaryModel.destroy({
+    where: {
+      case_rid: caseRid,
+      account_rid: accountRid
+    }
+  });
+
+  // Get qualified project IDs for the case
+  const projectQuery = `
+    SELECT DISTINCT cp.project_fiscal_rid
+    FROM ${schemaName}.case_projects cp
+    INNER JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    WHERE cp.case_rid = $1
+      AND cp.account_rid = $2
+  `;
+  
+  const projectIds: any = await orgDb.query(projectQuery, {
+    bind: [caseRid, accountRid],
+    type: QueryTypes.SELECT
+  });
+
+  if (projectIds.length === 0) {
+    // No qualified projects found
+    return STATUS_MESSAGE.dossierCreationInitiatedSuccess;
+  }
+
+  const projectFiscalRidList = projectIds.map((d: any) => d.project_fiscal_rid);
+
+  // Get the max version records for these projects from AiTechnicalSummary
+  const technicalQuery = `
+    SELECT DISTINCT ON (ats.project_fiscal_rid) ats.*
+    FROM ${schemaName}.ai_technical_summary ats
+    WHERE ats.account_rid = $1
+      AND ats.project_fiscal_rid = ANY($2::text[])
+    ORDER BY ats.project_fiscal_rid, ats.version DESC
+  `;
+
+  const technicalSummaryData = await orgDb.query(technicalQuery, {
+    bind: [accountRid, projectFiscalRidList],
+    type: QueryTypes.SELECT
+  });
+  console.log("Technical Summary Data : ", technicalSummaryData)
+
+  if (technicalSummaryData.length > 0) {
+    // Minimal mapping to reduce processing time
+    const clonedTechnicalSummaryData = technicalSummaryData.map((d: any) => ({
+      account_rid: d.account_rid,
+      r_number: d.r_number,
+      project_rid: d.project_rid,
+      case_rid: caseRid,
+      project_fiscal_rid: d.project_fiscal_rid,
+      fiscal_year: d.fiscal_year,
+      version: d.version,
+      title: d.title,
+      content: d.content,
+      created_by: d.created_by,
+      created_datetime: d.created_datetime,
+      modified_by: d.modified_by,
+      modified_datetime: d.modified_datetime
+    }));
+
+    // Bulk insert (already optimized)
+    await CaseTechnicalSummaryModel.bulkCreate(clonedTechnicalSummaryData, { validate: false }); // Skip validation for speed if data is trusted
+  }
+}
 }
   async exportAttachments(
     userId: string,
@@ -1092,9 +1179,10 @@ async getModels(schemaName: string) {
     const sequelize = await initOrgSequelize();
     const DossierFormModel = DossierForm.initialise(sequelize, schemaName)
     const AiTechnicalSummaryModel = AiTechnicalSummary.initialize(sequelize, schemaName)
+    const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(sequelize, schemaName)
     return {
       DossierFormModel,
-      AiTechnicalSummaryModel
+      AiTechnicalSummaryModel,CaseTechnicalSummaryModel
     }
 }
 async fetchDossierPackage (data : any) : Promise<any> {
@@ -1107,45 +1195,68 @@ async fetchDossierPackage (data : any) : Promise<any> {
   const fetchParentNumber : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize));
   let schemaName = rawQueries.fetchSchemaName(fetchParentNumber[0][0].r_number)
   const {DossierFormModel} = await this.getModels(schemaName);
-  let getZipPackage = await DossierFormModel.findOne({
-    where : {
-      case_rid : data.case_rid,
-      account_rid : data.account_rid
-    }
-  })
+  let getZipPackage : DossierForm | null
+  if(data.dossier_version === undefined) {
+    getZipPackage = await DossierFormModel.findOne({
+        where : {
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+        },
+        order : [['created_datetime', 'DESC']],
+        limit : 1
+      })
+  } 
+  else {
+    getZipPackage = await DossierFormModel.findOne({
+      where : {
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        dossier_version : data.dossier_version
+      },
+      order : [['created_datetime', 'DESC']],
+      limit : 1
+    })
+  }
+  
   if(getZipPackage) {
     let responsePackage : any[] = [];
     const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
-    for(let i = 0; i < data.downloaded_list.length; i++) {
-      for(let j = 0; j < stringToJson.length; j++) {
-        if(stringToJson[j].name.toLowerCase().startsWith(data.downloaded_list[i].toLowerCase())) {
-          if(stringToJson[j].extension === '.xlsx' || stringToJson[j].extension === '.pdf') {
-            responsePackage.push({
-              name : stringToJson[j].name,
-              buffer : Buffer.from(stringToJson[j].buffer, 'base64'),
-              extension : stringToJson[j].extension
-            });
+    const storeRequestSet = new Set(data.downloaded_list)
+    for(let j = 0; j < stringToJson.length; j++) {
+      if(storeRequestSet.has(stringToJson[j].name)) {
+        if(stringToJson[j].extension === '.xlsx' || stringToJson[j].extension === '.pdf') {
+          responsePackage.push({
+            name : stringToJson[j].name,
+            project_code : stringToJson[j].project_code,
+            buffer : Buffer.from(stringToJson[j].buffer, 'base64'),
+            extension : stringToJson[j].extension
+          });
+        } else {
+          if(stringToJson[j].name === 'RD Form Federal') {
+            let finalizedName : string = '';
+            if(stringToJson[j].url !== '') {
+              let splittedName = stringToJson[j].url.split('/').pop() as string
+              finalizedName = splittedName.split('_').slice(2,3).join('_')
+
+              responsePackage.push({
+                name : `RD Form-${finalizedName}`,
+                url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
+              })
+            }
           } else {
-            responsePackage.push(stringToJson[j])
+            responsePackage.push({
+              name : '',
+              urls : stringToJson[j].urls.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
+                return await generateSasUrl(d)
+              })) : []
+            })
           }
         }
       }
     }
     const [caseDetails] : any[] = await orgDbSequelize.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
     const convertToZip = await createZipFile(responsePackage);
-    const uploadToAzure = await uploadZipBufferToAzureBlob(convertToZip, "Dossier-Form", data.account_rid, caseDetails?.r_number!, fetchParentNumber[0][0].r_number, "cases");
-    await getZipPackage.update({
-      browse_url : uploadToAzure.url,
-      size : JSON.stringify(uploadToAzure.size),
-      document_name : uploadToAzure.name,
-      extension : uploadToAzure.extension
-    }, {
-      where : {
-        account_rid : data.account_rid,
-        case_rid : data.case_rid
-      }
-    })
-     getZipPackage.browse_url = await generateSasUrl(uploadToAzure.url);
+    const base64 = Buffer.from(convertToZip).toString('base64');
      const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
         userId: data.user_id!,
         eventType: eventTypes.UI_HANDLER
@@ -1165,7 +1276,10 @@ async fetchDossierPackage (data : any) : Promise<any> {
     },["case"]);
     return {
       statusCode : HttpStatus.SUCCESS,
-      data : obj
+      data : {
+        document_name : getZipPackage.document_name,
+        base64 : base64
+      }
     }
   } else {
     return {
@@ -1606,7 +1720,8 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       if(JSON.stringify(data.user_preference) !== '') {
         const getCaseCloseStatus = await mainDb.query<{rid : string, status_name : string, status_type : string}>(rawQueries.getCaseCloseStatus(), {type : QueryTypes.SELECT, plain : true})
         await Case.update({
-          status_rid : getCaseCloseStatus?.rid
+          status_rid : getCaseCloseStatus?.rid,
+          case_total_rd_cost : data.country_credits.rd_credits_computed,
         }, {
           where : {
             rid : data.case_rid
@@ -1717,6 +1832,190 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           stateComputedData : []
         }
       }
+    }
+  }
+  async revokeSignOff (data : RevokeSignoffRequest) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const orgDbTransaction = await orgDb.transaction();
+    const mainDbTransaction = await mainDb.transaction();
+    try {
+      const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+      if(fetchParentAccount) {
+        const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+        let dynamicEntityType : string
+        const [caseDetails] : any[] = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
+        if(data.type === 'RD Forms') {
+          await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDbTransaction.commit();
+          await mainDbTransaction.commit();
+          dynamicEntityType = entityTypes.RD_FORM  
+        }
+        else {
+          const getProjectIdsAssignedForCases = await orgDb.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(data.case_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
+          let caseProjectIds : string[] = [];
+          if(getProjectIdsAssignedForCases.length > 0) {
+            getProjectIdsAssignedForCases.forEach((fiscalIds) => {
+              caseProjectIds.push(fiscalIds.project_fiscal_rid)
+            })
+          } else {
+            await orgDbTransaction.rollback()
+            await mainDbTransaction.rollback()
+            return {
+              statusCode : HttpStatus.BAD_REQUEST,
+              statusMessage : STATUS_MESSAGE.noProjectsAssignedToCase
+            }
+          }
+          await orgDb.query(rawQueries.updateSignoffInCase(schemaName, data.case_rid, false), {transaction : orgDbTransaction});
+          await orgDb.query(rawQueries.revokeClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
+          await orgDb.query(rawQueries.revokeClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
+          await mainDb.query(rawQueries.revokeClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid), {transaction : mainDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          let mapIdsForCaseProjectregions : any[] = []
+          let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
+          caseProjectIds.forEach((d) => {
+              mapIdsForCaseProjectregions.push(mappedValuesForCasesRegions.get(d))
+          })
+          let query = rawQueries.revokeClaimQualifiedInCaseProjectFiscalRegion(mapIdsForCaseProjectregions, data.account_rid, schemaName)
+          if(query) {
+              await orgDb.query(query, {transaction : orgDbTransaction})
+          }
+          await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDbTransaction.commit();
+          await mainDbTransaction.commit();
+          dynamicEntityType = entityTypes.FINANCIAL_WORKING
+        }
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({userId: data.userId!,eventType: eventTypes.UI_HANDLER});
+        await this.helperMethod.createAccountTimelineEntry(fetchParentAccount.r_number, {
+          created_by: data.userId!,
+          account_rid: data.account_rid,
+          entity_rid: data.case_rid!,
+          entity_name: dynamicEntityType,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.REVOKED,
+          descriptions: caseDetails?.case_name || '',
+          case_rid: data.case_rid,
+          },["case"]);
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.revokedSuccessfully
+          }
+        }
+        await orgDbTransaction.rollback()
+        await mainDbTransaction.rollback()
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.accountNoFound
+      }
+    } 
+    catch (error) {
+      await orgDbTransaction.rollback()
+      await mainDbTransaction.rollback()
+      return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.failedToUpdate
+      }
+    }
+  }
+   async getDossierFormDetails (data : any) : Promise<any> {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb(); 
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      let paginationAllowed : boolean = false;
+      let sortingAllowed : boolean = false;
+      let filterAllowed : boolean = false;
+      let totalResult = 0;
+      if(Object.keys(data.filter).length > 1) {
+        for(let [key, cond] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') {
+            paginationAllowed = false
+            filterAllowed = true
+            break
+          } else {
+            paginationAllowed = true
+            filterAllowed = true
+            break;
+          }
+        }
+      } else if(Object.keys(data.filter).length === 1) {
+        for(let [key, cond] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') {
+            paginationAllowed = false
+            filterAllowed = false
+            break;
+          } else {
+            paginationAllowed = true
+            filterAllowed = true
+            break;
+          }
+        }
+      }
+      else {
+        paginationAllowed = true
+        filterAllowed = false
+      }
+      if(data.sort === 'created_by_name') {
+        sortingAllowed = false
+      } else {
+        sortingAllowed = true
+      }
+      const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+      const result = await orgDb.query<DossierFormResponse>(fetchDossierForm(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName, paginationAllowed, sortingAllowed, filterAllowed, data.account_rid, data.case_rid), {type : QueryTypes.SELECT});
+      if(result.length > 0) {
+        const getUserIds = [...new Set(result.map((d) => d.created_by))];
+        const getUserMetaData : any = await mainDb.query(rawQueries.getOwnerDetails(getUserIds));
+        const mapUser : Map<string, string>= new Map(getUserMetaData[0].map((d : any) => [d.rid, d.name]));
+        let iteratedResult = result.map((d) => {
+          return {
+            ...d,
+            created_by_name : mapUser.get(d.created_by) || ''
+          }
+        })
+        if(!filterAllowed) {
+          if(Object.keys(data.filter).length > 0) {
+            if(Object.keys(data.filter['created_by_name']).some((d) => d ==='equals')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase() === data.filter['created_by_name']['equals'].toLowerCase())
+          }
+          if(Object.keys(data.filter['created_by_name']).some((d) => d === 'not_equals')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase() !== data.filter['created_by_name']['not_equals'].toLowerCase())
+          }
+          if(Object.keys(data.filter['created_by_name']).some((d) => d === 'contains')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase().includes(data.filter['created_by_name']['contains'].toLowerCase()))
+          }
+          }
+        }
+        if(!sortingAllowed) {
+          if(data.sort_by === 'ASC')
+            iteratedResult.sort((a, b) => a.created_by_name.localeCompare(b.created_by_name))
+          else 
+            iteratedResult.sort((a, b) => b.created_by_name.localeCompare(a.created_by_name))
+        }
+        totalResult = paginationAllowed ? Number(result[0]!.total_result) : iteratedResult.length
+
+        if(!paginationAllowed) {
+          iteratedResult = iteratedResult.slice(((data.page - 1) * data.limit), data.limit)
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : iteratedResult,
+          total : totalResult
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : [],
+          totalResult : 0
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : [],
+          totalResult : 0
+        }
     }
   }
 }

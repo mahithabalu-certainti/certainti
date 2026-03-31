@@ -529,9 +529,11 @@ export class CaseManagementService {
             if(statusMap.get(data.status_rid) === 'In-Active') {
               const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequence(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!));
               await this.caseManangementSchemaService.updateSequenceForInactive(findTaskAfterDeleteData)
+              await mainDb.query(rawQueries.updateStatusForWorkFlowConnector(data.status_rid, data.rid));
             } else {
               const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequenceForActive(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!, isTaskExists.rid));
               await this.caseManangementSchemaService.updateSequenceForActive(findTaskAfterDeleteData)
+              await mainDb.query(rawQueries.updateStatusForWorkFlowConnector(data.status_rid, data.rid));
             }
           }
         }
@@ -593,7 +595,7 @@ export class CaseManagementService {
     const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(1,1, '', '', {},'', false, true, rid), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       let targetData : any[] = []
-      targetData = result.map((d : any) => d.workflow_connector.map((w : any) => {
+      targetData = result.map((d : any) => d.workflow_connector.filter((f : any) => f.target_name !== null).map((w : any) => {
         return {
           target_rid : w.target_rid,
           target_name : w.target_name
@@ -1071,7 +1073,9 @@ async listEmailTemplates (
     }
   }
   async linkTask (data : any) {
-      const result = await this.caseManangementSchemaService.taskWorkflowConnector(data);
+      const mainDb = await this.getMainDb();
+      const getActiveStatus : any = await mainDb.query(rawQueries.fetchActiveStatus())
+      const result = await this.caseManangementSchemaService.taskWorkflowConnector(data, getActiveStatus[0][0].rid);
       return result;
     }
   async deleteLinkTask (data : any) {

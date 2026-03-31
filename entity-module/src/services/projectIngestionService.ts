@@ -382,108 +382,108 @@ class ProjectIngestionService {
         type: "project",
       };
       logMessage(`Triggering AI for project fiscal rid: ${req}`);
-      await this.triggerAI(req, userId, response.project_code,accountNumber,entityTypes.AUTO_RD_ASSESSMENT);
+      await this.triggerAI(req, userId, response.project_code, accountNumber, entityTypes.AUTO_RD_ASSESSMENT);
     }
 
     return response;
   }
 
   async isAutoTriggerRDAssessment(
-      accountNumber: string,
-      interactionDetails: any
-    ) {
-      try {
-        if (!this.mainDbSequelize) {
-          this.mainDbSequelize = await this.getMainSequelize();
-        }
-        if(!this.orgDbSequelize){
-          this.orgDbSequelize = await this.getSequelize();
-        }
-        const globalInteractionAccess = await this.checkGlobalAutoTriggerAccess(this.mainDbSequelize);
-        if (globalInteractionAccess) {
-          return true;
-        } else {
-
-          const accountInteraction = await this.checkAccountAutoTriggerAccess(accountNumber, interactionDetails.account_rid,this.orgDbSequelize);
-          if(accountInteraction){
-            return true;
-          }
-          
-          const projectInteraction = await this.checkProjectAutoTriggerAccess(accountNumber, interactionDetails.project_fiscal_rid,this.orgDbSequelize);
-          if(projectInteraction){
-            return true;
-          }
-         
-          return false;
-        }
-      } catch (err) {
-        logMessage(`Error checking auto-send interaction status: ${err}`);
-        throw new Error(
-          "Error checking auto-send interaction status: " + (err as Error).message
-        );
+    accountNumber: string,
+    interactionDetails: any
+  ) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.getMainSequelize();
       }
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.getSequelize();
+      }
+      const globalInteractionAccess = await this.checkGlobalAutoTriggerAccess(this.mainDbSequelize);
+      if (globalInteractionAccess) {
+        return true;
+      } else {
+
+        const accountInteraction = await this.checkAccountAutoTriggerAccess(accountNumber, interactionDetails.account_rid, this.orgDbSequelize);
+        if (accountInteraction) {
+          return true;
+        }
+
+        const projectInteraction = await this.checkProjectAutoTriggerAccess(accountNumber, interactionDetails.project_fiscal_rid, this.orgDbSequelize);
+        if (projectInteraction) {
+          return true;
+        }
+
+        return false;
+      }
+    } catch (err) {
+      logMessage(`Error checking auto-send interaction status: ${err}`);
+      throw new Error(
+        "Error checking auto-send interaction status: " + (err as Error).message
+      );
     }
-    async checkGlobalAutoTriggerAccess(mainDbSequelize: Sequelize) {
-      try {
-        const [globalAccess]: any[] = await mainDbSequelize.query(
-          rawQueries.fetchGlobalAutoTriggerAccess(),
-          { type: "SELECT" }
-        );
-        return globalAccess?.auto_access_rd ?? false;
-      } catch (err) {
-        logMessage(`Error checking global auto-access RD interaction access: ${err}`);
-        throw new Error(
-          "Error checking global auto-access RD interaction access: " +
-            (err as Error).message
-        );
-      } 
+  }
+  async checkGlobalAutoTriggerAccess(mainDbSequelize: Sequelize) {
+    try {
+      const [globalAccess]: any[] = await mainDbSequelize.query(
+        rawQueries.fetchGlobalAutoTriggerAccess(),
+        { type: "SELECT" }
+      );
+      return globalAccess?.auto_access_rd ?? false;
+    } catch (err) {
+      logMessage(`Error checking global auto-access RD interaction access: ${err}`);
+      throw new Error(
+        "Error checking global auto-access RD interaction access: " +
+        (err as Error).message
+      );
     }
-  
-    async checkAccountAutoTriggerAccess( accountNumber: string,
-      accountRid: string,orgDbSequelize: Sequelize) {
-      try {
-       
-        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-            /\D/g,
-            ""
-          )}`;
-         const [accountInfo]: any[] = await orgDbSequelize.query(
-            rawQueries.fetchAccountLevelInfoForTriggerAI(accountRid, schemaName),  
-            { type: "SELECT" }
-          );
-        return accountInfo?.auto_access_rd ?? false;
-      } catch (err) {
-        logMessage(`Error checking account auto-trigger interaction access: ${err}`);
-        throw new Error(
-          "Error checking account auto-trigger interaction access: " +
-            (err as Error).message
-        );
-      } 
+  }
+
+  async checkAccountAutoTriggerAccess(accountNumber: string,
+    accountRid: string, orgDbSequelize: Sequelize) {
+    try {
+
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [accountInfo]: any[] = await orgDbSequelize.query(
+        rawQueries.fetchAccountLevelInfoForTriggerAI(accountRid, schemaName),
+        { type: "SELECT" }
+      );
+      return accountInfo?.auto_access_rd ?? false;
+    } catch (err) {
+      logMessage(`Error checking account auto-trigger interaction access: ${err}`);
+      throw new Error(
+        "Error checking account auto-trigger interaction access: " +
+        (err as Error).message
+      );
     }
-  
-    async checkProjectAutoTriggerAccess( accountNumber: string,
-      project_fiscal_rid: string,orgDbSequelize: Sequelize) {
-      try {
-        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-            /\D/g,
-            ""
-          )}`;
-         const [projectInfo]: any[] = await orgDbSequelize.query(
-            rawQueries.fetchisAutoTriggerEnabled(
-              project_fiscal_rid,
-              schemaName
-            ),
-            { type: "SELECT" }
-          );
-        return projectInfo?.auto_access_rd ?? false;
-      } catch (err) {
-        logMessage(`Error checking project auto-trigger interaction access: ${err}`);
-        throw new Error(
-          "Error checking project auto-trigger interaction access: " +
-            (err as Error).message
-        );
-      } 
+  }
+
+  async checkProjectAutoTriggerAccess(accountNumber: string,
+    project_fiscal_rid: string, orgDbSequelize: Sequelize) {
+    try {
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [projectInfo]: any[] = await orgDbSequelize.query(
+        rawQueries.fetchisAutoTriggerEnabled(
+          project_fiscal_rid,
+          schemaName
+        ),
+        { type: "SELECT" }
+      );
+      return projectInfo?.auto_access_rd ?? false;
+    } catch (err) {
+      logMessage(`Error checking project auto-trigger interaction access: ${err}`);
+      throw new Error(
+        "Error checking project auto-trigger interaction access: " +
+        (err as Error).message
+      );
     }
+  }
   private async getProducer(): Promise<Producer> {
     if (!this.producer) {
       const kafka = new Kafka({
@@ -566,21 +566,21 @@ class ProjectIngestionService {
         `Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`
       );
       const schemaService = new SchemaService();
-      const userEventInfo:any = await schemaService.fetchUserAndEventInfo({
-                                                      userId: userId!,
-                                                      eventType: eventTypes.UI_HANDLER
-                                                    });
+      const userEventInfo: any = await schemaService.fetchUserAndEventInfo({
+        userId: userId!,
+        eventType: eventTypes.UI_HANDLER
+      });
       await schemaService.createAccountTimelineEntry(accountNumber!, {
-                  created_by: userId!,
-                  account_rid: req.data[0].account_rid,
-                  entity_rid: req.data[0].project_fiscal_rid!,
-                  entity_name: entityTypes.AUTO_RD_ASSESSMENT,
-                  created_by_name: userEventInfo.full_name,
-                  event_type_rid: userEventInfo.event_type_rid,
-                  event_name: eventNames.TRIGGERED,
-                  descriptions:projectCode || '',
-                  project_rid: req.data[0].project_fiscal_rid
-                },["project"]);
+        created_by: userId!,
+        account_rid: req.data[0].account_rid,
+        entity_rid: req.data[0].project_fiscal_rid!,
+        entity_name: entityTypes.AUTO_RD_ASSESSMENT,
+        created_by_name: userEventInfo.full_name,
+        event_type_rid: userEventInfo.event_type_rid,
+        event_name: eventNames.TRIGGERED,
+        descriptions: projectCode || '',
+        project_rid: req.data[0].project_fiscal_rid
+      }, ["project"]);
       return {
         statusMessage: "RD Assessment Initiated",
         status: "success",
@@ -1062,7 +1062,7 @@ class ProjectIngestionService {
   async addAccountFiscalRegion(
     accountNumber: string,
     projectData: ICreateProject,
-    regionRid? : string
+    regionRid?: string
   ) {
     const { AccountFiscalRegion } = await this.getModels(accountNumber);
 
@@ -1077,14 +1077,14 @@ class ProjectIngestionService {
       );
     }
     let query;
-    if(regionRid === null && projectData.region_rid == '') {
+    if (regionRid === null && projectData.region_rid == '') {
       query = {
-        [Op.is] : null
+        [Op.is]: null
       }
     } else {
       query = regionRid
     }
-     //commented out since statewise summary will account only from  project resources
+    //commented out since statewise summary will account only from  project resources
     // if(projectData.region_rid === '') {
     //   await AccountFiscalRegion.destroy({
     //     where : {
@@ -1114,11 +1114,11 @@ class ProjectIngestionService {
         });
       }
     } else {
-        await this.updateAccountFiscalRegionAggregatesFromFiscal(
-          accountNumber,
-          projectData
-        );
-      }
+      await this.updateAccountFiscalRegionAggregatesFromFiscal(
+        accountNumber,
+        projectData
+      );
+    }
   }
 
   async updateAccountFiscalAggregatesFromFiscal(
@@ -1554,12 +1554,12 @@ class ProjectIngestionService {
         rid: projectData.project_fiscal_id,
       },
     });
-    if(projectData.currency_rid !== null) {
+    if (projectData.currency_rid !== null) {
       await Project.update({
-        currency_rid : projectData.currency_rid
+        currency_rid: projectData.currency_rid
       }, {
-        where : {
-          rid : projectData.project_id
+        where: {
+          rid: projectData.project_id
         }
       })
     }
@@ -1719,7 +1719,7 @@ class ProjectIngestionService {
       });
     } else {
       // Create new record
-      if(projectData.region_rid !== null && projectData.region_rid !== '') {
+      if (projectData.region_rid !== null && projectData.region_rid !== '') {
         await ProjectFiscalRegion.create({
           ...baseData,
           account_rid: projectData.account_id,
@@ -1956,7 +1956,7 @@ class ProjectIngestionService {
         aggregateValues
       });
     } else {
-      if(projectData.region_rid !== null && projectData.region_rid !== '') {
+      if (projectData.region_rid !== null && projectData.region_rid !== '') {
         await CaseProjectFiscalRegion.create({
           ...baseData,
           account_rid: projectData.account_id,
@@ -1969,7 +1969,7 @@ class ProjectIngestionService {
           project_fiscal_rid: projectData.project_fiscal_id,
           max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
           auto_send_ai_interaction: false,
-          total_cost_prj : baseData.total_cost_prj,
+          total_cost_prj: baseData.total_cost_prj,
           effective_cost: baseData.total_cost_prj,
           effective_effort: baseData.total_effort_prj,
           effective_total_fte: baseData.total_fte_prj,
@@ -1979,9 +1979,9 @@ class ProjectIngestionService {
           effective_fte_cost: baseData.total_cost_fte_prj,
           effective_subcon_cost: baseData.total_cost_subcon_prj,
           effective_nonlabor_cost: baseData.total_cost_nonlabor_prj,
-          case_rid : caseProjectData.case_rid,
-          case_project_rid : caseProjectData.rid,
-          project_fiscal_region_rid : ''
+          case_rid: caseProjectData.case_rid,
+          case_project_rid: caseProjectData.rid,
+          project_fiscal_region_rid: ''
         });
       }
     }
@@ -2406,9 +2406,10 @@ class ProjectIngestionService {
       project_name: "project_name",
       project_code: "project_code",
       rd_percent_final: "rd_percent_final",
+      is_assesed: "is_assesed",
     };
 
-    const childOnlyFilters = ["fiscal_year", "project_code", "rd_percent_final", "qre_final"];
+    const childOnlyFilters = ["fiscal_year", "project_code", "rd_percent_final", "qre_final", "is_assesed"];
     let isChildOnlyFilter: boolean = false;
 
     const parentFilters: Record<string, any> = {};
@@ -2602,7 +2603,7 @@ class ProjectIngestionService {
                 ]);
               }
               else {
-                if (field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final') {
+                if (field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final' && field !== 'is_assesed') {
                   fullOrder.push([
                     Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
                   ]);
@@ -2647,7 +2648,8 @@ class ProjectIngestionService {
                   required: true,
                   where: {
                     document_rid: documentRid,
-                    event_name: "insert"
+                    event_name: "created",
+                    entity_name: "project"
                   },
                   attributes: [
                     "rid",
@@ -2721,27 +2723,27 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-           include: [
-              ...(documentRid
-                ? [
-                  {
-                    model: ProjectTimeline,
-                    as: "ProjectTimelines",
-                    required: true,
-                    where: {
-                      document_rid: documentRid,
-                      event_name:"insert"
-                    },
-                    attributes: [
-                      "rid",
-                      "entity_rid", // THIS IS CRUCIAL
-                      "document_rid",
-                      "event_name",
-                    ],
+          include: [
+            ...(documentRid
+              ? [
+                {
+                  model: ProjectTimeline,
+                  as: "ProjectTimelines",
+                  required: true,
+                  where: {
+                    document_rid: documentRid,
+                    event_name: "insert"
                   },
-                ]
-                : []),
-            ],
+                  attributes: [
+                    "rid",
+                    "entity_rid", // THIS IS CRUCIAL
+                    "document_rid",
+                    "event_name",
+                  ],
+                },
+              ]
+              : []),
+          ],
           required: !!documentRid,
           where: {
             account_rid: accountData.rid,
@@ -2771,10 +2773,10 @@ class ProjectIngestionService {
         projectData,
         this.mainDbSequelize
       );
-      if(this.orgDbSequelize) {
+      if (this.orgDbSequelize) {
         this.orgDbSequelize = await initOrgSequelize();
       }
-       projectData = await this.insertRDAssessmentFlag(
+      projectData = await this.insertRDAssessmentFlag(
         projectData,
         this.mainDbSequelize,
         this.orgDbSequelize!,
@@ -2893,9 +2895,10 @@ class ProjectIngestionService {
       project_name: "project_name",
       project_code: "project_code",
       rd_percent_final: "rd_percent_final",
+      is_assesed: "is_assesed",
     };
 
-    const childOnlyFilters = ["fiscal_year", "project_code"];
+    const childOnlyFilters = ["fiscal_year", "project_code", "is_assesed"];
     let isChildOnlyFilter: boolean = false;
 
     const parentFilters: Record<string, any> = {};
@@ -3029,6 +3032,7 @@ class ProjectIngestionService {
             ["total_cost_fte_prj", "total_cost_fte"],
             ["total_cost_subcon_prj", "total_cost_subcon"],
             ["total_cost_nonlabor_prj", "total_cost_nonlabor"],
+            "is_assesed",
           ],
         },
       ],
@@ -3112,6 +3116,7 @@ class ProjectIngestionService {
       "Project Type": "Project Type",
       "Account Name": "Name",
       "Fiscal Year": "Fiscal Year",
+      "Is Assessed": "Is Assessed",
       "Project Classification": "Classification",
       "Customer Group": "Client Group",
       "Project Group": "Project Group",
@@ -3139,6 +3144,7 @@ class ProjectIngestionService {
         "Project Type": "-",
         "Account Name": "-",
         "Fiscal Year": "-",
+        "Is Assessed": "-",
         "Project Classification": "-",
         "Customer Group": "-",
         "Project Group": "-",
@@ -3192,6 +3198,7 @@ class ProjectIngestionService {
           "Project Type": fiscal.project_type_name || "-",
           "Account Name": project.account_name || "-",
           "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
+          "Is Assessed": fiscal.is_assesed ? "Yes" : "No",
           "Project Classification": fiscal.classification_name || "-",
           "Customer Group": fiscal.project_client_group || "-",
           "Project Group": fiscal?.project_group || "-",
@@ -3217,8 +3224,7 @@ class ProjectIngestionService {
           "Assessment Status": fiscal.assessment_status || "-",
           "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
           "QRE Final":
-            fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
-            "-",
+            formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Project Point of Contact Email": fiscal.project_point_of_contact_email || "-",
           "Technical Point of Contact":
@@ -3300,7 +3306,8 @@ class ProjectIngestionService {
           ["country_rid", "country"],
           ["region_rid", "region"],
           ["currency_rid", "currency"],
-          ["is_rd_claim_qualified", "is_rd_claim_qualified"]
+          ["is_rd_claim_qualified", "is_rd_claim_qualified"],
+          ["is_assesed", "is_assesed"]
         ],
       },
     });
@@ -3562,83 +3569,83 @@ class ProjectIngestionService {
   }
 
   async insertRDAssessmentFlag(
-  projects: any[],
-  mainDbSequelize: Sequelize,
-  orgDbSequelize: Sequelize,
-  schemaName: string,
-  accountRid: string,
-) {
-  try {
-    const [accountInfo]: any[] = await mainDbSequelize.query(
-      rawQueries.fetchAccountDetailsInfo(accountRid),
-      { type: 'SELECT' }
-    );
-    const [accountFiscalInfo]: any[] = await orgDbSequelize.query(
-      rawQueries.fetchAccountInfo(schemaName, accountRid), { type: 'SELECT' }
-    );
-    const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
-    const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
+    projects: any[],
+    mainDbSequelize: Sequelize,
+    orgDbSequelize: Sequelize,
+    schemaName: string,
+    accountRid: string,
+  ) {
+    try {
+      const [accountInfo]: any[] = await mainDbSequelize.query(
+        rawQueries.fetchAccountDetailsInfo(accountRid),
+        { type: 'SELECT' }
+      );
+      const [accountFiscalInfo]: any[] = await orgDbSequelize.query(
+        rawQueries.fetchAccountInfo(schemaName, accountRid), { type: 'SELECT' }
+      );
+      const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
+      const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
 
-    // Fetch all platform configs for this country
-    const allPlatformConfigs: any[] = await mainDbSequelize.query(
-     rawQueries.fetchAllPlatformConfig(accountInfo.country_rid),
-      { type: 'SELECT' }
-    );
+      // Fetch all platform configs for this country
+      const allPlatformConfigs: any[] = await mainDbSequelize.query(
+        rawQueries.fetchAllPlatformConfig(accountInfo.country_rid),
+        { type: 'SELECT' }
+      );
 
-    const updatedProjects = projects.map((project) => {
-      const updatedProject: any = {
-        ...(typeof project.toJSON === "function"
-          ? project.toJSON()
-          : project),
-      };
+      const updatedProjects = projects.map((project) => {
+        const updatedProject: any = {
+          ...(typeof project.toJSON === "function"
+            ? project.toJSON()
+            : project),
+        };
 
-      if (Array.isArray(project.ProjectFiscal)) {
-        updatedProject.ProjectFiscal = project.ProjectFiscal.map((child: any) => {
-          const childObj = typeof child.toJSON === "function" ? child.toJSON() : child;
-          const [splitMonthStart, splitDateStart] = fiscalStart.split("/");
-          const [splitMonthEnd, splitDateEnd] = fiscalEnd.split("/");
-          const fetchedStartEndDate = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, child.fiscal_year, splitDateStart, splitDateEnd)
+        if (Array.isArray(project.ProjectFiscal)) {
+          updatedProject.ProjectFiscal = project.ProjectFiscal.map((child: any) => {
+            const childObj = typeof child.toJSON === "function" ? child.toJSON() : child;
+            const [splitMonthStart, splitDateStart] = fiscalStart.split("/");
+            const [splitMonthEnd, splitDateEnd] = fiscalEnd.split("/");
+            const fetchedStartEndDate = calculateFiscalYearDateRange(splitMonthStart, splitMonthEnd, child.fiscal_year, splitDateStart, splitDateEnd)
 
-          // Check if this fiscal period falls within any platform config's effective dates
-          let is_rd_trigger_qualified = false;
-          for (const config of allPlatformConfigs) {
-            const effStart = new Date(config.effective_start_date);
-            const effEnd = new Date(config.effective_end_date);
-            // Optimized: prefer config.config_json.project_type, fallback to config.project_type_rid
-            let configProjectTypes: string[] = [];
-            const pjType = config.config_json?.project_type ?? config.project_type_rid;
-            if (Array.isArray(pjType)) {
-              configProjectTypes = pjType.map(String);
-            } else if (typeof pjType === 'string') {
-              configProjectTypes = pjType.split(',').map((s: string) => s.trim());
-            } else if (pjType != null) {
-              configProjectTypes = [String(pjType)];
+            // Check if this fiscal period falls within any platform config's effective dates
+            let is_rd_trigger_qualified = false;
+            for (const config of allPlatformConfigs) {
+              const effStart = new Date(config.effective_start_date);
+              const effEnd = new Date(config.effective_end_date);
+              // Optimized: prefer config.config_json.project_type, fallback to config.project_type_rid
+              let configProjectTypes: string[] = [];
+              const pjType = config.config_json?.project_type ?? config.project_type_rid;
+              if (Array.isArray(pjType)) {
+                configProjectTypes = pjType.map(String);
+              } else if (typeof pjType === 'string') {
+                configProjectTypes = pjType.split(',').map((s: string) => s.trim());
+              } else if (pjType != null) {
+                configProjectTypes = [String(pjType)];
+              }
+              if ((config.effective_start_date <= fetchedStartEndDate.endDate || config.effective_start_date == null)
+                && (config.effective_end_date >= fetchedStartEndDate.startDate || config.effective_end_date == null)
+                && configProjectTypes.includes(String(childObj.project_type_rid))
+              ) {
+                is_rd_trigger_qualified = true;
+                break;
+              }
             }
-            if ( (config.effective_start_date <= fetchedStartEndDate.endDate || config.effective_start_date == null)
-            && (config.effective_end_date >= fetchedStartEndDate.startDate || config.effective_end_date == null)
-            && configProjectTypes.includes(String(childObj.project_type_rid))
-            ) {
-              is_rd_trigger_qualified = true;
-              break;
-            }
-          }
-          return {
-            ...childObj,
-            is_rd_trigger_qualified: is_rd_trigger_qualified,
-          };
-        });
-      }
+            return {
+              ...childObj,
+              is_rd_trigger_qualified: is_rd_trigger_qualified,
+            };
+          });
+        }
 
-      return updatedProject;
-    });
+        return updatedProject;
+      });
 
-    return updatedProjects;
-  } catch (err) {
-    throw new Error(
-      "Error fetching classification: " + (err as Error).message
-    );
+      return updatedProjects;
+    } catch (err) {
+      throw new Error(
+        "Error fetching classification: " + (err as Error).message
+      );
+    }
   }
-}
   async finalProjectSort(
     projects: any[],
     sortBy: string,

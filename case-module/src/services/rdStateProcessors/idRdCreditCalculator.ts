@@ -64,12 +64,12 @@ export class RdCreditCalculatorForID {
      */
     qreCreditCalculation(currentYearQREs: QRE, config: ConfigJson, totalGrossReceipts: Decimal, priorYearsCount: number,caseDetails: Case | undefined,) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
-        const basic_research_payments = new Decimal(caseDetails?.basic_research_payments || 0);
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+        const basic_research_payments = new Decimal(caseDetails?.basic_research_payments_id || 0);
         const qualified_organization_base_period_amount = new Decimal(0);
         const line_3 = Decimal.max(0, basic_research_payments.minus(qualified_organization_base_period_amount));
         const supplies = new Decimal(currentYearQREs.supplies || 0);
-        const cost_to_rent = new Decimal(caseDetails?.lease_costs_of_computers || 0.00);
+        const cost_to_rent = new Decimal(caseDetails?.lease_costs_of_computers_id || 0.00);
         const total_current_year_qre = current_year_wages.plus(current_year_contract).plus(cost_to_rent).plus(supplies);
         const fixed_base_percentage = config.fixed_base_percentage;
         const average_annual_gross_receipts = priorYearsCount > 0 ? totalGrossReceipts.div(priorYearsCount) : new Decimal(0);

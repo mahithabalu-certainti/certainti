@@ -34,7 +34,7 @@ export const fetchCaseClosingRemarks = (schemaName : string, caseRid : string, s
 export const fetchRdFormUrlForCountry = (schemaName : string, caseRid : string) => {
   let query = `
   SELECT 
-  rc.rd_form_url AS country_url
+  rc.rd_form_url AS country_url, rc.country_rid
   FROM 
   ${schemaName}.rd_credit_country_calculations rc
   WHERE
@@ -48,7 +48,7 @@ export const fetchRdFormUrlForCountry = (schemaName : string, caseRid : string) 
 export const fetchRdFormUrlForState = (schemaName : string, caseRid : string) => {
   let query = `
   SELECT 
-  rs.rd_form_url AS state_url
+  rs.rd_form_url AS state_url, rs.state_rid
   FROM 
   ${schemaName}.rd_credit_state_calculations rs
   WHERE
