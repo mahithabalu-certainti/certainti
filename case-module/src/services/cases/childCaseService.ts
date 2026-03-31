@@ -5,7 +5,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, entityTypes, ENV_PREFIX, eventNames, eventTypes, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
 import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
-import { fetchDossierForm, getValidRegionIdsFromCases } from "../../utils/rawQueries";
+import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
 import { ENV, kafka } from "../../config/kafka";
@@ -2042,6 +2042,39 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         statusMessage : STATUS_MESSAGE.accountNotFound
       }
     }
+  }
+  async getCaseSettings (data : any) {
+    const mainDb = await this.getMainDb();
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      const {Case} = await this.caseModelService.getModels(fetchParentAccount.r_number);
+      return await Case.findOne({
+        attributes : ['rid', 'assessment_methodology'],
+        where : {
+          rid : data.rid
+        }, raw : true
+      })
+    }
+  }
+  async getCaseSummary (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      const findAccCtryDetails : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(data.account_rid))
+      let schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number)
+      const result : any = await orgDb.query(getCaseSummaryData(data.case_rid, schemaName));
+      const finalResult = {
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        title : `${findAccCtryDetails[0][0].account_name} ${findAccCtryDetails[0][0].country_code} ${result[0][0].fiscal_year} Dossier`,
+        company_overview : result[0][0].business_details,
+        assessment_methodology : result[0][0].assessment_methodology,
+        overall_project_summary : "NA"
+      }
+      return finalResult;
+    }
+    return null;
   }
 }
 

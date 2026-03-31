@@ -1,3 +1,4 @@
+import { Case } from "../../models/caseModel";
 import { CaseTask } from "../../models/caseTaskModel";
 import { TaskTemplate } from "../../models/caseTaskTemplateModel";
 import { DossierForm } from "../../models/dossierForm";
@@ -579,6 +580,15 @@ updateCaseSettings(data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
+getCaseSettings(data : any): Promise<Case | null | undefined>
+getCaseSummary(data : any) : Promise<{
+    case_rid: any;
+    account_rid: any;
+    title: string;
+    company_overview: any;
+    assessment_methodology: any;
+    overall_project_summary: string;
+} | null>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;

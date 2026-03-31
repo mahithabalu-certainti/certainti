@@ -562,6 +562,70 @@ async function updateCaseSettings (req : Request, res : Response) {
   }
 }
 
+async function fetchCaseSettings (req : Request, res : Response) {
+  const methodName = "fetchCaseSettings";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+      return;
+    }
+    const data = req.query;
+    const result = await childCaseService.getCaseSettings(data);
+    if(result) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.settingsFetchedSuccess,
+        data : result
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function fetchCaseSummary (req : Request, res : Response) {
+  const methodName = "fetchCaseSummary";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+      return;
+    }
+    const data = req.query;
+    const result = await childCaseService.getCaseSummary(data);
+    if(result) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.caseSummaryFetched,
+        data : result
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 
 
 
@@ -577,5 +641,7 @@ export default {
     getComputedValue,
     revokeApprovals,
     getDossierFormVersion,
-    updateCaseSettings
+    updateCaseSettings,
+    fetchCaseSettings,
+    fetchCaseSummary
 }

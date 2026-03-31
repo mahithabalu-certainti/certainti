@@ -227,7 +227,9 @@ export const STATUS_MESSAGE = {
   computedDataFetchedSuccess: "Computed data fetched successfully",
   revokedSuccessfully : "Approval revoked successfully",
   dossierFormFetchedSuccess: "Dossier Form fetched successfully",
-  settingsUpdatedSuccess : "Settings updated successfully"
+  settingsUpdatedSuccess : "Settings updated successfully",
+  settingsFetchedSuccess : "Settings fetched successfully",
+  caseSummaryFetched : "Case Summary fetched successfully"
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
