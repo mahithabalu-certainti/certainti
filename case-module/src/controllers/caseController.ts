@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   errorLog,
+  formatNumberForExport,
   generateExcelBase64,
   generateExcelBase64WithEmptyCheck,
   handleCustomResponse,
@@ -587,11 +588,12 @@ async function exportAllCasesAccount(req: Request, res: Response) {
               status_name: d.status_name,
               case_owner_name: d.case_owner_name,
               filing_type_name: d.filing_type_name,
-              case_total_project_cost: d.case_total_project_cost,
-              case_total_projects: d.case_total_projects,
-              case_total_rd_cost: d.case_total_rd_cost,
-              case_total_qre_cost: d.case_total_qre_cost,
               description: d.description,
+              case_total_project_cost: formatNumberForExport(d.case_total_project_cost, value.currency_symbol),
+              case_total_projects: d.case_total_projects,
+              case_total_qualified_projects: d.case_total_qualified_projects,
+              case_total_rd_cost: formatNumberForExport(d.case_total_rd_cost, value.currency_symbol) ,
+              case_total_qre_cost: formatNumberForExport(d.case_total_qre_cost, value.currency_symbol),
               case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
               created_by: d.created_user_name,
               created_datetime: formatDate(d.created_datetime),
@@ -599,15 +601,7 @@ async function exportAllCasesAccount(req: Request, res: Response) {
               modified_datetime:
                 d.modified_datetime == null
                   ? ""
-                  : formatDate(d.modified_datetime),
-              submitted_datetime:
-                d.submitted_datetime == null
-                  ? ""
-                  : formatDate(d.submitted_datetime),
-              approved_datetime:
-                d.approved_datetime == null
-                  ? ""
-                  : formatDate(d.approved_datetime),
+                  : formatDate(d.modified_datetime)
             };
 
             // Build exportRecord using allowed fields and resultMap
@@ -904,11 +898,11 @@ async function exportAllCasesSummary(req: Request, res: Response) {
               status_name: d.status_name,
               case_owner_name: d.case_owner_name,
               filing_type_name: d.filing_type_name,
-              case_total_project_cost: d.case_total_project_cost,
+              case_total_project_cost: formatNumberForExport(d.case_total_project_cost, d.currency_symbol),
               case_total_projects: d.case_total_projects,
               case_total_qualified_projects: d.case_total_qualified_projects,
-              case_total_rd_cost: d.case_total_rd_cost,
-              case_total_qre_cost: d.case_total_qre_cost,
+              case_total_rd_cost: formatNumberForExport(d.case_total_rd_cost, d.currency_symbol) ,
+              case_total_qre_cost: formatNumberForExport(d.case_total_qre_cost, d.currency_symbol),
               description: d.description,
               case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
               country_name: d.country_name,
@@ -918,15 +912,7 @@ async function exportAllCasesSummary(req: Request, res: Response) {
               modified_datetime:
                 d.modified_datetime == null
                   ? ""
-                  : formatDate(d.modified_datetime),
-              submitted_datetime:
-                d.submitted_datetime == null
-                  ? ""
-                  : formatDate(d.submitted_datetime),
-              approved_datetime:
-                d.approved_datetime == null
-                  ? ""
-                  : formatDate(d.approved_datetime),
+                  : formatDate(d.modified_datetime)
             };
 
             // Build exportRecord using allowed fields and resultMap

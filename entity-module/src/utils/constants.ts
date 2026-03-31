@@ -21,6 +21,7 @@ export const HttpStatus = {
 };
 
 export const MAIN_SCHEMA_NAME = "trd365";
+export const DOSSIER_NAME = 'dossier_project_document'
 
 export const NODE_ENV = {
   DEV: "DEV",
@@ -41,6 +42,7 @@ export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",
   ACCOUNT_FISCAL: "ACF",
+  ACCOUNT_TIMELINE: "ACT",
   PROJECT: "PRJ",
   PROJECT_FISCAL: "PFI",
   PROJECT_FISCAL_REGION: "PFIR",
@@ -75,6 +77,34 @@ export const R_NUMBER_PREFIX = {
   NOTES_TIMELINE: "NTETI",
   NOTES_SUMMARY: "NOTS",
 };
+
+export const entityTypes = {
+  ACCOUNT: "Account",
+  PROJECT: "Project",
+  RESOURCE: "Resource",
+  RESOURCE_COST: "Resource Cost",
+  RESOURCE_SKILL: "Resource Skill",
+  PROJECT_TASK: "Project Task",
+  NOTES: "Notes",
+  ATTACHMENT: "Attachment",
+  PROJECT_RESOURCE: "Project Resource",
+  TASK: "Task",
+  TAG: "Tag",
+  SETTINGS: "Settings",
+  QRE_PERCENT: "QRE Percent",
+  AUTO_RD_ASSESSMENT: "Auto RD Assessment",
+};
+
+export const eventNames = {
+  CREATE: "created",
+  UPDATE: "updated",
+  ADJUST: "adjusted",
+  TRIGGERED: "triggered",
+}
+
+export const eventTypes = {
+  UI_HANDLER: "web",
+}
 
 export const STATUS_MESSAGE = {
   accountInactive: "Inactive Account",
@@ -194,6 +224,22 @@ export const TYPES = {
 export const SCHEMANAME_PREFIX = "trd365_";
 
 export const rawQueries = {
+  getCaseSummaryByRids() {
+    return `SELECT rid as case_rid, case_name FROM trd365.case_summary WHERE rid IN (:caseRids)`;
+  },
+  getProjectsByRidsQuery() {
+    return `
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary
+      WHERE ${MAIN_SCHEMA_NAME}.project_fiscal_summary.project_fiscal_rid IN (:projectRids)
+    `;
+  },
+  fetchCasesByRids() {
+    return `
+    SELECT case_rid, case_name
+    FROM "${MAIN_SCHEMA_NAME}".case_summary
+    WHERE case_rid IN (:caseRids)
+    `;
+  },
   async fetchParentAccount(
     accountRid: any,
     mainSequelize: Sequelize
@@ -213,6 +259,10 @@ export const rawQueries = {
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
     }
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d: any) => `'${d}'`).join(',')})`;
   },
   fetchAccountDetailsByRid(accountRid: string) {
     return `
@@ -367,6 +417,10 @@ export const rawQueries = {
   },
   checkRegionExists(data: any) {
     return `SELECT 1 FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = '${data.region_rid}'`;
+  },
+  fetchGlobalAutoTriggerAccess() {
+    return `
+    SELECT auto_access_rd FROM ${MAIN_SCHEMA_NAME}.organization_licenses limit 1`;
   },
   isResourceCodeDuplicate(schemaName: string, data: any) {
     return `
@@ -783,6 +837,15 @@ export const rawQueries = {
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
+  findResourceByRid(schemaName: string, resource_rid: string) {
+    return `SELECT resource_code FROM ${schemaName}.resources WHERE rid = '${resource_rid}'`;
+  },
+  findProjectResourceByRid(schemaName: string, project_resource_rid: string) {
+    return `SELECT resource_rid FROM ${schemaName}.project_resource WHERE rid = '${project_resource_rid}'`;
+  },
+  findProjectFiscalByRid(schemaName: string, project_fiscal_rid: string) {
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${project_fiscal_rid}'`;
+  },
   fetchAccountById: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   updateTemplate(url: string, templateId: string, userId: string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.templates
@@ -1123,6 +1186,38 @@ export const rawQueries = {
       rid = '${data.rid}'
     `;
   },
+  updateProjectResourceFiscalQre(schemaName: string, data: any) {
+    return `
+    UPDATE ${schemaName}.project_resource_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      project_fiscal_rid = '${data.project_fiscal_rid}'
+    `;
+  },
+  updateCaseProjectResourceFiscalQre(schemaName: string, data: any) {
+    return `
+    UPDATE ${schemaName}.case_project_resource_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      project_fiscal_rid = '${data.project_fiscal_rid}'
+    `;
+  },
   updateProjectFiscalSummaryQre(data: any) {
     return `
     UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary
@@ -1139,6 +1234,23 @@ export const rawQueries = {
     WHERE
       project_fiscal_rid = '${data.rid}'
     `;
+  },
+  checkIsProjectMapped (projectFiscalRid : string, closedCaseStatusId : string, schemaName : string) {
+    return `
+    SELECT c.rid, cp.project_fiscal_rid 
+    FROM 
+    ${schemaName}.cases c
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
+    WHERE
+    cp.project_fiscal_rid = '${projectFiscalRid}'
+    AND
+    c.status_rid = '${closedCaseStatusId}'
+    GROUP BY
+    c.rid, cp.project_fiscal_rid
+    `
+  },
+  fetchCaseClosedStatus() {
+    return `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.case_status where status_name ILIKE '%closed%'`;
   },
   fetchProjecTaskType() {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_type`;
@@ -1472,6 +1584,43 @@ export const rawQueries = {
   fetchCurrencyFromAccount(accountId: string) {
     return `
       SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountId}'
+    `;
+  },
+  insertTimeLine(schemaName: string, tableName: string) {
+    return `
+      INSERT INTO "${schemaName}".${tableName} (
+        created_by, event_type_rid, event_name, descriptions, account_rid, entity_name, entity_rid, created_by_name
+      ) VALUES (
+        :created_by, :event_type_rid, :event_name, :descriptions, :account_rid, :entity_name, :entity_rid, :created_by_name
+      )
+      RETURNING *;
+    `;
+  },
+  insertProjectTimeLine(schemaName: string, tableName: string) {
+    return `
+      INSERT INTO "${schemaName}".${tableName} (
+        created_by, event_type_rid, event_name, descriptions, account_rid, entity_name, entity_rid, created_by_name, project_rid
+      ) VALUES (
+        :created_by, :event_type_rid, :event_name, :descriptions, :account_rid, :entity_name, :entity_rid, :created_by_name, COALESCE(:project_rid, NULL)
+      )
+      RETURNING *;
+    `;
+  },
+  insertCaseTimeLine(schemaName: string, tableName: string) {
+    return `
+          INSERT INTO "${schemaName}".${tableName} (
+            created_by, event_type_rid, event_name, descriptions,account_rid,entity_name,entity_rid,created_by_name,case_rid
+          ) VALUES (
+            :created_by,  :event_type_rid, :event_name, :descriptions, :account_rid,:entity_name,:entity_rid,:created_by_name, COALESCE(:case_rid, NULL)
+          )
+          RETURNING *;
+        `
+  },
+  fetchUserAndEventInfo() {
+    return `
+      SELECT
+        (SELECT CONCAT(first_name, ' ', last_name) as full_name FROM trd365.user WHERE rid = :userId LIMIT 1) AS full_name,
+        (SELECT rid FROM trd365.event_types WHERE event_type_name = :eventType LIMIT 1) AS event_type_rid
     `;
   },
   fetchAttachmentSummaryByTask() {
@@ -1947,7 +2096,8 @@ export const rawQueries = {
           COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
           COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
           pfs.rd_percent_final,
-          pfs.is_rd_claim_qualified
+          pfs.is_rd_claim_qualified,
+          pfs.is_assesed
         FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
         INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
         LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -2002,7 +2152,8 @@ export const rawQueries = {
             pfs.project_rid, 
             pfs.project_fiscal_rid, 
             pfs.r_number, 
-            pfs.account_rid
+            pfs.account_rid,
+            pfs.is_assesed
           FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
           INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -2269,6 +2420,13 @@ export const rawQueries = {
     if (newRid === null) newRid = ''
     return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
+  getEventTypeQuery() {
+    return `SELECT rid, event_type_name FROM ${MAIN_SCHEMA_NAME}.event_type where event_type_name = :eventType`
+  },
+  getEventNameQuery() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.event_type where event_name = :eventName`
+  },
+
   fetchCheckLists(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''
@@ -2363,6 +2521,14 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
+  fetchAccountLevelInfoForTriggerAI(rid: string, schemaName: string) {
+    return `
+    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,auto_access_rd FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+  },
+  fetchisAutoTriggerEnabled(projectFiscalRid: string, schemaName: string) {
+    return `
+    SELECT auto_access_rd FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`;
+  },
   fetchAllPlatformConfig(rid: string) {
     return `
     SELECT config_json,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
@@ -2373,6 +2539,17 @@ export const rawQueries = {
     AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
   ORDER BY rv.effective_start_date DESC`;
   },
+  fetchAssignedProjectIds(caseRid: string, schemaName: string) {
+    return `
+    SELECT pf.rid AS project_fiscal_rid 
+    FROM ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE 
+    cp.case_rid = '${caseRid}'
+    AND
+    pf.is_qualified = true
+    `
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
@@ -2551,3 +2728,19 @@ export const activityTypes = {
   call: "Call",
   task: "Task",
 };
+export const ruleTemplateNames = {
+  caseCreated: "case_create",
+  statusUpdated: "task_status_update",
+  taskCreated: "task_create",
+  assigneeChanged: "task_assignee_change"
+}
+
+export const ruleNames = {
+  caseCreated: "Case Event",
+  taskCreated: "Task Event",
+}
+
+export const entityNames = {
+  case: "Case",
+  task: "Task",
+}

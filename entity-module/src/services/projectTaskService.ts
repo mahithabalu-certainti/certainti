@@ -16,7 +16,7 @@ import { Resources } from "../models/resource";
 import { ProjectFiscal } from "../models/projectFiscal";
 import currency from "currency.js";
 import Decimal from "decimal.js";
-import { ProjectTaskTimeline } from "../models/projectTaskTimeline";
+import { ProjectTimeline } from "../models/projectTimeline";
 import { ProjectResource } from "../models/projectResource";
 import { errorLog, logMessage } from "../utils/helpers";
 
@@ -58,7 +58,7 @@ export class ProjectTaskService {
   *   data?: { tasks: any[]; totalCount: number };
   * }>} Returns an object containing status, message, optionally error message, 
   * and data with the paginated and formatted list of tasks and total count.
-  */ 
+  */
   async listProjectTasks(
     accountRid: string,
     projectRid: string,
@@ -123,12 +123,13 @@ export class ProjectTaskService {
             as: "resource",
           },
           {
-            model : models.ProjectResourceModel,
-            attributes : [
-              "project_resource_role"
+            model: models.ProjectResourceModel,
+            attributes: [
+              "project_resource_role",
+              ["rid", "project_resource_rid"]
             ],
-            required : false,
-            as : "project_resource"
+            required: false,
+            as: "project_resource"
           }
         ],
       });
@@ -203,7 +204,7 @@ export class ProjectTaskService {
   *   errorMessage?: string;
   *   data?: { tasks: any[]; totalCount: number };
   * }>} An object containing the export data of tasks, total count, and status information.
-  */ 
+  */
   async listProjectTasksExport(
     userId: string,
     accountRid: string,
@@ -311,56 +312,56 @@ export class ProjectTaskService {
       }
 
       const exportData = await Promise.all(
-            formattedTasks.map(async (task: any) => {
-              const exportRecord: Record<string, any> = {};
-              
-              // Only add fields that are in the allowedFieldSet
-              if (allowedFieldSet.has('resource_code')) {
-                exportRecord['Resource Code'] = task.resource_code || "-";
-              }
-              if (allowedFieldSet.has('task_name')) {
-                exportRecord['Task Name'] = task.task_name || "-";
-              }
-              if (allowedFieldSet.has('task_type_rid')) {
-                exportRecord['Task Type'] = task.task_type_name || "-";
-              }
-              if (allowedFieldSet.has('task_classification_rid')) {
-                exportRecord['Task Classification'] = task.task_classification_name || "-";
-              }
-              if (allowedFieldSet.has('resource_name')) {
-                exportRecord['Resource Name'] = task.resource_name || "-";
-              }
-              if (allowedFieldSet.has('resource_type_name')) {
-                exportRecord['Resource Type'] = task.resource_type_name || "-";
-              }
-              if (allowedFieldSet.has('resource_role')) {
-                exportRecord['Role'] = task.resource_role || "-";
-              }
-              if (allowedFieldSet.has('start_date')) {
-                exportRecord['Start Date'] = task.start_date ? moment(task.start_date).format("YYYY-MMM-DD") : "-";
-              }
-              if (allowedFieldSet.has('end_date')) {
-                exportRecord['End Date'] = task.end_date ? moment(task.end_date).format("YYYY-MMM-DD") : "-";
-              }
-              if (allowedFieldSet.has('total_cost_pro_task')) {
-                exportRecord['Cost'] = await this.formatNumberForExport(
-                  task.total_cost_pro_task,
-                  task.currency_symbol
-                ) || "-";
-              }
-              if (allowedFieldSet.has('total_hours_pro_task')) {
-                exportRecord['Effort in Hrs'] = task.total_hours_pro_task || "-";
-              }
-              if (allowedFieldSet.has('comments')) {
-                exportRecord['Comments'] = task.comments || "-";
-              }
-              if (allowedFieldSet.has('r_number')) {
-                exportRecord['Project Task ID'] = task.r_number || "-";
-              }
-              
-              return exportRecord;
-            })
-          );
+        formattedTasks.map(async (task: any) => {
+          const exportRecord: Record<string, any> = {};
+
+          // Only add fields that are in the allowedFieldSet
+          if (allowedFieldSet.has('resource_code')) {
+            exportRecord['Resource Code'] = task.resource_code || "-";
+          }
+          if (allowedFieldSet.has('task_name')) {
+            exportRecord['Task Name'] = task.task_name || "-";
+          }
+          if (allowedFieldSet.has('task_type_rid')) {
+            exportRecord['Task Type'] = task.task_type_name || "-";
+          }
+          if (allowedFieldSet.has('task_classification_rid')) {
+            exportRecord['Task Classification'] = task.task_classification_name || "-";
+          }
+          if (allowedFieldSet.has('resource_name')) {
+            exportRecord['Resource Name'] = task.resource_name || "-";
+          }
+          if (allowedFieldSet.has('resource_type_name')) {
+            exportRecord['Resource Type'] = task.resource_type_name || "-";
+          }
+          if (allowedFieldSet.has('resource_role')) {
+            exportRecord['Role'] = task.resource_role || "-";
+          }
+          if (allowedFieldSet.has('start_date')) {
+            exportRecord['Start Date'] = task.start_date ? moment(task.start_date).format("YYYY-MMM-DD") : "-";
+          }
+          if (allowedFieldSet.has('end_date')) {
+            exportRecord['End Date'] = task.end_date ? moment(task.end_date).format("YYYY-MMM-DD") : "-";
+          }
+          if (allowedFieldSet.has('total_cost_pro_task')) {
+            exportRecord['Cost'] = await this.formatNumberForExport(
+              task.total_cost_pro_task,
+              task.currency_symbol
+            ) || "-";
+          }
+          if (allowedFieldSet.has('total_hours_pro_task')) {
+            exportRecord['Effort in Hrs'] = task.total_hours_pro_task || "-";
+          }
+          if (allowedFieldSet.has('comments')) {
+            exportRecord['Comments'] = task.comments || "-";
+          }
+          if (allowedFieldSet.has('r_number')) {
+            exportRecord['Project Task ID'] = task.r_number || "-";
+          }
+
+          return exportRecord;
+        })
+      );
 
       // Ensure we always return at least an empty object in the array if there are no tasks
       const finalExportData = exportData.length > 0 ? exportData : [{}];
@@ -396,7 +397,7 @@ export class ProjectTaskService {
     const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
     const ResourceModel = Resources.initialize(sequelize, schemaName);
     const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
-    const ProjectTaskTimelineModel = ProjectTaskTimeline.initialize(sequelize, schemaName);
+    const ProjectTimelineModel = ProjectTimeline.initialize(sequelize, schemaName);
     const ProjectResourceModel = ProjectResource.initialize(sequelize, schemaName)
 
     // Define associations
@@ -419,10 +420,17 @@ export class ProjectTaskService {
     });
 
     ProjectTaskModel.belongsTo(ProjectResourceModel, {
-      foreignKey : "project_resource_rid",
-      targetKey : "rid",
-      as : "project_resource"
+      foreignKey: "project_resource_rid",
+      targetKey: "rid",
+      as: "project_resource"
     })
+
+    // Association between ProjectTask and ProjectTimeline
+    ProjectTaskModel.hasMany(ProjectTimelineModel, {
+      foreignKey: "entity_rid",
+      sourceKey: "rid",
+      as: "ProjectTimeline",
+    });
 
     return {
       sequelize,
@@ -432,7 +440,7 @@ export class ProjectTaskService {
         ProjectFiscalModel,
         ResourceModel,
         ProjectTaskModel,
-        ProjectTaskTimelineModel,
+        ProjectTimelineModel,
         ProjectResourceModel
       },
     };
@@ -460,21 +468,21 @@ export class ProjectTaskService {
 
     const resourceTypes = resourceTypeRids.length
       ? await mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
-          replacements: { resourceTypeRid: resourceTypeRids },
-          type: "SELECT",
-        })
+        replacements: { resourceTypeRid: resourceTypeRids },
+        type: "SELECT",
+      })
       : [];
-    
-      const projectTaskStatusIds = allTasks
+
+    const projectTaskStatusIds = allTasks
       .map((task) => (task as any)?.status_rid)
       .filter((statusRid) => statusRid)
 
-      const [resourceStatus] = await Promise.all([
+    const [resourceStatus] = await Promise.all([
       projectTaskStatusIds.length
         ? mainSequelize.query(rawQueries.fetchResourceStatus, {
-            replacements: { projectTaskStatusId: projectTaskStatusIds },
-            type: "SELECT",
-          })
+          replacements: { projectTaskStatusId: projectTaskStatusIds },
+          type: "SELECT",
+        })
         : [],
     ]);
 
@@ -486,9 +494,9 @@ export class ProjectTaskService {
     const [currencies] = await Promise.all([
       currencyRids.length
         ? mainSequelize.query(rawQueries.GET_CURRENCIES, {
-            replacements: { currencyRid: currencyRids },
-            type: "SELECT",
-          })
+          replacements: { currencyRid: currencyRids },
+          type: "SELECT",
+        })
         : [],
     ]);
 
@@ -500,9 +508,9 @@ export class ProjectTaskService {
     const [taskTypes] = await Promise.all([
       taskTypeRids.length
         ? mainSequelize.query(rawQueries.GET_TASK_TYPES, {
-            replacements: { taskTypeRid: taskTypeRids },
-            type: "SELECT",
-          })
+          replacements: { taskTypeRid: taskTypeRids },
+          type: "SELECT",
+        })
         : [],
     ]);
 
@@ -514,9 +522,9 @@ export class ProjectTaskService {
     const [taskClassifications] = await Promise.all([
       taskClassificationRids.length
         ? mainSequelize.query(rawQueries.GET_TASK_CLASSIFICATION, {
-            replacements: { taskClassificationRids },
-            type: "SELECT",
-          })
+          replacements: { taskClassificationRids },
+          type: "SELECT",
+        })
         : [],
     ]);
 
@@ -531,7 +539,7 @@ export class ProjectTaskService {
         ])
       ),
       resourceStatusMap: new Map<string, string>(
-        resourceStatus.map((resourceStatus : any) => [
+        resourceStatus.map((resourceStatus: any) => [
           resourceStatus.rid,
           resourceStatus.resource_status_name
         ])
@@ -555,7 +563,7 @@ export class ProjectTaskService {
     task: any,
     resourceTypeMap: Map<string, string>,
     currencyMap: Map<string, string>,
-    resourceStatusMap : Map<string, string>,
+    resourceStatusMap: Map<string, string>,
     taskTypeMap: Map<string, string>,
     taskClassificationMap: Map<string, string>,
   ) {
@@ -590,9 +598,10 @@ export class ProjectTaskService {
       modified_by: task.modified_by,
       created_datetime: task.created_datetime,
       modified_datetime: task.modified_datetime,
-      status_rid : task.status_rid,
-      status_name : resourceStatusMap.get(task.status_rid) || null,
-      project_resource_role : task.project_resource?.project_resource_role || null,
+      status_rid: task.status_rid,
+      status_name: resourceStatusMap.get(task.status_rid) || null,
+      project_resource_rid: (task as any).project_resource?.dataValues?.project_resource_rid || null,
+      project_resource_role: (task as any).project_resource?.dataValues?.project_resource_role || null,
       task_name: task.task_name || null,
       task_description: task.task_description || null,
       task_classification_rid: task.task_classification_rid || null,
@@ -641,9 +650,9 @@ export class ProjectTaskService {
       formattedTasks.sort((a, b) => {
         return finalSortOrder === "ASC"
           ? priorityMap[a.resource_type_name] -
-              priorityMap[b.resource_type_name]
+          priorityMap[b.resource_type_name]
           : priorityMap[b.resource_type_name] -
-              priorityMap[a.resource_type_name];
+          priorityMap[a.resource_type_name];
       });
     }
     else if (finalSortBy === "status_name") {
@@ -651,17 +660,17 @@ export class ProjectTaskService {
         "Active": 1,
         "Anomaly": 2,
         "Duplicate": 3,
-        "In-Active" : 4
+        "In-Active": 4
       };
 
       formattedTasks.sort((a, b) => {
         return finalSortOrder === "ASC"
           ? priorityMap[a.status_name] -
-              priorityMap[b.status_name]
+          priorityMap[b.status_name]
           : priorityMap[b.status_name] -
-              priorityMap[a.status_name];
+          priorityMap[a.status_name];
       });
-    } 
+    }
     else if (
       finalSortBy === "total_hours_pro_task" ||
       finalSortBy === "total_cost_pro_task"
@@ -727,40 +736,40 @@ export class ProjectTaskService {
           return bName?.localeCompare(aName ?? "") ?? 0;
         }
       });
-    } 
+    }
     else if (finalSortBy === "task_type_name") {
       formattedTasks.sort((a, b) => {
         const isANull = a.task_type_name === null || a.task_type_name === undefined;
         const isBNull = b.task_type_name === null || b.task_type_name === undefined;
-      
-        if (isANull && isBNull) return 0;       
-        if (isANull) return 1;                  
-        if (isBNull) return -1;                 
-      
+
+        if (isANull && isBNull) return 0;
+        if (isANull) return 1;
+        if (isBNull) return -1;
+
         const nameA = a.task_type_name;
         const nameB = b.task_type_name;
-      
+
         return finalSortOrder === "ASC"
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA);
-      });      
-    } 
-    else if(finalSortBy === "task_classification_name"){
+      });
+    }
+    else if (finalSortBy === "task_classification_name") {
       formattedTasks.sort((a, b) => {
         const isANull = a.task_classification_name === null || a.task_classification_name === undefined;
         const isBNull = b.task_classification_name === null || b.task_classification_name === undefined;
-      
-        if (isANull && isBNull) return 0;       
-        if (isANull) return 1;                  
-        if (isBNull) return -1;                 
-      
+
+        if (isANull && isBNull) return 0;
+        if (isANull) return 1;
+        if (isBNull) return -1;
+
         const nameA = a.task_classification_name;
         const nameB = b.task_classification_name;
-      
+
         return finalSortOrder === "ASC"
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA);
-      });    
+      });
     }
     else {
       formattedTasks.sort((a, b) => {
@@ -835,7 +844,7 @@ export class ProjectTaskService {
   *   data?: any;
   * }>} Returns an object containing status, message, optionally error message, 
   * and data with the detailed project task information.
-  */ 
+  */
   async getProjectTaskById(
     accountRid: string,
     taskRid: string
@@ -864,13 +873,13 @@ export class ProjectTaskService {
         ""
       )}`;
 
-    // Initialize models
-    const AccountDetailsModel = AccountDetails.initialize(sequelize, schemaName);
-    const ProjectModel = Project.initialize(sequelize, schemaName);
-    const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
-    const ResourceModel = Resources.initialize(sequelize, schemaName);
-    const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
-    const ProjectResoureModel = ProjectResource.initialize(sequelize, schemaName)
+      // Initialize models
+      const AccountDetailsModel = AccountDetails.initialize(sequelize, schemaName);
+      const ProjectModel = Project.initialize(sequelize, schemaName);
+      const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
+      const ResourceModel = Resources.initialize(sequelize, schemaName);
+      const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
+      const ProjectResoureModel = ProjectResource.initialize(sequelize, schemaName)
 
       // Define associations
       ProjectTaskModel.belongsTo(AccountDetailsModel, {
@@ -892,8 +901,8 @@ export class ProjectTaskService {
       });
 
       ProjectTaskModel.belongsTo(ProjectResoureModel, {
-        foreignKey : "project_resource_rid",
-        targetKey : "rid",
+        foreignKey: "project_resource_rid",
+        targetKey: "rid",
         as: "project_resource"
       })
 
@@ -944,51 +953,51 @@ export class ProjectTaskService {
       const [resourceTypeData, currencyData, TaskStatusData, taskTyepData, taskClassificationData] = await Promise.all([
         (task as any).dataValues.resource?.resource_type_rid
           ? mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
-              replacements: {
-                resourceTypeRid: (task as any).dataValues.resource
-                  ?.resource_type_rid,
-              },
-              type: "SELECT",
-            })
+            replacements: {
+              resourceTypeRid: (task as any).dataValues.resource
+                ?.resource_type_rid,
+            },
+            type: "SELECT",
+          })
           : Promise.resolve([]),
         (task as any).dataValues.project?.currency_rid
           ? mainSequelize.query(rawQueries.GET_CURRENCIES, {
-              replacements: {
-                currencyRid: (task as any).dataValues.project?.currency_rid,
-              },
-              type: "SELECT",
-            })
+            replacements: {
+              currencyRid: (task as any).dataValues.project?.currency_rid,
+            },
+            type: "SELECT",
+          })
           : Promise.resolve([]),
         (task as any).dataValues.status_rid
           ? mainSequelize.query(rawQueries.fetchResourceStatus, {
-              replacements: {
-                projectTaskStatusId: (task as any).dataValues.status_rid,
-              },
-              type: "SELECT",
-            })
+            replacements: {
+              projectTaskStatusId: (task as any).dataValues.status_rid,
+            },
+            type: "SELECT",
+          })
           : Promise.resolve([]),
         (task as any).dataValues.task_type_rid
-        ? mainSequelize.query(rawQueries.GET_TASK_TYPES, {
+          ? mainSequelize.query(rawQueries.GET_TASK_TYPES, {
             replacements: {
               taskTypeRid: (task as any).dataValues.task_type_rid,
             },
             type: "SELECT",
           })
-        : Promise.resolve([]),
+          : Promise.resolve([]),
         (task as any).dataValues.task_classification_rid
-        ? mainSequelize.query(rawQueries.GET_TASK_CLASSIFICATION, {
+          ? mainSequelize.query(rawQueries.GET_TASK_CLASSIFICATION, {
             replacements: {
               taskClassificationRids: (task as any).dataValues.task_classification_rid,
             },
             type: "SELECT",
           })
-        : Promise.resolve([]),
+          : Promise.resolve([]),
       ]);
 
       const [resourceType] = resourceTypeData;
       const [currency] = currencyData;
       const [taskStatus] = TaskStatusData;
-      const [taskTypes] = taskTyepData; 
+      const [taskTypes] = taskTyepData;
       const [taskClassification] = taskClassificationData;
 
       const attachments = await this.fetchAttachmentsBytaskId(taskRid);
@@ -1012,23 +1021,23 @@ export class ProjectTaskService {
         const [documentTypes, documentCategories, users] = await Promise.all([
           documentTypeIds.length > 0
             ? mainSequelize.query(rawQueries.GET_DOCUMENT_TYPES, {
-                replacements: { documentTypeIds },
-                type: "SELECT",
-              })
+              replacements: { documentTypeIds },
+              type: "SELECT",
+            })
             : Promise.resolve([]),
 
           documentCategoryIds.length > 0
             ? mainSequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
-                replacements: { documentCategoryIds },
-                type: "SELECT",
-              })
+              replacements: { documentCategoryIds },
+              type: "SELECT",
+            })
             : Promise.resolve([]),
 
           userIds.length > 0
             ? mainSequelize.query(rawQueries.GET_USERS, {
-                replacements: { userIds },
-                type: "SELECT",
-              })
+              replacements: { userIds },
+              type: "SELECT",
+            })
             : Promise.resolve([]),
         ]);
 
@@ -1100,9 +1109,9 @@ export class ProjectTaskService {
         modified_datetime: taskWithUserDetails.dataValues.modified_datetime,
         created_by: taskWithUserDetails.created_name,
         modified_by: taskWithUserDetails.modified_name,
-        status_rid : taskWithUserDetails.dataValues.status_rid,
-        status_name : (taskStatus as any)?.resource_status_name,
-        project_resource_role : taskWithUserDetails.dataValues.project_resource.project_resource_role,
+        status_rid: taskWithUserDetails.dataValues.status_rid,
+        status_name: (taskStatus as any)?.resource_status_name,
+        project_resource_role: taskWithUserDetails.dataValues.project_resource.project_resource_role,
         task_name: taskWithUserDetails.dataValues.task_name ?? null,
         task_description: taskWithUserDetails.dataValues.task_description ?? null,
         task_type_rid: taskWithUserDetails.dataValues.task_type_rid ?? null,
@@ -1273,7 +1282,7 @@ export class ProjectTaskService {
           break;
 
         case "start_date":
-        case "end_date" :
+        case "end_date":
           switch (operator.toLowerCase()) {
             case "equals": {
               const date = new Date(value);

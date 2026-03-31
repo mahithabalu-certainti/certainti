@@ -6,6 +6,7 @@ import {
   filterTypes,
   filterTypesForIntHistory,
   filterTypesForSummaryInteractions,
+  FourPartColumnsTypes,
   interactionFlag,
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -13,8 +14,9 @@ import {
   STATUS_MESSAGE,
   templatefiltersColumns,
 } from "./constants";
+import { FourPartColumns } from "./constants";
 
-type filterType = {
+export type filterType = {
   [key: string]: {
     [condition: string]: any;
   };
@@ -38,7 +40,10 @@ export const fetchInteractionForProjectLevelQuery = (
   search : string,
   activeStatusId : string,
   reminderFlag : boolean,
-  reminderFiltersIds : string[]
+  reminderFiltersIds : string[],
+  apiType : string,
+  rid : string,
+  assessment_type : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -51,11 +56,19 @@ export const fetchInteractionForProjectLevelQuery = (
   let reminderFilter : string = ``
   let accountLevelkeyContactQuery : string = ``
   let aggregatedQuery : string = `` 
+  let graphqlConditions : string = '';
+  let assessmentTypeQuery : string;
   if (disablePagination) pagination = ` `;
   else pagination;
 
   if(search) searchValue = `%${search}%`
   else searchValue = `%%`
+  
+  if(assessment_type === 'fpa') assessmentTypeQuery = `AND i.interaction_status_rid = '${activeStatusId}'`
+  else assessmentTypeQuery = ` `
+
+  if(apiType === 'graphql') graphqlConditions = ` AND i.rid = '${rid}' `
+  else graphqlConditions = ''
 
   if (flag == interactionFlag.account) {
     let fiscalQuery = ``;
@@ -144,6 +157,10 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY p.r_number ${sortBy}`;
   else if (sort === filtersColumns.createdAt)
     sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else if (sort === filtersColumns.four_part_r_number)
+    sortValue = `ORDER BY fpr.r_number ${sortBy}`
+  else if (sort === filtersColumns.interaction_batch_id)
+    sortValue = `ORDER BY i.interaction_batch_id ${sortBy}`
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -156,7 +173,7 @@ export const fetchInteractionForProjectLevelQuery = (
     WITH fetch_interaction AS (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
-            i.status_rid, ${accountLevelkeyContactQuery}
+            i.interaction_status_rid, i.status_rid, ${accountLevelkeyContactQuery}
            CASE 
             WHEN i.recipient_name IS NULL OR i.recipient_name = '' 
             THEN kcd.key_contact_name 
@@ -175,7 +192,8 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,pf.project_name,
+            pf.project_code,pf.project_name, fpr.r_number AS four_part_r_number, i.interaction_batch_id,
+            i.interaction_assessment_source_rid, i.four_part_assessment_rid,
             CASE 
                 WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
                 ELSE pf.fiscal_year
@@ -202,6 +220,7 @@ export const fetchInteractionForProjectLevelQuery = (
             END AS has_account_recipient
             FROM
             ${schemaName}.interactions i
+            LEFT JOIN ${schemaName}.four_part_assessment fpr ON fpr.rid = i.four_part_assessment_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
             LEFT JOIN LATERAL (
     SELECT kcd.key_contact_name, kcd.key_contact_email
@@ -223,6 +242,8 @@ export const fetchInteractionForProjectLevelQuery = (
 ) kcd ON true
             WHERE
             (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
+            ${graphqlConditions}
+            ${assessmentTypeQuery}
             AND
             ${whereConditions}
             ${reminderFilter}
@@ -266,7 +287,12 @@ export const fetchInteractionForProjectLevelQuery = (
         'project_code', i.project_code,
         'project_name', i.project_name, 
         'has_email_recipient', i.has_email_recipient,
-        'has_account_recipient', i.has_account_recipient
+        'has_account_recipient', i.has_account_recipient,
+        'interaction_batch_id', i.interaction_batch_id,
+        'four_part_r_number', i.four_part_r_number,
+        'interaction_assessment_source_rid', i.interaction_assessment_source_rid,
+        'four_part_assessment_rid', i.four_part_assessment_rid,
+        'interaction_status_rid', i.interaction_status_rid
         ${aggregatedQuery}
         ) ) AS interactions
 
@@ -650,6 +676,10 @@ const filterForInteractions = (
             else if (filteredColumns == "project_name") dynamicReference = `pf`;
             else if (filteredColumns == "account_name") dynamicReference = `a`;
             else if (filteredColumns == "fiscal_year") dynamicReference = `pf`;
+            else if (filteredColumns == 'four_part_r_number') {
+              dynamicReference = `fpr`
+              filteredColumns = "r_number"
+            }
             else if (filteredColumns == "parent_interaction_rid") {
               dynamicReference = `p`;
               filteredColumns = "r_number";
@@ -1160,10 +1190,16 @@ export const fetchProjectAttachmentsRids = (schemaName: string) => {
   return query;
 };
 
-export const fetchProjectInteractionRid = (schemaName: string) => {
+export const fetchProjectInteractionRid = (schemaName: string, statusRid?: string) => {
   let query = `
-    SELECT account_rid, project_fiscal_rid FROM ${schemaName}.interactions WHERE is_ai_processed = false
-    `;
+              SELECT account_rid,
+                project_fiscal_rid,
+                is_ai_processed
+          FROM ${schemaName}.interactions
+          WHERE is_ai_processed = false`;
+  if (statusRid) {
+    query += ` AND status_rid = '${statusRid}'`;
+  }
   return query;
 };
 
@@ -1400,4 +1436,210 @@ export const fetchKeyContactDetailsForInteractions = (schemaName : string, entit
     AND
     kc.include_in_communication = TRUE
   `
+}
+
+export const fetchFourPartAssessment = (page : number, limit : number, sort : string, sortBy : string, filters : filterType, search : string, schemaName : string, isPagination : boolean, isSorting : boolean, isFiltering : boolean, accountRid : string, projectFiscalRid : string, caseProjectFiscalRids : string[], type : string, isExport : boolean) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let doPagination : string;
+  let sortValue : string;
+  let filterQueries : string;
+  let andConditions : string;
+  let searchValue : string
+  let filterConditionsForLevel : string = ''
+
+  if(type === 'account') filterConditionsForLevel = `i.account_rid = '${accountRid}'`
+  else if(type === 'project') filterConditionsForLevel = `i.project_fiscal_rid = '${projectFiscalRid}'`
+  else if(type === 'case') filterConditionsForLevel = `i.project_fiscal_rid IN (${caseProjectFiscalRids.map((d) => `'${d}'`).join(',')})`
+
+  if(search) searchValue = `'%${search}%'`
+  else searchValue = `'%%'`
+
+  if(isPagination && !isExport) {
+    doPagination = pagination
+  } else {
+    doPagination = ''
+  }
+  if(isSorting) {
+    let getSortOrder : string;
+    if(sort === FourPartColumns.r_number) getSortOrder = FourPartColumns.r_number
+    else if(sort.toLowerCase() === FourPartColumns['rd_potential_category']?.split('.')[1]) getSortOrder = FourPartColumns.rd_potential_category!
+    else if(sort.toLowerCase() === FourPartColumns['status']?.split('.')[1]) getSortOrder = FourPartColumns.status
+    else if(sort.toLowerCase() === FourPartColumns['created_datetime']?.split('.')[1]) getSortOrder = FourPartColumns.created_datetime
+    else if(sort.toLowerCase() === FourPartColumns['project_code']?.split('.')[1]) getSortOrder = FourPartColumns.project_code
+    else if(sort.toLowerCase() === FourPartColumns['permitted_purpose_status']?.split('.')[1]) getSortOrder = FourPartColumns.permitted_purpose_status
+    else if(sort.toLowerCase() === FourPartColumns['technological_uncertainty_status']?.split('.')[1]) getSortOrder = FourPartColumns.technological_uncertainty_status
+    else if(sort.toLowerCase() === FourPartColumns['technological_in_nature_status']?.split('.')[1]) getSortOrder = FourPartColumns.technological_in_nature_status
+    else if(sort.toLowerCase() === FourPartColumns['process_of_experimentation_status']?.split('.')[1]) getSortOrder = FourPartColumns.process_of_experimentation_status
+    else if(sort.toLowerCase() === FourPartColumns['summary_judgment']?.split('.')[1]) getSortOrder = FourPartColumns.summary_judgment
+    else getSortOrder = FourPartColumns.r_number!
+    sortValue = `ORDER BY ${getSortOrder} ${sortBy} NULLS LAST`
+  } else sortValue = ''
+
+  if(isFiltering) {
+    if(Object.keys(filters).length > 0) filterQueries = filterUtilityFunction(filters, FourPartColumns)
+    else filterQueries = ''
+  } else filterQueries = ''
+
+  andConditions = filterQueries === '' ? '' : ' AND '
+
+  let query = 
+  `WITH fetch_fpa_data AS (
+  SELECT 
+  f.rid, f.r_number, f.status, f.rd_potential_category, f.created_datetime,
+  p.project_code, f.created_by, f.permitted_purpose_status, f.technological_uncertainty_status,
+  f.technological_in_nature_status, f.process_of_experimentation_status, f.summary_judgment
+  FROM ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
+  WHERE
+  (f.r_number ILIKE ${searchValue} OR f.status ILIKE ${searchValue} OR f.rd_potential_category ILIKE ${searchValue} OR p.project_code ILIKE ${searchValue})
+  AND
+  ${filterConditionsForLevel}
+  ${andConditions}
+  ${filterQueries}
+  ${sortValue}
+  ),
+  counted_results AS (
+  SELECT *, COUNT(*) OVER() AS total_results FROM fetch_fpa_data
+  )
+  SELECT * FROM counted_results ${doPagination}
+  `
+  return query;
+}
+
+const filterUtilityFunction = (filters : filterType, validColumns : any) => {
+  let filteredColumns : string[] = [];
+  for(let [key, conditions] of Object.entries(filters)) {
+    if(Object.keys(validColumns).includes(key)) {
+      let validFilterKey = validColumns[key];
+      for(let [condition, value] of Object.entries(conditions)) {
+        switch(FourPartColumnsTypes[key]) {
+          case "string" : {
+            if(condition === 'equals') {
+              filteredColumns.push(`LOWER(${validFilterKey}) = LOWER('${value}')`);
+              break;
+            }
+            if(condition === 'not_equals') {
+              filteredColumns.push(`LOWER(${validFilterKey}) != LOWER('${value}')`);
+              break;
+            }
+            if(condition === 'contains') {
+              filteredColumns.push(`${validFilterKey} ILIKE '%${value}%'`);
+              break;
+            }
+            if(condition === 'is_empty') {
+              filteredColumns.push(`${validFilterKey} IS NULL`);
+              break;
+            }
+          }
+          case "date" : {
+            if(condition === 'equals') {
+              filteredColumns.push(`DATE(${validFilterKey}) = '${value}'`)
+              break;
+            }
+            if(condition === 'not_equals') {
+              filteredColumns.push(`DATE(${validFilterKey}) != '${value}'`)
+              break;
+            }
+            if(condition === 'before') {
+              filteredColumns.push(`DATE(${validFilterKey}) < '${value}'`)
+              break;
+            }
+            if(condition === 'after') {
+              filteredColumns.push(`DATE(${validFilterKey}) > '${value}'`)
+              break;
+            }
+            if(condition === 'between') {
+              filteredColumns.push(`DATE(${validFilterKey}) BETWEEN ${value.map((d : any) => `'${d}'`).join(' AND ')}`)
+              break;
+            }
+          }
+          default : {
+            break
+          }
+        }
+      }
+    }
+  }
+  let finalFilteredQueries : string;
+  if(filteredColumns.length > 0) {
+    finalFilteredQueries = filteredColumns.map((d) => d).join(' AND ')
+  } else {
+    finalFilteredQueries = ''
+  }
+  return finalFilteredQueries;
+} 
+
+export const fetchProjectFiscalIds = (caseRid : string, schemaName : string) => {
+  return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'`
+}
+
+export const fetchFpaDetails = (rid : string, schemaName : string) => {
+  let query = 
+  `
+  WITH fetch_interaction_question AS (
+  SELECT ii.interaction_rid, i.r_number,
+  jsonb_build_object(
+  'interaction_rid', ii.interaction_rid,
+  'r_number', i.r_number,
+  'project_fiscal_rid', ii.project_fiscal_rid,
+  'question_details', array_agg(jsonb_build_object(
+    'question_seq_num', ii.question_seq_num,
+    'question', ii.question
+    )ORDER BY ii.question_seq_num ASC NULLS LAST)
+  ) AS interaction_questions
+  FROM
+  ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.interaction_items ii ON ii.interaction_rid = i.rid
+  WHERE
+  f.rid = '${rid}'
+  GROUP BY
+  ii.interaction_rid, i.r_number, ii.project_fiscal_rid)
+
+  SELECT 
+  jsonb_build_object(
+  'rid', f.rid,
+  'r_number', f.r_number
+  ) AS title,
+  jsonb_build_object(
+  'rid', p.rid,
+  'project_code', p.project_code,
+  'tracker_one_liner', f.tracker_one_liner,
+  'rd_potential_category', f.rd_potential_category,
+  'status', f.status,
+  'created_on', ai.created_datetime
+  ) AS record_information,
+  jsonb_build_object(
+  'permitted_purpose', jsonb_build_object(
+  'rationale', f.permitted_purpose_rationale,
+  'status', f.permitted_purpose_status),
+  'technological_uncertainty', jsonb_build_object(
+  'rationale', f.technological_uncertainty_rationale,
+  'status', f.technological_uncertainty_status),
+  'process_of_experimentation', jsonb_build_object(
+  'rationale', f.process_of_experimentation_rationale,
+  'status', f.process_of_experimentation_status),
+  'technological_in_nature', jsonb_build_object(
+  'rationale', f.technological_in_nature_rationale,
+  'status', f.technological_in_nature_status)
+  ) AS four_part_assessment_evaluation,
+  jsonb_build_object(
+  'record_id', ai.transaction_id,
+  'created_on', ai.created_datetime,
+  'created_by', ai.created_by,
+  'four_part_assessment_id', f.r_number
+  ) AS audit_information,
+  fiq.*
+  FROM
+  ${schemaName}.four_part_assessment f
+  LEFT JOIN ${schemaName}.interactions i ON i.four_part_assessment_rid = f.rid
+  LEFT JOIN ${schemaName}.project_fiscal p ON p.rid = i.project_fiscal_rid
+  LEFT JOIN ${schemaName}.ai_assessment_audit ai ON ai.transaction_id = f.transaction_id
+  LEFT JOIN fetch_interaction_question fiq ON fiq.interaction_rid = i.rid
+  WHERE
+  f.rid = '${rid}'
+  `
+  return query;
 }

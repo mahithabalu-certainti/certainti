@@ -397,20 +397,28 @@ CA: {
             order: 3
             },
             {
-            pattern: "[4 c] All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.",
+            pattern: "[4 a] Qualified small businesses multiply amount on Line 3 by 6% (.06)",
             order: 4
             },
             {
-            pattern: "[4] Tentative credit: Enter the amount from Line 4a, 4b, or 4c.",
+            pattern: "[4 b] Companies headquartered in an Enterprise Zone, with revenues in excess of $3 billion, employing more than 2,500 employees, may elect to multiply amount on Line 3 by 3.5% (.035).",
             order: 5
             },
             {
-            pattern: "[5] Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.",
+            pattern: "[4 c] All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.",
             order: 6
             },
             {
-            pattern: "[6] Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4.",
+            pattern: "[4] Tentative credit: Enter the amount from Line 4a, 4b, or 4c.",
             order: 7
+            },
+            {
+            pattern: "[5] Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.",
+            order: 8
+            },
+            {
+            pattern: "[6] Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4.",
+            order: 9
             }
         ],
 
@@ -477,27 +485,67 @@ CA: {
     },
     NJ: {
         sectionOrder: [
+            "[PART I] CREDIT CALCULATION FOR BASIC RESEARCH PAYMENTS",
+            "[PART II] CREDIT CALCULATION FOR BASIC RESEARCH PAYMENTS",
+            "[PART III] CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENSES",
             "[PART IV] CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)",
-            "[PART V] TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT"
+            "[PART V] TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT",
+            "[PART VI] CALCULATION OF THE ALLOWABLE CREDIT AMOUNT AND CARRYOVER"
         ],
         sectionFieldOrders: {
-           "[PART IV] CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)": [
-            { pattern: /^\[16\]\s*Wages for qualified services/, order: 1 },
-            { pattern: /^\[17\]\s*Cost of Supplies/, order: 2 },
-            { pattern: /^\[18\]\s*Rental or lease costs of computers/, order: 3 },
-            { pattern: /^\[19\]\s*Enter the applicable percentage of contract research expenses/, order: 4 },
-            { pattern: /^\[20\]\s*Total qualified research expenses\. Add lines 16 through 19/, order: 5 },
-            { pattern: /^\[21\]\s*Enter your total qualified research expenses for the prior 3 privilege periods/, order: 6 },
-            { pattern: /^\[22\]\s*Divide line 21 by \d+(\.\d+)?/, order: 7 },
-            { pattern: /^\[23\]\s*Subtract line 22 from line 20/, order: 8 },
-            { pattern: /^\[24\]\s*Enter amount from line 23/, order: 9 }
-        ],
+            "[PART I] CREDIT CALCULATION FOR BASIC RESEARCH PAYMENTS": [
+                { pattern: /^\[1\]\s*Enter the basic research payments paid or incurred to qualified organizations/, order: 1 }
+            ],
+            "[PART II] CREDIT CALCULATION FOR BASIC RESEARCH PAYMENTS": [
+                { pattern: /^\[2\]\s*Enter the basic research payments paid or incurred to qualified organizations/, order: 1 },
+                { pattern: /^\[3\]\s*Enter the base period amount/, order: 2 },
+                { pattern: /^\[4\]\s*Subtract line 3 from line 2/, order: 3 }
+            ],
+            "[PART III] CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENSES": [
+                { pattern: /^\[5\]\s*Wages for Qualified services/, order: 1 },
+                { pattern: /^\[6\]\s*Cost of Supplies/, order: 2 },
+                { pattern: /^\[7\]\s*Rental or lease costs of computers/, order: 3 },
+                { pattern: /^\[8\]\s*Enter 65%/, order: 4 },
+                { pattern: /^\[9\]\s*Total qualified research expenses/, order: 5 },
+                { pattern: /^\[10\]\s*Enter fixed-based percentage/, order: 6 },
+                { pattern: /^\[11\]\s*Enter average annual gross receipts/, order: 7 },
+                { pattern: /^\[12\]\s*Base amount/, order: 8 },
+                { pattern: /^\[13\]\s*Subtract line 12 from line 9/, order: 9 },
+                { pattern: /^\[14\]\s*Enter 50%/, order: 10 },
+                { pattern: /^\[15\]\s*Enter the smaller of line 13 or 14/, order: 11 }
+            ],
+            "[PART IV] CREDIT CALCULATION FOR QUALIFIED RESEARCH EXPENESES (ALTERNATIVE SIMPLIFIED CREDIT METHOD)": [
+                { pattern: /^\[16\]\s*Wages for qualified services/, order: 1 },
+                { pattern: /^\[17\]\s*Cost of Supplies/, order: 2 },
+                { pattern: /^\[18\]\s*Rental or lease costs of computers/, order: 3 },
+                { pattern: /^\[19\]\s*Enter the applicable percentage of contract research expenses/, order: 4 },
+                { pattern: /^\[20\]\s*Total qualified research expenses\. Add lines 16 through 19/, order: 5 },
+                { pattern: /^\[21\]\s*Enter your total qualified research expenses for the prior 3 privilege periods/, order: 6 },
+                { pattern: /^\[22\]\s*Divide line 21 by \d+(\.\d+)?/, order: 7 },
+                { pattern: /^\[23\]\s*Subtract line 22 from line 20/, order: 8 },
+                { pattern: /^\[24\]\s*Enter amount from line 23/, order: 9 }
+            ],
             "[PART V] TOTAL RESEARCH AND DEVELOPMENT TAX CREDIT": [
-            { pattern: /^\[26\]\s*Enter either line 15 or 24/, order: 1 },
-            { pattern: /^\[27\]\s*Add lines 25c and 26/, order: 2 },
-            { pattern: /^\[28\]\s*Multiply line 27 by \d+(\.\d+)?%$/, order: 3 },
-            { pattern: /^\[29\]\s*Research and Development Tax Credit carried forward from prior year/, order: 4 },
-            { pattern: /^\[30\]\s*Total credit available - Add lines 28 and 29/, order: 5 }
+                { pattern: /^\[26\]\s*Enter either line 15 or 24/, order: 1 },
+                { pattern: /^\[27\]\s*Add lines 25c and 26/, order: 2 },
+                { pattern: /^\[28\]\s*Multiply line 27 by \d+(\.\d+)?%$/, order: 3 },
+                { pattern: /^\[29\]\s*Research and Development Tax Credit carried forward from prior year/, order: 4 },
+                { pattern: /^\[30\]\s*Total credit available - Add lines 28 and 29/, order: 5 }
+            ],
+            "[PART VI] CALCULATION OF THE ALLOWABLE CREDIT AMOUNT AND CARRYOVER": [
+                { pattern: /^\[31\]\s*Enter tax liability from page 1/, order: 1 },
+                { pattern: /^\[32\]\s*Enter the required minimum tax liability/, order: 2 },
+                { pattern: /^\[33\]\s*Subtract line 32 from line 31/, order: 3 },
+                { pattern: /^\[34\]\s*Tax credit used by taxpayer on current year's return/, order: 4 },
+                { pattern: /^\(a\)/, order: 5 },
+                { pattern: /^\(b\)/, order: 6 },
+                { pattern: /^\(c\)/, order: 7 },
+                { pattern: /^\(d\)/, order: 8 },
+                { pattern: /^\[35\]\s*Subtract line 34 form line 33/, order: 9 },
+                { pattern: /^\[36\]\s*Allowable credit for the current period or tax year/, order: 10 },
+                { pattern: /^\[37\]\s*a\) research and development tax credit carryover/, order: 11 },
+                { pattern: /^\[37\]\s*b\) Amount of credit shared in current year/, order: 12 },
+                { pattern: /^\[37\]\s*c\) Amount of credit carryover to following year's return/, order: 13 }
             ]
         },
         BOLD: []
@@ -643,15 +691,40 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
         return computedFields;
     }
 
+    // Handle states with computed_fields wrapper (NJ, CO, etc.)
     if (
-        stateCode === "CO" &&
+        (stateCode === "CO" || stateCode === "NJ") &&
         config.sectionFieldOrders["computed_fields"]
     ) {
-        const reordered = reorderSectionFields(
-            computedFields,
+        // Reorder the top-level computed_fields object
+        const reorderedComputedFields = reorderSectionFields(
+            computedFields.computed_fields || computedFields,
             config.sectionFieldOrders["computed_fields"]
         );
-        return reordered;
+        
+        // Now reorder fields within each section
+        const finalReorderedFields: any = {};
+        config.sectionOrder.forEach(sectionKey => {
+            if (reorderedComputedFields[sectionKey]) {
+                if (config.sectionFieldOrders[sectionKey]) {
+                    finalReorderedFields[sectionKey] = reorderSectionFields(
+                        reorderedComputedFields[sectionKey],
+                        config.sectionFieldOrders[sectionKey]
+                    );
+                } else {
+                    finalReorderedFields[sectionKey] = reorderedComputedFields[sectionKey];
+                }
+            }
+        });
+
+        // Add BOLD array from configuration
+        if (config.BOLD && config.BOLD.length > 0) {
+            finalReorderedFields.BOLD = config.BOLD;
+        }
+
+        return {
+            computed_fields: finalReorderedFields
+        };
     }
 
     const reorderedFields: any = {};

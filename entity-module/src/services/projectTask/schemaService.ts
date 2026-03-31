@@ -2757,7 +2757,7 @@ export class ProjectTaskSchemaService {
     });
 
     if (!existingNewGroup) {
-      await ProjectResourceFiscal.create({
+      const rsFiscal = await ProjectResourceFiscal.create({
         ...newGroupKey,
         total_cost_from_tasks: projectTaskData.total_cost_pro_task,
         total_hours_from_tasks: projectTaskData.total_hours_pro_task,
@@ -2765,7 +2765,7 @@ export class ProjectTaskSchemaService {
         created_datetime: new Date(),
         project_rid: existingProjectTask.project_rid
       }, { transaction });
-      if(!existingCaseProjectTask) {
+      if(existingCaseProjectTask) {
         await CaseProjectResourceFiscal.create({
         ...newGroupKey,
         total_cost_from_tasks: projectTaskData.total_cost_pro_task,
@@ -2775,6 +2775,7 @@ export class ProjectTaskSchemaService {
         case_project_rid: existingCaseProjectTask!.case_project_rid,
         project_rid : existingCaseProjectTask!.project_rid,
         case_rid : existingCaseProjectTask!.case_rid,
+        project_resource_fiscal_rid : rsFiscal.rid
       }, { transaction });
       }
     }

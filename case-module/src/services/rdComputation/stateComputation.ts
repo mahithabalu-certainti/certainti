@@ -73,7 +73,7 @@ export class StateComputationService {
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
-            const processRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentAccountRnumber[0][0].r_number, caseRid);
+            const processRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentAccountRnumber[0][0].r_number, caseRid, 'financial_computation');
             // Publish to Kafka
             await kafkaProducerService.publish(accountRid, fetchParentAccountRnumber[0][0].r_number, processRid, caseRid, effectiveStart, effectiveEnd);
 
@@ -206,14 +206,16 @@ export class StateComputationService {
                     let result;
                     
                     if(config.state_code === "ON") {
-                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails)
+                        const [getCompletedTaskStatus] = await mainDb.query<{rid : string}>(rawQueries.getCaseTaskCompletedStatus(), {type : QueryTypes.SELECT});
+                        let caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid ? true : false
+                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails, caseClosed)
                     } else {
                         result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
                     }                  
                     
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
-                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,
-                        result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null
+                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,config.state_code,
+                        result.inputFields, result.computedFields, result.finalCredit,result?.totalQRE ?? null,stateRDData,extractConfig,result
                     );
                 }
             } catch (err) {

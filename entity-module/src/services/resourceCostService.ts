@@ -6,6 +6,9 @@ import {
   MAIN_SCHEMA_NAME,
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
+  entityTypes,
+  eventNames,
+  eventTypes,
   rawQueries,
 } from "../utils/constants";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
@@ -693,6 +696,20 @@ class ResourceCostService {
                 modified_by: userId,
               });
             }
+            const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                userId: userId!,
+                                eventType: eventTypes.UI_HANDLER
+                              });
+            await this.schemaService.createAccountTimelineEntry(accountNumberFetched!, {
+              created_by: userId!,
+              account_rid: account_rid,
+              entity_rid: createdResourceCost?.rid!,
+              entity_name: entityTypes.RESOURCE_COST,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.CREATE,
+              descriptions:resource_code
+            },["account"]);
           } catch (fiscalError) {
             errorLog(`Failed to update ResourceFiscal: ${(fiscalError as Error).message}`);
           }
@@ -1049,6 +1066,21 @@ class ResourceCostService {
                 modified_by: userId,
               });
             }
+            const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                userId: userId!,
+                                eventType: eventTypes.UI_HANDLER
+                              });
+            await this.schemaService.createAccountTimelineEntry(accountNumberFetched!, {
+              created_by: userId!,
+              account_rid: originalResourceCost.account_rid,
+              entity_rid: originalResourceCost?.rid!,
+              entity_name: entityTypes.RESOURCE_COST,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.UPDATE,
+              descriptions:originalResourceCost.resource_code
+            },
+            ["account"]);
           } catch (fiscalError) {
             errorLog(`Failed to update ResourceFiscal: ${(fiscalError as Error).message}`);
           }

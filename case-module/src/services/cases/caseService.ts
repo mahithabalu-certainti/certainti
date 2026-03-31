@@ -52,6 +52,9 @@ import {
   ruleTemplateNames,
   entityNames,
   onlyFederals,
+  eventTypes,
+  entityTypes,
+  eventNames,
 } from "../../utils/constants";
 import currency from "currency.js";
 import moment from "moment";
@@ -66,10 +69,10 @@ export class CaseService {
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
   protected caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService: CaseManagementSchemaService
-  private logger: Logger;
+  protected logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
-  private helperMethod: HelperMethods
+  protected helperMethod: HelperMethods
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -178,6 +181,24 @@ export class CaseService {
       }
       const { statusRid } = await this.getCaseStatusForCreate();
       caseRequest.status_rid = statusRid || "";
+        // Validate historical submission data early if available
+        if (caseRequest.amendment_case_info && caseRequest.amendment_case_info.length > 0) {
+          const validationError = await this.helperMethod.validateHistoricalSubmissionData(
+            accountNumber,
+            caseRequest.amendment_case_info,
+            caseRequest.account_rid
+          );
+          if (validationError) {
+            return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: validationError,
+          data: {
+            cases: null,
+          },
+        }
+          }
+        }
 
       const response = await this.caseSchemaService.createCases(
         accountNumber,
@@ -411,17 +432,19 @@ export class CaseService {
       await rawQueries.fetchParentAccount(accountRid, mainDb)
     );
     if (fetchParentAccountRnumber[0].length > 0) {
-      let schemaName = rawQueries.fetchSchemaName(
+      let schemaName : string = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number
       );
       const getActiveStatusId: any = await mainDb.query(rawQueries.getActiveStatusId());
+      const [getCompletedTaskStatus] = await mainDb.query<{rid : string}>(rawQueries.getCaseTaskCompletedStatus(), {type : QueryTypes.SELECT});
       const queryResult =
         await this.caseSchemaService.getCasesHeadersSectionList(
           caseRid,
           schemaName,
           orgDb,
           accountRid,
-          getActiveStatusId[0][0].rid
+          getActiveStatusId[0][0].rid,
+          getCompletedTaskStatus!.rid
         );
       if (queryResult) {
         let isSubscriptionCreated = false;
@@ -955,7 +978,8 @@ export class CaseService {
           isSorting,
           assignedProject,
           accessibleIds,
-          isExport
+          isExport,
+          mainDb
         );
 
       if (queryResult.length > 0) {
@@ -1554,10 +1578,8 @@ export class CaseService {
               fiscal.currency_symbol
             ) || "-",
           "Assessment Status": fiscal.assessment_status || "-",
-          "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
-          "QRE Final":
-            fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
-            "-",
+          "QRE Percent Final": fiscal.rd_percent_final || "-",
+          "QRE Final": formatNumberForExport(fiscal.qre_final, fiscal.currency_symbol) || "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Technical Point of Contact":
             fiscal.project_technical_point_of_contact || "-",
@@ -1904,16 +1926,31 @@ export class CaseService {
         const activityresponse = await Activities.create(activityData);
         activityData.activity_rid = activityresponse.rid;
         await this.activitySchemaService.uploadActivityFiles(files, activityData, accountNumber);
-        await this.caseSchemaService.addCaseTimeline(
-          accountNumber,
-          data.case_rid,
-          data.account_rid,
-          "Sent Review Projects",
-          userId,
-          "success",
-          "Review Projects sent via email from UI",
-          "ui handler"
-        );
+        const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                  userId: userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+        await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+                                            created_by: userId!,
+                                            account_rid: data.account_rid,
+                                            entity_rid: data.case_rid!,
+                                            entity_name: entityTypes.REVIEW_PROJECT_EMAIL,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.SENT,
+                                            descriptions:'for '+ caseInfo.case_name,
+                                            case_rid: data.case_rid,
+                                          },["case"]);
+        // await this.caseSchemaService.addCaseTimeline(
+        //   accountNumber,
+        //   data.case_rid,
+        //   data.account_rid,
+        //   "Sent Review Projects",
+        //   userId,
+        //   "success",
+        //   "Review Projects sent via email from UI",
+        //   "ui handler"
+        // );
 
 
       }
@@ -2132,6 +2169,21 @@ export class CaseService {
               created_by: data.userId,
               new_value: `signed off technical documentation for ${isProjectExists.project_code}`
             });
+            const userEventInfo:any = await this.helperMethod.fetchUserAndEventInfo({
+                                                  userId: data.userId!,
+                                                  eventType: eventTypes.UI_HANDLER
+                                                });
+            await this.helperMethod.createAccountTimelineEntry(fetchParent[0][0].r_number!, {
+                                            created_by: data.userId!,
+                                            account_rid: data.account_rid,
+                                            entity_rid: data.project_fiscal_rid!,
+                                            entity_name: entityTypes.REVIEW_PROJECT_EMAIL,
+                                            created_by_name: userEventInfo.full_name,
+                                            event_type_rid: userEventInfo.event_type_rid,
+                                            event_name: eventNames.SIGNOFF,
+                                            descriptions: isProjectExists.project_code,
+                                            project_rid: data.project_fiscal_rid,
+                                          },["project"]);
           }
           return {
             statusCode: HttpStatus.SUCCESS,

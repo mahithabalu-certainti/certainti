@@ -1,5 +1,5 @@
 
-import { filterColumnsCaseTask, filterColumnsCaseTaskTypes, MAIN_SCHEMA_NAME, sortByColumnsCaseTask, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
+import { filterColumnsCaseTask, filterColumnsCaseTaskTypes, filterColumnsDossierForm, filterColumnsDossierFormTypes, MAIN_SCHEMA_NAME, sortByColumnsCaseTask, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
 import {
   FilterType,
   validColumns,
@@ -7,7 +7,7 @@ import {
   validColumnsForSorting,
 } from "./types";
 
-export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid: string, activeStatusRid: string) => {
+export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid: string, activeStatusRid: string, getCompletedTaskStatus : string) => {
   let query = `
     WITH fetch_fiscal_year AS (
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
@@ -20,25 +20,67 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     CROSS JOIN fetch_fiscal_year f
     WHERE
     rid = f.project_fiscal_rid
+    ),
+    fetch_completed_count AS (
+    SELECT case_rid, COALESCE(COUNT(rid) OVER(), 0) AS count 
+    FROM ${schemaName}.case_task
+    WHERE 
+    task_status_rid != '${getCompletedTaskStatus}'
+    AND
+    case_rid = '${caseRid}'
+    ),
+    case_progress_summary AS (
+      SELECT 
+        rid,
+        CASE
+          WHEN case_startdate IS NULL OR planned_submission_date IS NULL OR planned_submission_date::date <= case_startdate::date THEN 100
+          ELSE LEAST(100, GREATEST(0, ((CURRENT_DATE - case_startdate::date)::NUMERIC / NULLIF((planned_submission_date::date - case_startdate::date), 0)::NUMERIC) * 100))
+        END as time_progress_percentage
+      FROM ${schemaName}.cases
+      WHERE rid = '${caseRid}'
+    ),
+    effective_progress_summary AS (
+      SELECT 
+        cps.rid,
+        CASE 
+          WHEN cps.time_progress_percentage = 0 THEN 100
+          ELSE (c.case_completion_percentage / cps.time_progress_percentage) * 100
+        END as effective_progress
+      FROM case_progress_summary cps
+      JOIN ${schemaName}.cases c ON c.rid = cps.rid
     )
 
-    SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
+    SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,c.parent_case_rid,
     c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,f.case_total_qualified_projects,
-    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, NULLIF(c.case_total_qre_cost, 0) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
+    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, CAST(NULLIF(c.case_total_qre_cost, 0) AS DECIMAL(18,2)) AS case_total_qre_cost, c.case_completion_percentage, f.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
-    c.employers_pension_contribution, c.other, c.material_software_cost, 
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability_sc, c.tax_liability_ct,
+    c.employers_pension_contribution, c.other_can, c.other_uk, c.other_on, c.material_software_cost, c.tax_liability_ga,
     c.sub_contracts, c.cloud_software,c.unpaid_amounts_paid, c.unpaid_amounts,
-    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,
-    c.lease_costs_of_computers,c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py,c.current_year_gross_receipts,c.other_credits_total,
-    rcc.final_credit,
+    c.aggregated_turnover, c.total_expenses, c.taxable_income, c.export_sales_revenue,financial_working_signoff,rd_form_signoff,
+    c.lease_costs_of_computers_nj, c.lease_costs_of_computers_il, c.lease_costs_of_computers_ca,
+    c.lease_costs_of_computers_az, c.lease_costs_of_computers_id,
+    c.illinois_rd_credit_partnership_corp, c.illinois_research_payments_corp_only, c.basic_research_payments_ma, c.basic_research_payments_id, c.qualified_computer_rental_time_expenses,c.credit_carry_forward_py_ga, c.credit_carry_forward_py_sc, c.credit_carry_forward_py_tx,c.current_year_gross_receipts,
+    c.other_credits_total_sc, c.other_credits_total_ga,rcc.final_credit,
+    CASE WHEN fcc.count > 0 THEN false ELSE true END AS all_task_completed,
+    CASE WHEN EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' AND is_initiated = false ORDER BY dossier_version DESC LIMIT 1) 
+    OR NOT EXISTS (SELECT 1 FROM ${schemaName}.dossier_form WHERE case_rid = '${caseRid}' ORDER BY dossier_version DESC LIMIT 1) THEN false ELSE true END AS is_initiated,
     CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
-    ELSE FALSE END AS is_case_team_created
+    ELSE FALSE END AS is_case_team_created,
+    COALESCE(ROUND(eps.effective_progress, 2), 0) as effective_progress,
+    CASE
+      WHEN eps.effective_progress >= 0 AND eps.effective_progress <= 40 THEN 'Critical'
+      WHEN eps.effective_progress > 40 AND eps.effective_progress <= 80 THEN 'At Risk'
+      WHEN eps.effective_progress > 80 THEN 'On Track'
+    END as case_progress
     FROM
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
     LEFT JOIN ${schemaName}.rd_credit_country_calculations rcc ON rcc.case_rid = c.rid
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.case_rid = c.rid
+    LEFT JOIN fetch_completed_count fcc ON fcc.case_rid = c.rid
+    LEFT JOIN effective_progress_summary eps ON eps.rid = c.rid
     CROSS JOIN fetch_project_count_cost f
     WHERE
     c.rid = '${caseRid}'
@@ -64,7 +106,8 @@ export const fetchProjectsForCases = (
   accessibleIds: string[],
   isExport: boolean,
   projectTypeRids: string[],
-  type? : string
+  caseClosed : boolean,
+  type? : string,
 ) => {
   let pagination: string = ``
   if (!isExport) {
@@ -94,14 +137,17 @@ export const fetchProjectsForCases = (
   let subQueryJoinConditions: string = ``;
   let accessibleProjects: string = ``;
   let projectTypeCondition: string = ``;
+  let closedAlias : string;
 
   if (accessibleIds.length > 0)
     accessibleProjects = `AND pf.rid IN (${accessibleIds
       .map((d: any) => `'${d}'`)
       .join(",")})`;
   else accessibleProjects = ``;
+  if(caseClosed) closedAlias = 'cp'
+  else closedAlias = 'pf'
   if( projectTypeRids.length > 0 ) {
-    projectTypeCondition = ` AND pf.project_type_rid IN (${projectTypeRids .map((d: any) => `'${d}'`).join(",")}) `;
+    projectTypeCondition = ` AND ${closedAlias}.project_type_rid IN (${projectTypeRids .map((d: any) => `'${d}'`).join(",")}) `;
   }
 
   if (assignedApi) {
@@ -117,7 +163,7 @@ export const fetchProjectsForCases = (
         `;
     subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`;
     subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`;
-    whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects} ${projectTypeCondition}`;
+    whereConditions = `${closedAlias}.account_rid = '${accountRid}' AND ${closedAlias}.fiscal_year = ${fiscalYear} ${accessibleProjects} ${projectTypeCondition}`;
   }
 
   if (!isSorting) {
@@ -127,17 +173,20 @@ export const fetchProjectsForCases = (
       validColumnsForSorting[sort] === "project_point_of_contact"
     ) {
       dynamicAlias = `poc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (
       sort.includes(validColumnsForSorting[sort]) &&
-      validColumnsForSorting[sort] === "project_point_of_contact"
+      validColumnsForSorting[sort] === "project_technical_point_of_contact"
     ) {
       dynamicAlias = `tpoc`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
     } else if (sort.includes(validColumnsForSorting[sort])) {
-      dynamicAlias = `pf`;
-      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
-    } else sortValue = `ORDER BY pf.project_code ASC`;
+      dynamicAlias = caseClosed ? 'cp' : 'pf';
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy} NULLS LAST`;
+    } else {
+      dynamicAlias = caseClosed ? 'cp' : 'pf';
+      sortValue = `ORDER BY pf.project_code ASC NULLS LAST`;
+    }
   } else {
     sortValue = ``;
   }
@@ -155,7 +204,7 @@ export const fetchProjectsForCases = (
         if (validKey === "project_point_of_contact") dynamicAlias = `poc`;
         else if (validKey === "project_technical_point_of_contact")
           dynamicAlias = `tpoc`;
-        else dynamicAlias = `pf`;
+        else dynamicAlias = caseClosed ? 'cp' : 'pf' 
         for (let [cond, value] of Object.entries(condition)) {
           switch (columnType[validKey]) {
             case "string": {
@@ -226,22 +275,22 @@ export const fetchProjectsForCases = (
             case "date": {
               if (cond === "equals") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} = '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) = '${value}'`
                 );
               }
               if (cond === "after") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} > '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) > '${value}'`
                 );
               }
               if (cond === "before") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} < '${value}'`
+                  `DATE(${dynamicAlias}.${validKey}) < '${value}'`
                 );
               }
               if (cond === "is_empty") {
                 filterQueryConditions.push(
-                  `${dynamicAlias}.${validKey} IS NULL`
+                  `DATE(${dynamicAlias}.${validKey}) IS NULL`
                 );
               }
               if (cond === "between") {
@@ -262,7 +311,7 @@ export const fetchProjectsForCases = (
     filterQueryConditions = [];
   }
   if (filterQueryConditions.length > 0) {
-    combinedFilterQuery = filterQueryConditions.join("AND");
+    combinedFilterQuery = filterQueryConditions.join(" AND ");
   } else {
     combinedFilterQuery = ` `;
   }
@@ -304,13 +353,13 @@ export const fetchProjectsForCases = (
     ), 
 
     fetch_projects AS (
-    SELECT DISTINCT pf.rid, pf.project_code, pf.project_name, pf.project_type_rid, 
-    pf.fiscal_year, pf.project_classification_rid, pf.project_client_group,
-    pf.project_group, pf.total_effort_prj, pf.total_cost_prj, pf.total_cost_fte_prj,
-    pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
-    pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
-    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid, pf.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
+    SELECT DISTINCT pf.rid, ${closedAlias}.project_code, ${closedAlias}.project_name, ${closedAlias}.project_type_rid, 
+    ${closedAlias}.fiscal_year, ${closedAlias}.project_classification_rid, ${closedAlias}.project_client_group,
+    ${closedAlias}.project_group, ${closedAlias}.total_effort_prj, ${closedAlias}.total_cost_prj, ${closedAlias}.total_cost_fte_prj,
+    ${closedAlias}.total_cost_subcon_prj, ${closedAlias}.total_cost_nonlabor_prj, ${closedAlias}.assessment_status,
+    ${closedAlias}.rd_percent_final, ${closedAlias}.qre_final, ${closedAlias}.comments, ${closedAlias}.modified_datetime, pf.r_number,
+    poc.project_point_of_contact, tpoc.project_technical_point_of_contact, ${closedAlias}.account_rid,
+    ${closedAlias}.project_rid, ${closedAlias}.currency_rid, pf.is_rd_claim_qualified, pf.is_qualified
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -338,6 +387,7 @@ export const fetchProjectsForCases = (
     )
     SELECT * FROM paginated_projects
     `;
+  console.log(query)
   return query;
 };
 
@@ -836,8 +886,8 @@ export const fetchAdminTemplates = (page: number, limit: number, sort: string, s
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type tt ON tt.rid = t.task_type_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid AND t.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid AND ttt.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE 'Active')
     LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector wc ON wc.rid = w.relationship_connector_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_weightage wt ON wt.rid = t.weightage_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_category tc ON tc.rid = t.task_category_rid
@@ -881,6 +931,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   m.milestone_name, m.milestone_description, m.status_rid AS "milestone_status_rid", m.case_filing_type_rid
   FROM
   ${MAIN_SCHEMA_NAME}.milestone_template m
+  where m.case_filing_type_rid = '${filingTypeRid}'
   ORDER BY m.r_number ASC
   ),
   fetch_task_data AS (
@@ -897,11 +948,15 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid: string, filingTypeRid: s
   t.task_type_rid = '${taskTypeRid}'
   AND
   t.status_rid = '${statusId}'
+  AND
+  m.case_filing_type_rid = '${filingTypeRid}'
   ORDER BY t.milestone_sequence ASC
   ),
   fetch_workflow_connector_map AS (
   SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
   FROM ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w
+  WHERE
+  status_rid = '${statusId}'
   ),
   aggregate_milestone AS (
   SELECT array_agg(jsonb_build_object(
@@ -983,7 +1038,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   ct.case_rid, ct.account_rid, ct.rid
   ),
   fetch_task AS (
-  SELECT cm.rid, cm.account_rid, cm.case_rid,
+  SELECT cm.rid, cm.account_rid, cm.case_rid, cm.case_filing_type_rid,
   array_agg(jsonb_build_object(
   'rid', t.rid,
   'task_name', t.task_name,
@@ -1053,11 +1108,12 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   AND
   t.account_rid = '${accountRid}'
   GROUP BY
-  cm.rid, cm.account_rid, cm.case_rid
+  cm.rid, cm.account_rid, cm.case_rid,cm.case_filing_type_rid
   )
   SELECT array_agg(jsonb_build_object(
   'rid', m.rid,
   'milestone_name', m.milestone_name,
+  'case_filing_type_rid', m.case_filing_type_rid,
   'task_count', (SELECT COUNT(DISTINCT ct.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.case_milestone cm ON ct.milestone_template_rid = cm.rid where ct.milestone_template_rid = m.rid AND ct.account_rid = '${accountRid}' AND ct.case_rid = '${caseRid}'),
   'tasks', ft.tasks
   ))
@@ -1746,24 +1802,24 @@ export const fetchProjectQueryByPrjId = (
   let query = `
     WITH calculate_resource_metrics AS (
         SELECT 
-        DISTINCT ON (a.account_rid)  
         COALESCE(pf.total_fte_prj, 0) AS total_fte, 
         COALESCE(pf.total_subcon_prj, 0) AS total_subcon,
         COALESCE(pf.total_nonlabor_prj, 0) AS total_nonlabor,
-        a.account_rid,
+        p.account_rid,
         pf.claim_status
         FROM
-        ${schemaName}.account_details a
-        LEFT JOIN ${schemaName}.project p ON p.account_rid = a.account_rid
-        LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+        ${schemaName}.project_fiscal p
+        LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid
         WHERE 
-        a.account_rid = '${account_rid}'
+        p.account_rid = '${account_rid}'
         AND
         pf.fiscal_year = ${fiscal_year}
         AND
         pf.project_fiscal_rid = '${project_fiscal_rid}'
+        AND 
+        pf.case_rid = '${case_rid}'
         GROUP BY
-        a.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj,pf.claim_status
+        p.account_rid,pf.total_fte_prj, pf.total_subcon_prj, pf.total_nonlabor_prj,pf.claim_status
     ),
     fetch_project_name AS (
         SELECT project_name, account_rid FROM ${schemaName}.case_projects
@@ -1773,195 +1829,211 @@ export const fetchProjectQueryByPrjId = (
         case_rid = '${case_rid}'
     ),
     calculate_hours_fte AS (
-        SELECT DISTINCT ON (ad.account_rid)
-                ad.account_rid,
-                CAST(COALESCE(pf.total_effort_fte_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
-                CAST(COALESCE(pf.total_effort_fte_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
-                CAST(COALESCE(pf.total_effort_fte_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
+        SELECT
+                pf.account_rid,
+                CAST(COALESCE(cp.total_effort_fte_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
+                CAST(COALESCE(cp.total_effort_fte_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
+                CAST(COALESCE(cp.total_effort_fte_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
             FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid 
             WHERE 
-            ad.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            pf.project_fiscal_rid = '${project_fiscal_rid}'
+            cp.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            cp.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid,pf.total_effort_fte_prj,pf.total_effort_fte_from_prj_res,pf.total_effort_fte_from_tasks 
+            pf.account_rid,cp.total_effort_fte_prj,cp.total_effort_fte_from_prj_res,cp.total_effort_fte_from_tasks 
     ),
     calculate_hours_subcon AS (
-        SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(COALESCE(pf.total_effort_subcon_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
-            CAST(COALESCE(pf.total_effort_subcon_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
-            CAST(COALESCE(pf.total_effort_subcon_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
+        SELECT
+            pf.account_rid,
+            CAST(COALESCE(cp.total_effort_subcon_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
+            CAST(COALESCE(cp.total_effort_subcon_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
+            CAST(COALESCE(cp.total_effort_subcon_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
             FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid 
             WHERE 
-            ad.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            pf.project_fiscal_rid = '${project_fiscal_rid}'
+            cp.project_fiscal_rid = '${project_fiscal_rid}'
             GROUP BY
-            ad.account_rid, pf.total_effort_subcon_prj,pf.total_effort_subcon_from_prj_res, pf.total_effort_subcon_from_tasks
+            pf.account_rid, cp.total_effort_subcon_prj,cp.total_effort_subcon_from_prj_res, cp.total_effort_subcon_from_tasks
             ),
     calculate_cost_fte AS (
-        SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(COALESCE(pf.total_cost_fte_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
-            CAST(COALESCE(pf.total_cost_fte_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
-            CAST(COALESCE(pf.total_cost_fte_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
+        SELECT
+            pf.account_rid,
+            CAST(COALESCE(cp.total_cost_fte_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
+            CAST(COALESCE(cp.total_cost_fte_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
+            CAST(COALESCE(cp.total_cost_fte_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
         FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
             WHERE 
-            ad.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            pf.project_fiscal_rid = '${project_fiscal_rid}'
+            cp.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            cp.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid, pf.total_cost_fte_prj, pf.total_cost_fte_from_prj_res, pf.total_cost_fte_from_tasks
+            pf.account_rid, 
+            cp.total_cost_fte_prj, 
+            cp.total_cost_fte_from_prj_res, 
+            cp.total_cost_fte_from_tasks
     ),
     calculate_cost_subcon AS (
-        SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(COALESCE(pf.total_cost_subcon_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
-            CAST(COALESCE(pf.total_cost_subcon_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
-            CAST(COALESCE(pf.total_cost_subcon_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
+        SELECT
+            pf.account_rid,
+            CAST(COALESCE(cp.total_cost_subcon_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
+            CAST(COALESCE(cp.total_cost_subcon_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
+            CAST(COALESCE(cp.total_cost_subcon_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
         FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
             WHERE 
-            ad.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            pf.project_fiscal_rid = '${project_fiscal_rid}'
+            cp.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            cp.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid, pf.total_cost_subcon_prj, pf.total_cost_subcon_from_prj_res, pf.total_cost_subcon_from_tasks
+            pf.account_rid, cp.total_cost_subcon_prj, cp.total_cost_subcon_from_prj_res, cp.total_cost_subcon_from_tasks
     ),
     calculate_cost_nonlabor AS (
-    SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(COALESCE(pf.total_cost_nonlabor_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
-            CAST(COALESCE(pf.total_cost_nonlabor_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level
+    SELECT
+            pf.account_rid,
+            CAST(COALESCE(cp.total_cost_nonlabor_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
+            CAST(COALESCE(cp.total_cost_nonlabor_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level
         FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
             WHERE 
-            ad.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            pf.project_fiscal_rid = '${project_fiscal_rid}'
+            cp.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            cp.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid, pf.total_cost_nonlabor_prj, pf.total_cost_nonlabor_from_prj_res
+            pf.account_rid, cp.total_cost_nonlabor_prj, cp.total_cost_nonlabor_from_prj_res
     ),
     calculate_rd_credits_federal AS (
-        SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(COALESCE(pf.rd_credits_fte_fed_level,0.00) AS DECIMAL(18,2)) AS rd_credits_fte,
-            CAST(COALESCE(pf.rd_credits_subcon_fed_level,0.00) AS DECIMAL(18,2)) AS rd_credits_subcon,
-            CAST(COALESCE(pf.rd_credits_nonlabor_fed_level, 0.00) AS DECIMAL(18,2)) AS rd_credits_nonlabor,
-            CAST(COALESCE(pf.rd_credits_total, 0.00) AS DECIMAL(18,2)) AS rd_credits_total
+        SELECT
+            pf.account_rid,
+            CAST(COALESCE(cp.qre_fte,0.00) AS DECIMAL(18,2)) AS rd_credits_fte,
+            CAST(COALESCE(cp.qre_subcon,0.00) AS DECIMAL(18,2)) AS rd_credits_subcon,
+            CAST(COALESCE(cp.qre_nonlabor, 0.00) AS DECIMAL(18,2)) AS rd_credits_nonlabor,
+            CAST(COALESCE(cp.qre_final, 0.00) AS DECIMAL(18,2)) AS rd_credits_total
         FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal pf
+            LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
             WHERE 
-            ad.account_rid = '${account_rid}'
+            pf.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            pf.project_fiscal_rid = '${project_fiscal_rid}'
+            cp.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            cp.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid, pf.rd_credits_fte_fed_level, pf.rd_credits_subcon_fed_level,pf.rd_credits_nonlabor_fed_level,pf.rd_credits_total  
+            pf.account_rid, cp.qre_fte, cp.qre_subcon,cp.qre_nonlabor,cp.qre_final  
     ),
     calculate_rd_credits_statewise AS (
-    SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
+    SELECT 
+            p.account_rid,
             CAST(COALESCE(pf.qre_fte,0.00) AS DECIMAL(18,2)) AS qre_fte,
             CAST(COALESCE(pf.qre_subcon,0.00) AS DECIMAL(18,2)) AS qre_subcon,
             CAST(COALESCE(pf.qre_nonlabor, 0.00) AS DECIMAL(18,2)) AS qre_nonlabor,
             CAST(COALESCE(pf.qre_final, 0.00) AS DECIMAL(18,2)) AS qre_final
         FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal p
+            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_fiscal_rid = p.rid
             WHERE 
-            ad.account_rid = '${account_rid}'
+            p.account_rid = '${account_rid}'
             AND
-            pf.fiscal_year = ${fiscal_year}
+            p.fiscal_year = ${fiscal_year}
             AND
             pf.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            pf.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid, pf.qre_fte, pf.qre_subcon, pf.qre_nonlabor, pf.qre_final
+            p.account_rid, pf.qre_fte, pf.qre_subcon, pf.qre_nonlabor, pf.qre_final
     ),
 
     calculate_rd_credits_total AS (
-            SELECT DISTINCT ON (ad.account_rid) ad.account_rid, 
+            SELECT p.account_rid, 
             CAST(COALESCE(pf.rd_percent_potential_ai,0.00) AS DECIMAL(18,2)) AS rd_percent_potential,
             CAST(COALESCE(pf.rd_percent_adjustment,0.00) AS DECIMAL(18,2)) AS rd_percent_adjustment,
             CAST(COALESCE(pf.rd_percent_final,0.00) AS DECIMAL(18,2)) AS rd_percent_final
         FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal p
+            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_fiscal_rid = p.rid
             WHERE 
-            ad.account_rid = '${account_rid}'
+            p.account_rid = '${account_rid}'
             AND
-            pf.fiscal_year = ${fiscal_year}
+            p.fiscal_year = ${fiscal_year}
             AND
             pf.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            pf.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid,pf.rd_percent_potential_ai,pf.rd_percent_adjustment,pf.rd_percent_final
+            p.account_rid,pf.rd_percent_potential_ai,pf.rd_percent_adjustment,pf.rd_percent_final
         ),
     
         calculate_federal AS (
-        SELECT DISTINCT ON (ad.account_rid)
-            ad.account_rid,
-            CAST(SUM(COALESCE(pf.rd_credits_fte_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_fte,
-            CAST(SUM(COALESCE(pf.rd_credits_subcon_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
-            CAST(SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor
+        SELECT
+            p.account_rid,
+            CAST(SUM(COALESCE(pf.qre_fte,0.00)) AS DECIMAL(18,2)) AS rd_credits_fte,
+            CAST(SUM(COALESCE(pf.qre_subcon,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
+            CAST(SUM(COALESCE(pf.qre_nonlabor,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor
         FROM
-            ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_rid = p.rid AND pf.case_rid = '${case_rid}'
+            ${schemaName}.project_fiscal p
+            LEFT JOIN ${schemaName}.case_projects pf ON pf.project_fiscal_rid = p.rid
             WHERE 
-            ad.account_rid = '${account_rid}'
+            p.account_rid = '${account_rid}'
             AND
-            pf.fiscal_year = ${fiscal_year}
+            p.fiscal_year = ${fiscal_year}
             AND
             pf.project_fiscal_rid = '${project_fiscal_rid}'
+            AND 
+            pf.case_rid = '${case_rid}'
             GROUP BY
-            ad.account_rid
+            p.account_rid
     ),
     calculate_statewise AS (
-    SELECT DISTINCT ON (ad.account_rid)
+    SELECT
             ad.account_rid,
-            CAST(SUM(COALESCE(afr.rd_credits_fte_fed_level,0.00)) AS DECIMAL(18,2))  AS rd_credits_fte,
-            CAST(SUM(COALESCE(afr.rd_credits_subcon_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
-            CAST(SUM(COALESCE(afr.rd_credits_nonlabor_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor
+            CAST(SUM(COALESCE(prf.qre_fte,0.00)) AS DECIMAL(18,2))  AS rd_credits_fte,
+            CAST(SUM(COALESCE(prf.qre_subcon,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
+            CAST(SUM(COALESCE(prf.qre_nonlabor,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor
         FROM
             ${schemaName}.account_details ad
-            LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
-            LEFT JOIN ${schemaName}.case_project_fiscal_region afr ON afr.project_rid = p.rid AND afr.case_rid = '${case_rid}'
-            LEFT JOIN ${schemaName}.case_projects pf ON pf.region_rid = afr.region_rid AND pf.case_rid = '${case_rid}'
+			      LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
+            LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+            LEFT JOIN ${schemaName}.project_resource pr ON pr.project_fiscal_rid = cp.project_fiscal_rid
+            LEFT JOIN ${schemaName}.project_resource_fiscal prf ON prf.project_fiscal_rid = pr.project_fiscal_rid
             WHERE 
             ad.account_rid = '${account_rid}'
             AND
             pf.fiscal_year = ${fiscal_year}
             AND
-            pf.project_fiscal_rid = '${project_fiscal_rid}'
+            pf.rid = '${project_fiscal_rid}'
+            AND
+            cp.case_rid = '${case_rid}'
+            AND
+            prf.region_rid = pr.region_rid
             GROUP BY
             ad.account_rid
     ),
@@ -2374,6 +2446,141 @@ export const fetchRdCreditConfigStateLevelQuery = () => {
   select config_json, state_code, state_rid, country_rid
   from eligible_configs
   where rn = 1
+  `
+  return query;
+}
+
+export const fetchDossierForm = (page : number, limit : number, sort : string, sort_by : string, filter : FilterType, search : string, schemaName : string,  paginationAllowed : boolean, sortingAllowed : boolean, filterAllowed : boolean, accountRid : string, caseRid : string) => {
+  let offset = (page - 1 ) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let searchValue : string;
+  let sortValue : string
+  let filterQueryArray : string[] = [];
+  let andOperator : string = ''
+  let validKey : string;
+  let combinedQueryString : string;
+  let doPagination : string;
+
+  if(paginationAllowed) doPagination = pagination
+  else doPagination = ''
+
+  if(sortingAllowed) {
+    if(sort === 'r_number') sortValue = `ORDER BY d.r_number ${sort_by}`
+    else if(sort === 'document_name') sortValue = `ORDER BY d.document_name ${sort_by} NULLS LAST`
+    else if(sort === 'dossier_version') sortValue = `ORDER BY d.dossier_version ${sort_by} NULLS LAST`
+    else if(sort === 'created_datetime') sortValue = `ORDER BY d.created_datetime ${sort_by}`
+    else sortValue = `ORDER BY d.r_number ASC`
+  } else {
+    sortValue = ''
+  }
+
+  if(search) searchValue = `'%${search}%'`
+  else searchValue = `'%%'`
+
+  if(filterAllowed) {
+    if (Object.keys(filter).length > 0) {
+      andOperator = ` AND `
+      for (let [key, conditions] of Object.entries(filter)) {
+        if (Object.keys(filterColumnsDossierForm).includes(key)) {
+          validKey = key;
+          for (let [cond, values] of Object.entries(conditions)) {
+            switch (filterColumnsDossierFormTypes[validKey]) {
+              case "string": {
+                if (cond === 'equals')
+                  filterQueryArray.push(`LOWER(${validKey}) = '${values.toLowerCase()}'`)
+                if (cond === 'not_equals')
+                  filterQueryArray.push(`(LOWER(${validKey}) != '${values.toLowerCase()}' OR ${validKey} IS NULL)`)
+                if (cond === 'contains')
+                  filterQueryArray.push(`${validKey} ILIKE '%${values}%'`)
+                if (cond === 'is_empty')
+                  filterQueryArray.push(`(${validKey} IS NULL OR ${validKey} = '')`)
+                if (cond === 'in')
+                  filterQueryArray.push(`${validKey} IN (${values.map((d: any) => `'${d}'`).join(',')})`)
+                break;
+              }
+              case "number": {
+                switch (cond) {
+                  case "equals": {
+                    filterQueryArray.push(`${validKey} = ${values}`)
+                    break
+                  }
+                  case "not_equals": {
+                    filterQueryArray.push(`${validKey} != ${values}`)
+                    break;
+                  }
+                  case "greater_than": {
+                    filterQueryArray.push(`${validKey} > ${values}`)
+                    break;
+                  }
+                  case "less_than": {
+                    filterQueryArray.push(`${validKey} < ${values}`)
+                    break;
+                  }
+                  case "is_empty": {
+                    filterQueryArray.push(`${validKey} IS NULL`)
+                    break;
+                  }
+                  case "between": {
+                    filterQueryArray.push(`${validKey} BETWEEN ${values.map((d: any) => `${d}`).join(' AND ')}`)
+                    break;
+                  }
+                  default: {
+                    break;
+                  }
+                }
+                break;
+              }
+              case "date": {
+                if (cond === 'equals')
+                  filterQueryArray.push(`DATE(${validKey}) = '${values}'`)
+                if (cond === 'before')
+                  filterQueryArray.push(`DATE(${validKey}) < '${values}'`)
+                if (cond === 'after')
+                  filterQueryArray.push(`DATE(${validKey}) > '${values}'`)
+                if (cond === 'is_empty')
+                  filterQueryArray.push(`DATE(${validKey}) IS NULL`)
+                if (cond === 'between')
+                  filterQueryArray.push(`DATE(${validKey}) BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
+                break;
+              }
+              default:
+                break;
+              }
+            }
+          }
+        }
+      } 
+      else {
+        filterQueryArray = []
+        andOperator = ` `
+    }
+  } else {
+    filterQueryArray = []
+    andOperator = ` `
+  }
+
+  if (filterQueryArray.length > 0) {
+    combinedQueryString = filterQueryArray.join(' AND ')
+  } else {
+    combinedQueryString = ` `
+  }
+
+  let query = `
+  WITH fetch_data AS (
+  SELECT COUNT(rid) OVER() AS total_result, d.rid, d.r_number, d.document_name, d.created_by, d.created_datetime, d.dossier_version
+  FROM 
+  ${schemaName}.dossier_form d
+  WHERE
+  d.account_rid = '${accountRid}'
+  AND
+  d.case_rid = '${caseRid}'
+  AND
+  (d.r_number ILIKE ${searchValue} OR d.document_name ILIKE ${searchValue})
+  ${andOperator}
+  ${combinedQueryString}
+  ${sortValue}
+  )
+  SELECT * FROM fetch_data ${doPagination}
   `
   return query;
 }

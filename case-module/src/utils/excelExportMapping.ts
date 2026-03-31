@@ -79,8 +79,8 @@ export const checklistsFieldMappings = [
     exportField: "Fiscal Year",
     dataField: "fiscal_year",
   },
-   
-   {
+
+  {
     permissionField: "created_by_name",
     exportField: "Created By",
     dataField: "created_by_name",
@@ -100,7 +100,7 @@ export const checklistsFieldMappings = [
     exportField: "Updated On",
     dataField: "modified_datetime",
   }
-          
+
 ];
 
 export const taskTemplateFieldMappings = [
@@ -231,19 +231,24 @@ export const activityFieldMappings = [
     exportField: "Activity Type",
     dataField: "activity_type",
   },
-   {
+  {
     permissionField: "created_by",
     exportField: "Created By",
     dataField: "created_by_name",
   },
-   {
+  {
     permissionField: "status_rid",
     exportField: "Status",
     dataField: "status_name",
   },
-   {
+  {
+    permissionField: "attachment_level",
+    exportField: "Related Entity",
+    dataField: "attachment_level",
+  },
+  {
     permissionField: "attached_to",
-    exportField: "Related To",
+    exportField: "Related To Name",
     dataField: "attached_to",
   },
   {
@@ -251,8 +256,8 @@ export const activityFieldMappings = [
     exportField: "Due Date",
     dataField: "effective_end_datetime",
   },
- 
-          
+
+
 ];
 export const taskactivityFieldMappings = [
   {
@@ -270,17 +275,17 @@ export const taskactivityFieldMappings = [
     exportField: "Status",
     dataField: "status_name",
   },
-   {
+  {
     permissionField: "attached_to",
     exportField: "Related To",
     dataField: "attached_to",
   },
-   {
+  {
     permissionField: "created_by",
     exportField: "Created By",
     dataField: "created_by",
   },
-   {
+  {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
@@ -295,12 +300,12 @@ export const taskactivityFieldMappings = [
     exportField: "Due Date",
     dataField: "effective_end_datetime",
   },
-   {
+  {
     permissionField: "assigned_to",
     exportField: "Assigned To",
     dataField: "assigned_to_name",
   },
-          
+
 ];
 export const emailactivityFieldMappings = [
   {
@@ -313,7 +318,7 @@ export const emailactivityFieldMappings = [
     exportField: "Email Status",
     dataField: "status_name",
   },
-   {
+  {
     permissionField: "attached_to",
     exportField: "Related To",
     dataField: "attached_to",
@@ -329,22 +334,22 @@ export const emailactivityFieldMappings = [
     exportField: "Created On",
     dataField: "created_datetime",
   },
-   {
+  {
     permissionField: "to_email",
     exportField: "Email To",
     dataField: "to_email",
   },
-    {
+  {
     permissionField: "subject",
     exportField: "Email Subject",
     dataField: "subject",
   }
 
-  
-          
+
+
 ];
 export const callactivityFieldMappings = [
-    {
+  {
     permissionField: "r_number",
     exportField: "Call ID",
     dataField: "r_number",
@@ -364,7 +369,7 @@ export const callactivityFieldMappings = [
     exportField: "Call Status",
     dataField: "status_name",
   },
-   {
+  {
     permissionField: "effective_start_datetime",
     exportField: "Call Start Date",
     dataField: "effective_start_datetime",
@@ -397,7 +402,7 @@ export const meetingactivityFieldMappings = [
     exportField: "Meeting Status",
     dataField: "status_name",
   },
-   {
+  {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
@@ -407,7 +412,7 @@ export const meetingactivityFieldMappings = [
     exportField: "Invited By",
     dataField: "invited_by",
   },
-   {
+  {
     permissionField: "effective_start_time",
     exportField: "Meeting Start Time",
     dataField: "effective_start_time",
@@ -417,11 +422,11 @@ export const meetingactivityFieldMappings = [
     exportField: "Meeting End Time",
     dataField: "effective_end_time",
   },
-    {
+  {
     permissionField: "attached_to",
     exportField: "Related To",
     dataField: "attached_to",
-  }       
+  }
 ];
 
 export const reviewProjectsFieldMappings = [
@@ -574,18 +579,18 @@ export const casesFieldMappings = [
     exportField: "Total Project Cost",
     dataField: "case_total_project_cost",
   },
-  
+
   {
     permissionField: "case_total_qualified_projects",
     exportField: "No of Qualified Projects",
     dataField: "case_total_qualified_projects",
   },
-   {
+  {
     permissionField: "case_total_qualified_project_cost",
     exportField: "Total Qualified Project Cost",
     dataField: "case_total_qualified_project_cost",
   },
-  
+
   {
     permissionField: "case_total_qre_cost",
     exportField: "Total QRE",
@@ -596,7 +601,7 @@ export const casesFieldMappings = [
     exportField: "Total RD Credits",
     dataField: "case_total_rd_cost",
   },
-  
+
   // { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
   {
     permissionField: "created_datetime",
@@ -690,16 +695,6 @@ export const casesSummaryFieldMappings = [
     dataField: "created_datetime",
   },
   {
-    permissionField: "submitted_datetime",
-    exportField: "Submitted On",
-    dataField: "submitted_datetime",
-  },
-  {
-    permissionField: "approved_datetime",
-    exportField: "Approved On",
-    dataField: "approved_datetime",
-  },
-  {
     permissionField: "status_rid",
     exportField: "Status",
     dataField: "status_name",
@@ -752,9 +747,9 @@ export const adminCheckListMappings = [
 ];
 
 export const jurisdictionRuleMapping = [
-   {
+  {
     permissionField: "r_number",
-    exportField: "Geo Bases ID",
+    exportField: "Jurisdiction Rule ID",
     dataField: "r_number",
   },
   {
@@ -779,12 +774,12 @@ export const jurisdictionRuleMapping = [
   },
   {
     permissionField: "effective_start_date",
-    exportField: "Effective Start Date",
+    exportField: "Start Date",
     dataField: "effective_start_date",
   },
   {
     permissionField: "effective_end_date",
-    exportField: "Effective End Date",
+    exportField: "End Date",
     dataField: "effective_end_date",
   },
 
@@ -793,12 +788,12 @@ export const jurisdictionRuleMapping = [
     exportField: "Created By",
     dataField: "created_by",
   },
-   {
+  {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
   },
- 
+
   {
     permissionField: "modified_by",
     exportField: "Updated By",
@@ -814,4 +809,21 @@ export const jurisdictionRuleMapping = [
     exportField: "Status",
     dataField: "status_name",
   }
+];
+
+export const dataMapperFieldMappings = [
+  { permissionField: "r_number", exportField: "Form ID", dataField: "r_number" },
+  { permissionField: "form_name", exportField: "Form Name", dataField: "form_name" },
+  { permissionField: "is_federal", exportField: "Is Federal?", dataField: "is_federal" },
+  { permissionField: "country_rid", exportField: "Country", dataField: "country_name" },
+  { permissionField: "state_rid", exportField: "Region", dataField: "state_name" },
+  { permissionField: "effective_from_date", exportField: "Start Date", dataField: "effective_from_date" },
+  { permissionField: "effective_to_date", exportField: "End Date", dataField: "effective_to_date" },
+  { permissionField: "status_rid", exportField: "Status", dataField: "status_name" },
+  { permissionField: "document_name", exportField: "Document Name", dataField: "document_name" },
+  { permissionField: "created_by", exportField: "Created By", dataField: "created_by" },
+  { permissionField: "created_datetime", exportField: "Created On", dataField: "created_datetime" },
+  { permissionField: "modified_by", exportField: "Updated By", dataField: "modified_by" },
+  { permissionField: "modified_datetime", exportField: "Updated On", dataField: "modified_datetime" },
+  { permissionField: "error_message", exportField: "Error Message", dataField: "error_message" }
 ];

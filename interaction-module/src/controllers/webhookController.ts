@@ -31,7 +31,7 @@ const webhookService = services.webhookService;
  * - Catches any exceptions thrown during processing, logs the error, and sends a bad request response.
  */
 async function handleWehook(req: Request, res: Response): Promise<void> {
-  const methodName = "Create interaction";
+  const methodName = "Create interaction webhook";
   try {
     logMessage(`[${methodName}] Request received: ${JSON.stringify(req.body)} Query: ${JSON.stringify(req.query)} `);
     if (req.query && req.query.validationToken) {
@@ -46,6 +46,7 @@ async function handleWehook(req: Request, res: Response): Promise<void> {
     const interaction = await webhookService.webhookHanlder(
       req.body,
     );
+    logMessage(`[${methodName}] Service response: ${JSON.stringify(interaction)}`);
 
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

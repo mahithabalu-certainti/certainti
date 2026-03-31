@@ -2,14 +2,15 @@ import { Decimal } from "decimal.js";
 import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 
 export interface ConfigJson {
-    credit_rate: number;
-    tentative_credit_rate: number;
-    qualified_small_business_rate: number;
-    one_third_rate: number;
-    half_tax_liability_rate: number;
-    double_credit_multiplier: number;
-    tax_limit_rate: number;
-}
+    tc_qre_credit_percentage_c1: number;
+    tc_qre_credit_percentage_c2: number;
+    tc_tentative_credit_rate: number;
+    cc_qre_credit_percentage_c1: number;
+    cc_qre_credit_percentage_c2: number;
+    cc_qre_credit_percentage_c3: number;
+    cc_qre_credit_percentage_c4: number; 
+    sub_con_percent: number;
+    }
 
 /**
  * 
@@ -31,7 +32,7 @@ export class RdCreditCalculatorForCT {
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string, year :number) {
         const part1Computation = this.part1CreditComputation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const part1TentativeComputation = this.part1TentativeTaxCreditComputation(stateRdData.currentYearQREs, part1Computation.excess_qre, config);
-        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, stateRdData.currentYearQREs.business_tax_liability || 0, config);
+        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, stateRdData.currentYearQREs.business_tax_liability_ct || 0, config);
 
         const inputFields = await this.buildInputParams(part1Computation.total_qre, part1Computation.prior_year_1_qre, {
             country: this.country,
@@ -44,8 +45,11 @@ export class RdCreditCalculatorForCT {
         return {
             inputFields,
             computedFields,
-            finalCredit: part2Computation.final_credit,
-            totalQRE: part1Computation.total_qre
+            finalCredit: part1TentativeComputation.allowable_tentative_tax_credit,
+            totalQRE: part1TentativeComputation.tentative_total_qre,
+              totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0
         }
     }
 
@@ -56,13 +60,14 @@ export class RdCreditCalculatorForCT {
      * @param extractConfig 
      */
     part1CreditComputation(currentYearQREs: QRE, prior3YearsQREs: QRE[], extractConfig: ConfigJson) {
-        const wages = currentYearQREs.wages || 0;
-        const supplies = currentYearQREs.supplies || 0;
-        const contract = currentYearQREs.contract || 0;
+        const wages = new Decimal(currentYearQREs.wages ?? 0.00);
+        const supplies = new Decimal(currentYearQREs.supplies ?? 0.00);
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00);
+        const subConPercent = (extractConfig.sub_con_percent/100)
 
         //Part I - Credit Computation
         //---- Line 1: Total QREs
-        const totalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
+        const totalQREs = wages.plus(supplies).plus(contract.mul(subConPercent));
 
         //---- Line 2: PriorYear 1 QREs
         const priorYear1QREs = new Decimal(prior3YearsQREs[0]?.qre ?? 0);
@@ -72,7 +77,7 @@ export class RdCreditCalculatorForCT {
         const finalExcessQre = excessQRE.lessThan(0) ? new Decimal(0) : excessQRE
 
         //---- Line 4: Multiply line 3 by 20%
-        const taxCredit = excessQRE.mul(new Decimal(extractConfig.credit_rate/100 || 0));
+        const taxCredit = excessQRE.mul(new Decimal(extractConfig.tc_qre_credit_percentage_c1/100 || 0));
         const finalTaxCredit = taxCredit.gt(0) ? taxCredit : new Decimal(0);
 
         return {
@@ -91,14 +96,15 @@ export class RdCreditCalculatorForCT {
      * @returns 
      */
     part1TentativeTaxCreditComputation(currentYearQREs: QRE, excessQRE: Decimal, extractConfig: ConfigJson) {
-        const wages = currentYearQREs.wages || 0;
-        const supplies = currentYearQREs.supplies || 0;
-        const contract = currentYearQREs.contract || 0;
-
+        const wages = new Decimal(currentYearQREs.wages ?? 0.00);
+        const supplies = new Decimal(currentYearQREs.supplies ?? 0.00);
+        const contract = new Decimal(currentYearQREs.contract ?? 0.00);
+        const contractPercent = (extractConfig.sub_con_percent/100)
 
         //Part I - Tentative Credit Computation
         //Line 1: Total QREs
-        const tentativeTotalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
+
+        const tentativeTotalQREs = wages.plus(supplies).plus(contract.mul(contractPercent));
 
         //Line 2: Excess QREs (Line 3 from Part I)
         const tentativeExcessQRE = excessQRE;
@@ -107,7 +113,7 @@ export class RdCreditCalculatorForCT {
         const tentativeBalance = Decimal.max(tentativeTotalQREs.minus(tentativeExcessQRE), 0);
 
         //Line 4c: Tetative credit rate.
-        const tentativeCreditRate = tentativeBalance.mul(new Decimal(extractConfig.tentative_credit_rate || 0));
+        const tentativeCreditRate = tentativeBalance.mul(new Decimal((extractConfig.tc_tentative_credit_rate / 100) || 0));
 
         //Line 4: Tentative credit rate from line 4c
         const tentativeCredit = tentativeCreditRate;
@@ -140,22 +146,22 @@ export class RdCreditCalculatorForCT {
         const part2AllowableTentativeTaxCredit = allowableTentativeTaxCredit;
 
         //Line 2:Multiply Line 1 by .3333
-        const part2OneThirdRate = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.one_third_rate/100 || 0));
+        const part2OneThirdRate = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c1
+            /100 || 0));
 
         //Line 3: Current Year CT Business Tax Liability 
         const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability);
 
         //Line 4: Multiply Line 3 by 50%
-        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate/100 || 0));
+        const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c2/100 || 0));
 
         //Line 5a: Double Credit for Certain Expenses: Multiply Line 1 by 2
-        const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.double_credit_multiplier || 0));
+        const doubleCredit = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c3 || 0));
 
         //Line 5b: Enter 90% of Line 3
-        const taxLimit = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.tax_limit_rate/100 || 0));
-
+        const taxLimit = currentYearCTBusinessTaxLiability?.mul(new Decimal(extractConfig.cc_qre_credit_percentage_c4/100 || 0)) || 0;
         //Line 5: Enter the lesser of Line 5a or Line 5b
-        const minFinal = Decimal.min(doubleCredit, taxLimit);
+        const minFinal = Decimal.min(doubleCredit, taxLimit); 
 
         //Line 6: Enter the greater of Line 4 or Line 5 
         const allowableCredit = Decimal.max(halfTaxLiability, minFinal);
@@ -216,14 +222,16 @@ export class RdCreditCalculatorForCT {
         "[1] Enter the amount of Connecticut research and experimental expenditures for the current income year.": this.round2(part1Computation.total_qre),
         "[2] Enter the amount of Connecticut research and experimental expenditures for the first prior income year.": this.round2(part1Computation.prior_year_1_qre),
         "[3] Balance: Subtract Line 2 from Line 1. If zero or less, the corporation is not eligible for this credit.": this.round2(part1Computation.excess_qre),
-        [`[4] Tax credit: Multiply Line 3 by ${extractConfig.credit_rate}%. Enter here and on Form CT-1120K, Part I-C, Column B.`]: this.round2(part1Computation.tax_credit)
+        [`[4] Tax credit: Multiply Line 3 by ${extractConfig.tc_qre_credit_percentage_c1}%. Enter here and on Form CT-1120K, Part I-C, Column B.`]: this.round2(part1Computation.tax_credit)
         };
 
        let part2 = {
         "[1] Enter the amount of Connecticut research and experimental expenditures for the current income year.": this.round2(part1TentativeComputation.tentative_total_qre),
         "[2] Enter the amount of excess Connecticut research and experimental expenditures for the current income year. From Form CT-1120RC Part I, Line 3.": this.round2(part1TentativeComputation.tentative_excess_qre),
         [`[3] Balance: Subtract Line 2 from Line 1. Net research and development expenses for ${currentYear - 2}`]: this.round2(part1TentativeComputation.tentative_balance),
-        "[4 c] All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.": this.round2(part1TentativeComputation.tentative_credit),
+        "[4 a] Qualified small businesses multiply amount on Line 3 by 6% (.06)": "-",
+        "[4 b] Companies headquartered in an Enterprise Zone, with revenues in excess of $3 billion, employing more than 2,500 employees, may elect to multiply amount on Line 3 by 3.5% (.035).": "-",
+        "[4 c] All other businesses determine amount from the Tentative Credit Rate Schedule on Page 2 of form.": this.round2(part1TentativeComputation.tentative_balance.mul(new Decimal(0.01))),
         "[4] Tentative credit: Enter the amount from Line 4a, 4b, or 4c.": this.round2(part1TentativeComputation.tentative_credit),
         "[5] Reduction of tentative tax credit for 2024: Applicable if Line 3 exceeds $200 million and workforce is reduced.": this.round2(part1TentativeComputation.reduction_tentative_tax_credit),
         "[6] Allowable tentative tax credit for Current Year: Subtract Line 5 from Line 4.": this.round2(part1TentativeComputation.allowable_tentative_tax_credit)
@@ -231,11 +239,11 @@ export class RdCreditCalculatorForCT {
 
         let part3 = {
             [`[1] Allowable Tentative Tax Credit for ${currentYear - 1} from Part 1, line 6`]: this.round2(part2Computation.part2_allowable_tentative_tax_credit),
-            [`[2] Multiply Line 1 by ${extractConfig.one_third_rate}%`]: this.round2(part2Computation.part2_one_third_rate),
+            [`[2] Multiply Line 1 by ${extractConfig.cc_qre_credit_percentage_c1}%`]: this.round2(part2Computation.part2_one_third_rate),
             "[3] Current Year CT Business Tax Liability": this.round2(part2Computation.current_year_ct_business_tax_liability),
-            [`[4] Multiply Line 3 by ${extractConfig.half_tax_liability_rate}%`]: this.round2(part2Computation.half_tax_liability),
-            [`[5 a] Multiply Line 1 by ${extractConfig.double_credit_multiplier}`]: this.round2(part2Computation.double_credit),
-            [`[5 b] Enter ${extractConfig.tax_limit_rate}% (${extractConfig.tax_limit_rate}) of Line 3`]: this.round2(part2Computation.tax_limit),
+            [`[4] Multiply Line 3 by ${extractConfig.cc_qre_credit_percentage_c2}%`]: this.round2(part2Computation.half_tax_liability),
+            [`[5 a] Multiply Line 1 by ${extractConfig.cc_qre_credit_percentage_c3}`]: this.round2(part2Computation.double_credit),
+            [`[5 b] Enter ${extractConfig.cc_qre_credit_percentage_c4}% (${extractConfig.cc_qre_credit_percentage_c4}) of Line 3`]: this.round2(part2Computation.tax_limit),
             "[5] Enter the lesser of Line 5a or Line 5b": this.round2(part2Computation.min_final),
             "[6] Enter the greater of Line 4 or Line 5": this.round2(part2Computation.allowable_credit),
             "[7] 2024 Research and Development Expenditures tax credit: Enter the lesser of Line 2 or Line 6 here and on Form CT-1120K, Part I-C, Column B.": this.round2(part2Computation.final_credit)
