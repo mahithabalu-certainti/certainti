@@ -4017,7 +4017,6 @@ export class InteractionService {
             accountNumber
           ),
         ]);
-        accountNumber = interactionInfo.accountInfo.r_number ?? accountNumber;
         const interactionLink = await this.generateInteractionLink(
           interaction_rid,
           interactionInfo.accountInfo.account_rid,
