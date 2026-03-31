@@ -196,9 +196,14 @@ export class InteractionService {
       if (!parentData[0][0].r_number) {
         throw new Error("Invalid account ID");
       }
+      const rNumber = parentData?.[0]?.[0]?.r_number;
+
+      if (!rNumber) {
+        throw new Error(`Invalid account ID — r_number missing for account_rid: ${interactionData.account_rid}`);
+      }
 
       // Sync tables to ensure they exist in the database before transaction
-      await this.interactionModelService.syncOrgDbModels(parentData[0][0].r_number);
+      await this.interactionModelService.syncOrgDbModels(rNumber);
 
       transaction = await dbInit.transaction();
 

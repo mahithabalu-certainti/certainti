@@ -26,9 +26,37 @@ import { InteractionTemplateItem } from "../models/interactionTemplateItems";
 import { AiAssessmentEventTracker } from "../models/aiAssessmentEventTracker";
 import { FourPartAssessment } from "../models/fourPartAssessment";
 
+type OrgModels = {
+  Interaction: typeof Interaction;
+  InteractionItem: typeof InteractionItem;
+  InteractionHistory: typeof InteractionHistory;
+  InteractionResponseHistory: typeof InteractionResponseHistory;
+  InteractionTimeline: typeof InteractionTimeline;
+  InteractionType: typeof InteractionType;
+  InteractionSummary: typeof InteractionSummary;
+  InteractionAttachment: typeof InteractionAttachment;
+  AiTechnicalSummary: typeof AiTechnicalSummary;
+  AiAssessmentAudit: typeof AiAssessmentAudit;
+  AiAssessmentError: typeof AiAssessmentError;
+  AiAssessmentQre: typeof AiAssessmentQre;
+  SchedulerExecution: typeof SchedulerExecutions;
+  SchedulerTaskExecution: typeof SchedulerTaskExecutions;
+  WebhookEmailLog: typeof WebhookEmailLog;
+  AccountInteraction: typeof AccountInteractions;
+  SendEmailInfo: typeof SendEmailInfo;
+  AutoSendInteractionAudit: typeof AutoSendInteractionAudit;
+  InteractionTemplate: typeof InteractionTemplate;
+  InteractionTemplateItem: typeof InteractionTemplateItem;
+  AiAssessmentEventTracker: typeof AiAssessmentEventTracker;
+  FourPartAssessment: typeof FourPartAssessment;
+};
+
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
   mainDbSequelize: Sequelize | null = null;
+  private syncInProgress = new Map<string, Promise<void>>();
+  private initLocks  = new Map<string, Promise<OrgModels>>();
+  private syncLocks  = new Map<string, Promise<void>>();
 
   modelCache: Map<
     string,
@@ -65,13 +93,20 @@ export class InteractionModelService {
     return this.mainDbSequelize;
   }
 
-  async getModels(accountNumber: string) {
+  async getModels(accountNumber: string) : Promise<OrgModels> {
+    if (accountNumber === undefined || accountNumber === null || accountNumber === 'undefined') {
+    throw new Error(`getModels called with invalid accountNumber: ${accountNumber}`);
+  }
+
     logMessage(`Fetching the schema name for Models with AccountNumber : ${accountNumber}`)
     const numericPart = accountNumber.replace(/\D/g, "");
     if(!numericPart) {
       logMessage(`Error SchemaName with AccountNumber  : ${numericPart}`)
     }
-    const schemaName = rawQueries.fetchSchemaName(accountNumber)
+    const schemaName = accountNumber === ''  ? MAIN_SCHEMA_NAME : rawQueries.fetchSchemaName(accountNumber);
+    if (this.modelCache.has(schemaName)) {
+      return this.modelCache.get(schemaName) as OrgModels; // ← skip re-initialization entirely
+    }
 
     logMessage(`SchemaName After fetching AccountNumber  : ${schemaName}`)
 
@@ -170,53 +205,128 @@ export class InteractionModelService {
   }
 
   async syncOrgDbModels(accountNumber: string): Promise<void> {
-    try {
-      const schemaName = rawQueries.fetchSchemaName(accountNumber)
-      const sequelize = await this.getSequelize();
-
-      // Get all models for this account to initialize them
-      await this.getModels(accountNumber);
-
-      // Check if schema exists
-      const schemaExists = await sequelize.query(
-        `SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = '${schemaName}');`,
-        { type: "SELECT", raw: true }
-      );
-
-      if (!schemaExists || !schemaExists[0] || !Object.values(schemaExists[0])[0]) {
-        logMessage(`[syncOrgDbModels] Schema ${schemaName} does not exist, creating it...`);
-        try {
-          await sequelize.createSchema(schemaName, {});
-          logMessage(`[syncOrgDbModels] Schema ${schemaName} created successfully`);
-        } catch (schemaErr: any) {
-          // Schema might already exist (race condition), continue
-          if (!schemaErr.message.includes('already exists')) {
-            throw schemaErr;
-          }
-        }
-      }
-
-      // Try to sync only if needed, with error handling
-      try {
-        await sequelize.sync({
-          force: false,
-          schema: schemaName,
-          alter: false,
-          logging: false,
-        });
-        logMessage(`[syncOrgDbModels] Tables synced successfully for schema: ${schemaName}`);
-      } catch (syncErr: any) {
-        // If tables already exist, this is not an error we need to propagate
-        if (syncErr.message.includes('already exists') || syncErr.name === 'SequelizeUniqueConstraintError') {
-          logMessage(`[syncOrgDbModels] Tables already exist in schema: ${schemaName}, skipping sync`);
-        } else {
-          logMessage(`[syncOrgDbModels] Sync warning for schema ${schemaName}: ${syncErr.message}`);
-          // Don't throw - tables likely already exist from account creation
-        }
-      }
-    } catch (error) {
-      logMessage(`[syncOrgDbModels] Warning syncing tables for account ${accountNumber}: ${error}`);
-      // Don't throw - assume tables exist from account creation, just log the warning
-    }
+  if (!accountNumber || accountNumber === 'undefined') {
+    throw new Error(`syncOrgDbModels called with invalid accountNumber: ${accountNumber}`);
   }
+
+  const schemaName = rawQueries.fetchSchemaName(accountNumber);
+
+  // If a sync is already running for this account, wait for it instead of starting another
+  if (this.syncLocks.has(schemaName)) {
+    logMessage(`[syncOrgDbModels] Sync already in progress for schema: ${schemaName}, waiting...`);
+    return this.syncLocks.get(schemaName)!;
+  }
+
+  const syncPromise = this._doSync(accountNumber, schemaName);
+  this.syncLocks.set(schemaName, syncPromise);
+
+  try {
+    await syncPromise;
+  } finally {
+    this.syncLocks.delete(schemaName); // always clean up lock
+  }
+}
+private async _doSync(accountNumber: string, schemaName: string): Promise<void> {
+  try {
+    const sequelize = await this.getSequelize();
+
+    // Initialize models into cache before syncing
+    await this.getModels(accountNumber);
+
+    // Check if schema exists
+    const schemaExists = await sequelize.query(
+      `SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = '${schemaName}');`,
+      { type: 'SELECT', raw: true }
+    );
+
+    if (!schemaExists || !schemaExists[0] || !Object.values(schemaExists[0])[0]) {
+      logMessage(`[syncOrgDbModels] Schema ${schemaName} does not exist, creating it...`);
+      try {
+        await sequelize.createSchema(schemaName, {});
+        logMessage(`[syncOrgDbModels] Schema ${schemaName} created successfully`);
+      } catch (schemaErr: any) {
+        // Race condition — another process may have created it; safe to continue
+        if (!schemaErr.message.includes('already exists')) {
+          throw schemaErr;
+        }
+        logMessage(`[syncOrgDbModels] Schema ${schemaName} already exists (race condition), continuing`);
+      }
+    }
+
+    // Sync tables
+    try {
+      await sequelize.sync({
+        force:   false,
+        schema:  schemaName,
+        alter:   false,
+        logging: false,
+      });
+      logMessage(`[syncOrgDbModels] Tables synced successfully for schema: ${schemaName}`);
+    } catch (syncErr: any) {
+      if (
+        syncErr.message.includes('already exists') ||
+        syncErr.name === 'SequelizeUniqueConstraintError'
+      ) {
+        logMessage(`[syncOrgDbModels] Tables already exist in schema: ${schemaName}, skipping sync`);
+      } else {
+        // Log but don't throw — tables likely exist from account creation
+        logMessage(`[syncOrgDbModels] Sync warning for schema ${schemaName}: ${syncErr.message}`);
+      }
+    }
+  } catch (error) {
+    logMessage(`[syncOrgDbModels] Warning syncing tables for account ${accountNumber}: ${error}`);
+    // Don't throw — assume tables exist from account creation
+  }
+}
+  // async syncOrgDbModels(accountNumber: string): Promise<void> {
+  //   try {
+  //     const schemaName = rawQueries.fetchSchemaName(accountNumber)
+  //     const sequelize = await this.getSequelize();
+
+  //     // Get all models for this account to initialize them
+  //     await this.getModels(accountNumber);
+
+  //     // Check if schema exists
+  //     const schemaExists = await sequelize.query(
+  //       `SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = '${schemaName}');`,
+  //       { type: "SELECT", raw: true }
+  //     );
+
+  //     if (!schemaExists || !schemaExists[0] || !Object.values(schemaExists[0])[0]) {
+  //       logMessage(`[syncOrgDbModels] Schema ${schemaName} does not exist, creating it...`);
+  //       try {
+  //         await sequelize.createSchema(schemaName, {});
+  //         logMessage(`[syncOrgDbModels] Schema ${schemaName} created successfully`);
+  //       } catch (schemaErr: any) {
+  //         // Schema might already exist (race condition), continue
+  //         if (!schemaErr.message.includes('already exists')) {
+  //           throw schemaErr;
+  //         }
+  //       }
+  //     }
+
+  //     // Try to sync only if needed, with error handling
+  //     try {
+  //       await sequelize.sync({
+  //         force: false,
+  //         schema: schemaName,
+  //         alter: false,
+  //         logging: false,
+  //       });
+  //       logMessage(`[syncOrgDbModels] Tables synced successfully for schema: ${schemaName}`);
+  //     } catch (syncErr: any) {
+  //       // If tables already exist, this is not an error we need to propagate
+  //       if (syncErr.message.includes('already exists') || syncErr.name === 'SequelizeUniqueConstraintError') {
+  //         logMessage(`[syncOrgDbModels] Tables already exist in schema: ${schemaName}, skipping sync`);
+  //       } else {
+  //         logMessage(`[syncOrgDbModels] Sync warning for schema ${schemaName}: ${syncErr.message}`);
+  //         // Don't throw - tables likely already exist from account creation
+  //       }
+  //     }
+  //   } catch (error) {
+  //     logMessage(`[syncOrgDbModels] Warning syncing tables for account ${accountNumber}: ${error}`);
+  //     // Don't throw - assume tables exist from account creation, just log the warning
+  //   }
+  // }
+
 }
