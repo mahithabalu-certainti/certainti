@@ -4223,7 +4223,7 @@ class InteractionSchemaService {
     }
   }
 
-  async fetchInteractionBatch(accountNumber: string, accountId: string) {
+  async fetchInteractionBatch(accountNumber: string, accountId: string, transaction?: any) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4235,7 +4235,7 @@ class InteractionSchemaService {
 
       const interactionBatchInfo: any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteraction(schemaName, accountId),
-        { type: "SELECT" }
+        { type: "SELECT", transaction }
       );
       return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
@@ -4244,7 +4244,7 @@ class InteractionSchemaService {
     }
   }
 
-  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId: string) {
+  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId: string, transaction?: any) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4255,12 +4255,35 @@ class InteractionSchemaService {
       )}`;
       const interactionBatchInfo: any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
-        { type: "SELECT" }
+        { type: "SELECT", transaction }
       );
       return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+  async lockAccount(transaction: any, accountRid: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      // Use PostgreSQL advisory lock to serialize batch generation for the specific account
+      // pg_advisory_xact_lock is automatically released when the transaction ends.
+      // We use hashtext to convert the accountRid string into a deterministic integer for the lock.
+      await this.orgDbSequelize.query(
+        `SELECT pg_advisory_xact_lock(hashtext(:accountRid))`,
+        {
+          replacements: { accountRid },
+          transaction,
+          type: "SELECT"
+        }
+      );
+      logMessage(`Advisory lock acquired for accountRid: ${accountRid}`);
+    } catch (err) {
+      logMessage(`Error locking account: ${err}`);
+      throw err;
     }
   }
 
@@ -4635,8 +4658,47 @@ class InteractionSchemaService {
     }
   }
 
-  async createSchedulerTaskRecords(executionRid: string, taskName: string) {
-    const { SchedulerTaskExecution, SchedulerExecution } = await this.interactionModelService.getModels("")
+  async createSchedulerRecordsForSendEmail () {
+    const { SchedulerExecution } = await this.interactionModelService.getModels("");
+    const findSchedulerExists = await SchedulerExecution.findOne({
+      where : {
+        scheduler_name : 'SendEmail',
+        status : schedulerStatus.Running
+      }
+    })
+    if(!findSchedulerExists) {
+      const createSchedulerExecution = await SchedulerExecution.create({
+        created_datetime : new Date(),
+        started_at : new Date(),
+        status : schedulerStatus.Running,
+        scheduler_name : 'SendEmail'
+      })
+      return createSchedulerExecution
+    } else {
+      // Mark existing running record as failed (server crash/deployment detected)
+      await SchedulerExecution.update({
+        status: schedulerStatus.Failed,
+        completed_at: new Date()
+      }, {
+        where: {
+          rid: findSchedulerExists.rid
+        }
+      })
+      logMessage(`Marked stale SendEmail scheduler (rid: ${findSchedulerExists.rid}) as Failed due to server restart/deployment`)
+      
+      // Create new scheduler record
+      const createSchedulerExecution = await SchedulerExecution.create({
+        created_datetime : new Date(),
+        started_at : new Date(),
+        status : schedulerStatus.Running,
+        scheduler_name : 'SendEmail'
+      })
+      return createSchedulerExecution
+    }
+  }
+
+  async createSchedulerTaskRecords (executionRid : string, taskName : string) {
+    const {SchedulerTaskExecution, SchedulerExecution} = await this.interactionModelService.getModels("")
     const findTaskAlreadyRunning = await SchedulerExecution.findOne({
       where: {
         rid: executionRid,
@@ -4658,7 +4720,8 @@ class InteractionSchemaService {
   async updateSchedulerRecords(executionRid: string, status: string) {
     const { SchedulerExecution } = await this.interactionModelService.getModels("")
     await SchedulerExecution.update({
-      status: status
+      completed_at: new Date(),
+      status : status
     }, {
       where: {
         rid: executionRid

@@ -695,16 +695,6 @@ export const casesSummaryFieldMappings = [
     dataField: "created_datetime",
   },
   {
-    permissionField: "submitted_datetime",
-    exportField: "Submitted On",
-    dataField: "submitted_datetime",
-  },
-  {
-    permissionField: "approved_datetime",
-    exportField: "Approved On",
-    dataField: "approved_datetime",
-  },
-  {
     permissionField: "status_rid",
     exportField: "Status",
     dataField: "status_name",

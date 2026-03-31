@@ -119,7 +119,7 @@ async function listFinancialHighlightsAccounts(req: Request, res: Response) {
           result.data.nonlabor_cost.project_resource_level
         ).toFixed(2),
       });
-      if(data.summaryType !== 'state') {
+      if(data.summaryType !== 'state' && req.url !== '/state') {
         claimJurisdictionArray.push({
         rid: uuid(),
         name: result.data.federal.name,
@@ -148,22 +148,6 @@ async function listFinancialHighlightsAccounts(req: Request, res: Response) {
         ).toFixed(2),
         rd_credits_total: Number(
           result.data.state_wise.rd_credits_total
-        ).toFixed(2),
-      });
-       claimJurisdictionArray.push({
-        rid: uuid(),
-        name: result.data.grand_total.name,
-        rd_credits_fte: Number(result.data.grand_total.rd_credits_fte).toFixed(
-          2
-        ),
-        rd_credits_subcon: Number(
-          result.data.grand_total.rd_credits_subcon
-        ).toFixed(2),
-        rd_credits_nonlabor: Number(
-          result.data.grand_total.rd_credits_nonlabor
-        ).toFixed(2),
-        rd_credits_total: Number(
-          result.data.grand_total.rd_credits_total
         ).toFixed(2),
       });
       } else {
@@ -356,15 +340,15 @@ async function listFinancialHighlightsProjects(req: Request, res: Response) {
         rid: uuid(),
         name: result.data.federal.name,
         claim_rd_credits_fte: Number(
-          result.data.federal.rd_credits_fte
+          result.data.rd_credits.rd_credits_fte
         ).toFixed(2),
         claim_rd_credits_subcon: Number(
-          result.data.federal.rd_credits_subcon
+          result.data.rd_credits.rd_credits_subcon
         ).toFixed(2),
         claim_rd_credits_nonlabor: Number(
-          result.data.federal.rd_credits_nonlabor
+          result.data.rd_credits.rd_credits_nonlabor
         ).toFixed(2),
-        claim_rd_credits_total: result.data.federal.rd_credits_total,
+        claim_rd_credits_total: result.data.rd_credits.rd_credits_total,
       });
       claimJurisdictionArray.push({
         rid: uuid(),
@@ -379,20 +363,6 @@ async function listFinancialHighlightsProjects(req: Request, res: Response) {
           result.data.state_wise.rd_credits_nonlabor
         ).toFixed(2),
         claim_rd_credits_total: result.data.state_wise.rd_credits_total,
-      });
-      claimJurisdictionArray.push({
-        rid: uuid(),
-        name: result.data.grand_total.name,
-        claim_rd_credits_fte: Number(
-          result.data.grand_total.rd_credits_fte
-        ).toFixed(2),
-        claim_rd_credits_subcon: Number(
-          result.data.grand_total.rd_credits_subcon
-        ).toFixed(2),
-        claim_rd_credits_nonlabor: Number(
-          result.data.grand_total.rd_credits_nonlabor
-        ).toFixed(2),
-        claim_rd_credits_total: result.data.grand_total.rd_credits_total,
       });
       let finalData = {
         account_rid: data.account_rid,

@@ -768,9 +768,6 @@ async exportresourceCostDetailsForFinancialHighlights(
       resource_type_name: "Resource Type",
       country_name: "Country",
       total_cost_pro_res: "Net Resource Cost",
-      rd_percent_final: "RD %",
-      qre_final: "Project QRE",
-      rd_credits_total: "RD Credit",
       };
     } else {
       permissionName = 'project_resource_cost_view'
@@ -781,9 +778,6 @@ async exportresourceCostDetailsForFinancialHighlights(
       country_rid: "Country",
       region_rid: "Region",
       total_cost_pro_res: "Net Resource Cost",
-      rd_percent_final: "RD %",
-      qre_final: "Project QRE",
-      rd_credits_total: "RD Credit",
       };
     }
   
@@ -814,10 +808,7 @@ async exportresourceCostDetailsForFinancialHighlights(
       resource_name: resource.resource_name,
       resource_type_name: resource.resource_type_name,
       country_name: resource.country_name,
-      total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, currencyDetailMap[currencyId!]?.currency_symbol || '$'),
-      rd_percent_final: resource.rd_percent_final,
-      qre_final: resource.qre_final,
-      rd_credits_total: resource.rd_credits_total,
+      total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, currencyDetailMap[currencyId!]?.currency_symbol || '$')
       };
     } else {
       resultMap = {
@@ -826,10 +817,7 @@ async exportresourceCostDetailsForFinancialHighlights(
       resource_type_rid: resource.resource_type_name,
       country_rid: resource.country_name,
       region_rid: resource.region_name,
-      total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, currencyDetailMap[resource.currency_rid]?.currency_symbol || '$'),
-      rd_percent_final: resource.rd_percent_final,
-      qre_final: resource.qre_final,
-      rd_credits_total: resource.rd_credits_total,
+      total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, currencyDetailMap[resource.currency_rid]?.currency_symbol || '$')
       };
     }
 

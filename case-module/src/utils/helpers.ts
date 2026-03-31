@@ -21,6 +21,7 @@ import {
 import { parse } from "url";
 import { CaseProjectTask } from "../models/caseProjectTaskModel";
 import { Op, Sequelize } from "sequelize";
+import currency from "currency.js";
 
 
 function getLogger() {
@@ -963,3 +964,16 @@ export const addLog = (methodName: string, timestamp: string, message: string) =
   const logger = getLogger();
   return logger.info(`MethodName : ${methodName}, Timestamp : ${timestamp}, Error : ${message}`)
 }
+
+export const formatNumberForExport = (value: any, currency_symbol: string): string => {
+  if (value == null || value === "") return "-";
+  const num = Number(value);
+  if (isNaN(num)) return "-";
+  return currency(num, {
+    symbol: currency_symbol ? currency_symbol : "$",
+    precision: 2,
+    pattern: "! #",
+    separator: ",",
+    decimal: ".",
+  }).format();
+};
