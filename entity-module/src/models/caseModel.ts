@@ -73,6 +73,7 @@ interface CaseAttributes {
   rrc_credit_280_c? : string
   asc_credit_280_c? : string
   parent_case_rid?: string;
+  assessment_methodology? : string
 
 }
 
@@ -147,6 +148,7 @@ export class Case
   public credit_carry_forward_py_ga? : number
   public credit_carry_forward_py_sc? : number
   public credit_carry_forward_py_tx? : number
+  public assessment_methodology? : string
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -234,6 +236,7 @@ export class Case
         credit_carry_forward_py_ga : {type : DataTypes.DECIMAL, allowNull : true},
         credit_carry_forward_py_sc : {type : DataTypes.DECIMAL, allowNull : true},
         credit_carry_forward_py_tx : {type : DataTypes.DECIMAL, allowNull : true},
+        assessment_methodology : {type : DataTypes.TEXT, allowNull : true},
       },
       {
         sequelize,
