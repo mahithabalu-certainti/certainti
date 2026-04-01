@@ -1139,7 +1139,13 @@ export class ProjectResourceService {
         },
       };
     } catch (err : any) {
-      errorLog("Error updating project resource", err)
+      logMessage(
+        `Error updating project resource -> ${err?.name}: ${
+          err?.errors?.map((e: any) =>
+            `${e.path}: ${e.message} (value: ${e.value})`
+          ).join(", ") || err?.message
+        }`
+      );
       await transaction.rollback();
       throw this.throwServiceError(err as Error);
     }
