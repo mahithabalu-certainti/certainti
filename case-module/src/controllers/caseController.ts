@@ -993,14 +993,20 @@ async function assignProjectToCase(req: Request, res: Response): Promise<any> {
         statusMessage: result.statusMessage,
       });
     }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
+  } catch (err : any) {
+    logMessage(
+    `Error updating project resource -> ${err?.name}: ${
+      err?.errors?.map((e: any) =>
+        `${e.path}: ${e.message} (value: ${e.value})`
+      ).join(", ") || err?.message
+    }\nStack: ${err?.stack}`
+  );
+    errorLog(methodName, err);
     handleErrorResponse(
       res,
       HttpStatus.BAD_REQUEST,
       HttpStatus.BAD_REQUEST_MESSAGE,
-      error.message
+      err.message
     );
     return;
   }
