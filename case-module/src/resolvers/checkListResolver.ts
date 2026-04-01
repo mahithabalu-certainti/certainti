@@ -32,11 +32,11 @@ export const checkListResolver: IResolvers = {
           modified_by: userId,
           modified_datetime: new Date(),
         };
-        const result = await ctx.services.caseService.updateCheckList(checklistUpdateData,userId);
+        const result = await ctx.services.checklistService.updateCheckList(checklistUpdateData, userId);
           if (result.statusCode === HttpStatus.SUCCESS) {
           // Fetch the updated checklist information to return complete data like listchecklist
           try {
-            const checklistListResult = await ctx.services.caseService.getCheckListDetailsById(
+            const checklistListResult = await ctx.services.checklistService.getCheckListDetailsById(
                 data.rid,
                 {
                     account_rid: data.account_rid,
