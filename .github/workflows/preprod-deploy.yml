@@ -573,6 +573,7 @@ jobs:
           ORGDB_PASSWORD=org-db-admin-password-pvt
           ORGDB_USERNAME=org-db-admin-username-pvt
           ORGDB_ENDPOINT=org-db-endpoint-pvt
+          BATCH_PREFIX=BATCH_
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
