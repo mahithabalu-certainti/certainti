@@ -2340,10 +2340,6 @@ export class InteractionService {
       sourceFilter = requestFilters.interaction_source_name;
       sourceConditions = detectConditions(sourceFilter);
     }
-    if (requestFilters.interaction_source_name) {
-      sourceFilter = requestFilters.interaction_source_name;
-      sourceConditions = detectConditions(sourceFilter);
-    }
 
     [
       "created_user_name",
@@ -4735,22 +4731,29 @@ export class InteractionService {
     }
 
     const normalizedFolders: any[] = [];
-    for (const folder of folders) {
-      const folderName = folder.displayName || "";
-      const folderPath = pathPrefix ? `${pathPrefix}/${folderName}` : folderName;
-      const children =
-        folder.childFolderCount > 0
-          ? await this.fetchMailboxFolderChildren(
-              graphClient,
-              supportEmail,
-              folder.id,
-              folderPath
-            )
-          : [];
+    const folderBatchSize = 5;
 
-      normalizedFolders.push(
-        this.normalizeMailboxFolder(folder, pathPrefix, children)
+    for (let index = 0; index < folders.length; index += folderBatchSize) {
+      const folderBatch = folders.slice(index, index + folderBatchSize);
+      const normalizedBatch = await Promise.all(
+        folderBatch.map(async (folder: any) => {
+          const folderName = folder.displayName || "";
+          const folderPath = pathPrefix ? `${pathPrefix}/${folderName}` : folderName;
+          const children =
+            folder.childFolderCount > 0
+              ? await this.fetchMailboxFolderChildren(
+                  graphClient,
+                  supportEmail,
+                  folder.id,
+                  folderPath
+                )
+              : [];
+
+          return this.normalizeMailboxFolder(folder, pathPrefix, children);
+        })
       );
+
+      normalizedFolders.push(...normalizedBatch);
     }
 
     normalizedFolders.sort((a, b) => {
@@ -4892,7 +4895,10 @@ export class InteractionService {
     if (!endDate) {
       end.setDate(end.getDate() + 30);
     }
-    const safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
+    let safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
+    if (safeEnd < safeStart) {
+      safeEnd = new Date(safeStart);
+    }
     safeEnd.setHours(23, 59, 59, 999);
 
     return {
@@ -5158,44 +5164,9 @@ export class InteractionService {
         clientId,
         clientSecret
       );
-      const folders = await this.fetchMailboxFolderChildren(
-        graphClient,
-        supportEmail
-      );
-      let selectedFolder =
-        this.findFolderInTree(
-          folders,
-          data.folderId,
-          data.folderPath,
-          data.folderId || data.folderPath ? undefined : "inbox"
-        ) || null;
-
-      if (!selectedFolder) {
-        try {
-          selectedFolder = await this.getMailboxInboxFolder(
-            graphClient,
-            supportEmail
-          );
-        } catch (error) {
-          selectedFolder = folders[0] || null;
-        }
-      }
-
-      if (!selectedFolder) {
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          statusMessage: "Mailbox messages fetched successfully",
-          data: {
-            support_email: supportEmail,
-            selected_folder: null,
-            next_page_token: null,
-            messages: [],
-          },
-        };
-      }
-
       const limit = Math.min(Math.max(data.limit || 50, 1), 100);
       let request;
+      let selectedFolder = null;
 
       if (data.pageToken) {
         const validatedPageToken = this.getValidatedMailboxPageToken(
@@ -5204,6 +5175,65 @@ export class InteractionService {
         );
         request = graphClient.api(validatedPageToken);
       } else {
+        let folders: any[] = [];
+
+        if (data.folderId) {
+          try {
+            const folder = await graphClient
+              .api(
+                `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(
+                  data.folderId
+                )}`
+              )
+              .select(
+                "id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount"
+              )
+              .get();
+
+            selectedFolder = this.normalizeMailboxFolder(folder, "", []);
+          } catch (error) {
+            selectedFolder = null;
+          }
+        }
+
+        if (!selectedFolder) {
+          folders = await this.fetchMailboxFolderChildren(
+            graphClient,
+            supportEmail
+          );
+          selectedFolder =
+            this.findFolderInTree(
+              folders,
+              data.folderId,
+              data.folderPath,
+              data.folderId || data.folderPath ? undefined : "inbox"
+            ) || null;
+        }
+
+        if (!selectedFolder) {
+          try {
+            selectedFolder = await this.getMailboxInboxFolder(
+              graphClient,
+              supportEmail
+            );
+          } catch (error) {
+            selectedFolder = folders[0] || null;
+          }
+        }
+
+        if (!selectedFolder) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            statusMessage: "Mailbox messages fetched successfully",
+            data: {
+              support_email: supportEmail,
+              selected_folder: null,
+              next_page_token: null,
+              messages: [],
+            },
+          };
+        }
+
         request = graphClient
           .api(
             `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(selectedFolder.id)}/messages`
@@ -5456,7 +5486,7 @@ export class InteractionService {
         statusMessage: "Calendar metadata fetched successfully",
         data: {
           calendar_owner_email: supportEmail,
-          mode: "read_only",
+          mode: "read_only_with_cancel",
           allowed_actions: {
             view_calendar: true,
             view_event_detail: true,
