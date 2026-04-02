@@ -1170,11 +1170,12 @@ export default class ImportGraphqlServices {
         },
         // ✅ New: Join with ProjectTaskTimeline
         {
-          model: models.ProjectTaskTimelineModel, // Ensure this model is initialized
+          model: models.ProjectTimelineModel, // Ensure this model is initialized
           as: "ProjectTimeline",
           required: true, // INNER JOIN (only tasks with matching timeline entries)
           where: {
             document_rid: documentRid, // Filter by the provided documentRid
+            entity_name: "project_task"
           },
           attributes: [], // No need to select timeline fields
         },
@@ -1357,11 +1358,12 @@ export default class ImportGraphqlServices {
         },
         // ✅ New: Join with ProjectTaskTimeline
         {
-          model: models.ProjectTaskTimelineModel, // Ensure this model is initialized
+          model: models.ProjectTimelineModel, // Ensure this model is initialized
           as: "ProjectTimeline",
           required: true, // INNER JOIN (only tasks with matching timeline entries)
           where: {
             document_rid: documentRid, // Filter by the provided documentRid
+            entity_name: "project_task", // Ensure we are joining on the correct entity
           },
           attributes: [], // No need to select timeline fields
         },

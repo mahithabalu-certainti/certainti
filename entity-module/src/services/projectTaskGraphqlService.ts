@@ -95,13 +95,13 @@ export default class ProjectTaskGraphqlServies {
           data: null,
         };
       } else {
-        if (data.resource_code) {
+        if (data.project_resource_rid) {
           // Fetch resource rid from resources table using resource code
           const resourceQuery = await orgSequelize.query(
-            rawQueries.findResourceByCode(schemaName, data.resource_code)
+            rawQueries.findProjectResourceByRid(schemaName, data.project_resource_rid)
           );
           if (resourceQuery[0].length > 0) {
-            data.resource_rid = (resourceQuery[0][0] as { rid: string }).rid;
+            data.resource_rid = (resourceQuery[0][0] as { resource_rid: string }).resource_rid;
           } else {
             return {
               statusCode: HttpStatus.NOT_FOUND,
@@ -110,28 +110,43 @@ export default class ProjectTaskGraphqlServies {
             };
           }
         }
-        if(data.total_hours_pro_task) total_hours_pro_task = data.total_hours_pro_task
+        if (data.resource_rid) {
+          // Fetch resource rid from resources table using resource code
+          const resourceQuery = await orgSequelize.query(
+            rawQueries.findResourceByRid(schemaName, data.resource_rid)
+          );
+          if (resourceQuery[0].length > 0) {
+            data.resource_code = (resourceQuery[0][0] as { resource_code: string }).resource_code;
+          } else {
+            return {
+              statusCode: HttpStatus.NOT_FOUND,
+              statusMessage: STATUS_MESSAGE.resourceNotFound,
+              data: null,
+            };
+          }
+        }
+        if (data.total_hours_pro_task) total_hours_pro_task = data.total_hours_pro_task
         else total_hours_pro_task = checkForExistingData[0][0].total_hours_pro_task
 
-        if(data.total_cost_pro_task) total_cost_pro_task = data.total_cost_pro_task
+        if (data.total_cost_pro_task) total_cost_pro_task = data.total_cost_pro_task
         else total_cost_pro_task = checkForExistingData[0][0].total_cost_pro_task
-        if(data.start_date && data.end_date) {
+        if (data.start_date && data.end_date) {
           const newStartDate = new Date(data.start_date);
           const newEndDate = new Date(data.end_date);
-          if(newStartDate > newEndDate) {
+          if (newStartDate > newEndDate) {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
               data: null,
             };
           }
-        } 
-        if(data.start_date && !data.end_date) {
+        }
+        if (data.start_date && !data.end_date) {
           data.start_date = new Date(data.start_date).toISOString().split('T')[0];
-          if(checkForExistingData[0][0].end_date) {
+          if (checkForExistingData[0][0].end_date) {
             const existingEndDate = new Date(checkForExistingData[0][0].end_date);
             const newStartDate = new Date(data.start_date);
-            if(newStartDate > existingEndDate) {
+            if (newStartDate > existingEndDate) {
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
@@ -140,12 +155,12 @@ export default class ProjectTaskGraphqlServies {
             }
           }
         }
-        if(data.end_date && !data.start_date) {
+        if (data.end_date && !data.start_date) {
           data.end_date = new Date(data.end_date).toISOString().split('T')[0];
-          if(checkForExistingData[0][0].start_date) {
+          if (checkForExistingData[0][0].start_date) {
             const existingStartDate = new Date(checkForExistingData[0][0].start_date);
             const newEndDate = new Date(data.end_date);
-            if(newEndDate < existingStartDate) {
+            if (newEndDate < existingStartDate) {
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
@@ -154,71 +169,71 @@ export default class ProjectTaskGraphqlServies {
             }
           }
         }
-        
+
 
         const newEffort = new Decimal(data.total_hours_pro_task || "0");
 
-      if (!newEffort.isZero() && !newEffort.isNaN()) {
-        const startDate = data.start_date? data.start_date : checkForExistingData[0][0].start_date;
-        const endDate = data.end_date? data.end_date : checkForExistingData[0][0].end_date;
-        if (startDate && endDate) {
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-          const diffDays =
-            Math.floor(
-              (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-            ) + 1;
-          const maxAllowedEffort = new Decimal(diffDays * 24);
+        if (!newEffort.isZero() && !newEffort.isNaN()) {
+          const startDate = data.start_date ? data.start_date : checkForExistingData[0][0].start_date;
+          const endDate = data.end_date ? data.end_date : checkForExistingData[0][0].end_date;
+          if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffDays =
+              Math.floor(
+                (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+              ) + 1;
+            const maxAllowedEffort = new Decimal(diffDays * 24);
 
-          const existingProjectTask = checkForExistingData[0][0];
+            const existingProjectTask = checkForExistingData[0][0];
 
-          const newProjectTaskData = {
-            ...existingProjectTask,
-            ...data
-          }
+            const newProjectTaskData = {
+              ...existingProjectTask,
+              ...data
+            }
 
-          const existingTasks: ProjectTask[] =
-            await this.projectTaskSchema.getExistingEffortInProjectTask(
-              accountNumber,
-              newProjectTaskData,
-              newProjectTaskData.resource_rid!
+            const existingTasks: ProjectTask[] =
+              await this.projectTaskSchema.getExistingEffortInProjectTask(
+                accountNumber,
+                newProjectTaskData,
+                newProjectTaskData.resource_rid!
+              );
+
+            const filteredTasks = existingTasks.filter(
+              (task) => task.rid !== data.rid
             );
 
-          const filteredTasks = existingTasks.filter(
-            (task) => task.rid !== data.rid 
-          );
+            const validation = this.validatePerDayEffortLimit(
+              filteredTasks,
+              newEffort,
+              start,
+              end
+            );
 
-          const validation = this.validatePerDayEffortLimit(
-            filteredTasks,
-            newEffort,
-            start,
-            end
-          );
-
-          if (!validation.success) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              statusMessage : validation.errorMessage,
-              data : null
-            };
-          }
-        } else if (startDate && !endDate) {
-          if (newEffort.gt(24)) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              statusMessage: STATUS_MESSAGE.effort24HrsExceeded,
-              data: null,
-            };
+            if (!validation.success) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: validation.errorMessage,
+                data: null
+              };
+            }
+          } else if (startDate && !endDate) {
+            if (newEffort.gt(24)) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: STATUS_MESSAGE.effort24HrsExceeded,
+                data: null,
+              };
+            }
           }
         }
-      }
 
-        const getAccountCurrencyRid : any = await mainSequelize.query(rawQueries.fetchCurrencyFromAccount(data.account_rid))
+        const getAccountCurrencyRid: any = await mainSequelize.query(rawQueries.fetchCurrencyFromAccount(data.account_rid))
         const costFields = {
           total_hours_pro_task,
           total_cost_pro_task
         };
-        const costValues : any = Object.entries(costFields).reduce(
+        const costValues: any = Object.entries(costFields).reduce(
           (acc, [key, value]) => {
             // Normalize empty string to null
             if (value === null || value === undefined) {
@@ -236,23 +251,23 @@ export default class ProjectTaskGraphqlServies {
           },
           {} as Record<string, string | null>
         );
-                
+
         // Get currency threshold
-        const currencyThreshold = await getCurrencyThreshold(mainSequelize,getAccountCurrencyRid[0][0].currency_rid);
+        const currencyThreshold = await getCurrencyThreshold(mainSequelize, getAccountCurrencyRid[0][0].currency_rid);
         let status = "Active";
         const statusMap = await getResourceStatuses(mainSequelize);
-        const activeId : any = await mainSequelize.query(rawQueries.fetchActiveStatusRid(status));
-        const activeStatusId : any = statusMap?.get(status);
+        const activeId: any = await mainSequelize.query(rawQueries.fetchActiveStatusRid(status));
+        const activeStatusId: any = statusMap?.get(status);
 
         if (total_hours_pro_task != null && Number(total_hours_pro_task) > 3000) {
-            status = "Anomaly";
-        } 
+          status = "Anomaly";
+        }
         else if (
           (total_cost_pro_task !== null && currencyThreshold !== null && Number(total_cost_pro_task) > currencyThreshold)) {
           status = "Anomaly";
         }
-        const statusRid : any = statusMap?.get(status);
-        if(statusRid !== undefined || statusRid !== null) data.status_rid = statusRid
+        const statusRid: any = statusMap?.get(status);
+        if (statusRid !== undefined || statusRid !== null) data.status_rid = statusRid
         else data.status_rid = checkForExistingData[0][0].status_rid
         let getSetData = setInlineForProjectTask(
           checkForExistingData[0][0],
@@ -270,45 +285,45 @@ export default class ProjectTaskGraphqlServies {
             rawQueries.updateProjectTaskQuery(schemaName, getSetData, data)
           );
 
-          const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(data.account_rid);
+          const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(data.account_rid);
 
-          const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+          const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
           if (checkTableExists) {
-            const projectCaseMapping = 
-            await this.projectIngestion.fetchProjectFiscalCaseMapping(
-              accountNumber,
-              projectData.rid
-            );
-            if (projectCaseMapping.length > 0) {  
-      
-                for (const caseMapping of projectCaseMapping) {
-                  const caseData = await Case.findOne({
-                    where: {
-                      rid: caseMapping.case_rid,
-                    },
-                  });
-                
-                  if (!caseData) {
-                    continue;
-                  }
-                  const mainSequelize = await initMainDbSequelize();
-                
-                  const caseStatus = await mainSequelize.query(
-                    rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-                    {
-                      type: "SELECT",
-                    }
-                  ) as CaseStatusResult[];
-                
-                  if (caseStatus[0]?.status_name === "Closed") {
-                    continue;
-                  }
+            const projectCaseMapping =
+              await this.projectIngestion.fetchProjectFiscalCaseMapping(
+                accountNumber,
+                projectData.rid
+              );
+            if (projectCaseMapping.length > 0) {
 
-                  const updatedProjectTask = await orgSequelize.query(
-                    rawQueries.updateCaseProjectTaskQuery(schemaName, getSetData, data, caseMapping)
-                  );
-                  
+              for (const caseMapping of projectCaseMapping) {
+                const caseData = await Case.findOne({
+                  where: {
+                    rid: caseMapping.case_rid,
+                  },
+                });
+
+                if (!caseData) {
+                  continue;
                 }
+                const mainSequelize = await initMainDbSequelize();
+
+                const caseStatus = await mainSequelize.query(
+                  rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+                  {
+                    type: "SELECT",
+                  }
+                ) as CaseStatusResult[];
+
+                if (caseStatus[0]?.status_name === "Closed") {
+                  continue;
+                }
+
+                const updatedProjectTask = await orgSequelize.query(
+                  rawQueries.updateCaseProjectTaskQuery(schemaName, getSetData, data, caseMapping)
+                );
+
+              }
             }
           }
 
@@ -326,21 +341,21 @@ export default class ProjectTaskGraphqlServies {
             //   data.rid,
             //   data.userId
             // );
-            const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
-                            userId: data.userId!,
-                            eventType: eventTypes.UI_HANDLER
-                          });
+            const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+              userId: data.userId!,
+              eventType: eventTypes.UI_HANDLER
+            });
             await this.schemaService.createAccountTimelineEntry(checkAccountExists[0][0].r_number!, {
-                            created_by: data.userId!,
-                            account_rid: data.account_rid,
-                            created_by_name: userEventInfo.full_name,
-                            entity_rid: checkForExistingData.rid,
-                            entity_name: entityTypes.PROJECT_TASK,
-                            event_type_rid: userEventInfo.event_type_rid,
-                            event_name: eventNames.UPDATE,
-                             descriptions:checkForExistingData.project_resource_code || '',
-                             project_rid : checkForExistingData.project_fiscal_rid
-                          },["project"]);
+              created_by: data.userId!,
+              account_rid: data.account_rid,
+              created_by_name: userEventInfo.full_name,
+              entity_rid: checkForExistingData[0][0].rid,
+              entity_name: entityTypes.PROJECT_TASK,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.UPDATE,
+              descriptions: checkForExistingData[0][0].project_resource_code || '',
+              project_rid: checkForExistingData[0][0].project_fiscal_rid
+            }, ["project"]);
 
             await this.projectTaskInjestionService.runAggregationAfterInlineUpdate(
               accountNumber,
@@ -394,8 +409,9 @@ export default class ProjectTaskGraphqlServies {
               modified_by: latestData.modified_by,
               created_datetime: latestData.created_datetime,
               modified_datetime: latestData.modified_datetime,
-              status_name : latestData.status_name,
-              project_resource_role : latestData.project_resource_role,
+              status_name: latestData.status_name,
+              project_resource_rid: latestData.project_resource_rid || null,
+              project_resource_role: latestData.project_resource_role,
               task_name: latestData.task_name,
               task_description: latestData.task_description,
               task_classification_rid: latestData.task_classification_rid,
@@ -413,7 +429,7 @@ export default class ProjectTaskGraphqlServies {
       }
     }
   }
-    private validatePerDayEffortLimit(
+  private validatePerDayEffortLimit(
     existingTasks: ProjectTask[],
     newEffort: Decimal,
     start: Date,
@@ -422,9 +438,9 @@ export default class ProjectTaskGraphqlServies {
     const diffDays =
       Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     const newTaskStart = start.getTime();
-  
+
     const perDayEffort: Record<string, Decimal> = {};
-  
+
     // Existing tasks
     for (const task of existingTasks) {
       if (task.start_date && task.end_date && task.total_hours_pro_task) {
@@ -434,7 +450,7 @@ export default class ProjectTaskGraphqlServies {
         const taskDays =
           Math.floor((taskEnd - taskStart) / (1000 * 60 * 60 * 24)) + 1;
         const perDay = taskEffort.div(taskDays);
-  
+
         for (let d = 0; d < taskDays; d++) {
           const day = new Date(taskStart + d * 24 * 60 * 60 * 1000);
           const dayStr = day.toISOString().slice(0, 10);
@@ -442,14 +458,14 @@ export default class ProjectTaskGraphqlServies {
         }
       }
     }
-  
+
     // New task
     const newPerDay = newEffort.div(diffDays);
     for (let d = 0; d < diffDays; d++) {
       const day = new Date(newTaskStart + d * 24 * 60 * 60 * 1000);
       const dayStr = day.toISOString().slice(0, 10);
       perDayEffort[dayStr] = (perDayEffort[dayStr] || new Decimal(0)).plus(newPerDay);
-  
+
       if (perDayEffort[dayStr].gt(24)) {
         return {
           success: false,
@@ -457,7 +473,7 @@ export default class ProjectTaskGraphqlServies {
         };
       }
     }
-  
+
     return { success: true };
   }
 }

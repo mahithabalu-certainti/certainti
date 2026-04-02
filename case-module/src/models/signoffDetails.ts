@@ -12,6 +12,7 @@ interface SignoffDetailsAttributes {
   signoff_type_rid: string;
   case_rid: string;
   account_rid: string;
+  comments? : string
 }
 
 export interface SignoffDetailsCreationAttributes
@@ -33,6 +34,7 @@ export class SignoffDetails
   public signoff_type_rid!: string;
   public case_rid!: string;
   public account_rid!: string;
+  public comments? : string
 
   static initialize(
     sequelize: Sequelize,
@@ -81,6 +83,10 @@ export class SignoffDetails
           type: DataTypes.STRING(50),
           allowNull: false,
         },
+        comments : {
+          type : DataTypes.TEXT,
+          allowNull : true
+        }
       },
       {
         sequelize,

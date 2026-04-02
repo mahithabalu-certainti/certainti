@@ -43,23 +43,32 @@ export class RdCreditCalculatorForAus {
           totalFteQreCost = parseFloat(Number(totalFteQreCost + Number(cost.fte_qre_amount)).toFixed(2));
           totalSubconQreCost = parseFloat(Number(totalSubconQreCost + Number(cost.subcon_qre_amount)).toFixed(2))
         })
+        totalSubconQreCost = parseFloat(Number(totalSubconQreCost * 0.65).toFixed(2))
         totalAllocatedNotionalDections = totalFteQreCost + totalSubconQreCost;
         totalAccountExpenditure = totalAllocatedNotionalDections;
         let preliminaryCalculation = totalAccountExpenditure;
         taxRate = extractConfig.tax_rate;
         rdTotalExpenses = Number(caseDetails.total_expenses)|| 0.00
-        totalNotionalObj = totalAccountExpenditure;
-        rdIntensity = parseFloat(Number(totalAccountExpenditure/rdTotalExpenses).toFixed(4))
+        totalNotionalObj = Number(totalAccountExpenditure);
+        let ratio = totalAccountExpenditure/rdTotalExpenses;
+        if(ratio > 1) {
+          rdIntensity = parseFloat(Number((totalAccountExpenditure/rdTotalExpenses)).toFixed(2))
+        } else {
+          rdIntensity = parseFloat(Number((totalAccountExpenditure/rdTotalExpenses)).toFixed(4)) * 100
+        }
         let conditionDeduction = extractConfig.intensity/100
         let notionalDeductionApplied = 0.00;
         let notionalDeductionAppliedForTier2 = 0.00;
-        if(rdIntensity < conditionDeduction) {
+        if(ratio < conditionDeduction) {
           notionalDeductionApplied = totalAccountExpenditure
         } else {
           notionalDeductionApplied = rdTotalExpenses * conditionDeduction
         }
-        if(rdIntensity > conditionDeduction) {
-          notionalDeductionAppliedForTier2 = totalAccountExpenditure - notionalDeductionApplied
+        if(ratio > conditionDeduction) {
+          if(totalAccountExpenditure > notionalDeductionApplied)
+            notionalDeductionAppliedForTier2 = totalAccountExpenditure - notionalDeductionApplied
+          else 
+            notionalDeductionAppliedForTier2 = notionalDeductionApplied - totalAccountExpenditure
         } else {
           notionalDeductionAppliedForTier2 = 0.00
         }
@@ -67,12 +76,12 @@ export class RdCreditCalculatorForAus {
           {
             name : `Tier 1 (Intensity: 0 to ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_1_rd_premium}%)`,
             "offset Amount" : parseFloat(Number(notionalDeductionApplied * ((taxRate/100) + (extractConfig.tier_1_rd_premium/100))).toFixed(2)) || 0.00,
-            "Notional deductions applied": notionalDeductionApplied,
+            "Notional deductions applied": parseFloat(Number(notionalDeductionApplied).toFixed(2)),
           },
           {
             name : `Tier 2 (Intensity: > ${extractConfig.intensity}% R&D premium: ${extractConfig.tier_2_rd_premium}%)`,
             "offset Amount" : parseFloat(Number(notionalDeductionAppliedForTier2 * ((taxRate/100) + (extractConfig.tier_2_rd_premium/100))).toFixed(2)) || 0.00,
-            "Notional deductions applied" : notionalDeductionAppliedForTier2,
+            "Notional deductions applied" : parseFloat(Number(notionalDeductionAppliedForTier2).toFixed(2)),
           }
         ]
         let nonRefundableRdTaxOffset = parseFloat(Number(calculateCredit[0]?.["offset Amount"]! + calculateCredit[1]?.["offset Amount"]!).toFixed(2));

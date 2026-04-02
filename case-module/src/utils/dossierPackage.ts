@@ -59,10 +59,11 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
             let splittedName = url.split('/').pop() as string;
 
             let finalizedName = splittedName.split('_').slice(2,4).join('_');
-              archive.append(response.data, {
-                name: `RD Form-${finalizedName}${ext}`,
-              });
-
+              if(finalizedName !== '') {
+                archive.append(response.data, {
+                  name: `RD Form-${finalizedName}${ext}`,
+                });
+              }
               index++;
             }
           }

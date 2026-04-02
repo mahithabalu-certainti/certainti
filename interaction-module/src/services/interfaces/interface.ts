@@ -214,7 +214,8 @@ export interface IInteractionService {
   }>;
   getTechnicalSummaryDetailsById(
     techSummaryId: string,
-    accountId: string
+    accountId: string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -286,13 +287,13 @@ export interface IInteractionService {
     status: any,
     data: any
   }>
-  triggerAiFromScheduler(schedulerRecord: SchedulerExecutions): Promise<void>
-  getAllowedExportFields(
-    userId: string,
-    permission_name: string
-  ): Promise<any[]>;
-  sendEmailInBatch(): Promise<void>
-  fetchStatusIdsForReminder(): Promise<any>,
+  triggerAiFromScheduler(schedulerRecord : SchedulerExecutions) : Promise<void>
+   getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]>;
+  sendEmailInBatch(schedulerRecord?: SchedulerExecutions) : Promise<void>
+  fetchStatusIdsForReminder() : Promise<any>,
   getAccountNumberByRid(accountRid: string): Promise<{
     statusCode: number;
     message: string;
@@ -351,6 +352,10 @@ export interface IInteractionService {
     comment?: string;
     userId: string;
   }): Promise<any>
+}
+
+export interface IInteractionChildService {
+  listAiAssessmentAudit(data: any, page: number, limit: number, filters: Record<string, any>, userId: string): Promise<any>;
 }
 
 export interface IWebHookService {

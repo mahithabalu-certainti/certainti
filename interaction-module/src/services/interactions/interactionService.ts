@@ -155,7 +155,7 @@ export class InteractionService {
         interactionData.interaction_source_rid = intSource || "";
         interactionData.interaction_type_rid = intType || "";
 
-        this.interactionSchemaService.createBulkInteractions(
+        await this.interactionSchemaService.createBulkInteractions(
           accountNumber,
           interactionData,
           userId,
@@ -189,38 +189,84 @@ export class InteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }> {
-    const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
+    const dbInit = await this.getOrgDb()
+    const mainDb = await this.getMainDb()
+    let transaction: any;
     try {
       interactionData.created_by = userId;
       if (interactionData.interaction_assessment_source_rid == undefined) interactionData.interaction_assessment_source_rid = interactionAssessmentSourceType.RD
-      const { accountNumber, parentAccountId } =
-        await this.interactionSchemaService.fetchValidAccountNumberById(
-          interactionData.account_rid
-        );
+      // const { accountNumber, parentAccountId } =
+      //   await this.interactionSchemaService.fetchValidAccountNumberById(
+      //     interactionData.account_rid
+      //   );
+      const parentData : any = await mainDb.query(await rawQueries.fetchParentAccount(interactionData.account_rid, mainDb))
 
-      if (!accountNumber) {
+      if (!parentData[0][0].r_number) {
         throw new Error("Invalid account ID");
+      }
+      const rNumber = parentData?.[0]?.[0]?.r_number;
+
+      if (!rNumber) {
+        throw new Error(`Invalid account ID — r_number missing for account_rid: ${interactionData.account_rid}`);
+      }
+
+      // Sync tables to ensure they exist in the database before transaction
+      await this.interactionModelService.syncOrgDbModels(rNumber);
+
+      transaction = await dbInit.transaction();
+
+      // Atomically handle interaction_batch_id if not provided
+      if (!interactionData.interaction_batch_id) {
+        logMessage(`Generating interaction_batch_id atomically for account: ${interactionData.account_rid}`);
+        // 1. Lock the account to serialize batch generation
+        await this.interactionSchemaService.lockAccount(transaction, interactionData.account_rid);
+
+        const accountNumber = parentData[0][0].r_number;
+        const company_id = interactionData.account_rid;
+        const transaction_id = interactionData.transaction_id;
+
+        // 2. Identify the type of assessment to determine batch generation strategy
+        // interactionData.interaction_assessment_source_rid contains the source NAME (e.g., "Four Part Assessment")
+        const inputSourceName = interactionData.interaction_assessment_source_rid;
+        
+        if (inputSourceName === interactionAssessmentSourceType.FPA) {
+          // For FPA, fetch latest and increment
+          const findBatch = await this.interactionSchemaService.fetchInteractionBatch(accountNumber, company_id, transaction);
+          if (findBatch) {
+            const splitBatchNumber = Number(findBatch.split('_')[1]);
+            const incrementedBatchNumber = splitBatchNumber + 1;
+            interactionData.interaction_batch_id = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`;
+          } else {
+            interactionData.interaction_batch_id = `${process.env.BATCH_PREFIX}000001`;
+          }
+        } else if (transaction_id) {
+          // For RD Assessment, fetch by transaction_id
+          const findBatch = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id, transaction);
+          interactionData.interaction_batch_id = findBatch;
+        }
+        logMessage(`Resolved interaction_batch_id: ${interactionData.interaction_batch_id}`);
       }
 
       const { intSource, intType } = await this.getInteractionStatusAndSource(
         interactionSource
       );
-      const intResponseSource = await this.getInteractionAssessmentStatus(interactionData.interaction_assessment_source_rid!)
+      // Fetch the actual RID for the source name
+      const intResponseSourceRid = await this.getInteractionAssessmentStatus(interactionData.interaction_assessment_source_rid!)
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
-      interactionData.interaction_assessment_source_rid = intResponseSource || ""
-
+      interactionData.interaction_assessment_source_rid = intResponseSourceRid || ""
+      logMessage(`Interaction creation input data: ${JSON.stringify(interactionData)}`);
+      logMessage(`Interaction creation for account number: ${parentData[0][0].r_number}`);
       const interaction =
         await this.interactionSchemaService.createInteractions(
-          accountNumber,
+          parentData[0][0].r_number,
           interactionData,
           transaction,
           intLevel
         );
       if (interaction) {
         await this.interactionSchemaService.addInteractionItems(
-          accountNumber,
+          parentData[0][0].r_number,
           interactionData,
           interaction.rid,
           transaction,
@@ -228,7 +274,7 @@ export class InteractionService {
         );
         logMessage(`Interaction created successfully, ${interaction.rid}`);
         await this.interactionSchemaService.addInteractionSummary(
-          accountNumber,
+          parentData[0][0].r_number,
           interactionData,
           interaction.rid,
           interaction.get("r_number") || "",
@@ -244,7 +290,7 @@ export class InteractionService {
           timelineTypes = ["project"]
         }
 
-        await this.interactionSchemaService.createAccountTimelineEntry(accountNumber!, {
+        await this.interactionSchemaService.createAccountTimelineEntry(parentData[0][0].r_number!, {
           created_by: userId!,
           account_rid: interactionData.account_rid,
           entity_rid: interaction.rid!,
@@ -256,7 +302,7 @@ export class InteractionService {
           project_rid: intLevel === 'Project' ? interactionData.project_fiscal_rid : '',
         }, timelineTypes);
         await this.interactionSchemaService.addInteractionTimeline(
-          accountNumber,
+          parentData[0][0].r_number,
           "create",
           interactionData,
           interaction.dataValues.rid,
@@ -275,15 +321,15 @@ export class InteractionService {
       }
       let isEmailRecipientAvailable = false;
       if (intLevel === 'Account') {
-        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailableForAccount(accountNumber, interactionData.account_rid);
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailableForAccount(parentData[0][0].r_number, interactionData.account_rid);
       }
       else {
-        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(parentData[0][0].r_number, interactionData.project_fiscal_rid);
       }
 
       logMessage(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if ((interactionStatus === statusAction.DRAFT && (isEmailRecipientAvailable || interactionData.email_info?.email)) || interactionData.trigger_send)
-        await this.checkAutoSendEnabled(accountNumber, interactionData, interaction.rid, userId, interactionData?.account_rid, intLevel, parentAccountId);
+        await this.checkAutoSendEnabled(parentData[0][0].r_number, interactionData, interaction.rid, userId, interactionData?.account_rid, intLevel, parentData[0][0].rid);
       else {
         if (!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
           return {
@@ -303,7 +349,9 @@ export class InteractionService {
       };
     } catch (err) {
       logMessage(`Error creating interaction, ${err}`);
-      await transaction.rollback();
+      if (transaction) {
+        await transaction.rollback();
+      }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -552,7 +600,7 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
+    let transaction: any;
     try {
       const { accountNumber, parentAccountId, accountName } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -562,6 +610,11 @@ export class InteractionService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+
+      // Sync tables to ensure they exist in the database before transaction
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+
+      transaction = await dbInit.transaction();
 
       let interactionStatus;
       if (interactionData.status_rid) {
@@ -667,7 +720,9 @@ export class InteractionService {
       };
     } catch (err) {
       errorLog("Error updating resource", (err as Error).message);
-      await transaction.rollback();
+      if (transaction) {
+        await transaction.rollback();
+      }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -686,7 +741,7 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
+    let transaction: any;
     try {
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -697,6 +752,11 @@ export class InteractionService {
         logMessage(`Invalid account ID ${interactionData?.account_rid}`);
         throw new Error("Invalid account ID");
       }
+
+      // Sync tables to ensure they exist in the database before transaction
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+
+      transaction = await dbInit.transaction();
 
       let interactionStatus;
       if (interactionData.status_rid) {
@@ -733,7 +793,9 @@ export class InteractionService {
       };
     } catch (err) {
       errorLog("Error updating interaction", (err as Error).message);
-      await transaction.rollback();
+      if (transaction) {
+        await transaction.rollback();
+      }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1455,7 +1517,8 @@ export class InteractionService {
 
   async getTechnicalSummaryDetailsById(
     techSummaryId: string,
-    accountRid: string
+    accountRid: string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1478,7 +1541,8 @@ export class InteractionService {
       const techSummaryDetails =
         await this.interactionSchemaService.fetchTechnicalSummaryDetailsById(
           accountNumber,
-          techSummaryId
+          techSummaryId,
+          caseRid
         );
 
       if (!techSummaryDetails) {
@@ -1987,6 +2051,7 @@ export class InteractionService {
         }
         emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       }
+
       let emailContent = {
         message: {
           subject: this.replacePlaceholders(emailPreview.subject, emailInfo, projectInfo, accountInfo, interactionLink, emailPrefix, interactionRid, interactionLevel),
@@ -3517,6 +3582,9 @@ export class InteractionService {
       } else {
         parsedMessage = message;
       }
+
+      logMessage(`Parsed message structure: ${JSON.stringify(parsedMessage)}`);
+
       const {
         company_id,
         project_id,
@@ -3528,33 +3596,55 @@ export class InteractionService {
         detailed_breakdown,
         four_part_assessment
       } = parsedMessage.data;
+
+      logMessage(`Extracted fields — company_id: ${company_id}, project_id: ${project_id}, type: ${type}, transaction_id: ${transaction_id}`);
+      logMessage(`interaction_questions count: ${Array.isArray(interaction_questions) ? interaction_questions.length : 'N/A (not array)'}, value: ${JSON.stringify(interaction_questions)}`);
+      logMessage(`four_part_assessment present: ${!!four_part_assessment}, value: ${JSON.stringify(four_part_assessment)}`);
+
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           company_id
         );
+
+      logMessage(`Fetched accountNumber: ${accountNumber} for company_id: ${company_id}`);
+
       if (!accountNumber) {
-        logMessage(`Invalid account ID in Kafka message: ${company_id}`);
+        logMessage(`SKIPPING — Invalid account ID in Kafka message: ${company_id}`);
         return;
       }
+
+      logMessage(`statusCode present: ${!!parsedMessage.statusCode}, value: ${parsedMessage.statusCode}`);
+
       if (parsedMessage.statusCode) {
         if (!company_id || !project_id || !type) {
-          logMessage(`Kafka message missing required fields: ${JSON.stringify(parsedMessage)}`);
+          logMessage(`SKIPPING — Kafka message missing required fields. company_id: ${company_id}, project_id: ${project_id}, type: ${type}`);
           return;
         }
 
+        logMessage(`Routing message by type: "${type}"`);
+
         if (type === "four_part_assessment") {
+          logMessage(`Handling four_part_assessment block (standalone save + audit update)`);
           let fourPartPayload: FourPartAssessmentResponse;
-          fourPartPayload = four_part_assessment
+          fourPartPayload = four_part_assessment;
+          logMessage(`four_part_assessment payload: ${JSON.stringify(fourPartPayload)}`);
           await this.interactionSchemaService.createFourPartAssessment(
             four_part_assessment,
             accountNumber,
             project_id,
             company_id,
             transaction_id
-          )
+          );
+          logMessage(`createFourPartAssessment done for transaction_id: ${transaction_id}`);
+          await this.interactionSchemaService.updateFourPartAssessmentAuditStatus(
+            accountNumber,
+            parsedMessage
+          );
+          logMessage(`updateFourPartAssessmentAuditStatus done`);
         }
 
         if (type === "qre_percent") {
+          logMessage(`Handling qre_percent for project_id: ${project_id}`);
           await this.interactionSchemaService.updateQrePercent(
             qre_percent,
             accountNumber,
@@ -3564,8 +3654,11 @@ export class InteractionService {
             transaction_id,
             parsedMessage
           );
+          logMessage(`updateQrePercent done`);
         }
+
         if (type === "project_summary") {
+          logMessage(`Handling project_summary for project_id: ${project_id}`);
           await this.interactionSchemaService.updateTechSummary(
             project_summary,
             accountNumber,
@@ -3574,63 +3667,83 @@ export class InteractionService {
             transaction_id,
             parsedMessage
           );
+          logMessage(`updateTechSummary done`);
         }
+
         if (type === "interaction_questions" || type === 'four_part_assessment') {
+          logMessage(`Entering interaction creation block for type: "${type}"`);
+
           let interactionAssessmentSource: string;
           let fourPartAssessmentRid: string | null;
           let fourPartPayload: FourPartAssessmentResponse;
           let batchId: string;
-          fourPartPayload = four_part_assessment
+          fourPartPayload = four_part_assessment;
           let dynamicQuestions: any[];
-          let intStatusRid: string = ''
+          let intStatusRid: string = '';
+
           const findStatus = await this.interactionSchemaService.getStatus();
+          logMessage(`getStatus result count: ${findStatus?.length}, values: ${JSON.stringify(findStatus)}`);
+
           if (type === 'four_part_assessment') {
-            interactionAssessmentSource = interactionAssessmentSourceType.FPA
+            logMessage(`Branch: four_part_assessment — fetching FPA RID for transaction_id: ${transaction_id}`);
+            interactionAssessmentSource = interactionAssessmentSourceType.FPA;
+
             const findFpaRid = await this.interactionSchemaService.fetchAccountFpaInfo(transaction_id, accountNumber);
+            logMessage(`fetchAccountFpaInfo result: ${JSON.stringify(findFpaRid)}`);
             fourPartAssessmentRid = findFpaRid.rid;
-            dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => {
-              return {
-                question: d
-              }
-            })
-            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatch(accountNumber);
-            if (findBatchAndIncrement) {
-              const splitBatchNumber = Number(findBatchAndIncrement.split('_')[1])
-              const incrementedBatchNumber = splitBatchNumber + 1
-              batchId = `${process.env.BATCH_PREFIX}${String(incrementedBatchNumber).padStart(6, '0')}`
-            } else {
-              batchId = `${process.env.BATCH_PREFIX}000001`
-            }
-          }
-          else {
-            interactionAssessmentSource = interactionAssessmentSourceType.RD
+            logMessage(`fourPartAssessmentRid: ${fourPartAssessmentRid}`);
+
+            logMessage(`four_part_assessment follow_up_questions: ${JSON.stringify(fourPartPayload?.follow_up_questions)}`);
+            dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => ({ question: d }));
+            logMessage(`dynamicQuestions mapped (count: ${dynamicQuestions.length}): ${JSON.stringify(dynamicQuestions)}`);
+
+            batchId = ""; // Will be generated atomically in createInteraction
+          } else {
+            logMessage(`Branch: interaction_questions (RD) — transaction_id: ${transaction_id}`);
+            interactionAssessmentSource = interactionAssessmentSourceType.RD;
             fourPartAssessmentRid = null;
-            dynamicQuestions = interaction_questions
-            const findBatchAndIncrement = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id);
-            batchId = findBatchAndIncrement
+            dynamicQuestions = interaction_questions;
+            logMessage(`dynamicQuestions from interaction_questions (count: ${Array.isArray(dynamicQuestions) ? dynamicQuestions.length : 'NOT AN ARRAY'}): ${JSON.stringify(dynamicQuestions)}`);
+
+            batchId = ""; // Will be fetched atomically in createInteraction
           }
 
-          const projectInfo =
-            await this.interactionSchemaService.fetchProjectInfo(
-              accountNumber,
-              project_id
-            );
-          const statusRid =
-            await this.interactionSchemaService.getInteractionStatusByType(
-              statusAction.DRAFT
-            );
+          const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
+          logMessage(`fetchProjectInfo result: ${JSON.stringify(projectInfo)}`);
+
+          const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.DRAFT);
+          logMessage(`getInteractionStatusByType (DRAFT) result: ${statusRid}`);
+
           const questionsWithActionType = Array.isArray(dynamicQuestions)
             ? dynamicQuestions.map((q: any) => ({
-              ...q,
-              action_type: "add",
-            }))
+                question: q.question || q,
+                notes: q.notes || "",
+                response: q.response || "",
+                action_type: "add"
+              }))
             : [];
+          logMessage(`questionsWithActionType count: ${questionsWithActionType.length}`);
+
+          if (!Array.isArray(dynamicQuestions) || dynamicQuestions.length === 0) {
+            logMessage(`WARNING — dynamicQuestions is empty or not an array. No questions will be attached to interaction. type: ${type}, transaction_id: ${transaction_id}`);
+          }
 
           if (findStatus.length > 0) {
             const mapStatus = new Map(findStatus.map((d) => [d.status_name, d.rid]));
-            intStatusRid = interactionAssessmentSource == interactionAssessmentSourceType.RD ? mapStatus.get('In-Active')! : mapStatus.get('Active')!
+            logMessage(`Status map keys: ${JSON.stringify([...mapStatus.keys()])}`);
+            intStatusRid = interactionAssessmentSource === interactionAssessmentSourceType.RD
+              ? mapStatus.get('In-Active')!
+              : mapStatus.get('Active')!;
+            logMessage(`intStatusRid resolved: ${intStatusRid} for source: ${interactionAssessmentSource}`);
+
+            if (!intStatusRid) {
+              logMessage(`WARNING — intStatusRid is undefined/null. Expected status key "${interactionAssessmentSource === interactionAssessmentSourceType.RD ? 'In-Active' : 'Active'}" not found in map.`);
+            }
+          } else {
+            logMessage(`WARNING — findStatus is empty; intStatusRid will remain empty string`);
           }
-          let interactionData = {
+
+          let interactionData: ICreateInteraction = {
             account_rid: company_id,
             project_fiscal_rid: project_id,
             fiscal_year: projectInfo.fiscal_year,
@@ -3647,28 +3760,34 @@ export class InteractionService {
             interaction_batch_id: batchId,
             interaction_status_rid: intStatusRid
           };
+
+          logMessage(`interactionData to be created: ${JSON.stringify(interactionData)}`);
+
           await this.createInteraction(
             interactionData,
             interactionSource.AUTO,
             process.env.SYSTEM_USER_ID!
           );
-          await this.interactionSchemaService.updateInteractionStatus(
-            accountNumber,
-            parsedMessage
-          );
+          logMessage(`createInteraction SUCCESS for transaction_id: ${transaction_id}, type: ${type}`);
+
+          await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage);
+          logMessage(`updateInteractionStatus done for transaction_id: ${transaction_id}`);
         }
+
         if (type === 'data_ingestion') {
-          logMessage(`Processing data_ingestion type for account: ${company_id}  ${accountNumber}`);
+          logMessage(`Processing data_ingestion type for account: ${company_id} ${accountNumber}`);
           await this.interactionSchemaService.updateAIProcessed(accountNumber, project_id, parsedMessage);
+          logMessage(`updateAIProcessed done for project_id: ${project_id}`);
         }
-      }
-      else {
-        logMessage(`Kafka message indicates failure status: ${JSON.stringify(message)}`);
+
+      } else {
+        logMessage(`SKIPPING — Kafka message indicates failure/missing statusCode: ${JSON.stringify(message)}`);
       }
 
-      logMessage(`Processed Kafka message for account: ${company_id}`);
+      logMessage(`Finished processing Kafka message for account: ${company_id}, transaction_id: ${parsedMessage?.data?.transaction_id}`);
     } catch (err) {
       logMessage(`Error processing Kafka message: ${JSON.stringify(err)}`);
+      logMessage(`Error stack: ${err instanceof Error ? err.stack : 'No stack available'}`);
     }
   }
 
@@ -3730,6 +3849,7 @@ export class InteractionService {
             );
           }
           try {
+            logMessage(`Checking or creating scheduler task record for 'interaction'`);
             const isRecordExists =
               await this.interactionSchemaService.findTaskRecordExists(
                 schedulerRecord.rid,
@@ -3741,9 +3861,20 @@ export class InteractionService {
                 interactionTaskName.interaction
               );
             }
-            let fetchProjectIdsFromInteractions: any = await orgDb.query(
-              fetchProjectInteractionRid(schemaName)
+            logMessage(`Fetching status_rid for 'Response Received'`);
+            let statusResult: any = await mainDb.query(
+              rawQueries.fetchInteractionStatusByType(STATUS_MESSAGE.responseReceivedStatus)
             );
+
+            // Depending on your DB driver, this might be [rows, metadata]
+            let status_rid = statusResult[0][0].rid;
+
+            logMessage(`Fetched status_rid for 'response_received': ${status_rid}`);
+
+            let fetchProjectIdsFromInteractions: any = await orgDb.query(
+              fetchProjectInteractionRid(schemaName, status_rid)
+            );
+            logMessage(`Fetched project IDs from interactions: ${JSON.stringify(fetchProjectIdsFromInteractions[0])}`);
             await this.createPayloadForTriggerAi(
               fetchProjectIdsFromInteractions[0]
             );
@@ -3823,132 +3954,171 @@ export class InteractionService {
     }
   }
 
-  async sendEmailInBatch() {
+   async sendEmailInBatch(schedulerRecord?: SchedulerExecutions) {
     const mainDb = await this.getMainDb();
     let fetchEmailInfo: any = await mainDb.query(rawQueries.fetchEmailInfo);
     logMessage(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
 
-    for (let data of fetchEmailInfo[0]) {
-      let email_info: {
-        email: string;
-        name: string | null;
-        ccEmails?: string[] | [];
-      } = {
-        email: data.email,
-        name: data.name,
-        ccEmails: [],
-      };
-      let accountNumber = data.account_rnumber;
-      let interaction_rid = data.interaction_rid;
-      let is_interaction_followup = data.is_interaction_followup;
-      let userId = data.user_rid;
-      let project_fiscal_rid = data.project_fiscal_rid;
-      let accountRid = data.account_rid;
-      let interactionLevel = data.interaction_level;
-      let createdBy = data.user_rid;
-
-      // If emailInfo.email is empty, fetch POC email
-      let sendEmailInfo = email_info;
-
-      logMessage(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
-      if (interactionLevel === 'Account') {
-        sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid, email_info, is_interaction_followup, data.interaction_rid);
+    try {
+      // Create scheduler task record if scheduler record is provided
+      if (schedulerRecord) {
+        const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(
+          schedulerRecord.rid,
+          'SendEmail'
+        );
+        if (isRecordExists == null) {
+          await this.interactionSchemaService.createSchedulerTaskRecords(
+            schedulerRecord.rid,
+            'SendEmail'
+          );
+        }
       }
-      else {
-        sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid, email_info, is_interaction_followup);
+
+      for (let data of fetchEmailInfo[0]) {
+        let email_info: {
+          email: string;
+          name: string | null;
+          ccEmails?: string[] | [];
+        } = {
+          email: data.email,
+          name: data.name,
+          ccEmails: [],
+        };
+        let accountNumber = data.account_rnumber;
+        let interaction_rid = data.interaction_rid;
+        let is_interaction_followup = data.is_interaction_followup;
+        let userId = data.user_rid;
+        let project_fiscal_rid = data.project_fiscal_rid;
+        let accountRid = data.account_rid;
+        let interactionLevel = data.interaction_level;
+        let createdBy = data.user_rid;
+
+        // If emailInfo.email is empty, fetch POC email
+        let sendEmailInfo = email_info;
+
+          logMessage(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
+          if(interactionLevel === 'Account')
+          {
+             sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid,email_info,is_interaction_followup,data.interaction_rid);
+          }
+          else
+          {
+              sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid,email_info,is_interaction_followup);
+           if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
+          logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+          continue;
+        }
+            }
+          
+
         if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
           logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
           continue;
         }
-      }
+         logMessage(`[SEND] Sending email to ${sendEmailInfo.email} for interaction ${interaction_rid}.`);
 
-
-      if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
-        logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
-        continue;
-      }
-      logMessage(`[SEND] Sending email to ${sendEmailInfo.email} for interaction ${interaction_rid}.`);
-
-      const [interactionItems, interactionInfo] = await Promise.all([
-        this.interactionSchemaService.fetchInteractionQuestionsById(
-          accountNumber,
-          interaction_rid
-        ),
-        this.interactionSchemaService.fetchInteractionInfo(
-          interaction_rid,
-          accountNumber
-        ),
-      ]);
-      const interactionLink = await this.generateInteractionLink(
-        interaction_rid,
-        interactionInfo.accountInfo.account_rid,
-        project_fiscal_rid,
-        interactionLevel
-      );
-      console.log(interactionInfo)
-      const senderEmailInfo = await this.getSenderEmailInfo(
-        interactionInfo.accountInfo.parent_account_rid,
-        interactionInfo.accountInfo.account_rid
-      );
-      const excelBuffer = await this.generateExcelBuffer(
-        interaction_rid,
-        interactionItems,
-        interactionInfo
-      );
-      const excelAttachment = {
-        filename: `interaction_${interaction_rid}.xlsx`,
-        content: Buffer.from(excelBuffer).toString("base64"),
-        contentType:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      };
-      // Send email
-      const emailResponse = await this.sendEmailWithAttachment(
-        sendEmailInfo,
-        interactionInfo.projectInfo || null,
-        interactionInfo.accountInfo,
-        excelAttachment,
-        interactionLink,
-        senderEmailInfo!,
-        interaction_rid,
-        is_interaction_followup,
-        interactionLevel,
-        false,
-        createdBy,
-        accountNumber,
-        data,
-        interactionInfo.interactionInfo
-      );
-      if (emailResponse) {
-        logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
-        if (!is_interaction_followup) {
-          await this.interactionSchemaService.updateInteractionInfo(
+        const [interactionItems, interactionInfo] = await Promise.all([
+          this.interactionSchemaService.fetchInteractionQuestionsById(
             accountNumber,
+            interaction_rid
+          ),
+          this.interactionSchemaService.fetchInteractionInfo(
             interaction_rid,
-            statusAction.SENT,
-            userId,
-            sendEmailInfo,
-            interactionLink
+            accountNumber
+          ),
+        ]);
+        const interactionLink = await this.generateInteractionLink(
+          interaction_rid,
+          interactionInfo.accountInfo.account_rid,
+          project_fiscal_rid,
+          interactionLevel
+        );
+        const senderEmailInfo = await this.getSenderEmailInfo(
+          interactionInfo.accountInfo.parent_account_rid,
+          interactionInfo.accountInfo.account_rid
+        );
+        const excelBuffer = await this.generateExcelBuffer(
+          interaction_rid,
+          interactionItems,
+          interactionInfo
+        );
+        const excelAttachment = {
+          filename: `interaction_${interaction_rid}.xlsx`,
+          content: Buffer.from(excelBuffer).toString("base64"),
+          contentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        };
+        // Send email
+        const emailResponse = await this.sendEmailWithAttachment(
+          sendEmailInfo,
+          interactionInfo.projectInfo,
+          interactionInfo.accountInfo,
+          excelAttachment,
+          interactionLink,
+          senderEmailInfo!,
+          interaction_rid,
+          is_interaction_followup,
+          interactionLevel,
+          false,
+          createdBy,
+          accountNumber,
+          data,
+          interactionInfo.interactionInfo
+        );
+        if (emailResponse) {
+          logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
+          if(!is_interaction_followup)
+          {
+            await this.interactionSchemaService.updateInteractionInfo(
+              accountNumber,
+              interaction_rid,
+              statusAction.SENT,
+              userId,
+              sendEmailInfo,
+              interactionLink
+            );
+          } else {
+            await this.interactionSchemaService.updateInteractionInfoForReminder(
+              accountNumber,
+              interaction_rid,
+              project_fiscal_rid,
+              statusAction.SENT,
+              userId,
+              sendEmailInfo,
+              interactionLink
+            );
+          }
+          await this.interactionSchemaService.updateEmailSendFlag(
+            interaction_rid
           );
         } else {
-          await this.interactionSchemaService.updateInteractionInfoForReminder(
-            accountNumber,
-            interaction_rid,
-            project_fiscal_rid,
-            statusAction.SENT,
-            userId,
-            sendEmailInfo,
-            interactionLink
-          );
+          //need to add logic for sending toPS team
+          logMessage(`[FAIL] Email failed to send for interaction ${interaction_rid}. Needs manual intervention.`);
         }
-        await this.interactionSchemaService.updateEmailSendFlag(
-          interaction_rid
-        );
-      } else {
-        //need to add logic for sending toPS team
-        logMessage(`[FAIL] Email failed to send for interaction ${interaction_rid}. Needs manual intervention.`);
       }
+      logMessage(`[BATCH EMAIL] Finished processing batch.`);
+
+      // Update task record to success if scheduler record is provided
+      if (schedulerRecord) {
+        await this.interactionSchemaService.updateSchedulerTaskRecords(
+          schedulerRecord.rid,
+          'SendEmail',
+          schedulerStatus.Success,
+          ''
+        );
+      }
+    } catch (error: any) {
+      logMessage(`[ERROR] Error in sendEmailInBatch: ${error}`);
+      if (schedulerRecord) {
+        await this.interactionSchemaService.updateSchedulerTaskRecords(
+          schedulerRecord.rid,
+          'SendEmail',
+          schedulerStatus.Failed,
+          error.message
+        );
+      }
+      throw error;
     }
-    logMessage(`[BATCH EMAIL] Finished processing batch.`);
   }
   async fetchStatusIdsForReminder() {
     const mainDb = await this.getMainDb();
@@ -4667,6 +4837,16 @@ export class InteractionService {
     return decodedToken;
   }
 
+  /**
+   * Validates and decodes a calendar pagination token before reuse.
+   *
+   * Input:
+   * - `pageToken`: opaque calendar next-page token from a previous response.
+   * - `supportEmail`: mailbox calendar owner used to validate the token scope.
+   *
+   * Output:
+   * - Returns the decoded Graph next-link when it matches the expected calendar path.
+   */
   private getValidatedCalendarPageToken(
     pageToken: string,
     supportEmail: string
@@ -4693,6 +4873,16 @@ export class InteractionService {
     return decodedToken;
   }
 
+  /**
+   * Calculates a safe calendar date range for Graph calendar queries.
+   *
+   * Input:
+   * - `startDate`: optional requested start date.
+   * - `endDate`: optional requested end date.
+   *
+   * Output:
+   * - Returns normalized ISO start and end timestamps for the calendar query window.
+   */
   private getCalendarRange(startDate?: string, endDate?: string) {
     const start = startDate ? new Date(startDate) : new Date();
     const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
@@ -4711,6 +4901,15 @@ export class InteractionService {
     };
   }
 
+  /**
+   * Extracts the primary join link for an online meeting event.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the resolved join URL and the field it was sourced from.
+   */
   private extractMeetingLink(event: any) {
     const directJoinUrl = event?.onlineMeeting?.joinUrl || "";
     if (directJoinUrl) {
@@ -4728,6 +4927,15 @@ export class InteractionService {
     };
   }
 
+  /**
+   * Normalizes a Graph calendar event into the summary payload used by the UI.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the normalized calendar event summary object.
+   */
   private normalizeCalendarEventSummary(event: any) {
     const { join_url, link_source } = this.extractMeetingLink(event);
     return {
@@ -4753,6 +4961,15 @@ export class InteractionService {
     };
   }
 
+  /**
+   * Normalizes a Graph calendar event into the detailed payload used by the UI.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the summary fields plus body, attendee, and metadata details.
+   */
   private normalizeCalendarEventDetails(event: any) {
     const base = this.normalizeCalendarEventSummary(event);
     return {
@@ -5222,6 +5439,15 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Fetches calendar metadata for the supplied account.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   *
+   * Output:
+   * - Returns the calendar owner and the allowed read-only calendar actions.
+   */
   async getCalendarMetadata(data: { account_rid: string }) {
     try {
       const { supportEmail } = await this.getMailboxSettings(data.account_rid);
@@ -5253,6 +5479,19 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Fetches calendar events for a selected range, search term, or pagination token.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.start_date` / `data.end_date`: optional range bounds.
+   * - `data.search`: optional event search text.
+   * - `data.limit`: optional page size.
+   * - `data.pageToken`: optional next-page token from a previous response.
+   *
+   * Output:
+   * - Returns calendar owner details, range metadata, next-page token, and event summaries.
+   */
   async listCalendarEvents(data: {
     account_rid: string;
     start_date?: string;
@@ -5351,6 +5590,16 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Fetches the full detail payload for a single calendar event.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.eventId`: Graph calendar event identifier.
+   *
+   * Output:
+   * - Returns the normalized detailed calendar event payload.
+   */
   async getCalendarEventById(data: { account_rid: string; eventId: string }) {
     try {
       const { supportEmail, tenantId, clientId, clientSecret } =
@@ -5408,6 +5657,18 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Cancels a calendar event on behalf of the resolved mailbox organizer.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.eventId`: Graph calendar event identifier.
+   * - `data.comment`: optional cancellation message.
+   * - `data.userId`: platform user performing the cancellation.
+   *
+   * Output:
+   * - Returns the cancellation status payload for the selected event.
+   */
   async cancelCalendarEvent(data: {
     account_rid: string;
     eventId: string;

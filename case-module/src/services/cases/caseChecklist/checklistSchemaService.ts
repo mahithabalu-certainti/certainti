@@ -1117,8 +1117,9 @@ export class ChecklistSchemaService {
     caseRequest: ICreateChecklist,
     transaction: Transaction
   ) {
-    // Implementation for creating checklist in the database
+    // Implementation for updating checklist in the database
     try {
+      logMessage(`Updating checklist with RID: ${caseRequest.checklist_rid} for account: ${accountNumber}`);
       const { CheckList } = await this.caseModelService.getModels(
         accountNumber
       );
@@ -1151,7 +1152,7 @@ export class ChecklistSchemaService {
         eventType: eventTypes.UI_HANDLER
       });
       const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(caseRequest.attachment_level);
-
+      logMessage(`TimelineTypes determined for attachment level ${caseRequest.attachment_level}: ${timelineTypes.join(", ")}`);
       await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
         created_by: caseRequest.modified_by!,
         account_rid: caseRequest.account_rid,

@@ -174,4 +174,8 @@ routes.post('/fourPartAssessment/details', checkUserStatusMiddleware('four_part_
 routes.post('/fourPartAssessment/export', checkUserStatusMiddleware("four_part_assessment_export"), controller.interactionsController.exportFetchFourPartAssessmentList)
 routes.post('/fourPartAssessment/update', checkUserStatusMiddleware("NA"), controller.interactionsController.updateInteractionStatus)
 routes.get("/assessmentSource", checkUserStatusMiddleware("NA"), controller.interactionsController.getInteractionAssessmentSource)
+
+routes.post('/rdAssessmentAudit/list', checkUserStatusMiddleware("rd_assessment_status_view"), controller.interactionsController.listAiAssessmentAudit)
+routes.post('/rdAssessmentAudit/export', checkUserStatusMiddleware("rd_assessment_status_export"), controller.interactionsController.exportAiAssessmentAudit)
+
 export default routes;

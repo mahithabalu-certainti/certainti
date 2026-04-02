@@ -703,7 +703,7 @@ class ActivitySchemaService {
           accessActivity.push('Meeting');
         }
         if (callAccess) {
-          accessActivity.push('Call');
+          accessActivity.push('Call Log');
         }
         if (accessActivity.length > 0) {
           if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
@@ -2155,7 +2155,6 @@ class ActivitySchemaService {
       }
     } catch (err) {
       logMessage(`Error scheduling Teams meeting: ${err}`);
-      console.log("yoki 1", err);
     }
   }
 
@@ -2186,7 +2185,7 @@ class ActivitySchemaService {
     }
     const activityData = {
       ...activityRequest,
-      activity_type: "Call",
+      activity_type: "Call Log",
       status_rid: callStatus?.rid || null,
       call_participants: callParticipants,
       account_rid:
@@ -2236,7 +2235,7 @@ class ActivitySchemaService {
       await this.caseModelService.getModels(accountNumber);
     const activityData = {
       ...activityRequest,
-      activity_type: "Call",
+      activity_type: "Call Log",
       modified_by: userId,
       modified_datetime: new Date(),
       account_rid:

@@ -181,7 +181,26 @@ export class CaseService {
       }
       const { statusRid } = await this.getCaseStatusForCreate();
       caseRequest.status_rid = statusRid || "";
-
+        // Validate historical submission data early if available
+        if (caseRequest.amendment_case_info && caseRequest.amendment_case_info.length > 0) {
+          const validationError = await this.helperMethod.validateHistoricalSubmissionData(
+            accountNumber,
+            caseRequest.amendment_case_info,
+            caseRequest.account_rid
+          );
+          if (validationError) {
+            return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: validationError,
+          data: {
+            cases: null,
+          },
+        }
+          }
+        }
+      const getPlatformLevelConfig : any = await mainDb.query(rawQueries.getPlatformCaseSetting())
+      caseRequest.assessment_methodology = getPlatformLevelConfig[0][0].assessment_methodology
       const response = await this.caseSchemaService.createCases(
         accountNumber,
         caseRequest,
@@ -414,7 +433,7 @@ export class CaseService {
       await rawQueries.fetchParentAccount(accountRid, mainDb)
     );
     if (fetchParentAccountRnumber[0].length > 0) {
-      let schemaName = rawQueries.fetchSchemaName(
+      let schemaName : string = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number
       );
       const getActiveStatusId: any = await mainDb.query(rawQueries.getActiveStatusId());
@@ -1560,10 +1579,8 @@ export class CaseService {
               fiscal.currency_symbol
             ) || "-",
           "Assessment Status": fiscal.assessment_status || "-",
-          "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
-          "QRE Final":
-            fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
-            "-",
+          "QRE Percent Final": fiscal.rd_percent_final || "-",
+          "QRE Final": formatNumberForExport(fiscal.qre_final, fiscal.currency_symbol) || "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Technical Point of Contact":
             fiscal.project_technical_point_of_contact || "-",

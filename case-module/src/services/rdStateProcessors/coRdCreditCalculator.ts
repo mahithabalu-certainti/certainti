@@ -8,6 +8,8 @@ import { StateRDData } from "../rdComputation/rdCreditTypes";
 export interface ConfigJson {
     qre_credit_percentage_c2: number;
     qre_credit_percentage_c1: number;
+     sub_con_percent: number;
+
 }
 
 export class RdCreditCalculatorForCO {
@@ -24,13 +26,14 @@ export class RdCreditCalculatorForCO {
      * @returns 
      */
     async compute(config: ConfigJson, stateRdData: StateRDData, fiscalYear : string) {
-        const wages = stateRdData.currentYearQREs.wages || 0;
-        const supplies = stateRdData.currentYearQREs.supplies || 0;
-        const costToRent = 0;
-        const contract = stateRdData.currentYearQREs.contract || 0;
+        const wages = new Decimal(stateRdData.currentYearQREs.wages ?? 0.00);
+        const supplies = new Decimal(stateRdData.currentYearQREs.supplies ?? 0.00);
+        const costToRent = 0.00;
+        const contract = new Decimal(stateRdData.currentYearQREs.contract ?? 0.00);
+        const subConPercent = (config.sub_con_percent/100)
 
         //---- Line A: Total QREs
-        const totalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(costToRent)).plus(new Decimal(contract));
+        const totalQREs = wages.plus(supplies).plus(costToRent).plus(contract.mul(subConPercent));
 
         //---- Line B: PriorYear 1 QREs
         const priorYear1QREs = new Decimal(stateRdData.prior3YearsQREs[0]?.qre ?? 0);

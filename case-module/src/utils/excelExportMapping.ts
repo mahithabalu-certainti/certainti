@@ -242,8 +242,13 @@ export const activityFieldMappings = [
     dataField: "status_name",
   },
   {
+    permissionField: "attachment_level",
+    exportField: "Related Entity",
+    dataField: "attachment_level",
+  },
+  {
     permissionField: "attached_to",
-    exportField: "Related To",
+    exportField: "Related To Name",
     dataField: "attached_to",
   },
   {
@@ -690,16 +695,6 @@ export const casesSummaryFieldMappings = [
     dataField: "created_datetime",
   },
   {
-    permissionField: "submitted_datetime",
-    exportField: "Submitted On",
-    dataField: "submitted_datetime",
-  },
-  {
-    permissionField: "approved_datetime",
-    exportField: "Approved On",
-    dataField: "approved_datetime",
-  },
-  {
     permissionField: "status_rid",
     exportField: "Status",
     dataField: "status_name",
@@ -779,12 +774,12 @@ export const jurisdictionRuleMapping = [
   },
   {
     permissionField: "effective_start_date",
-    exportField: "Effective Start Date",
+    exportField: "Start Date",
     dataField: "effective_start_date",
   },
   {
     permissionField: "effective_end_date",
-    exportField: "Effective End Date",
+    exportField: "End Date",
     dataField: "effective_end_date",
   },
 
@@ -822,8 +817,8 @@ export const dataMapperFieldMappings = [
   { permissionField: "is_federal", exportField: "Is Federal?", dataField: "is_federal" },
   { permissionField: "country_rid", exportField: "Country", dataField: "country_name" },
   { permissionField: "state_rid", exportField: "Region", dataField: "state_name" },
-  { permissionField: "effective_from_date", exportField: "Effective From Date", dataField: "effective_from_date" },
-  { permissionField: "effective_to_date", exportField: "Effective To Date", dataField: "effective_to_date" },
+  { permissionField: "effective_from_date", exportField: "Start Date", dataField: "effective_from_date" },
+  { permissionField: "effective_to_date", exportField: "End Date", dataField: "effective_to_date" },
   { permissionField: "status_rid", exportField: "Status", dataField: "status_name" },
   { permissionField: "document_name", exportField: "Document Name", dataField: "document_name" },
   { permissionField: "created_by", exportField: "Created By", dataField: "created_by" },

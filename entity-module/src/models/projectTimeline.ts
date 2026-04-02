@@ -6,15 +6,24 @@ import { ProjectFiscal } from "./projectFiscal";
 
 interface ProjectTimelineAttributes {
   rid?: string;
-  account_rid: string;
   r_number?: string;
-  event_name: string;
-  event_status: string;
-  event_datetime?: Date;
-  event_type: string;
-  entity_rid: string;
+  created_by: string;
   modified_by?: string;
-  created_by?:string
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  account_rid: string;
+  document_rid?: string;
+  entity_rid: string;
+  event_name: string;
+  event_type?: string;
+  event_type_rid?: string;
+  event_status?: string;
+  event_datetime?: Date;
+  project_rid?: string;
+  entity_name?: string;
+  created_by_name?: string;
+  descriptions?: string;
+  source_record_count?: number;
 }
 
 interface ProjectTimelineCreationAttributes
@@ -25,15 +34,24 @@ export class ProjectTimeline
   implements ProjectTimelineAttributes
 {
   public rid?: string;
-  public account_rid!: string;
   public r_number?: string;
-  public event_name!: string;
-  public event_status!: string;
-  public event_datetime?: Date;
-  public event_type!: string;
-  public entity_rid!: string;
+  public created_by!: string;
   public modified_by?: string;
-  public created_by?: string;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
+  public account_rid!: string;
+  public document_rid?: string;
+  public entity_rid!: string;
+  public event_name!: string;
+  public event_type?: string;
+  public event_type_rid?: string;
+  public event_status?: string;
+  public event_datetime?: Date;
+  public project_rid?: string;
+  public entity_name?: string;
+  public created_by_name?: string;
+  public descriptions?: string;
+  public source_record_count?: number;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
      const model = ProjectTimeline.init(
@@ -51,20 +69,27 @@ export class ProjectTimeline
         },
         created_by: {
           type: DataTypes.STRING(50),
-          allowNull: true,
+          allowNull: false,
         },
         modified_by: {
           type: DataTypes.STRING(50),
           allowNull: true,
         },
-         event_datetime: {
+        created_datetime: {
           type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
+          allowNull: true,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
         },
         account_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+        },
+        document_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
         entity_rid: {
           type: DataTypes.STRING(50),
@@ -76,14 +101,41 @@ export class ProjectTimeline
         },
         event_type: {
           type: DataTypes.STRING(100),
-          allowNull: false,
+          allowNull: true,
+        },
+        event_type_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
         event_status: {
           type: DataTypes.STRING(100),
-          allowNull: false,
+          allowNull: true,
         },
-       
-        
+        event_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+        project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        entity_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        created_by_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        descriptions: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        source_record_count: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
       },
       {
         sequelize,

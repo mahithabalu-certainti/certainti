@@ -655,7 +655,7 @@ class CaseManagementSchemaService {
         data.workflow_connector.source_rid = result.dataValues.rid
         data.workflow_connector.created_by = userId
         if(data.workflow_connector.target_rid.length > 0) {
-          await this.taskWorkflowConnector(data.workflow_connector);
+          await this.taskWorkflowConnector(data.workflow_connector, data.status_rid);
         }
       }
     }
@@ -712,9 +712,11 @@ class CaseManagementSchemaService {
           if(statusMap.get(data.status_rid) === 'In-Active') {
             const findTaskAfterDeleteData : any = await this.mainDbSequelize.query(rawQueries.fetchTaskBasedOnSequence(checkTaskExists.sequence_no!, checkTaskExists.milestone_template_rid!));
             await this.updateSequenceForInactive(findTaskAfterDeleteData)
+            await this.mainDbSequelize.query(rawQueries.updateStatusForWorkFlowConnector(data.status_rid, data.rid));
           } else {
             const findTaskAfterDeleteData : any = await this.mainDbSequelize.query(rawQueries.fetchTaskBasedOnSequenceForActive(checkTaskExists.sequence_no!, checkTaskExists.milestone_template_rid!, checkTaskExists.rid));
             await this.updateSequenceForActive(findTaskAfterDeleteData)
+            await this.mainDbSequelize.query(rawQueries.updateStatusForWorkFlowConnector(data.status_rid, data.rid));
           }
         }
         dynamicData = {
@@ -755,7 +757,7 @@ class CaseManagementSchemaService {
             data.workflow_connector.created_by = userId
             if(data.workflow_connector.target_rid !== undefined) {
               if(data.workflow_connector.target_rid.length > 0)
-                await this.taskWorkflowConnector(data.workflow_connector);
+                await this.taskWorkflowConnector(data.workflow_connector, data.status_rid);
             }
             if(data.workflow_connector.delete_target_rids !== undefined) {
               if(data.workflow_connector.delete_target_rids.length > 0) {
@@ -1450,7 +1452,7 @@ async getWorkFlowConnector () {
   } 
   else return []
 }
-  async taskWorkflowConnector (data : any) {
+  async taskWorkflowConnector (data : any, statusRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -1470,7 +1472,8 @@ async getWorkFlowConnector () {
         source_rid : data.source_rid,
         target_rid : {
           [Op.in] : data.target_rid.map((d : any) => d)
-        }
+        },
+        status_rid : statusRid
       }, raw : true
     });
     if(findExistingData.length > 0) {
@@ -1509,7 +1512,8 @@ async getWorkFlowConnector () {
           where : {
             source_rid : data.source_rid,
             target_rid : d,
-            relationship_connector_rid : data.relationship_connector_rid
+            relationship_connector_rid : data.relationship_connector_rid,
+            status_rid : statusRid
           }, raw : true
         });
         if(!checkIsAlreadyMapped) {
@@ -1521,7 +1525,8 @@ async getWorkFlowConnector () {
             created_datetime : new Date(),
             source_rid : data.source_rid,
             target_rid : d,
-            relationship_connector_rid : data.relationship_connector_rid
+            relationship_connector_rid : data.relationship_connector_rid,
+            status_rid : statusRid
           });
           if(result) {
             workFlowConnectorDetails = await WorkflowConnector.findOne({
@@ -1535,7 +1540,8 @@ async getWorkFlowConnector () {
                 created_datetime : new Date(),
                 source_rid : d,
                 target_rid : data.source_rid,
-                relationship_connector_rid : workFlowConnectorDetails.rid!
+                relationship_connector_rid : workFlowConnectorDetails.rid!,
+                status_rid : statusRid
               });
             }
           }

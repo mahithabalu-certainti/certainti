@@ -809,7 +809,7 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
       permissionName = "activity_meeting_view_edit";
     } else if (
       value.activityType &&
-      value.activityType.toLowerCase() === "call"
+      value.activityType.toLowerCase() === "call log"
     ) {
       permissionName = "activity_call_view_edit";
     } else {
@@ -855,13 +855,13 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
               description: d.description,
               created_datetime: formatDate(d.created_datetime),
               effective_start_datetime:
-                value.activityType && value.activityType.toLowerCase() === "task"
-                  ? formatDateOnly(d.effective_start_datetime)
-                  : formatDate(d.effective_start_datetime),
+              d.activity_type && d.activity_type.toLowerCase() === "task" ? 
+              formatDateOnly(d.effective_start_datetime) 
+              : value.activityType && value.activityType === 'All' ? "-" : formatDate(d.effective_start_datetime),
               effective_end_datetime:
-                value.activityType && value.activityType.toLowerCase() === "task"
+                d.activity_type && d.activity_type.toLowerCase() === "task"
                   ? formatDateOnly(d.effective_end_datetime)
-                  : formatDate(d.effective_end_datetime),
+                  : value.activityType && value.activityType === 'All' ? "-" : formatDate(d.effective_end_datetime),
               activity_type: d.activity_type,
               created_by_name: d.created_by_name,
               call_platform: d.call_platform,
@@ -896,7 +896,7 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                     resultMap[mapping.dataField];
                 }
               });
-            } else if (value.activityType && value.activityType.toLowerCase() === "call") {
+            } else if (value.activityType && value.activityType.toLowerCase() === "call log") {
               callactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =

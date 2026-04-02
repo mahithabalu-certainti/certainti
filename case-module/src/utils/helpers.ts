@@ -21,6 +21,7 @@ import {
 import { parse } from "url";
 import { CaseProjectTask } from "../models/caseProjectTaskModel";
 import { Op, Sequelize } from "sequelize";
+import currency from "currency.js";
 
 
 function getLogger() {
@@ -720,7 +721,7 @@ export const getColumnsNamesForTaskCommentsUpdate = (data: UpdateCommentsType, d
   return columns;
 }
 
-export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promise<string> {
+export async function generateSasUrl(blobUrl: string, expiryMinutes = 1440): Promise<string> {
   try {
     const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     // const connectionString = "storage-account-connection-string";
@@ -731,7 +732,9 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       throw new Error("Azure storage connection string is required");
     }
 
-    const parsedUrl = parse(blobUrl);
+    // ✅ Remove existing SAS token if present
+    const cleanUrl = blobUrl.split("?")[0] as string;
+    const parsedUrl = parse(cleanUrl);
     const hostnameParts = parsedUrl.hostname?.split(".") || [];
     const accountName = hostnameParts[0];
     const pathParts = parsedUrl.pathname?.replace(/^\/+/, "").split("/") || [];
@@ -764,7 +767,7 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       credential
     ).toString();
 
-    const sasUrl = `${blobUrl}?${sasToken}`;
+    const sasUrl = `${cleanUrl}?${sasToken}`;
     return sasUrl;
   } catch (error) {
     logMessage(`Error generating SAS URL: ${error}`);
@@ -961,3 +964,16 @@ export const addLog = (methodName: string, timestamp: string, message: string) =
   const logger = getLogger();
   return logger.info(`MethodName : ${methodName}, Timestamp : ${timestamp}, Error : ${message}`)
 }
+
+export const formatNumberForExport = (value: any, currency_symbol: string): string => {
+  if (value == null || value === "") return "-";
+  const num = Number(value);
+  if (isNaN(num)) return "-";
+  return currency(num, {
+    symbol: currency_symbol ? currency_symbol : "$",
+    precision: 2,
+    pattern: "! #",
+    separator: ",",
+    decimal: ".",
+  }).format();
+};

@@ -19,6 +19,10 @@ import {
   setupResourceHistorySeq,
 } from "../models/resourceHistory";
 import {
+  AccountTimeline,
+  setupAccountTimelineSeq,
+} from "../models/accountTimeline";
+import {
   ResourcesTimeline,
   setupResourceTimelineSeq,
 } from "../models/resourceTimeline";
@@ -375,7 +379,7 @@ class SchemaService {
         schemaName
       );
 
-      const ResourceTimelineModel = ResourcesTimeline.initialize(sequelize, schemaName);
+      const AccountTimelineModel = AccountTimeline.initialize(sequelize, schemaName);
 
 
       Resource.belongsTo(AccountDetailsModel, {
@@ -390,10 +394,10 @@ class SchemaService {
         as: "ResourceFiscal",
       });
 
-      Resource.hasMany(ResourceTimelineModel, {
+      Resource.hasMany(AccountTimelineModel, {
         foreignKey: "entity_rid",
         sourceKey: "rid",
-        as: "ResourceTimelines",
+        as: "AccountTimelines",
       });
 
       // Build the include array dynamically
@@ -415,11 +419,12 @@ class SchemaService {
       // Add ResourceTimeline join if documentRid is provided
       if (documentRid) {
         include.push({
-          model: ResourceTimelineModel,
-          as: "ResourceTimelines",
+          model: AccountTimelineModel,
+          as: "AccountTimelines",
           required: true,
           where: {
-            document_rid: documentRid
+            document_rid: documentRid,
+            entity_name: "resource"
           },
           attributes: [] // Only join, don't select fields
         });
@@ -4146,6 +4151,46 @@ class SchemaService {
         }
       );
 
+      await sequelize.query(
+        rawQueries.updateProjectResourceFiscalQre(schemaName,
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            project_fiscal_rid: projectFiscalId,
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      const closedCaseId : any = await mainSequelize.query(rawQueries.fetchCaseClosedStatus())
+      const checkIfProjectExistsInCase : any = await sequelize.query(rawQueries.checkIsProjectMapped(projectFiscalId, closedCaseId[0][0].rid, schemaName))
+      if(checkIfProjectExistsInCase[0].length === 0) {
+        await sequelize.query(
+        rawQueries.updateCaseProjectResourceFiscalQre(schemaName,
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            project_fiscal_rid: projectFiscalId,
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      }
       // update project summary
       await mainSequelize.query(
         rawQueries.updateProjectFiscalSummaryQre(
