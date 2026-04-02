@@ -41,7 +41,6 @@ export const getTechnicalSummaryListColumns = (
     label: 'Project Code',
     width: 160,
     sortable: true,
-    sx: { textAlign: 'right' },
     // hide:
     //   !permissionMap?.['project_code']?.edit &&
     //   !permissionMap?.['project_code']?.read,
@@ -52,7 +51,6 @@ export const getTechnicalSummaryListColumns = (
     label: 'Project Name',
     width: 160,
     sortable: true,
-    sx: { textAlign: 'right' },
     // hide:
     //   !permissionMap?.['project_name']?.edit &&
     //   !permissionMap?.['project_name']?.read,
@@ -89,26 +87,26 @@ export const getTechnicalSummaryListColumns = (
     render: (row: TechnicalSummaryList) =>
       formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
-  {
-    id: 'modified_user_name',
-    sortId: 'modified_user_name',
-    label: 'Updated By',
-    width: 160,
-    sortable: true,
-    hide:
-      !permissionMap?.['modified_by']?.edit &&
-      !permissionMap?.['modified_by']?.read,
-  },
-  {
-    id: 'modified_datetime',
-    sortId: 'modified_datetime',
-    label: 'Updated On',
-    width: 200,
-    sortable: true,
-    hide:
-      !permissionMap?.['modified_datetime']?.edit &&
-      !permissionMap?.['modified_datetime']?.read,
-    render: (row: TechnicalSummaryList) =>
-      formatDateToYYYYMMDDWithTime(row.modified_datetime),
-  },
+  // {
+  //   id: 'modified_user_name',
+  //   sortId: 'modified_user_name',
+  //   label: 'Updated By',
+  //   width: 160,
+  //   sortable: true,
+  //   hide:
+  //     !permissionMap?.['modified_by']?.edit &&
+  //     !permissionMap?.['modified_by']?.read,
+  // },
+  // {
+  //   id: 'modified_datetime',
+  //   sortId: 'modified_datetime',
+  //   label: 'Updated On',
+  //   width: 200,
+  //   sortable: true,
+  //   hide:
+  //     !permissionMap?.['modified_datetime']?.edit &&
+  //     !permissionMap?.['modified_datetime']?.read,
+  //   render: (row: TechnicalSummaryList) =>
+  //     formatDateToYYYYMMDDWithTime(row.modified_datetime),
+  // },
 ];

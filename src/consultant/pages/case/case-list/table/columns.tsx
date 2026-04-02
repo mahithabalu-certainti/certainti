@@ -267,34 +267,6 @@ export const getGlobalCaseListColumns = (
           : '-',
     },
     {
-      id: 'submitted_datetime',
-      label: 'Submitted On',
-      width: 200,
-      sortable: true,
-      sortId: 'submitted_datetime',
-      hide:
-        !permissionMap?.['submitted_datetime']?.edit &&
-        !permissionMap?.['submitted_datetime']?.read,
-      render: (row) =>
-        row.submitted_datetime
-          ? formatDateToYYYYMMDDWithTime(row.submitted_datetime)
-          : '-',
-    },
-    {
-      id: 'approved_datetime',
-      label: 'Approved On',
-      width: 200,
-      sortable: true,
-      sortId: 'approved_datetime',
-      hide:
-        !permissionMap?.['approved_datetime']?.edit &&
-        !permissionMap?.['approved_datetime']?.read,
-      render: (row) =>
-        row.approved_datetime
-          ? formatDateToYYYYMMDDWithTime(row.approved_datetime)
-          : '-',
-    },
-    {
       id: 'status_name',
       label: 'Status',
       width: 100,

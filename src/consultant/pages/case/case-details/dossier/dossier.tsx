@@ -21,6 +21,7 @@ import {
   CaseAssignedExportParams,
   CaseDetails,
   ColorCode,
+  DownloadDossierSheetPayload,
   ExportType,
   FinancialHighlightsResponse,
   SelectOption,
@@ -41,11 +42,13 @@ import {
   QualifiedProjects,
   RDForm,
   ResourceSummary,
+  CloseCaseForm,
 } from './tab';
 import {
   getProjectDocumentsFilterFields,
   getQualifiedProjectsFilterFields,
 } from './helper';
+import { getVersionControlFilterFields } from './tab/version-control/helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
@@ -69,10 +72,10 @@ import ClosingRemarks from './tab/close-remarks/closing-remarks';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 import { getTechnicalSummaryFilterFields } from '../technical-summary/helpers';
-import CloseCaseModal from './close-case-modal';
 import { useGetProjectType } from '../../../../services/project';
 import Timeline from '../../../../../pages/timeline/timeline';
 import TextButton from '../../../../../components/button/text-button';
+import VersionControl from './tab/version-control/version-control';
 
 const DossierTabs: OverviewTabs[] = [
   {
@@ -117,6 +120,8 @@ interface DossierProps {
   setAuditTimelineParams?: React.Dispatch<
     React.SetStateAction<AuditTimelineListExportParams>
   >;
+  isActionItemsExpanded?: boolean;
+  setIsActionItemsExpanded?: (expanded: boolean) => void;
 }
 
 const Dossier: React.FC<DossierProps> = ({
@@ -137,6 +142,8 @@ const Dossier: React.FC<DossierProps> = ({
   setResourceSummaryParams,
   setTechnicalSummaryParams,
   setAuditTimelineParams,
+  isActionItemsExpanded,
+  setIsActionItemsExpanded,
 }) => {
   const navigate = useNavigate();
   const { caseId } = useParams();
@@ -154,11 +161,12 @@ const Dossier: React.FC<DossierProps> = ({
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [resetSearch, setResetSearch] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [isDownloadModalOpen, setIsDownloadModalOpen] =
     useState<boolean>(false);
-
+  const closeCaseFormRef = React.useRef<{ handleSubmit: () => void }>(null);
+  const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
+  const isTaskCompleted = caseDetails?.all_task_completed;
   const DOWNLOAD_OPTIONS = [
     'Qualified Projects',
     'Technical Summary',
@@ -211,13 +219,13 @@ const Dossier: React.FC<DossierProps> = ({
     permission,
     AllPermissions.DOSSIER_SUMMARY_VIEW
   );
-  const isCaseCloseEnable = checkPermission(
-    permission,
-    AllPermissions.DOSSIER_CLOSE_CASE
-  );
   const isPackagesDownload = checkPermission(
     permission,
     AllPermissions.DOSSIER_PACKAGES
+  );
+  const isCaseCloseEnable = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_CLOSE_CASE
   );
 
   // Permission Management
@@ -274,6 +282,8 @@ const Dossier: React.FC<DossierProps> = ({
     if (isRdFormsView) return 'rd_forms';
     if (isAuditTimelineView) return 'approval_status';
     if (isSummaryView) return 'summary';
+    if (isCaseCloseEnable) return 'close_case';
+    if (isPackagesDownload) return 'dossier_version';
     return 'summary';
   }, [
     isQualifiedProjectsView,
@@ -283,6 +293,8 @@ const Dossier: React.FC<DossierProps> = ({
     isRdFormsView,
     isAuditTimelineView,
     isSummaryView,
+    isCaseCloseEnable,
+    isPackagesDownload,
   ]);
 
   useEffect(() => {
@@ -329,7 +341,7 @@ const Dossier: React.FC<DossierProps> = ({
       return;
     }
 
-    // Call API only for valid status values (e.g., 'PENDING', 'PROCESSING', etc.)
+    // Call API only for valid status values (e.g., 'PENDING', 'PROCESSING', etc.')
     const result = await refetchRDCreditStatus();
     if (result.data) {
       if (result.data?.data === 'COMPLETED') {
@@ -398,6 +410,7 @@ const Dossier: React.FC<DossierProps> = ({
   const handleGenerateDossierSheet = () => {
     if (caseDetails?.is_initiated) {
       // Open the download options modal
+      setSelectedVersion(null);
       setSelectedDownloadItems(DOWNLOAD_OPTIONS);
       setIsDownloadModalOpen(true);
     } else {
@@ -444,12 +457,24 @@ const Dossier: React.FC<DossierProps> = ({
       finalDownloadList.push('RD Form Federal', 'RD Form State');
     }
 
-    refetchDossierSheetStatus({
+    const payload: DownloadDossierSheetPayload = {
       accountRid: accountid,
       caseRid: caseId ?? '',
       downloaded_list: finalDownloadList,
-    });
+    };
+
+    if (selectedVersion) {
+      payload.dossier_version = selectedVersion;
+    }
+
+    refetchDossierSheetStatus(payload);
     setIsDownloadModalOpen(false);
+  };
+
+  const handleVersionDownload = (dossier_version: string) => {
+    setSelectedVersion(dossier_version);
+    setSelectedDownloadItems(DOWNLOAD_OPTIONS);
+    setIsDownloadModalOpen(true);
   };
 
   const technicalSummaryViewEditFields = useMemo(
@@ -545,6 +570,8 @@ const Dossier: React.FC<DossierProps> = ({
           memoizedResourceType,
           memoizedResourceStatus
         );
+      case 'dossier_version':
+        return getVersionControlFilterFields();
       default:
         return [];
     }
@@ -605,6 +632,16 @@ const Dossier: React.FC<DossierProps> = ({
       value: 'approval_status',
       hide: !isAuditTimelineView,
     },
+    {
+      label: 'Dossier Version',
+      value: 'dossier_version',
+      hide: !isPackagesDownload,
+    },
+    // {
+    //   label: 'Close Case',
+    //   value: 'close_case',
+    //   hide: !isCaseCloseEnable,
+    // },
   ];
 
   const showTableControls =
@@ -632,20 +669,32 @@ const Dossier: React.FC<DossierProps> = ({
       hide: !isPackagesDownload,
     },
     {
-      label: 'Close Case',
+      label: 'Save',
       variant: 'outlined' as const,
+      onClick: () => closeCaseFormRef.current?.handleSubmit(),
       disabled:
-        !!caseDetails?.rd_form_signoff ||
+        !caseDetails?.rd_form_signoff ||
+        !isTaskCompleted ||
         caseDetails?.status_name?.toLowerCase() === 'closed',
-      onClick: () => setIsModalOpen(true),
-      sx: { width: '90px', minWidth: '90px' },
-      hide: !isCaseCloseEnable,
+      sx: { width: '80px', minWidth: '80px' },
+      hide: tabParam !== 'close_case',
     },
   ];
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
+  if (
+    !isPackagesDownload &&
+    !isCaseCloseEnable &&
+    !isRdFormsView &&
+    !isFinancialView &&
+    !isAuditTimelineView &&
+    !isProjectDocumentsView &&
+    !isResourceSummaryView &&
+    !isTechnicalSummaryView &&
+    !isQualifiedProjectsView &&
+    !isSummaryView
+  ) {
+    return <AccessRestricted />;
+  }
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
@@ -729,6 +778,8 @@ const Dossier: React.FC<DossierProps> = ({
               count={count}
               showItemCount={showTableControls}
               buttons={headerButtons}
+              isExpanded={isActionItemsExpanded}
+              onToggleExpand={setIsActionItemsExpanded}
             />
 
             <SectionHeaderTab
@@ -737,7 +788,8 @@ const Dossier: React.FC<DossierProps> = ({
               defaultValue={tabParam}
             />
             {caseDetails?.case_total_qualified_projects === 0 ||
-            caseDetails?.case_total_qualified_projects === '0' ? (
+            caseDetails?.case_total_qualified_projects === '0' ||
+            caseDetails?.case_total_qualified_projects == null ? (
               <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
                 <div>
                   <React.Suspense fallback={null}>
@@ -756,20 +808,17 @@ const Dossier: React.FC<DossierProps> = ({
               </div>
             ) : (
               <div className='border border-t-0 border-[#CBD6E2]'>
-                {tabParam === 'financial_workings' &&
-                  (!isFinancialView ? (
-                    <AccessRestricted />
-                  ) : (
-                    <FinancialWorkingForm
-                      caseDetails={caseDetails}
-                      setDossierFinancialStatus={setDossierFinancialStatus}
-                      dossierFinancialStatus={dossierFinancialStatus}
-                      financialData={financialData}
-                      setFinancialData={setFinancialData}
-                      refetchCaseDetails={refetchCaseDetails}
-                      isDetailLoading={isDetailLoading}
-                    />
-                  ))}
+                {tabParam === 'financial_workings' && (
+                  <FinancialWorkingForm
+                    caseDetails={caseDetails}
+                    setDossierFinancialStatus={setDossierFinancialStatus}
+                    dossierFinancialStatus={dossierFinancialStatus}
+                    financialData={financialData}
+                    setFinancialData={setFinancialData}
+                    refetchCaseDetails={refetchCaseDetails}
+                    isDetailLoading={isDetailLoading}
+                  />
+                )}
                 {tabParam === 'summary' && (
                   <div className='flex items-center justify-center h-full'>
                     <ComingSoon alt='comingSoon' />
@@ -788,6 +837,7 @@ const Dossier: React.FC<DossierProps> = ({
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
                     fiscalYear={caseDetails?.fiscal_year ?? 0}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
                 {tabParam === 'rd_forms' && (
@@ -810,6 +860,7 @@ const Dossier: React.FC<DossierProps> = ({
                     columnAnchorEl={columnAnchorEl}
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
 
@@ -825,6 +876,7 @@ const Dossier: React.FC<DossierProps> = ({
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
                     fiscalYear={caseDetails?.fiscal_year ?? 0}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
 
@@ -839,6 +891,7 @@ const Dossier: React.FC<DossierProps> = ({
                     columnAnchorEl={columnAnchorEl}
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
                   />
                 )}
 
@@ -853,6 +906,37 @@ const Dossier: React.FC<DossierProps> = ({
                     columnAnchorEl={columnAnchorEl}
                     setColumnAnchorEl={setColumnAnchorEl}
                     searchValue={searchText}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+                {tabParam === 'dossier_version' && (
+                  <VersionControl
+                    refreshTrigger={refreshTrigger}
+                    currentPage={currentPage}
+                    appliedFilters={appliedFilters}
+                    setCount={setCount}
+                    columnAnchorEl={columnAnchorEl}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    searchValue={searchText}
+                    onVersionDownload={handleVersionDownload}
+                    isActionItemsExpanded={isActionItemsExpanded}
+                  />
+                )}
+                {tabParam === 'close_case' && (
+                  <CloseCaseForm
+                    ref={closeCaseFormRef}
+                    caseDetails={{
+                      country_name: caseDetails?.country_name,
+                      country_rid: caseDetails?.country_rid,
+                      country_code: caseDetails?.country_code,
+                      fiscal_year: caseDetails?.fiscal_year,
+                      all_task_completed: caseDetails?.all_task_completed,
+                      currency_symbol: caseDetails?.currency_symbol,
+                    }}
+                    refetchCaseDetails={refetchCaseDetails}
+                    showTitle={false}
+                    showCloseIcon={false}
+                    hideFooter={true}
                   />
                 )}
               </div>
@@ -860,18 +944,6 @@ const Dossier: React.FC<DossierProps> = ({
           </>
         )}
       </div>
-      <CloseCaseModal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        caseDetails={{
-          country_name: caseDetails?.country_name,
-          country_rid: caseDetails?.country_rid,
-          country_code: caseDetails?.country_code,
-          fiscal_year: caseDetails?.fiscal_year,
-          all_task_completed: caseDetails?.all_task_completed,
-        }}
-        refetchCaseDetails={refetchCaseDetails}
-      />
 
       {/* Download Dossier Selection Modal */}
       <Dialog

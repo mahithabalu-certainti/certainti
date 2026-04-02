@@ -66,6 +66,7 @@ export interface CaseProjectResourceRow {
   resource_rid?: string;
   account_number?: string;
   [key: string]: unknown;
+  project_resource_rid?: string;
 }
 
 export interface CaseProjectResourceListURLParams {

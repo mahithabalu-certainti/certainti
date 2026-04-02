@@ -30,6 +30,7 @@ import {
   HistorySubmissionIcon,
   DashboardIcon,
   FourPartIcon,
+  RdStatusIcon,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -82,6 +83,7 @@ import {
   ProjectFinancialResourceExportParams,
   ColorCode,
   FourPartAssessmentListExportURLParams,
+  RdAssessmentStatusExportURLParams,
 } from '../../types';
 import { exportProjectData, ProjectTriggerAI } from '../../services/project';
 import {
@@ -119,6 +121,8 @@ import HistorySubmission from '../case/case-details/history-submission/history-s
 import Dashboard from '../account-details-sidebar/sidebar-pages/dashboard/dashboard';
 import { ExportFourPartAssessmentList } from '../../services/four-part-assessment/four-part-assessment-service';
 import { FourPartAssessment } from '../four-part-assessment';
+import { ExportRdAssessmentStatusList } from '../../services/rd-assessment/rd-assessment-service';
+import { RdAssessmentStatus } from '../rd-assessment-status';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -221,6 +225,11 @@ export const AccountDetails = () => {
   const isFourPartExportEnable = checkPermission(
     permission,
     AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
   );
 
   const isFinancialResourceCostExportEnable = checkPermission(
@@ -428,6 +437,14 @@ export const AccountDetails = () => {
       type: 'account',
     });
 
+  const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
+    useState<RdAssessmentStatusExportURLParams>({
+      search: '',
+      sortBy: 'created_datetime',
+      sortOrder: 'DESC',
+      filters: {},
+    });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -462,7 +479,8 @@ export const AccountDetails = () => {
       searchParams.get('tab') !== 'timesheet_project' &&
       searchParams.get('tab') !== 'timesheet_project_resource' &&
       searchParams.get('tab') !== 'timesheet_project_task' &&
-      searchParams.get('list') !== 'four_part_assessment'
+      searchParams.get('list') !== 'four_part_assessment' &&
+      searchParams.get('list') !== 'rd_assessment_status'
     ) {
       return;
     }
@@ -578,7 +596,14 @@ export const AccountDetails = () => {
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
     } else if (exportType === 'cases') {
-      ExportCaseList(casesParams, accountid);
+      ExportCaseList(
+        {
+          ...casesParams,
+          currency_symbol:
+            accountDetailsForEdit?.accountById?.currency?.currency_symbol || '',
+        },
+        accountid
+      );
     } else if (exportType === 'timesheet' && !tab) {
       exportTimesheetData({
         ...importsParams,
@@ -605,6 +630,8 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'four_part_assessment') {
       ExportFourPartAssessmentList(fourPartParams);
+    } else if (exportType === 'rd_assessment_status') {
+      ExportRdAssessmentStatusList(rdAssessmentStatusParams);
     } else if (exportType === 'interactions') {
       if (interactionHistoryId) {
         const projectInteractionHistoryExportPayload = {
@@ -757,6 +784,8 @@ export const AccountDetails = () => {
       return !isInteractionsExportEnable;
     } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
       return !isFourPartExportEnable;
+    } else if (list === 'rd_assessment_status') {
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
@@ -930,6 +959,15 @@ export const AccountDetails = () => {
             moduleLevel='account'
           />
         );
+      case 'rd_assessment_status':
+        return (
+          <RdAssessmentStatus
+            setExportType={setExportType}
+            setRdAssessmentStatusParams={setRdAssessmentStatusParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='account'
+          />
+        );
       case 'cases':
         return (
           <Cases
@@ -1086,6 +1124,14 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: FourPartIcon,
+      },
+      {
+        name: 'RD Assessment Status',
+        key: 'rd_assessment_status',
+        id: AllModules.RD_ASSESSMENT_STATUS,
+        disabled: disable,
+        hide: disable,
+        icon: RdStatusIcon,
       },
       {
         name: 'Cases',

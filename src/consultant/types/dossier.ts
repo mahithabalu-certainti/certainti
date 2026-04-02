@@ -291,6 +291,40 @@ export interface ClosingRemarksResponse {
   };
 }
 
+//-------- Version Control ----------
+export type VersionControlItem = {
+  rid: string;
+  r_number: string;
+  document_name: string;
+  dossier_version: string;
+  created_by_name: string;
+  created_by: string;
+  browse_file: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+};
+
+export interface VersionControlParams {
+  case_rid: string;
+  account_rid: string;
+  sort: string;
+  sort_by: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  filter?: Record<string, string | number | boolean | string[]>;
+}
+
+export interface VersionControlResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    data: VersionControlItem[];
+    total_result: number;
+  };
+}
+
 //-------- Project Summary ----------
 export interface ProjectSummaryListURLParams {
   page: number;
@@ -594,6 +628,12 @@ export interface DossierPackageResponse {
     document_name: string;
     base64?: string;
   };
+}
+export interface DownloadDossierSheetPayload {
+  accountRid: string;
+  caseRid: string;
+  downloaded_list: string[];
+  dossier_version?: string;
 }
 
 // ComputedData

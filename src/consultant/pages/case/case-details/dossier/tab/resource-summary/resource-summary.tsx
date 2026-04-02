@@ -3,7 +3,12 @@ import {
   ExportType,
   ResourceSummaryListURLParams,
 } from '../../../../../../types';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -18,6 +23,7 @@ import {
   getCaseProjectResourceColumns,
 } from '../../../case-project-resource/columns';
 import { ReviewProjectListURLParams } from '../../../../../../types/assign-projects';
+import { PROJECT_DETAILS } from '../../../../../../../routes';
 
 interface ResourceSummaryProps {
   refreshTrigger: number;
@@ -33,6 +39,7 @@ interface ResourceSummaryProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  isActionItemsExpanded?: boolean;
 }
 
 const ResourceSummary: React.FC<ResourceSummaryProps> = ({
@@ -45,8 +52,10 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  isActionItemsExpanded,
 }) => {
   const { caseId } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const [resourceSummary, setResourceSummary] = useState<
@@ -176,8 +185,28 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
     { id: 'resource_code', canHide: false, canDrag: false },
   ];
 
+  const handleViewResource = (row: CaseProjectResourceRowType) => {
+    if (row.rid) {
+      const path = generatePath(PROJECT_DETAILS, {
+        projectid: row.project_fiscal_rid ?? '',
+      });
+      const queryParams = new URLSearchParams({
+        list: 'projectResources',
+        accountID: row.account_rid || accountId || '',
+        currency_rid: row.currency_rid || '',
+        source: 'account',
+        navigateFrom: 'case',
+        page: 'details',
+        pro_res_id: row.project_resource_rid || '',
+        origin: 'case_dossier',
+      });
+
+      navigate(`${path}?${queryParams.toString()}`);
+    }
+  };
+
   const resourceSummaryColumns = getCaseProjectResourceColumns(
-    undefined,
+    handleViewResource,
     permissionMap,
     projectPermissionMap
   );
@@ -223,7 +252,9 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

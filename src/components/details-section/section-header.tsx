@@ -38,6 +38,7 @@ interface SectionHeaderProps {
   onToggleExpand?: (expanded: boolean) => void;
   onRefreshClick?: () => void;
   showRefresh?: boolean;
+  headerStatic?: boolean;
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -58,6 +59,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   onToggleExpand,
   onRefreshClick,
   showRefresh = false,
+  headerStatic = false,
 }) => {
   if (hideSection) {
     return null;
@@ -65,13 +67,19 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div
-      className={
+      className={`${
         className
           ? className
           : 'border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
-      }
+      } ${headerStatic ? 'sticky top-0 z-[11] bg-white' : ''}`}
     >
-      <div className='h-full flex items-center justify-between gap-4 py-1 px-3'>
+      <div
+        className={
+          headerStatic
+            ? 'sticky top-0 z-[11] bg-white h-full flex items-center justify-between gap-4 py-1 px-3'
+            : 'h-full flex items-center justify-between gap-4 py-1 px-3'
+        }
+      >
         <div className='flex items-center gap-1'>
           {/* {showBackArrow && (
             <div

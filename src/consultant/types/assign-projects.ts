@@ -29,6 +29,7 @@ export type AssignProject = {
   project_point_of_contact: string | null;
   project_technical_point_of_contact: string | null;
   currency_symbol: string | undefined;
+  currency_rid: string | null;
 };
 export type ReviewProject = {
   rid: string;

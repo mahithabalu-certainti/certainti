@@ -38,6 +38,7 @@ export type TechnicalSummaryList = {
   modified_datetime: string | null;
   project_rid: string;
   project_fiscal_rid: string;
+  is_rd_claim_qualified: boolean;
 };
 
 export interface TechnicalSummaryListResponse {
@@ -81,14 +82,26 @@ export interface TechnicalSummaryTextUpdateRequest {
   account_rid: string;
   tech_summary_rid: string;
   project_fiscal_rid: string;
-  summary_context: string;
+  technical_summary: Technical_summary[];
 }
-
+export interface TechnicalSummaryRefinePromptRequest {
+  account_rid: string;
+  tech_summary_rid: string;
+  project_fiscal_rid: string;
+  refinement_prompt: string;
+  existing_summary: SummaryList[];
+}
+export interface SummaryList {
+  title: string;
+  summary: string;
+  summary_tag_ids: number | string;
+}
 export interface TechnicalSummaryTextUpdateResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    technicalSummary: null;
+    technicalSummary?: TechnicalSummaryDetails;
+    updated_summary?: SummaryList[];
   };
 }

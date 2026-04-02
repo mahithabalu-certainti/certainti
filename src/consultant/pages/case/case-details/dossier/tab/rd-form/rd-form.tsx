@@ -101,7 +101,7 @@ const RDForm: React.FC<RDFormProps> = ({
   };
 
   const handleRDFormMapperPreview = async () => {
-    if (activeTab === 'state_wise' && !selectedRegion) {
+    if (activeTab === 'state' && !selectedRegion) {
       return;
     }
     setIsPreviewError(false);
@@ -204,7 +204,7 @@ const RDForm: React.FC<RDFormProps> = ({
   // Auto-select first region when switching to state-wise tab
   useEffect(() => {
     if (
-      activeTab === 'state_wise' &&
+      activeTab === 'state' &&
       regionListOptions.length > 0 &&
       !selectedRegion
     ) {
@@ -244,15 +244,15 @@ const RDForm: React.FC<RDFormProps> = ({
       hide: false,
     },
     {
-      label: 'State-wise',
-      value: 'state_wise',
+      label: 'States',
+      value: 'state',
       hide: false,
     },
   ];
   const selectedStateName =
     regionListOptions.find((r) => r.value === selectedRegion)?.label ?? '';
   const downloadName =
-    activeTab === 'state_wise' && selectedStateName
+    activeTab === 'state' && selectedStateName
       ? `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}-${selectedStateName}`
       : `${caseDetails?.account_name}-${caseDetails?.fiscal_year}-${caseDetails?.country_name}`;
   const handleTabChange = (value: string) => {
@@ -286,7 +286,7 @@ const RDForm: React.FC<RDFormProps> = ({
     <div className='w-full'>
       <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
         <div>{caseDetails?.country_name} RD Form Information</div>
-        <div>
+        <div className='flex items-center gap-2'>
           <TextButton
             label={'Approve'}
             onClick={() => setIsSignOffModalOpen(true)}
@@ -364,7 +364,7 @@ const RDForm: React.FC<RDFormProps> = ({
             )}
           </div>
 
-          {activeTab === 'state_wise' && (
+          {activeTab === 'state' && (
             <div
               style={{
                 display:
@@ -396,6 +396,7 @@ const RDForm: React.FC<RDFormProps> = ({
               >
                 <MenuItem
                   value=''
+                  disabled
                   sx={{
                     color: '#7D98B6',
                     fontSize: '13px',

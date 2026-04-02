@@ -10,6 +10,7 @@ import {
   DossierPackageResponse,
   RDFormRevokePayload,
   RDFormRevokeResponse,
+  DownloadDossierSheetPayload,
 } from '../../types';
 import {
   getFinancialHighlightsURL,
@@ -206,17 +207,27 @@ export const useDossierInitiate = () => {
 export const ExportDossierPackage = async (
   accountRid: string,
   caseRid: string,
-  downloaded_list: string[]
+  downloaded_list: string[],
+  dossier_version?: string
 ): Promise<DossierPackageResponse> => {
   try {
     const url = getDossierSheetStatusURL();
 
-    // Call the actual API (uncommented to ensure actual payload fires too)
-    const response = await caseServiceApi.post<DossierPackageResponse>(url, {
+    const payload: Record<string, unknown> = {
       case_rid: caseRid,
       account_rid: accountRid,
       downloaded_list,
-    });
+    };
+
+    // Include dossier_version only when provided (version-control row download)
+    if (dossier_version !== undefined && dossier_version !== '') {
+      payload.dossier_version = dossier_version;
+    }
+
+    const response = await caseServiceApi.post<DossierPackageResponse>(
+      url,
+      payload
+    );
 
     const status = response.data;
 
@@ -252,10 +263,15 @@ export const useDownloadDossierSheet = () => {
   return useMutation<
     DossierPackageResponse | undefined,
     Error,
-    { accountRid: string; caseRid: string; downloaded_list: string[] }
+    DownloadDossierSheetPayload
   >({
-    mutationFn: ({ accountRid, caseRid, downloaded_list }) =>
-      ExportDossierPackage(accountRid, caseRid, downloaded_list),
+    mutationFn: ({ accountRid, caseRid, downloaded_list, dossier_version }) =>
+      ExportDossierPackage(
+        accountRid,
+        caseRid,
+        downloaded_list,
+        dossier_version
+      ),
   });
 };
 

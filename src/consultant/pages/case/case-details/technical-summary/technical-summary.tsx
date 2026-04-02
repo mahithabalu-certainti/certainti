@@ -183,7 +183,11 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   const handleViewTechnicalSummary = (row: TechnicalSummaryList) => {
     if (row) {
       searchParams.set('technical_summary_id', row.rid);
-      searchParams.set('project_id', row.project_rid);
+      searchParams.set('project_id', row.project_fiscal_rid);
+      searchParams.set(
+        'is_project_signed_off',
+        row.is_rd_claim_qualified.toString()
+      );
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -274,73 +278,77 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
           setSortFilterCount={() => {}}
         />
       )}
-      {viewTechSummaryDetails ? (
-        <TechnicalSummaryDetails
-          accountInActive={accountInActive}
-          handleBackClick={handleBackClick}
-          isActionItemsExpanded={isActionItemsExpanded}
-          setIsActionItemsExpanded={setIsActionItemsExpanded}
-        />
-      ) : isTimeLineView ? (
+      {isTimeLineView ? (
         <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
           <Timeline entitytype='case' />
         </div>
       ) : (
         <>
-          <SectionHeader
-            title={'Technical Summary'}
-            titleIcon={
-              <TechSummaryIcon
-                alt='financial-header-icon'
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+          {viewTechSummaryDetails ? (
+            <TechnicalSummaryDetails
+              accountInActive={accountInActive}
+              handleBackClick={handleBackClick}
+              isActionItemsExpanded={isActionItemsExpanded}
+              setIsActionItemsExpanded={setIsActionItemsExpanded}
+            />
+          ) : (
+            <>
+              <SectionHeader
+                title={'Technical Summary'}
+                titleIcon={
+                  <TechSummaryIcon
+                    alt='financial-header-icon'
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  />
+                }
+                count={totalItems}
+                showItemCount={true}
+                buttons={headerButtons}
+                iconBg={ColorCode.caseBgColor}
+                bgType='circle'
               />
-            }
-            count={totalItems}
-            showItemCount={true}
-            buttons={headerButtons}
-            iconBg={ColorCode.caseBgColor}
-            bgType='circle'
-          />
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={technicalSummaryColumns}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
-            />
-            <ListTable
-              data={technicalSummaryList}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 380px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={false}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={[]}
-              loading={isLoading}
-              error={isError ? 'Failed to Load Technical Summary data' : ''}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSortRequest}
-            />
-          </div>
+              <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={technicalSummaryColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={technicalSummaryList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 380px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={[]}
+                  loading={isLoading}
+                  error={isError ? 'Failed to Load Technical Summary data' : ''}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSortRequest}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

@@ -72,7 +72,7 @@ export const getAllActivityFilterFields = (
       { option: 'Email', value: 'Email' },
       { option: 'Task', value: 'Task' },
       { option: 'Meeting', value: 'Meeting' },
-      { option: 'Call', value: 'Call' },
+      { option: 'Call Log', value: 'Call' },
     ],
     hide: !isFieldVisibleInAnyModule('activity_type', permissionMaps),
   },
@@ -113,6 +113,7 @@ export const getAllActivityFilterFields = (
     value: 'due_date',
     type: 'date',
     operatorOption: dateOptions,
+    isFutureDateEnabled: true,
     hide: !isFieldVisibleInAnyModule('effective_end_datetime', permissionMaps),
   },
 ];
