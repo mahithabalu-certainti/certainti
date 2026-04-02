@@ -323,14 +323,33 @@ export interface IInteractionService {
     pageToken?: string;
     search?: string;
   }): Promise<any>
-  getInboxMessageById(data: {
+  getMailboxMessageById(data: {
     account_rid: string;
     messageId: string;
   }): Promise<any>
-  getInboxAttachmentById(data: {
+  getMailboxAttachmentById(data: {
     account_rid: string;
     messageId: string;
     attachmentId: string;
+  }): Promise<any>
+  getCalendarMetadata(data: { account_rid: string }): Promise<any>
+  listCalendarEvents(data: {
+    account_rid: string;
+    start_date?: string;
+    end_date?: string;
+    search?: string;
+    limit?: number;
+    pageToken?: string;
+  }): Promise<any>
+  getCalendarEventById(data: {
+    account_rid: string;
+    eventId: string;
+  }): Promise<any>
+  cancelCalendarEvent(data: {
+    account_rid: string;
+    eventId: string;
+    comment?: string;
+    userId: string;
   }): Promise<any>
 }
 

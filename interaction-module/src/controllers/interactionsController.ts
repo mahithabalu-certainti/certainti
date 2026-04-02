@@ -44,6 +44,10 @@ import {
   listInboxMessagesSchema,
   listMailboxFoldersSchema,
   listMailboxMessagesSchema,
+  calendarMetadataSchema,
+  listCalendarEventsSchema,
+  calendarEventDetailsSchema,
+  cancelCalendarEventSchema,
 } from "../lib/joi/schemas/schema";
 
 // import Joi schemas and interaction services as needed
@@ -3172,8 +3176,8 @@ async function listMailboxMessages(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function getInboxMessageById(req: Request, res: Response): Promise<void> {
-  const methodName = "Get inbox message by id";
+async function getMailboxMessageById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get mailbox message by id";
   try {
     const value = await validateRequest(
       ({
@@ -3209,7 +3213,7 @@ async function getInboxMessageById(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const result = await interactionService.getInboxMessageById({
+    const result = await interactionService.getMailboxMessageById({
       account_rid: value.account_rid,
       messageId: value.messageId,
     });
@@ -3239,8 +3243,8 @@ async function getInboxMessageById(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function getInboxAttachmentById(req: Request, res: Response): Promise<void> {
-  const methodName = "Get inbox attachment by id";
+async function getMailboxAttachmentById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get mailbox attachment by id";
   try {
     const value = await validateRequest(
       ({
@@ -3274,10 +3278,248 @@ async function getInboxAttachmentById(req: Request, res: Response): Promise<void
 
     if (!value) return;
 
-    const result = await interactionService.getInboxAttachmentById({
+    const result = await interactionService.getMailboxAttachmentById({
       account_rid: value.account_rid,
       messageId: value.messageId,
       attachmentId: value.attachmentId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function getCalendarMetadata(req: Request, res: Response): Promise<void> {
+  const methodName = "Get calendar metadata";
+  try {
+    const value = await validateRequest(req, calendarMetadataSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.getCalendarMetadata({
+      account_rid: value.account_rid,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function listCalendarEvents(req: Request, res: Response): Promise<void> {
+  const methodName = "List calendar events";
+  try {
+    const value = await validateRequest(req, listCalendarEventsSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.listCalendarEvents({
+      account_rid: value.account_rid,
+      start_date: value.start_date,
+      end_date: value.end_date,
+      search: value.search || undefined,
+      limit: Number(value.limit || 50),
+      pageToken: value.pageToken || undefined,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function getCalendarEventById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get calendar event by id";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        query: {
+          ...req.query,
+          eventId: req.params.eventId,
+        },
+      } as unknown) as Request,
+      calendarEventDetailsSchema,
+      res,
+      "GET"
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.getCalendarEventById({
+      account_rid: value.account_rid,
+      eventId: value.eventId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function cancelCalendarEvent(req: Request, res: Response): Promise<void> {
+  const methodName = "Cancel calendar event";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        body: {
+          ...req.body,
+          eventId: req.params.eventId,
+        },
+      } as unknown) as Request,
+      cancelCalendarEventSchema,
+      res
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.cancelCalendarEvent({
+      account_rid: value.account_rid,
+      eventId: value.eventId,
+      comment: value.comment || undefined,
+      userId,
     });
 
     if (result.statusCode === HttpStatus.SUCCESS) {
@@ -3348,8 +3590,12 @@ export default {
   listInboxMessages,
   listMailboxFolders,
   listMailboxMessages,
-  getInboxMessageById,
-  getInboxAttachmentById,
+  getMailboxMessageById,
+  getMailboxAttachmentById,
+  getCalendarMetadata,
+  listCalendarEvents,
+  getCalendarEventById,
+  cancelCalendarEvent,
   saveRefineSummary,
   refineSummary
 };
