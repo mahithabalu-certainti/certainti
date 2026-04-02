@@ -67,10 +67,11 @@ const normalizeFolderToken = (value?: string | null) =>
 
 const normalizeFilterText = (value: string) => value.trim().toLowerCase();
 
+const getStartOfDayTime = (dateValue: string) =>
+  new Date(`${dateValue}T00:00:00.000`).getTime();
+
 const getEndOfDayTime = (dateValue: string) => {
-  const date = new Date(dateValue);
-  date.setHours(23, 59, 59, 999);
-  return date.getTime();
+  return new Date(`${dateValue}T23:59:59.999`).getTime();
 };
 
 const getFolderCountDisplay = (folder: MailboxFolder) => {
@@ -308,7 +309,7 @@ const Inbox = () => {
 
       const receivedTime = new Date(message.received_datetime).getTime();
       if (filters.receivedFrom) {
-        const startTime = new Date(filters.receivedFrom).getTime();
+        const startTime = getStartOfDayTime(filters.receivedFrom);
         if (receivedTime < startTime) return false;
       }
       if (filters.receivedTo) {
@@ -467,6 +468,14 @@ const Inbox = () => {
     }
     setPreviewAttachment(null);
   };
+
+  useEffect(() => {
+    return () => {
+      if (previewAttachment?.objectUrl) {
+        window.URL.revokeObjectURL(previewAttachment.objectUrl);
+      }
+    };
+  }, [previewAttachment]);
 
   useEffect(() => {
     if (!activeDivider || !isDesktopLayout) return;

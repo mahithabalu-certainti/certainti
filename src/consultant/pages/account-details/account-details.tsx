@@ -1078,8 +1078,8 @@ export const AccountDetails = () => {
         name: 'Mailbox',
         key: 'inbox',
         id: AllModules.ACCOUNTS,
-        disabled: false,
-        hide: false,
+        disabled: !disable,
+        hide: !disable,
         icon: DraftEmailIcon,
       },
       {
@@ -1094,8 +1094,8 @@ export const AccountDetails = () => {
         name: 'Four Part Assessment',
         key: 'four_part_assessment',
         id: AllModules.FOUR_PART_ASSESSMENT,
-        disabled: false,
-        hide: false,
+        disabled: disable,
+        hide: disable,
         icon: FourPartIcon,
       },
       {

@@ -140,6 +140,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   caseServiceApi,
   ruleBuilderServiceApi,
   reportServiceApi,
+  chatServiceApi,
   api,
 ].forEach((api) => {
   api.interceptors.response.use(
