@@ -2,7 +2,10 @@ import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 
 import { CommonApiResponse } from '../../../common-service';
 import { caseServiceApi } from '../../../api/api';
-import { updateCaseJurisdictionPayload } from '../../types';
+import {
+  updateCaseJurisdictionPayload,
+  updateCaseSettingsPayload,
+} from '../../types';
 export interface CaseTeamMember {
   rid?: string;
   user_id: string;
@@ -59,6 +62,12 @@ export interface CaseConfigDetailsResponse extends CommonApiResponse {
     is_state_level: boolean;
     is_federal_level: boolean;
     data: CaseConfigDetailsResponse[];
+  };
+}
+export interface CaseConfigSettingsResponse extends CommonApiResponse {
+  data: {
+    assessment_methodology: string;
+    rid: string;
   };
 }
 
@@ -429,6 +438,8 @@ export const caseConfigDetailUrl = (
   type?: string
 ) =>
   `/api/jurisdictions/details/?accountRid=${accountId}&level=${level}${caseId ? `&caseRid=${caseId}` : ''}${type ? `&type=${type}` : '&type=All'}`;
+export const caseConfigSettingsUrl = (accountId: string, rid: string) =>
+  `/api/cases/settings/details/?account_rid=${accountId}&rid=${rid}`;
 
 export const fetchConfigFields = async (
   accountId: string,
@@ -438,6 +449,15 @@ export const fetchConfigFields = async (
 ): Promise<CaseConfigDetailsResponse> => {
   const { data } = await caseServiceApi.get<CaseConfigDetailsResponse>(
     caseConfigDetailUrl(accountId, level, caseId, type)
+  );
+  return data;
+};
+export const fetchConfigSettingsFields = async (
+  accountId: string,
+  rid: string
+): Promise<CaseConfigSettingsResponse> => {
+  const { data } = await caseServiceApi.get<CaseConfigSettingsResponse>(
+    caseConfigSettingsUrl(accountId, rid)
   );
   return data;
 };
@@ -457,8 +477,24 @@ export const useFetchCasesConfigFields = (
     retry: 0,
   });
 };
+export const useFetchCasesConfigSettingsFields = (
+  accountId: string,
+  rid: string
+) => {
+  return useQuery<CaseConfigSettingsResponse, Error>({
+    queryKey: ['configSettingsFields', accountId, rid],
+    queryFn: () => fetchConfigSettingsFields(accountId, rid),
+    enabled: !!accountId, // Only fetch if accountId exists
+    staleTime: 0, // No cache
+    gcTime: 0, // Immediately remove from cache
+    retry: 0,
+  });
+};
 export const getCaseConfigUrl = (): string => {
   return `/api/jurisdictions/add`;
+};
+export const getCaseConfigSettingsUrl = (): string => {
+  return `/api/cases/settings`;
 };
 
 export const updateCaseJurisdictionConfig = async (
@@ -475,6 +511,20 @@ export const updateCaseJurisdictionConfig = async (
     throw error;
   }
 };
+export const updateCaseJurisdictionConfigSettings = async (
+  body: Partial<updateCaseSettingsPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await caseServiceApi.put<CommonApiResponse>(
+      getCaseConfigSettingsUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating case details:', error);
+    throw error;
+  }
+};
 
 export const useUpdateJurisdictionConfig = () => {
   return useMutation<
@@ -483,6 +533,15 @@ export const useUpdateJurisdictionConfig = () => {
     Partial<updateCaseJurisdictionPayload>
   >({
     mutationFn: (body) => updateCaseJurisdictionConfig({ ...body }),
+  });
+};
+export const useUpdateJurisdictionConfigSettings = () => {
+  return useMutation<
+    CommonApiResponse,
+    Error,
+    Partial<updateCaseSettingsPayload>
+  >({
+    mutationFn: (body) => updateCaseJurisdictionConfigSettings({ ...body }),
   });
 };
 export interface DeleteTagPayload {

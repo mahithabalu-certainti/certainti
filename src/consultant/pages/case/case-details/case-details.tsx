@@ -76,6 +76,7 @@ import {
   TechSummaryIcon,
   WorkBreakdownIcon,
   RdStatusIcon,
+  ConfigIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -998,7 +999,7 @@ export const CaseDetails = () => {
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
-      case 'settings':
+      case 'configuration':
         return <Setting activityMenuItems={activityMenuItems} />;
       case 'activities':
         return (
@@ -1244,13 +1245,21 @@ export const CaseDetails = () => {
         icon: ChecklistIcon,
       },
       {
-        name: 'Settings',
-        key: 'settings',
+        name: 'Configuration',
+        key: 'configuration',
         id: AllMenus.CONFIGURATION,
         disabled: false,
         hide: false,
-        icon: SettingIcon,
+        icon: ConfigIcon,
         subMenu: [
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            hide: false,
+            icon: SettingIcon,
+          },
           {
             name: 'Jurisdiction Configuration',
             key: 'jurisdiction_configuration',
