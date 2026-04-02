@@ -142,7 +142,7 @@ export const getClaimJurisdictionColumns = (
 ): ListTableColumn<ClaimJurisdiction>[] => [
   {
     id: 'name',
-    label: 'Claim Jurisdiction',
+    label: 'Jurisdiction',
     sortable: false,
     sortId: 'name',
     width: '25%',
@@ -159,7 +159,7 @@ export const getClaimJurisdictionColumns = (
   },
   {
     id: 'rd_credits_fte',
-    label: 'RD Credits - FTE',
+    label: 'QRE FTE',
     sortable: false,
     sortId: 'rd_credits_fte',
     width: '25%',
@@ -174,7 +174,7 @@ export const getClaimJurisdictionColumns = (
   },
   {
     id: 'rd_credits_subcon',
-    label: 'RD Credits - SubCon',
+    label: 'QRE Sub Con',
     sortable: false,
     sortId: 'rd_credits_subcon',
     width: '25%',
@@ -189,7 +189,7 @@ export const getClaimJurisdictionColumns = (
   },
   {
     id: 'rd_credits_nonlabor',
-    label: 'RD Credits - NonLabor',
+    label: 'QRE Non Labor',
     sortable: false,
     sortId: 'rd_credits_nonlabor',
     width: '25%',

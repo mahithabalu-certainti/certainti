@@ -40,7 +40,7 @@ import {
   getFiltersFromStorage,
 } from '../../common-utils';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ACCOUNT, CASE, PROFILE, PROJECT } from '../../routes';
+import { ACCOUNT, ADMIN_PROFILE, CASE, PROFILE, PROJECT } from '../../routes';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
 import { useMsal } from '@azure/msal-react';
@@ -296,11 +296,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     const params = new URLSearchParams(searchparams); // Clone current search params
     params.set('userView', 'profile');
     navigate({
-      pathname: PROFILE,
+      pathname: showAdminSidebar ? ADMIN_PROFILE : PROFILE,
       search: params.toString(),
     });
     handleMenuClose();
-  }, [navigate, searchparams, handleMenuClose]);
+  }, [navigate, searchparams, showAdminSidebar, handleMenuClose]);
 
   const renderMenu = useMemo(
     () => (

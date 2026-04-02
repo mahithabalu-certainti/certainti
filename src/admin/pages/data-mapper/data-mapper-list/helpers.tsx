@@ -97,7 +97,7 @@ export const getDataMapperFilterFields = (
         !permissionMap?.['state_rid']?.edit,
     },
     {
-      label: 'Effective From Date',
+      label: 'Start Date',
       name: 'effective_from_date',
       type: 'date',
       operatorOption: requiredDateOptions,
@@ -107,7 +107,7 @@ export const getDataMapperFilterFields = (
         !permissionMap?.['effective_from_date']?.edit,
     },
     {
-      label: 'Effective To Date',
+      label: 'End Date',
       name: 'effective_to_date',
       type: 'date',
       operatorOption: requiredDateOptions,

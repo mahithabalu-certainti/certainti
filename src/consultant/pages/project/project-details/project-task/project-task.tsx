@@ -41,7 +41,6 @@ import {
   FilterType,
   FormFiscalDateType,
   ProjectResourcesListType,
-  SelectOption,
   SelectResourceOption,
 } from '../../../../types';
 import {
@@ -54,7 +53,7 @@ import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT_TASK } from '../../../../../api/graphql/queries/project-query';
 import { taskClient } from '../../../../../api/graphql/clients/client';
 import {
-  useGetProjectResourceCode,
+  useGetProjectResourceTaskCode,
   useGetProjectResourceTaskType,
 } from '../../../../services/project-resources/project-resources-form-service';
 import { checkPermission } from '../../../../../common-utils';
@@ -306,17 +305,21 @@ export const ProjectTask = ({
   }, [searchParams, taskId]);
 
   const resourceData = resourceDetails?.data;
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string,
-    projectID as string
-  );
-  const memoizedProjectResourceCode: SelectOption[] = useMemo(
+  const payload = {
+    account_rid: accountID || undefined,
+    search: '',
+    project_fiscal_rid: projectID || undefined,
+  };
+
+  const { data: projectResourceCodeOptions } =
+    useGetProjectResourceTaskCode(payload);
+  const memoizedProjectResourceCode = useMemo(
     () =>
-      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: item.resource_code,
-        value: item.resource_code,
+      projectResourceCodeOptions?.data?.map((item) => ({
+        label: `${item.resource_code}  ${item.project_resource_role ? `(${item.project_resource_role})` : ''}`,
+        value: item.rid,
       })) || [],
-    [projectResourceCodeOptions?.data?.resourceCodes]
+    [projectResourceCodeOptions?.data]
   );
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);

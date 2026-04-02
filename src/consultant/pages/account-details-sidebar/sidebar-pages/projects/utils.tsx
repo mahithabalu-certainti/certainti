@@ -135,8 +135,8 @@ export const projectFilterFields = (
     options: IsAssessedOptions,
     operatorOption: fiscalOptions,
     hide:
-      !projectPermissionMap?.['is_assesed']?.read &&
-      !projectPermissionMap?.['is_assesed']?.edit,
+      !projectPermissionMap?.['is_assessed']?.read &&
+      !projectPermissionMap?.['is_assessed']?.edit,
   },
   {
     name: 'Project Classification',

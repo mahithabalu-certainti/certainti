@@ -5,3 +5,4 @@ export { default as RDForm } from './rd-form/rd-form';
 export { default as QualifiedProjects } from './qualified-projects/qualified-projects';
 export { default as FinancialWorkingForm } from './financial-working/financial-form';
 export { default as DossierSummary } from './dossier-summary/dossier-summary';
+export { default as CloseCaseForm } from './close-case/close-case-form';

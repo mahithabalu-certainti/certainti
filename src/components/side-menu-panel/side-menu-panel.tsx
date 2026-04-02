@@ -167,6 +167,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('fpa_id');
     searchParams.delete('navigate_source');
     searchParams.delete('main_navigate_source');
+    searchParams.delete('is_project_signed_off');
 
     if (parentKey) {
       // Submenu item - check if navigation is actually needed

@@ -77,6 +77,15 @@ export interface CancelCalendarEventResponse {
   already_cancelled: boolean;
 }
 
+/**
+ * Fetches calendar metadata for the supplied account.
+ *
+ * Input:
+ * - `accountRid`: account RID used to resolve the mailbox calendar owner.
+ *
+ * Output:
+ * - Returns the calendar owner email and the allowed read-only calendar actions.
+ */
 export const fetchCalendarMetadata = async (
   accountRid: string
 ): Promise<CalendarMetadata> => {
@@ -88,6 +97,19 @@ export const fetchCalendarMetadata = async (
   return data.data;
 };
 
+/**
+ * Fetches one page of calendar events for the selected account and date range.
+ *
+ * Input:
+ * - `params.accountRid`: account RID used to resolve the calendar.
+ * - `params.startDate` / `params.endDate`: optional ISO date range boundaries.
+ * - `params.search`: optional search text for filtering events.
+ * - `params.limit`: optional page size.
+ * - `params.pageToken`: optional pagination token from a previous response.
+ *
+ * Output:
+ * - Returns the calendar owner, active range, next-page token, and event summaries.
+ */
 export const fetchCalendarEvents = async (params: {
   accountRid: string;
   startDate?: string;
@@ -113,6 +135,15 @@ export const fetchCalendarEvents = async (params: {
   return data.data;
 };
 
+/**
+ * Fetches all calendar events for a range by following every paginated response.
+ *
+ * Input:
+ * - `params`: account RID, range, search, and page size inputs for event retrieval.
+ *
+ * Output:
+ * - Returns a single aggregated calendar event response with all pages combined.
+ */
 export const fetchAllCalendarEvents = async (params: {
   accountRid: string;
   startDate?: string;
@@ -150,6 +181,16 @@ export const fetchAllCalendarEvents = async (params: {
   };
 };
 
+/**
+ * Fetches the full detail payload for a single calendar event.
+ *
+ * Input:
+ * - `accountRid`: account RID used to resolve the calendar.
+ * - `eventId`: Microsoft Graph calendar event identifier.
+ *
+ * Output:
+ * - Returns the selected event detail with attendees, body, and meeting-link information.
+ */
 export const fetchCalendarEventById = async (
   accountRid: string,
   eventId: string
@@ -166,6 +207,17 @@ export const fetchCalendarEventById = async (
   return data.data;
 };
 
+/**
+ * Posts a cancel-invite request for a calendar event.
+ *
+ * Input:
+ * - `params.accountRid`: account RID used to resolve the calendar.
+ * - `params.eventId`: calendar event identifier to cancel.
+ * - `params.comment`: optional cancellation comment sent to invitees.
+ *
+ * Output:
+ * - Returns the cancellation status payload for the selected event.
+ */
 export const postCancelCalendarEvent = async (params: {
   accountRid: string;
   eventId: string;
@@ -181,6 +233,15 @@ export const postCancelCalendarEvent = async (params: {
   return data.data;
 };
 
+/**
+ * React Query hook for calendar metadata.
+ *
+ * Input:
+ * - `accountRid`: account RID to load calendar metadata for.
+ *
+ * Output:
+ * - Returns the query state and the calendar metadata payload.
+ */
 export const useCalendarMetadata = (accountRid: string) =>
   useQuery<CalendarMetadata, AxiosError>({
     queryKey: ['calendar-metadata', accountRid],
@@ -189,6 +250,15 @@ export const useCalendarMetadata = (accountRid: string) =>
     retry: 0,
   });
 
+/**
+ * React Query hook for the aggregated calendar event list.
+ *
+ * Input:
+ * - `params`: account RID and range/search inputs for calendar retrieval.
+ *
+ * Output:
+ * - Returns the query state and all event pages combined into a single response.
+ */
 export const useCalendarEvents = (params: {
   accountRid: string;
   startDate?: string;
@@ -203,6 +273,16 @@ export const useCalendarEvents = (params: {
     retry: 0,
   });
 
+/**
+ * React Query hook for the selected calendar event detail.
+ *
+ * Input:
+ * - `accountRid`: account RID used to resolve the calendar.
+ * - `eventId`: optional selected event identifier.
+ *
+ * Output:
+ * - Returns the query state and the selected calendar event payload.
+ */
 export const useCalendarEventById = (accountRid: string, eventId?: string) =>
   useQuery<CalendarEventDetail, AxiosError>({
     queryKey: ['calendar-event-detail', accountRid, eventId],
@@ -211,6 +291,15 @@ export const useCalendarEventById = (accountRid: string, eventId?: string) =>
     retry: 0,
   });
 
+/**
+ * React Query mutation hook for canceling a calendar invite.
+ *
+ * Input:
+ * - Mutation variables containing `accountRid`, `eventId`, and an optional `comment`.
+ *
+ * Output:
+ * - Returns the mutation state and invalidates calendar queries after a successful cancel.
+ */
 export const useCancelCalendarEvent = () => {
   const queryClient = useQueryClient();
 

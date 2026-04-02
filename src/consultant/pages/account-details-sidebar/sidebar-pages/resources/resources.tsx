@@ -1105,6 +1105,7 @@ const Resource: React.FC<ResourceProps> = ({
             : true
         }
         activityMenuItems={activityMenuItems}
+        hideTabPanel={showUploads}
       />
       {showUploads ? (
         <Uploads accountId={accountid} attachID={resId} />

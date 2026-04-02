@@ -33,26 +33,71 @@ const MONTH_NAMES = [
   'December',
 ];
 
+/**
+ * Left-pads numeric date values for ISO-style date formatting.
+ *
+ * Input:
+ * - `value`: numeric date or time segment.
+ *
+ * Output:
+ * - Returns a two-character string.
+ */
 const pad = (value: number) => `${value}`.padStart(2, '0');
 
+/**
+ * Returns a copy of the supplied date pinned to the start of the day.
+ *
+ * Input:
+ * - `date`: source date.
+ *
+ * Output:
+ * - Returns a new date set to `00:00:00.000`.
+ */
 const startOfDay = (date: Date) => {
   const next = new Date(date);
   next.setHours(0, 0, 0, 0);
   return next;
 };
 
+/**
+ * Returns a copy of the supplied date pinned to the end of the day.
+ *
+ * Input:
+ * - `date`: source date.
+ *
+ * Output:
+ * - Returns a new date set to `23:59:59.999`.
+ */
 const endOfDay = (date: Date) => {
   const next = new Date(date);
   next.setHours(23, 59, 59, 999);
   return next;
 };
 
+/**
+ * Calculates the first day of the visible week for a date anchor.
+ *
+ * Input:
+ * - `date`: source date.
+ *
+ * Output:
+ * - Returns the week start date at local midnight.
+ */
 const startOfWeek = (date: Date) => {
   const next = startOfDay(date);
   next.setDate(next.getDate() - next.getDay());
   return next;
 };
 
+/**
+ * Calculates the final day of the visible week for a date anchor.
+ *
+ * Input:
+ * - `date`: source date.
+ *
+ * Output:
+ * - Returns the week end date at local end-of-day.
+ */
 const endOfWeek = (date: Date) => {
   const next = startOfWeek(date);
   next.setDate(next.getDate() + 6);
@@ -60,29 +105,83 @@ const endOfWeek = (date: Date) => {
   return next;
 };
 
+/**
+ * Calculates the first day of the visible month for a date anchor.
+ *
+ * Input:
+ * - `date`: source date.
+ *
+ * Output:
+ * - Returns the first day of the current month.
+ */
 const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
 
+/**
+ * Calculates the final day of the visible month for a date anchor.
+ *
+ * Input:
+ * - `date`: source date.
+ *
+ * Output:
+ * - Returns the last day of the current month at local end-of-day.
+ */
 const endOfMonth = (date: Date) => {
   const next = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   next.setHours(23, 59, 59, 999);
   return next;
 };
 
+/**
+ * Formats a `Date` object as `YYYY-MM-DD`.
+ *
+ * Input:
+ * - `date`: source date.
+ *
+ * Output:
+ * - Returns an ISO-like local date key used by the calendar UI.
+ */
 const toIsoDate = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
+/**
+ * Extracts the raw `YYYY-MM-DD` date portion from a calendar timestamp.
+ *
+ * Input:
+ * - `value`: calendar event timestamp string.
+ *
+ * Output:
+ * - Returns the date key when present, otherwise `null`.
+ */
 const getRawDateKey = (value?: string | null) => {
   if (!value) return null;
   const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
   return match?.[1] || null;
 };
 
+/**
+ * Safely parses an optional calendar timestamp.
+ *
+ * Input:
+ * - `value`: calendar timestamp string.
+ *
+ * Output:
+ * - Returns a valid `Date` instance or `null` when parsing fails.
+ */
 const parseDate = (value?: string | null) => {
   if (!value) return null;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+/**
+ * Formats the time portion of a calendar event for list display.
+ *
+ * Input:
+ * - `value`: calendar timestamp string.
+ *
+ * Output:
+ * - Returns a localized time string or `All day`.
+ */
 const formatTime = (value?: string | null) => {
   if (!value) return 'All day';
   const match = value.match(/T(\d{2}):(\d{2})/);
@@ -94,6 +193,15 @@ const formatTime = (value?: string | null) => {
   });
 };
 
+/**
+ * Formats a date heading used by the grouped calendar event list.
+ *
+ * Input:
+ * - `isoDate`: date key in `YYYY-MM-DD` format.
+ *
+ * Output:
+ * - Returns a human-readable heading with weekday, month, day, and year.
+ */
 const formatDateHeading = (isoDate: string) => {
   const parsed = new Date(`${isoDate}T00:00:00`);
   return parsed.toLocaleDateString([], {
@@ -104,6 +212,15 @@ const formatDateHeading = (isoDate: string) => {
   });
 };
 
+/**
+ * Formats a timestamp for the event details panel.
+ *
+ * Input:
+ * - `value`: calendar timestamp string.
+ *
+ * Output:
+ * - Returns a localized date-time string or `-` when unavailable.
+ */
 const formatDateTime = (value?: string | null) => {
   const parsed = parseDate(value);
   if (!parsed) return '-';
@@ -117,6 +234,15 @@ const formatDateTime = (value?: string | null) => {
   });
 };
 
+/**
+ * Removes HTML markup from calendar body content before previewing it in the UI.
+ *
+ * Input:
+ * - `html`: raw HTML body content.
+ *
+ * Output:
+ * - Returns a compact plain-text string.
+ */
 const stripHtml = (html?: string | null) =>
   (html || '')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
@@ -125,6 +251,15 @@ const stripHtml = (html?: string | null) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+/**
+ * Maps the raw attendee response code to a readable label.
+ *
+ * Input:
+ * - `status`: attendee response status from the backend.
+ *
+ * Output:
+ * - Returns a UI-friendly response label.
+ */
 const responseLabel = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'accepted':
@@ -141,6 +276,15 @@ const responseLabel = (status: string) => {
   }
 };
 
+/**
+ * Maps the attendee response code to the badge styling used in the UI.
+ *
+ * Input:
+ * - `status`: attendee response status from the backend.
+ *
+ * Output:
+ * - Returns the CSS utility classes for the response badge.
+ */
 const responseColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'accepted':
@@ -155,6 +299,16 @@ const responseColor = (status: string) => {
   }
 };
 
+/**
+ * Builds the visible range title for the current day, week, or month mode.
+ *
+ * Input:
+ * - `mode`: current calendar range mode.
+ * - `anchorDate`: selected anchor date.
+ *
+ * Output:
+ * - Returns the heading text for the current calendar range.
+ */
 const rangeLabel = (mode: RangeMode, anchorDate: Date) => {
   if (mode === 'day') {
     return formatDateHeading(toIsoDate(anchorDate));

@@ -27,6 +27,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { AllPermissions } from '../../../common-service';
 import { FourPartAssessmentInteractionQuestions } from '../../types';
+import { TruncateWithTooltip } from '../../../components';
 
 interface FourPartAssessmentDetailsProps {
   moduleLevel: 'account' | 'project' | 'case';
@@ -262,9 +263,18 @@ const FourPartAssessmentDetails: React.FC<FourPartAssessmentDetailsProps> = ({
                 <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
                   Summary
                 </div>
-                <div className='font-medium text-[13px] text-[#425A76] px-6 my-[6px]'>
-                  {data?.record_information?.tracker_one_liner || '-'}
-                </div>
+                <TruncateWithTooltip
+                  text={undefined}
+                  maxWidth={'100%'}
+                  className='break-all max-w-full inline-block'
+                  alwaysShowTooltip={true}
+                  tooltipMaxWidth={'50vw'}
+                  whiteSpace='normal'
+                >
+                  <span className='inline-block font-medium text-[13px] text-[#425A76] px-6 my-[6px]'>
+                    {data?.record_information?.tracker_one_liner || '-'}
+                  </span>
+                </TruncateWithTooltip>
               </div>
             )}
           </>

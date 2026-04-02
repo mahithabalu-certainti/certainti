@@ -96,7 +96,9 @@ const FinancialWorkingUKTable = ({
                 </td>
                 <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                   {costDisplay(
-                    project['Total Project Value/Labor'] || 0,
+                    Number(project['Total Project Value/Labor'] || 0).toFixed(
+                      2
+                    ),
                     currencySymbol || '$'
                   )}
                 </td>
@@ -118,7 +120,10 @@ const FinancialWorkingUKTable = ({
                 Total Project to be shared with HMRC
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] font-bold text-[#2D3E4F]'>
-                {costDisplay(hmrcTotal || 0, currencySymbol || '$')}
+                {costDisplay(
+                  Number(hmrcTotal || 0).toFixed(2),
+                  currencySymbol || '$'
+                )}
               </td>
             </tr>
           )}
@@ -161,7 +166,7 @@ const FinancialWorkingUKPercentageTable = ({
               </td>
               <td className='border border-[#CBD6E2] px-3 py-2 text-right text-[13px] text-[#425A76]'>
                 {typeof value === 'number' && key !== 'Total Customer Groups'
-                  ? costDisplay(value as number, currencySymbol || '$')
+                  ? costDisplay(Number(value).toFixed(2), currencySymbol || '$')
                   : (value as React.ReactNode)}
               </td>
             </tr>
@@ -250,14 +255,14 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
   // Call appropriate API when federal tab changes
 
   useEffect(() => {
-    if (!dossierFinancialStatus) return; // Wait for initiate to complete first
-
-    if (activeTab === 0) {
-      // Federal Yes: Call handleViewFinancialHighlights
-      handleViewFinancialHighlights();
+    if (dossierFinancialStatus || isFinancialWorkingSignoff) {
+      if (activeTab === 0) {
+        // Federal Yes: Call handleViewFinancialHighlights
+        handleViewFinancialHighlights();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, dossierFinancialStatus]);
+  }, [activeTab, dossierFinancialStatus, isFinancialWorkingSignoff]);
 
   // Call region API when region changes in Federal No mode (activeTab === 1)
   useEffect(() => {
@@ -268,7 +273,12 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       handleViewFinancialHighlightsForRegion();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRegion, activeTab, dossierFinancialStatus]);
+  }, [
+    selectedRegion,
+    activeTab,
+    dossierFinancialStatus,
+    isFinancialWorkingSignoff,
+  ]);
 
   const isSignoffVisible = checkPermission(
     permission,
@@ -495,7 +505,7 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
       <div className='pb-2'>
         <div className='flex items-center justify-between capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
           <div>{caseDetails?.country_name} Financial Information</div>
-          <div>
+          <div className='flex items-center gap-2'>
             <TextButton
               label={'Approve'}
               onClick={() => setIsSignOffModalOpen(true)}
@@ -753,8 +763,8 @@ const FinancialWorkingForm: React.FC<FinancialWorkingFormProps> = ({
         </DialogTitle>
         <DialogContent>
           <Typography className='text-[14px] text-[#425A76]'>
-            The Revoke will be applied on RD form also. Please confirm you want
-            to apply revoke to both.
+            The revoke action will be applied to the RD form as well. Kindly
+            confirm if you would like the revoke to be applied to both
           </Typography>
         </DialogContent>
         <DialogActions className='pr-4 mb-2'>

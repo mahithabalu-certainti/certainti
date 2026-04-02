@@ -6,6 +6,7 @@ import {
   TechnicalSummaryList,
   TechnicalSummaryListResponse,
   TechnicalSummaryListURLParams,
+  TechnicalSummaryRefinePromptRequest,
   TechnicalSummaryTextUpdateRequest,
   TechnicalSummaryTextUpdateResponse,
 } from '../../types';
@@ -52,7 +53,8 @@ export const useTechnicalSummaryList = (
 const fetchTechnicalSummaryDetails = async (
   tech_summary_rid: string,
   account_rid: string,
-  project_fiscal_rid: string
+  project_fiscal_rid: string,
+  case_rid?: string
 ): Promise<TechnicalSummaryDetails> => {
   const response =
     await interactionServiceApi.get<TechnicalSummaryDetailsResponse>(
@@ -60,6 +62,7 @@ const fetchTechnicalSummaryDetails = async (
         tech_summary_rid,
         account_rid,
         project_fiscal_rid,
+        case_rid,
       })
     );
   return response.data.data;
@@ -68,7 +71,8 @@ const fetchTechnicalSummaryDetails = async (
 export const useTechnicalSummaryDetails = (
   tech_summary_rid: string,
   account_rid: string,
-  project_fiscal_rid: string
+  project_fiscal_rid: string,
+  case_rid?: string
 ): UseQueryResult<TechnicalSummaryDetails | undefined, Error> => {
   return useQuery<TechnicalSummaryDetails | undefined, Error>({
     queryKey: [
@@ -76,12 +80,14 @@ export const useTechnicalSummaryDetails = (
       tech_summary_rid,
       account_rid,
       project_fiscal_rid,
+      case_rid,
     ],
     queryFn: () =>
       fetchTechnicalSummaryDetails(
         tech_summary_rid,
         account_rid,
-        project_fiscal_rid
+        project_fiscal_rid,
+        case_rid
       ),
     retry: 0,
     gcTime: 0,
@@ -95,8 +101,23 @@ export const updateTechnicalSummaryText = async (
 ): Promise<TechnicalSummaryTextUpdateResponse> => {
   try {
     const { data } =
-      await interactionServiceApi.put<TechnicalSummaryTextUpdateResponse>(
-        '/api/interactions/technicalSummary/update',
+      await interactionServiceApi.post<TechnicalSummaryTextUpdateResponse>(
+        '/api/interactions/refineSummary/save',
+        body
+      );
+    return data;
+  } catch (error) {
+    console.error('Error updating technical summary text:', error);
+    throw error;
+  }
+};
+export const updateRefinePrompt = async (
+  body: TechnicalSummaryRefinePromptRequest
+): Promise<TechnicalSummaryTextUpdateResponse> => {
+  try {
+    const { data } =
+      await interactionServiceApi.post<TechnicalSummaryTextUpdateResponse>(
+        '/api/interactions/refineSummary',
         body
       );
     return data;
@@ -113,6 +134,15 @@ export const useUpdateTechnicalSummaryText = () => {
     TechnicalSummaryTextUpdateRequest
   >({
     mutationFn: (body) => updateTechnicalSummaryText(body),
+  });
+};
+export const useUpdateRefinePrompt = () => {
+  return useMutation<
+    TechnicalSummaryTextUpdateResponse,
+    Error,
+    TechnicalSummaryRefinePromptRequest
+  >({
+    mutationFn: (body) => updateRefinePrompt(body),
   });
 };
 

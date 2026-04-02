@@ -468,6 +468,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
         onSearch={(text) => setSearchText(text)}
         showAddActivity={showUploads ? false : true}
         activityMenuItems={activityMenuItems}
+        hideTabPanel={showUploads}
       />
       {isTimeLineView ? (
         <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>

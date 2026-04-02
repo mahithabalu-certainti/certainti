@@ -113,6 +113,12 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Case Status',
           value: cases?.status_name || '-',
+          className: (() => {
+            const status = cases?.status_name;
+            if (!status) return '';
+            if (status === 'Closed') return 'text-[#3EA72F] font-semibold';
+            return '';
+          })(),
         },
 
         {
@@ -139,19 +145,14 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         },
         {
           label: 'Case Progress',
-          value: (() => {
-            const pct = Number(cases?.case_completion_percentage);
-            if (!cases?.case_completion_percentage) return '-';
-            if (pct >= 80) return 'On Track';
-            if (pct >= 60) return 'At Risk';
-            return 'Critical';
-          })(),
+          value: cases?.case_progress || '-',
           className: (() => {
-            const pct = Number(cases?.case_completion_percentage);
-            if (!cases?.case_completion_percentage) return '';
-            if (pct >= 80) return 'text-[#3EA72F] font-semibold';
-            if (pct >= 60) return 'text-[#FF9800] font-semibold';
-            return 'text-[#FF3C03] font-semibold';
+            const progress = cases?.case_progress;
+            if (!progress) return '';
+            if (progress === 'On Track') return 'text-[#3EA72F] font-semibold';
+            if (progress === 'At Risk') return 'text-[#FF9800] font-semibold';
+            if (progress === 'Critical') return 'text-[#FF3C03] font-semibold';
+            return '';
           })(),
         },
       ],
