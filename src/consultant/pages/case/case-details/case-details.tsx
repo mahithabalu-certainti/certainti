@@ -556,7 +556,7 @@ export const CaseDetails = () => {
       return transformCaseData(caseData, permissionMap, accountPermissionMap);
     }
     return [];
-  }, [caseData]);
+  }, [caseData, permissionMap, accountPermissionMap]);
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&

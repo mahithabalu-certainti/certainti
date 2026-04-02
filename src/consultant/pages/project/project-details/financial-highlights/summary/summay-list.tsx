@@ -97,7 +97,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [financialSummaryViewEditFields]);
+  }, [projectViewEditFields]);
 
   const { data, isLoading, isError } = useProjectFinancialSummary({
     account_rid: accountId,

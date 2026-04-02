@@ -354,7 +354,14 @@ export const ProjectDetails = () => {
       result
     );
     setProjectData(updatedProject as unknown as NewProjectData);
-    setProjectDetails(transformProjectData(updatedProject as projectDetails));
+    setProjectDetails(
+      transformProjectData(
+        updatedProject as projectDetails,
+        permissionMap,
+        accountPermissionMap,
+        isProjectSignedOff
+      )
+    );
   };
 
   const handleAdjustmentFactor = async (newValue: string) => {
@@ -374,7 +381,14 @@ export const ProjectDetails = () => {
       );
 
       setProjectData(updatedProject as unknown as NewProjectData);
-      setProjectDetails(transformProjectData(updatedProject as projectDetails));
+      setProjectDetails(
+        transformProjectData(
+          updatedProject as projectDetails,
+          permissionMap,
+          accountPermissionMap,
+          isProjectSignedOff
+        )
+      );
       refetch();
     } catch (err) {
       console.log(err);

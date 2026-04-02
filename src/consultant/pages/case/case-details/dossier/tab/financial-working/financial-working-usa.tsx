@@ -576,9 +576,10 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
 
     // Keys whose values should be displayed as-is (no number formatting)
     const yearLikeKeys = new Set(
-      dataKeys.filter((key) =>
-        key.toLowerCase().includes('fiscal year') ||
-        key.toLowerCase() === 'fiscal year'
+      dataKeys.filter(
+        (key) =>
+          key.toLowerCase().includes('fiscal year') ||
+          key.toLowerCase() === 'fiscal year'
       )
     );
 
@@ -611,7 +612,9 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               (!isNaN(Number(val)) || val.endsWith('%')));
 
           // For year-like keys (e.g. "Fiscal Year"), display the raw value without number formatting
-          const displayValue = isYearLikeKey ? (val ?? '-') : (formatValue(val) || '-');
+          const displayValue = isYearLikeKey
+            ? (val ?? '-')
+            : formatValue(val) || '-';
 
           return (
             <div
