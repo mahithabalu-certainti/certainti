@@ -69,6 +69,11 @@ const reportServiceApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const chatServiceApi = axios.create({
+  baseURL: resolveServiceBaseUrl(import.meta.env.VITE_CHAT_URL),
+  headers: { 'Content-Type': 'application/json' },
+});
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
@@ -86,17 +91,21 @@ const api = axios.create({
   caseServiceApi,
   ruleBuilderServiceApi,
   reportServiceApi,
+  chatServiceApi,
   api,
 ].forEach((api) => {
   api.interceptors.request.use(
     (config) => {
       const auth = localStorage.getItem('auth');
-      const { authToken, userId } = auth ? JSON.parse(auth) : {};
+      const { authToken, userId, azureId } = auth ? JSON.parse(auth) : {};
       if (authToken) {
         config.headers.Authorization = `Bearer ${authToken}`;
       }
       if (userId) {
         config.headers['x-user-id'] = userId;
+      }
+      if (azureId) {
+        config.headers['x-azure-id'] = azureId;
       }
       return config;
     },
@@ -252,5 +261,6 @@ export {
   caseServiceApi,
   ruleBuilderServiceApi,
   reportServiceApi,
+  chatServiceApi,
   api,
 };

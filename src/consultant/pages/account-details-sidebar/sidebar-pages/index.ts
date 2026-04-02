@@ -1,5 +1,6 @@
 export * from './activities';
 export * from './attachments';
+export * from './calendar';
 export * from './cases';
 export * from './checklist';
 export * from './details';
