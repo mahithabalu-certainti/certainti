@@ -226,7 +226,7 @@ export class InteractionChildService {
         data: { auditInfo: finalData, count: totalCount },
       };
     } catch (err) {
-      logMessage(`Error listing AI assessment audit: ${err}`);
+      logMessage(`Error listing AI assessment audit: ${err}`); 
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
