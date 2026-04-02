@@ -46,6 +46,7 @@ import {
   Checklist,
   Details,
   FinancialSummary,
+  Inbox,
   Import,
   Notes,
   Projects,
@@ -950,6 +951,8 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'inbox':
+        return <Inbox />;
       case 'four_part_assessment':
         return (
           <FourPartAssessment
@@ -1108,6 +1111,14 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Mailbox',
+        key: 'inbox',
+        id: AllModules.ACCOUNTS,
+        disabled: !disable,
+        hide: !disable,
+        icon: DraftEmailIcon,
       },
       {
         name: 'Interactions',
