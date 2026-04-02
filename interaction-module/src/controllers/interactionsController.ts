@@ -3020,6 +3020,17 @@ async function getInteractionAssessmentSource(req: Request, res: Response) {
     });
   }
 }
+
+/**
+ * Handles the mailbox inbox listing endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.query.limit`: optional number of inbox messages to return.
+ *
+ * Output:
+ * - Sends a normalized inbox message list response or an error response.
+ */
 async function listInboxMessages(req: Request, res: Response): Promise<void> {
   const methodName = "List inbox messages";
   try {
@@ -3150,6 +3161,15 @@ async function listAiAssessmentAudit(req: Request, res: Response): Promise<void>
   }
 }
 
+/**
+ * Handles the mailbox folder tree endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ *
+ * Output:
+ * - Sends the normalized mailbox folder tree or an error response.
+ */
 async function listMailboxFolders(req: Request, res: Response): Promise<void> {
   const methodName = "List mailbox folders";
   try {
@@ -3202,6 +3222,19 @@ async function listMailboxFolders(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles the mailbox messages endpoint for folder browsing, search, and pagination.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.query.folderId` / `req.query.folderPath`: optional folder selector.
+ * - `req.query.limit`: optional page size.
+ * - `req.query.pageToken`: optional next-page token from a previous response.
+ * - `req.query.search`: optional mailbox search text.
+ *
+ * Output:
+ * - Sends normalized mailbox message data or an error response.
+ */
 async function listMailboxMessages(req: Request, res: Response): Promise<void> {
   const methodName = "List mailbox messages";
   try {
@@ -3259,6 +3292,16 @@ async function listMailboxMessages(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles the mailbox message details endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.params.messageId`: mailbox message identifier.
+ *
+ * Output:
+ * - Sends the normalized mailbox message detail payload or an error response.
+ */
 async function getMailboxMessageById(req: Request, res: Response): Promise<void> {
   const methodName = "Get mailbox message by id";
   try {
@@ -3436,6 +3479,17 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
   }
 }
 
+/**
+ * Handles the mailbox attachment details endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.params.messageId`: parent mailbox message identifier.
+ * - `req.params.attachmentId`: mailbox attachment identifier.
+ *
+ * Output:
+ * - Sends the normalized attachment payload or an error response.
+ */
 async function getMailboxAttachmentById(req: Request, res: Response): Promise<void> {
   const methodName = "Get mailbox attachment by id";
   try {
