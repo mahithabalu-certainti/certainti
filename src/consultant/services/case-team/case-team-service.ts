@@ -56,10 +56,6 @@ export interface CaseConfigDetailsResponse {
   rid: string;
   states: string[];
 }
-export interface CaseConfigSettingsResponse {
-  rid: string;
-  assessment_methodology: string;
-}
 export interface CaseConfigDetailsResponse extends CommonApiResponse {
   data: {
     states(states: unknown): unknown;
@@ -72,7 +68,6 @@ export interface CaseConfigSettingsResponse extends CommonApiResponse {
   data: {
     assessment_methodology: string;
     rid: string;
-    data: CaseConfigSettingsResponse[];
   };
 }
 
@@ -487,7 +482,7 @@ export const useFetchCasesConfigSettingsFields = (
   rid: string
 ) => {
   return useQuery<CaseConfigSettingsResponse, Error>({
-    queryKey: ['configFields', accountId, rid],
+    queryKey: ['configSettingsFields', accountId, rid],
     queryFn: () => fetchConfigSettingsFields(accountId, rid),
     enabled: !!accountId, // Only fetch if accountId exists
     staleTime: 0, // No cache

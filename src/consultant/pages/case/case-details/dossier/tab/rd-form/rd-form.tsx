@@ -438,10 +438,7 @@ const RDForm: React.FC<RDFormProps> = ({
           <div className='p-3'>
             {previewData.data.rdformUrl ? (
               <PdfViewer
-                // base64={previewData.data.rdformUrl}
-                url={
-                  'https://raw.githubusercontent.com/mozilla/pdf.js/master/test/pdfs/160F-2019.pdf'
-                }
+                base64={previewData.data.rdformUrl}
                 isLoadingPdf={isPreviewLoading}
                 isPdfError={isPreviewError}
                 downloadName={downloadName}
