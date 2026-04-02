@@ -77,6 +77,15 @@ export interface MailboxMessagesResponse {
   messages: InboxMessageListItem[];
 }
 
+/**
+ * Fetches the mailbox folder tree for the supplied account.
+ *
+ * Input:
+ * - `accountRid`: account RID used by the backend to resolve mailbox configuration.
+ *
+ * Output:
+ * - Returns the mailbox owner email and the normalized folder hierarchy.
+ */
 export const fetchMailboxFolders = async (
   accountRid: string
 ): Promise<MailboxFoldersResponse> => {
@@ -91,6 +100,19 @@ export const fetchMailboxFolders = async (
   return data.data;
 };
 
+/**
+ * Fetches mailbox messages for a folder, search term, or pagination cursor.
+ *
+ * Input:
+ * - `params.accountRid`: account RID used to resolve the mailbox.
+ * - `params.folderId` / `params.folderPath`: optional folder selection.
+ * - `params.limit`: optional page size.
+ * - `params.pageToken`: optional pagination token from the previous response.
+ * - `params.search`: optional server-side mailbox search text.
+ *
+ * Output:
+ * - Returns mailbox owner details, the selected folder, the next page token, and message rows.
+ */
 export const fetchMailboxMessages = async (params: {
   accountRid: string;
   folderId?: string;
@@ -115,6 +137,16 @@ export const fetchMailboxMessages = async (params: {
   return data.data;
 };
 
+/**
+ * Fetches full details for a single mailbox message.
+ *
+ * Input:
+ * - `accountRid`: account RID used to resolve the mailbox.
+ * - `messageId`: Microsoft Graph message identifier.
+ *
+ * Output:
+ * - Returns the selected message with sender, recipients, body, metadata, and attachment summary data.
+ */
 export const fetchInboxMessageById = async (
   accountRid: string,
   messageId: string
@@ -130,6 +162,17 @@ export const fetchInboxMessageById = async (
   return data.data;
 };
 
+/**
+ * Fetches a single mailbox attachment payload for preview or download.
+ *
+ * Input:
+ * - `accountRid`: account RID used to resolve the mailbox.
+ * - `messageId`: parent message identifier.
+ * - `attachmentId`: attachment identifier from the message details response.
+ *
+ * Output:
+ * - Returns attachment metadata and inline base64 content when the backend allows it.
+ */
 export const fetchInboxAttachmentById = async (
   accountRid: string,
   messageId: string,
@@ -149,6 +192,15 @@ export const fetchInboxAttachmentById = async (
   return data.data;
 };
 
+/**
+ * React Query hook for the mailbox folder tree.
+ *
+ * Input:
+ * - `accountRid`: account RID to load folders for.
+ *
+ * Output:
+ * - Returns the folder query state and normalized mailbox folder data.
+ */
 export const useMailboxFolders = (accountRid: string) =>
   useQuery<MailboxFoldersResponse, AxiosError>({
     queryKey: ['mailbox-folders', accountRid],
@@ -157,6 +209,15 @@ export const useMailboxFolders = (accountRid: string) =>
     retry: 0,
   });
 
+/**
+ * React Query hook for mailbox message pages.
+ *
+ * Input:
+ * - `params`: mailbox account, folder, page token, limit, and search options.
+ *
+ * Output:
+ * - Returns the message query state and a paged mailbox message response.
+ */
 export const useMailboxMessages = (params: {
   accountRid: string;
   folderId?: string;
@@ -172,6 +233,16 @@ export const useMailboxMessages = (params: {
     retry: 0,
   });
 
+/**
+ * React Query hook for a single mailbox message detail payload.
+ *
+ * Input:
+ * - `accountRid`: account RID for mailbox resolution.
+ * - `messageId`: selected mailbox message identifier.
+ *
+ * Output:
+ * - Returns the detail query state and the selected mailbox message payload.
+ */
 export const useInboxMessageById = (accountRid: string, messageId?: string) =>
   useQuery<InboxMessageDetails, AxiosError>({
     queryKey: ['account-mailbox-message', accountRid, messageId],
