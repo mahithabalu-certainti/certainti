@@ -27,12 +27,31 @@ import {
 } from '../../../../services/interactions/mailbox-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
+/**
+ * Flattens the nested mailbox folder tree into a list while preserving nesting level.
+ *
+ * Input:
+ * - `folders`: nested mailbox folders from the backend.
+ * - `level`: current nesting depth used for indentation.
+ *
+ * Output:
+ * - Returns a flat array of folders with an added `level` property.
+ */
 const flattenFolders = (folders: MailboxFolder[], level = 0) =>
   folders.flatMap((folder) => [
     { ...folder, level },
     ...flattenFolders(folder.children || [], level + 1),
   ]);
 
+/**
+ * Chooses the default folder to show when the mailbox first loads.
+ *
+ * Input:
+ * - `folders`: top-level mailbox folder tree.
+ *
+ * Output:
+ * - Returns the inbox folder when available, otherwise the first folder, otherwise `null`.
+ */
 const findDefaultFolder = (folders: MailboxFolder[]) => {
   const allFolders = flattenFolders(folders);
   return (
@@ -62,18 +81,63 @@ type MailboxFilters = {
   receivedTo: string;
 };
 
+/**
+ * Normalizes folder names and well-known names for case-insensitive comparisons.
+ *
+ * Input:
+ * - `value`: raw folder name or well-known token.
+ *
+ * Output:
+ * - Returns a lowercase token with whitespace removed.
+ */
 const normalizeFolderToken = (value?: string | null) =>
   (value || '').toLowerCase().replace(/\s+/g, '');
 
+/**
+ * Normalizes free-text filter input before applying message filters.
+ *
+ * Input:
+ * - `value`: user-entered filter text.
+ *
+ * Output:
+ * - Returns trimmed lowercase text for case-insensitive matching.
+ */
 const normalizeFilterText = (value: string) => value.trim().toLowerCase();
 
+/**
+ * Builds a local start-of-day timestamp for a mailbox date filter.
+ *
+ * Input:
+ * - `dateValue`: date string in `YYYY-MM-DD` format.
+ *
+ * Output:
+ * - Returns the local timestamp representing `00:00:00.000` for that day.
+ */
 const getStartOfDayTime = (dateValue: string) =>
   new Date(`${dateValue}T00:00:00.000`).getTime();
 
+/**
+ * Builds a local end-of-day timestamp for a mailbox date filter.
+ *
+ * Input:
+ * - `dateValue`: date string in `YYYY-MM-DD` format.
+ *
+ * Output:
+ * - Returns the local timestamp representing `23:59:59.999` for that day.
+ */
 const getEndOfDayTime = (dateValue: string) => {
   return new Date(`${dateValue}T23:59:59.999`).getTime();
 };
 
+/**
+ * Computes the unread or item-count badge shown beside a folder.
+ *
+ * Input:
+ * - `folder`: normalized mailbox folder.
+ *
+ * Output:
+ * - Returns the badge text for supported folders or an empty string when no badge should be shown.
+ */
 const getFolderCountDisplay = (folder: MailboxFolder) => {
   const token = normalizeFolderToken(folder.well_known_name || folder.name);
 
@@ -88,6 +152,16 @@ const getFolderCountDisplay = (folder: MailboxFolder) => {
   return '';
 };
 
+/**
+ * Renders the visual icon for a mailbox folder row.
+ *
+ * Input:
+ * - `folder`: normalized mailbox folder.
+ * - `collapsed`: whether the folder pane is collapsed.
+ *
+ * Output:
+ * - Returns the JSX icon matching the folder type.
+ */
 const renderFolderIcon = (folder: MailboxFolder, collapsed = false) => {
   const token = normalizeFolderToken(folder.well_known_name || folder.name);
   const className = collapsed ? 'h-[18px] w-[18px]' : 'h-4 w-4';
@@ -366,6 +440,15 @@ const Inbox = () => {
     };
   }, []);
 
+  /**
+   * Formats recipients for display in the reading pane.
+   *
+   * Input:
+   * - `recipients`: optional list of recipient name/email pairs.
+   *
+   * Output:
+   * - Returns a comma-separated string or `-` when no recipients exist.
+   */
   const renderRecipientList = (
     recipients: { name: string; email: string }[] | undefined
   ) => {
@@ -379,6 +462,16 @@ const Inbox = () => {
       .join(', ');
   };
 
+  /**
+   * Converts base64 attachment content into a browser `Blob`.
+   *
+   * Input:
+   * - `content`: base64-encoded attachment payload.
+   * - `contentType`: MIME type returned by the backend.
+   *
+   * Output:
+   * - Returns a blob suitable for previewing or downloading in the browser.
+   */
   const convertBase64ToBlob = (content: string, contentType: string) => {
     const binary = window.atob(content);
     const bytes = new Uint8Array(binary.length);
@@ -390,6 +483,15 @@ const Inbox = () => {
     return new Blob([bytes], { type: contentType });
   };
 
+  /**
+   * Determines whether an attachment can be previewed inline in the mailbox UI.
+   *
+   * Input:
+   * - `contentType`: attachment MIME type.
+   *
+   * Output:
+   * - Returns `true` for previewable image, PDF, text, and JSON files.
+   */
   const isInlinePreviewable = (contentType: string) => {
     const normalizedType = contentType.toLowerCase();
 
@@ -401,6 +503,17 @@ const Inbox = () => {
     );
   };
 
+  /**
+   * Loads a mailbox attachment and either previews or downloads it.
+   *
+   * Input:
+   * - `attachmentId`: selected attachment identifier.
+   * - `attachmentName`: attachment filename used for downloads.
+   * - `action`: whether the user wants to `view` or `download` the attachment.
+   *
+   * Output:
+   * - Opens a preview dialog, opens a browser tab, or starts a download depending on the attachment type.
+   */
   const handleAttachmentAction = async (
     attachmentId: string,
     attachmentName: string,
@@ -462,6 +575,15 @@ const Inbox = () => {
     }
   };
 
+  /**
+   * Closes the inline attachment preview and releases the preview object URL.
+   *
+   * Input:
+   * - No direct arguments; uses the current preview state.
+   *
+   * Output:
+   * - Clears the preview state and revokes the browser object URL when present.
+   */
   const closePreview = () => {
     if (previewAttachment?.objectUrl) {
       window.URL.revokeObjectURL(previewAttachment.objectUrl);
