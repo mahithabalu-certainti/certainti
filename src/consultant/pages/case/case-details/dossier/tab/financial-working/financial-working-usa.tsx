@@ -10,7 +10,7 @@ import {
 import { MenuItem, Select } from '@mui/material';
 import { COMMON_MENU_PROPS, getSelectStyles } from '../rd-form/helper';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { costDisplay } from '../../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../../common-utils';
 import { useUserPreference } from '../../../../../../services/case-dossier/cases-financial-services';
 import {
   formatLabel,
@@ -225,7 +225,15 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       return '';
     }
     if (typeof value === 'number') {
-      return costDisplay(value, currencySymbol as string);
+      return costDisplay(value.toFixed(2), currencySymbol as string);
+    }
+    if (
+      typeof value === 'string' &&
+      !isNaN(Number(value)) &&
+      value.trim() !== '' &&
+      !/[a-zA-Z]/.test(value)
+    ) {
+      return valueDisplay(value);
     }
     return value;
   };
@@ -408,7 +416,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                               ? 'rrc_credit_280_c'
                               : title;
                         return (
-                          <td key={colKey} className='px-2 py-0 text-right'>
+                          <td key={colKey} className={`px-2 py-0 text-right`}>
                             <div className='w-[180px] h-[24px] inline-flex items-center justify-end'>
                               <Selection280C
                                 value={cellValue}
@@ -422,7 +430,10 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
                         );
                       }
                       return (
-                        <td key={colKey} className='px-2 py-0 text-right'>
+                        <td
+                          key={colKey}
+                          className={`px-2 py-0 ${reduction280c[colKey][rowKey] && (typeof reduction280c[colKey][rowKey] === 'number' || !isNaN(Number(reduction280c[colKey][rowKey])) || String(reduction280c[colKey][rowKey]).endsWith('%')) ? 'text-right' : 'text-left'}`}
+                        >
                           {renderValue(
                             reduction280c[colKey][rowKey],
                             isBold,
@@ -547,8 +558,15 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             (k) => k.toLowerCase() === 'year'
           );
           const val = yearKey ? row[yearKey] : '-';
+          const isNumeric =
+            typeof val === 'number' ||
+            (typeof val === 'string' &&
+              val.trim() !== '' &&
+              (!isNaN(Number(val)) || val.endsWith('%')));
           return (
-            <div className='px-2 py-0 w-full flex justify-end text-sm font-bold text-[#1A2733]'>
+            <div
+              className={`px-2 py-0 w-full flex ${isNumeric ? 'justify-end text-right' : 'justify-start text-left'} text-sm font-bold text-[#1A2733]`}
+            >
               {val || '-'}
             </div>
           );
@@ -576,9 +594,15 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           const isTotal =
             key.toLowerCase() === 'total' || key.toLowerCase() === 'sum';
 
+          const isNumeric =
+            typeof val === 'number' ||
+            (typeof val === 'string' &&
+              val.trim() !== '' &&
+              (!isNaN(Number(val)) || val.endsWith('%')));
+
           return (
             <div
-              className={`px-2 w-full flex justify-end  text-right ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
+              className={`px-2 w-full flex ${isNumeric ? 'justify-end text-right' : 'justify-start text-left'} ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
             >
               {formatValue(val) || '-'}
             </div>

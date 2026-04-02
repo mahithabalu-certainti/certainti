@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ConfigRuleIcon } from '../../../../../assets';
+import { ConfigRuleIcon, SettingsIcon } from '../../../../../assets';
 import { AllPermissions, OverviewTabs } from '../../../../../common-service';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -7,6 +7,7 @@ import JurisdictionConfig from './Jurisdiction-Config/Jurisdiction-Config';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
 import Timeline from '../../../../../pages/timeline/timeline';
 import { useSearchParams } from 'react-router';
+import JurisdictionSetting from './jurisdiction-setting/Jurisdiction_setting';
 
 const SettingsTabs: OverviewTabs[] = [
   {
@@ -37,6 +38,8 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
   };
   const [searchParams] = useSearchParams();
   const isTimeLineView = searchParams.get('timelineview') === 'true';
+  const isJurisdictionConfigView =
+    searchParams.get('subMenu') === 'jurisdiction_configuration';
   const headerButtons = [
     {
       label: 'Save',
@@ -80,22 +83,41 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
       ) : (
         <>
           <SectionHeader
-            title={'Jurisdiction Configuration'}
+            title={
+              isJurisdictionConfigView
+                ? 'Jurisdiction Configuration'
+                : 'Settings'
+            }
             titleIcon={
-              <ConfigRuleIcon
-                alt='settings-header-icon'
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-              />
+              isJurisdictionConfigView ? (
+                <ConfigRuleIcon
+                  alt='settings-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              ) : (
+                <SettingsIcon
+                  alt='settings-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              )
             }
             buttons={headerButtons}
             iconBg={ColorCode.caseBgColor}
             bgType='circle'
           />
-          <JurisdictionConfig
-            formRef={formRef}
-            setIsFormSaving={setIsFormSaving}
-            // setIsSaveDisable={setIsSaveDisable}
-          />
+          {isJurisdictionConfigView ? (
+            <JurisdictionConfig
+              formRef={formRef}
+              setIsFormSaving={setIsFormSaving}
+              // setIsSaveDisable={setIsSaveDisable}
+            />
+          ) : (
+            <JurisdictionSetting
+              formRef={formRef}
+              setIsFormSaving={setIsFormSaving}
+              // setIsSaveDisable={setIsSaveDisable}
+            />
+          )}
         </>
       )}
     </div>

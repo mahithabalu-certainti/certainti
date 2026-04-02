@@ -935,39 +935,39 @@ export const CreateCases: React.FC = () => {
                         </TableCell>
                         {[
                           {
-                            label: 'Total FTE Cost',
-                            required: true,
-                            width: '160px',
-                          },
-                          {
-                            label: 'Total Subcon Cost',
-                            required: true,
-                            width: '160px',
-                          },
-                          {
-                            label: 'Total Non-Labor Cost',
-                            required: true,
-                            width: '160px',
-                          },
-                          {
                             label: 'Total Project Cost',
                             required: true,
-                            width: '160px',
+                            width: '190px',
+                          },
+                          {
+                            label: 'Total FTE QRE Cost',
+                            required: true,
+                            width: '190px',
+                          },
+                          {
+                            label: 'Total Subcon QRE Cost',
+                            required: true,
+                            width: '210px',
+                          },
+                          {
+                            label: 'Total Non-Labor QRE Cost',
+                            required: true,
+                            width: '230px',
                           },
                           {
                             label: 'Total QRE',
                             required: true,
-                            width: '160px',
+                            width: '180px',
                           },
                           {
                             label: 'Total RD Credits',
                             required: true,
-                            width: '160px',
+                            width: '180px',
                           },
                           {
                             label: 'Gross Receipts',
                             required: false,
-                            width: '160px',
+                            width: '180px',
                             showTooltip: true,
                             tooltipMessage:
                               'Annual Gross Receipt is the total money received in a year.',
@@ -1214,24 +1214,24 @@ export const CreateCases: React.FC = () => {
                             {(
                               [
                                 {
-                                  key: 'total_fte_cost',
-                                  label: 'Total FTE Cost',
-                                  width: '180px',
-                                },
-                                {
-                                  key: 'total_subcon_cost',
-                                  label: 'Total Subcon Cost',
-                                  width: '200px',
-                                },
-                                {
-                                  key: 'total_nonlabor_cost',
-                                  label: 'Total Non-Labor Cost',
-                                  width: '210px',
-                                },
-                                {
                                   key: 'total_project_cost',
                                   label: 'Total Project Cost',
                                   width: '190px',
+                                },
+                                {
+                                  key: 'total_fte_cost',
+                                  label: 'Total FTE QRE Cost',
+                                  width: '190px',
+                                },
+                                {
+                                  key: 'total_subcon_cost',
+                                  label: 'Total Subcon QRE Cost',
+                                  width: '210px',
+                                },
+                                {
+                                  key: 'total_nonlabor_cost',
+                                  label: 'Total Non-Labor QRE Cost',
+                                  width: '230px',
                                 },
                                 {
                                   key: 'total_qre',

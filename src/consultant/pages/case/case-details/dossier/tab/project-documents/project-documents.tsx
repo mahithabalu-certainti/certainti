@@ -3,7 +3,12 @@ import {
   ExportType,
   ProjectDocumentsListURLParams,
 } from '../../../../../../types';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -19,6 +24,7 @@ import { checkPermission } from '../../../../../../../common-utils';
 import { AllPermissions } from '../../../../../../../common-service';
 import { RootState } from '../../../../../../../store/store';
 import { useSelector } from 'react-redux';
+import { PROJECT_DETAILS } from '../../../../../../../routes';
 
 interface ProjectDocumentsProps {
   refreshTrigger: number;
@@ -34,6 +40,7 @@ interface ProjectDocumentsProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  isActionItemsExpanded?: boolean;
 }
 
 const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
@@ -46,8 +53,10 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  isActionItemsExpanded,
 }) => {
   const { caseId } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const [projectDocuments, setProjectDocuments] = useState<AttachmentList[]>(
@@ -174,10 +183,27 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     permission,
     AllPermissions.ATTACHMENT_EXPORT
   );
+
+  const handleViewRecord = (data: AttachmentList) => {
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: data?.attach_to ?? '',
+    });
+    const queryParams = new URLSearchParams({
+      list: 'attachments',
+      accountID: data?.account_rid || accountId || '',
+      source: 'account',
+      currency_rid: data?.currency_rid ?? '',
+      navigateFrom: 'case',
+    });
+
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const projectDocumentsColumns = getProjectDocumentsColumns(
     projectPermissionMap,
     permissionMap,
-    isAttachmentExportEnable
+    isAttachmentExportEnable,
+    handleViewRecord
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
@@ -223,7 +249,9 @@ const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

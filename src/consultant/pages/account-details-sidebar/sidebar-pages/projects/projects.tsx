@@ -353,7 +353,14 @@ const Projects: React.FC<ProjectsProps> = ({
   );
 
   const handleselectedList = (id: string[]) => {
-    const childIds = id.filter((_, index) => index % 2 === 0);
+    const allChildIds = new Set(
+      projectList.flatMap(
+        (project) =>
+          project.ProjectFiscal?.map((fiscal) => fiscal.project_fiscal_rid) ||
+          []
+      )
+    );
+    const childIds = id.filter((selectedId) => allChildIds.has(selectedId));
     setSelectedTableIds(childIds);
   };
   const triggerAIMutation = ProjectTriggerAI();

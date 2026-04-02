@@ -51,6 +51,7 @@ export const getCaseExportListURL = (
     timezone,
     isGlobal,
     search,
+    currency_symbol,
   }: CaseListExportParams,
   accountId?: string
 ): string => {
@@ -76,6 +77,7 @@ export const getCaseExportListURL = (
     searchParams.set('search', search);
   }
   if (timezone) searchParams.set('timezone', timezone);
+  if (currency_symbol) searchParams.set('currency_symbol', currency_symbol);
 
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

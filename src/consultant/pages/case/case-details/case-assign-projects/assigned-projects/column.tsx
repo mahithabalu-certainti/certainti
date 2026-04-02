@@ -16,7 +16,8 @@ export const formatDateToYMD = (dateString: string): string => {
   return `${year}-${month}-${day}`;
 };
 export const getAssignedProjectColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  handleViewProject?: (project: AssignProject) => void
 ): ListTableColumn<AssignProject>[] => [
   {
     id: 'project_code',
@@ -29,6 +30,18 @@ export const getAssignedProjectColumns = (
     hide:
       !permissionMap?.['project_code']?.read &&
       !permissionMap?.['project_code']?.edit,
+    render: (row: AssignProject) => {
+      return handleViewProject ? (
+        <span
+          onClick={() => handleViewProject(row)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.project_code}
+        </span>
+      ) : (
+        row.project_code
+      );
+    },
   },
 
   {

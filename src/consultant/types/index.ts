@@ -22,3 +22,4 @@ export * from './activities';
 export * from './dossier';
 export * from './dashboard';
 export * from './four-part-assessment';
+export * from './rd-assessment';

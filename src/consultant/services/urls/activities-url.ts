@@ -33,7 +33,10 @@ export const ActivityListURL = ({
     searchParams.set('accountRid', accountRid);
   }
   if (activity_type !== undefined) {
-    searchParams.set('activityType', capitalize(activity_type));
+    searchParams.set(
+      'activityType',
+      activity_type === 'call' ? 'Call Log' : capitalize(activity_type)
+    );
   }
 
   // Only add filters if the object has properties
@@ -89,7 +92,10 @@ export const getActivityExportListURL = ({
     searchParams.set('entityId', entityId.toString());
   }
   if (activity_type !== undefined) {
-    searchParams.set('activityType', capitalize(activity_type));
+    searchParams.set(
+      'activityType',
+      activity_type === 'call' ? 'Call Log' : capitalize(activity_type)
+    );
   }
   if (accountRid !== undefined) {
     searchParams.set('accountRid', accountRid.toString());

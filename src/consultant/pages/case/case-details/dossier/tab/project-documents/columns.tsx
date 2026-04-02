@@ -17,7 +17,8 @@ const handleDownload = (documentUrl: string, documentName: string) => {
 export const getProjectDocumentsColumns = (
   projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  isAttachmentExportEnable?: boolean
+  isAttachmentExportEnable?: boolean,
+  handleView?: (data: AttachmentList) => void
 ): ListTableColumn<AttachmentList>[] => [
   {
     id: 'project_code',
@@ -37,6 +38,18 @@ export const getProjectDocumentsColumns = (
     hide:
       !projectPermissionMap?.['project_code']?.edit &&
       !projectPermissionMap?.['project_code']?.read,
+    render: (row) => {
+      return handleView ? (
+        <span
+          onClick={() => handleView(row)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.project_code}
+        </span>
+      ) : (
+        row.project_code
+      );
+    },
   },
   {
     id: 'project_name',

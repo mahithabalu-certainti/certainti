@@ -77,7 +77,7 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     attachmentPermissionMap
   );
 
-  if (isDetailsLoading || !resourceData) {
+  if (isDetailsLoading) {
     return <DetailsSectionSkeleton />;
   }
 

@@ -10,14 +10,16 @@ import {
   ComputedDataResponse,
   ComputedDataPayload,
   CaseClosePayload,
+  VersionControlItem,
+  VersionControlParams,
+  VersionControlResponse,
+  DossierSummaryResponse,
 } from '../../types';
-import {
-  ResourceSummaryMockData,
-  DossierSummaryMockData,
-} from '../../mockdata/dossier';
+import { ResourceSummaryMockData } from '../../mockdata/dossier';
 import { caseServiceApi } from '../../../api/api';
 import {
   getClosingRemarksListURL,
+  getDossierVersionListURL,
   getRDFormMapperPreviewURL,
 } from '../urls/dossier-url';
 
@@ -63,15 +65,10 @@ export const fetchDossierSummary = async (
   accountRid: string,
   caseRid: string
 ): Promise<DossierSummary> => {
-  // const response = await caseServiceApi.get<DossierSummaryResponse>(
-  //   `/api/dossier/summary?account_rid=${accountRid}&case_rid=${caseRid}`
-  // );
-
-  // Mock usage
-  console.log('dossier-summary-params', { accountRid, caseRid });
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return DossierSummaryMockData.data.dossierSummary;
+  const response = await caseServiceApi.get<DossierSummaryResponse>(
+    `/api/cases/dossier/summary?account_rid=${accountRid}&case_rid=${caseRid}`
+  );
+  return response.data.data;
 };
 
 export const useDossierSummary = (
@@ -132,6 +129,19 @@ export const fetchClosingRemarksList = async (
   };
 };
 
+export const fetchDossierVersionList = async (
+  params: VersionControlParams
+): Promise<{ versionList: VersionControlItem[]; count: number }> => {
+  const response = await caseServiceApi.post<VersionControlResponse>(
+    getDossierVersionListURL(),
+    params
+  );
+  return {
+    versionList: response.data.data.data,
+    count: response.data.data.total_result,
+  };
+};
+
 export const useClosingRemarksList = (
   params: ClosingRemarksParams,
   refreshList?: number
@@ -145,6 +155,22 @@ export const useClosingRemarksList = (
   >({
     queryKey: ['closing-remarks-list', params, refreshList],
     queryFn: () => fetchClosingRemarksList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.case_rid && !!params.account_rid,
+  });
+};
+
+export const useDossierVersionList = (
+  params: VersionControlParams,
+  refreshList?: number
+): UseQueryResult<
+  { versionList: VersionControlItem[]; count: number },
+  Error
+> => {
+  return useQuery<{ versionList: VersionControlItem[]; count: number }, Error>({
+    queryKey: ['dossier-version-list', params, refreshList],
+    queryFn: () => fetchDossierVersionList(params),
     retry: 0,
     gcTime: 0,
     enabled: !!params.case_rid && !!params.account_rid,

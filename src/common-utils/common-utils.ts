@@ -547,7 +547,7 @@ export const REGEX_PATTERNS = {
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   BLENDED_NUMBER: /^(?:[0-9]{1,3})(?:\.[0-9]{1,2})?$/,
-  EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
+  EFFORTS_NUMBER: /^(?!0+$|0+\.0+$)[0-9]{1,16}(\.[0-9]{1,2})?$/,
   EFFORTS_NEGATIVE_NUMBER: /^-?(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
@@ -933,7 +933,15 @@ export const valueDisplay = (
 ): string => {
   if (value === null || value === undefined) return '-';
 
-  const valueStr = String(value);
+  const numValue = Number(value);
+  const valueStr =
+    !isNaN(numValue) &&
+    value !== '' &&
+    String(value).trim() !== '' &&
+    !/[a-zA-Z]/.test(String(value))
+      ? numValue.toFixed(2)
+      : String(value);
+
   const [whole, decimal] = valueStr.split('.');
   const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   const formattedValue =
