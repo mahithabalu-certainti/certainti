@@ -78,26 +78,6 @@ routes.get(
   controller.interactionsController.getMailboxAttachmentById
 );
 routes.get(
-  "/calendar/metadata",
-  checkUserStatusMiddleware("accounts_view_edit"),
-  controller.interactionsController.getCalendarMetadata
-);
-routes.get(
-  "/calendar/events",
-  checkUserStatusMiddleware("accounts_view_edit"),
-  controller.interactionsController.listCalendarEvents
-);
-routes.get(
-  "/calendar/events/:eventId",
-  checkUserStatusMiddleware("accounts_view_edit"),
-  controller.interactionsController.getCalendarEventById
-);
-routes.post(
-  "/calendar/events/:eventId/cancel",
-  checkUserStatusMiddleware("accounts_view_edit"),
-  controller.interactionsController.cancelCalendarEvent
-);
-routes.get(
   "/interactionSource",
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionSource
