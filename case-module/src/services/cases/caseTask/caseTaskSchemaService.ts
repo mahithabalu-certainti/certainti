@@ -968,7 +968,7 @@ export class CaseTaskSchemaService {
             entity_name: entityTypes.TAG,
             event_name: eventNames.UPDATE,
             // description: `Tag added for task : ${tagDetails!.tag_name}`,
-            descriptions: `Task ${existingTaskInfo!.task_name}`,
+            descriptions: `Task ${existingTaskInfo?.task_name}`,
             created_by_name: userEventInfo.full_name,
             event_type_rid: userEventInfo.event_type_rid,
           });

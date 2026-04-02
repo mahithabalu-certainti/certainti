@@ -7,6 +7,7 @@ import {
   interactionSource,
   STATUS_MESSAGE,
   techSummaryFieldMappings,
+  rdAssessmentAuditFieldMappings
 } from "../utils/constants";
 import {
   deleteFromAzureBlob,
@@ -44,12 +45,14 @@ import {
   listInboxMessagesSchema,
   listMailboxFoldersSchema,
   listMailboxMessagesSchema,
+  listAiAssessmentAuditSchema,
 } from "../lib/joi/schemas/schema";
 
 // import Joi schemas and interaction services as needed
 
 const services = configurations.getInstance().getServices();
 const interactionService = services.interactionService;
+const interactionChildService = services.interactionChildService;
 
 /**
  * Handles the creation of a new interaction based on the incoming HTTP request.
@@ -746,7 +749,8 @@ async function getTechnicalSummaryDetailsById(
     const interactionDetails =
       await interactionService.getTechnicalSummaryDetailsById(
         value.tech_summary_rid,
-        value.account_rid
+        value.account_rid,
+        value.case_rid
       );
 
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
@@ -1443,10 +1447,19 @@ async function exportAllInteractions(req: Request, res: Response) {
       userId,
       "interactions_view_edit"
     );
+    const fpaFields = await interactionService.getAllowedExportFields(
+      userId,
+      "four_part_assessment_export"
+    );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
+      }
+    }
+    for (const f of fpaFields) {
+      if (f.read) {
+        allowedFieldSet.add(f.field_name);
       }
     }
     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
@@ -1466,6 +1479,9 @@ async function exportAllInteractions(req: Request, res: Response) {
             let resultMap: { [key: string]: any } = {
               r_number: d.r_number,
               interaction_level_name: d.interaction_level_name,
+              interaction_assessment_source_name: d.interaction_assessment_source_name,
+              interaction_batch_id: d.interaction_batch_id,
+              four_part_r_number: d.four_part_r_number,
               project_code: d.project_code,
               interaction_age: d.interaction_age,
               fiscal_year: d.fiscal_year,
@@ -2875,7 +2891,11 @@ async function exportFetchFourPartAssessmentList(req: Request, res: Response) {
     if (result.statusCode == HttpStatus.SUCCESS) {
       const fields = await interactionService.getAllowedExportFields(
         userId,
-        "four_part_assessment_export"
+        "four_part_assessment_view_edit"
+      );
+      const projectFields = await interactionService.getAllowedExportFields(
+        userId,
+        "projects_view_edit"
       );
       const allowedFieldSet = new Set<string>();
       for (const field of fields) {
@@ -2883,13 +2903,12 @@ async function exportFetchFourPartAssessmentList(req: Request, res: Response) {
           allowedFieldSet.add(field.field_name);
         }
       }
-      const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-      const formatDate = (date?: Date) =>
-        date
-          ? moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .format("YYYY-MM-DD, hh:mm:ss A")
-          : null;
+      for (const field of projectFields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+
       if (result.statusCode == HttpStatus.SUCCESS) {
         let structuredData =
           result.data.data.length < 1
@@ -2905,7 +2924,7 @@ async function exportFetchFourPartAssessmentList(req: Request, res: Response) {
                 process_of_experimentation_status: d.process_of_experimentation_status,
                 status: d.status,
                 summary_judgment: d.summary_judgment,
-                created_datetime: d.created_datetime === null ? "" : formatDate(d.created_datetime),
+                created_datetime: d.created_datetime ? data.timezone && isValidTimezone(data.timezone) ? moment.tz(d.created_datetime.toISOString(), data.timezone).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : moment(d.created_datetime.toISOString()).add(5, 'hours').add(30, 'minutes').format("YYYY-MMM-DD, hh:mm:ss A") : "-",
                 created_by: d.created_by_name
               };
 
@@ -3001,7 +3020,6 @@ async function getInteractionAssessmentSource(req: Request, res: Response) {
     });
   }
 }
-
 async function listInboxMessages(req: Request, res: Response): Promise<void> {
   const methodName = "List inbox messages";
   try {
@@ -3060,6 +3078,75 @@ async function listInboxMessages(req: Request, res: Response): Promise<void> {
       HttpStatus.BAD_REQUEST_MESSAGE,
       error.message
     );
+  }
+}
+
+/**
+ * Handles listing of AI assessment audits based on provided filters and sorting options.
+ *
+ * @param {Request} req - Express request object containing account_rid, filters, sorting, and other parameters.
+ * @param {Response} res - Express response object used to send results back to the client.
+ *
+ * @returns {Promise<void>} - Resolves after sending the response to the client.
+ */
+async function listAiAssessmentAudit(req: Request, res: Response): Promise<void> {
+  const methodName = "List AI assessment audit";
+  try {
+    const value = await validateRequest(req, listAiAssessmentAuditSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+
+    const page: number = value.page || 1;
+    const limit: number = value.limit || 10;
+
+    const result = await interactionChildService.listAiAssessmentAudit(
+      value,
+      page,
+      limit,
+      value.filters,
+      userId
+    );
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+      return;
+    }
+
+    errorLog(methodName, result.errorMessage);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.errorMessage
+    );
+    return;
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
   }
 }
 
@@ -3239,6 +3326,116 @@ async function getMailboxMessageById(req: Request, res: Response): Promise<void>
   }
 }
 
+async function exportAiAssessmentAudit(req: Request, res: Response): Promise<void> {
+  const methodName = "Export AI assessment audit";
+  try {
+    const value = await validateRequest(req, listAiAssessmentAuditSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, userId: ${userId}`);
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, "User ID is required in headers");
+      return;
+    }
+
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+
+    const page: number = 1;
+    const limit: number = Number.MAX_SAFE_INTEGER;
+
+    const result = await interactionChildService.listAiAssessmentAudit(
+      value,
+      page,
+      limit,
+      value.filters,
+      userId
+    );
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+
+      const [auditFields, projectFields] = await Promise.all([
+        interactionService.getAllowedExportFields(userId, "rd_assessment_status_view"),
+        interactionService.getAllowedExportFields(userId, "projects_view_edit"),
+      ]);
+      const allowedFieldSet = new Set<string>();
+      if (auditFields && Array.isArray(auditFields)) {
+        for (const field of auditFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+      }
+      if (projectFields && Array.isArray(projectFields)) {
+        for (const field of projectFields) {
+          if (field.field_name === "project_code" && field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+      }
+
+      const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+      const formatDate = (date?: Date | string | null, format: string = "YYYY-MMM-DD, hh:mm:ss A") => {
+        if (!date) return null;
+        const dateObj = date instanceof Date ? date : new Date(date);
+        if (isNaN(dateObj.getTime())) return null;
+        return moment(dateObj).tz(isValidTZ ? value.timezone : "UTC").format(format);
+      };
+
+      const finalStructuredData = (!result?.data?.auditInfo || result.data.auditInfo.length < 1)
+        ? []
+        : result.data.auditInfo.map((d: any) => {
+          const resultMap: { [key: string]: any } = {
+            rid: d.rid || "",
+            transaction_id: d.transaction_id || "",
+            account_name: d.account_name || "",
+            project_code: d.project_code || "",
+            created_datetime: formatDate(d.created_datetime) || "",
+            four_part_assessment: d.four_part_assessment || "",
+            project_summary: d.project_summary || "",
+            qre_summary: d.qre_summary || "",
+            interaction_status: d.interaction_status || ""
+          };
+
+          const exportRecord: Record<string, any> = {};
+          rdAssessmentAuditFieldMappings.forEach((mapping) => {
+            if (allowedFieldSet.has(mapping.permissionField)) {
+              exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+            }
+          });
+          return exportRecord;
+        });
+
+      if (finalStructuredData.length === 0) {
+        finalStructuredData.push({ Message: "No data available" });
+      }
+
+      if (value.project_fiscal_rid) {
+        finalStructuredData.forEach((record: any) => {
+          delete record["Project Code"];
+        });
+      }
+
+      const generateBase64Response = await generateExcelBase64(finalStructuredData, "RDAssessmentAudit");
+      handleSuccessResponse(res, generateBase64Response);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, result.errorMessage);
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, error.message);
+    return;
+  }
+}
+
 async function getMailboxAttachmentById(req: Request, res: Response): Promise<void> {
   const methodName = "Get mailbox attachment by id";
   try {
@@ -3340,6 +3537,8 @@ export default {
   exportTechnicalSummary,
   updateAccountInteraction,
   fetchInteractionListForReminder,
+  listAiAssessmentAudit,
+  exportAiAssessmentAudit,
   fetchFourPartAssessmentList,
   getFpaDetails,
   exportFetchFourPartAssessmentList,

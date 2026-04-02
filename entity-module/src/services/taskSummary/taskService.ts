@@ -1232,6 +1232,8 @@ export class TaskService {
         "Account Name": "Account Name",
         "Task Name": flag === 'milestone' ? "Task Name" : "Activity Name",
         "Description": "Description",
+        "Start Date": "Start Date",
+        "Due Date" : "Due Date",
         "Fiscal Year": "Fiscal Year",
         [flag === 'milestone' ? "Related To Name" : "Related To Name"]: "Related To Name",
         [flag === 'milestone' ? "Related Entity" : "Related Entity"]: "Related Entity",
@@ -1406,6 +1408,24 @@ export class TaskService {
       "Priority": task.priority_name || '-',
       "Status": task.status_name || '-',
       "Account Status": task.account_status_name || '-',
+      "Start Date": task.effective_start_datetime
+        ? timezone && isValidTimezone(timezone)
+          ? moment(task.effective_start_datetime)
+            .tz(timezone)
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+          : moment(task.effective_start_datetime).format(
+            "YYYY-MMM-DD, hh:mm:ss A"
+          )
+        : "-",
+      "Due Date": task.effective_end_datetime
+        ? timezone && isValidTimezone(timezone)
+          ? moment(task.effective_end_datetime)
+            .tz(timezone)
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+          : moment(task.effective_end_datetime).format(
+            "YYYY-MMM-DD, hh:mm:ss A"
+          )
+        : "-",
       "Created By": task.created_by_name || '-',
       "Created On": task.created_datetime
         ? timezone && isValidTimezone(timezone)

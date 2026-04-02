@@ -18,6 +18,9 @@ import { DocumentType } from "../models/documentType";
 import { AttachmentSummary } from "../models/attachmentSummary";
 import { generateSasUrl } from "../utils/blob";
 import { isValidTimezone } from "../utils/valideTimeChecker";
+import { ProjectFiscal } from "../models/projectFiscal";
+import { Project } from "../models/project";
+import { fetchProjectIds } from "../utils/rawQueries";
 
 
 export class AttachmentService {
@@ -968,6 +971,18 @@ export class AttachmentService {
             : bType.localeCompare(aType);
         });
       }
+      if(attachmentLevel === 'project' && type === DOSSIER_NAME && attachments.length > 0) {
+        const findFiscalRid : any = await orgDbSequelize.query(fetchProjectIds(schemaName, attachments))
+        if(findFiscalRid[0].length > 0) {
+          const mapCurrencyWithFiscal = new Map(findFiscalRid[0].map((d : any) => [d.rid, d.currency_rid]));
+          attachments = attachments.map((d) => {
+            return {
+              ...d,
+              currency_rid : mapCurrencyWithFiscal.get(d.attach_to) ?? null
+            }
+          })
+        }
+      }
 
       // Add "mb" suffix to size values for attachments
       attachments = attachments.map((attachment) => ({
@@ -990,6 +1005,7 @@ export class AttachmentService {
     };
 
   } catch (error) {
+    console.log(error)
     errorLog("getAttachments error:", (error as Error).message);
     return {
       statusCode: 500,

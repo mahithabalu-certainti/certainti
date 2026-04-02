@@ -14,7 +14,7 @@ const positiveDecimal18_2 = Joi.string()
   .custom((value, helpers) => {
     try {
       const num = new Decimal(value);
-      if (num.lte(0)) {
+      if (num.lt(0)) {
         return helpers.error("any.invalid");
       }
       return value;
@@ -43,7 +43,10 @@ const createCaseSchema = Joi.object({
 
   heat_light_power: positiveDecimal18_2,
   total_nonlabor_cost: positiveDecimal18_2,
-  tax_liability: positiveDecimal18_2,
+
+  tax_liability_sc: positiveDecimal18_2,
+  tax_liability_ct : positiveDecimal18_2,
+  tax_liability_ga: positiveDecimal18_2,
 
   total_expenses: positiveDecimal18_2,
   aggregated_turnover: positiveDecimal18_2,
@@ -56,15 +59,51 @@ const createCaseSchema = Joi.object({
   employers_pension_contribution: positiveDecimal18_2,
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
-  other: positiveDecimal18_2,
-  lease_costs_of_computers: positiveDecimal18_2,
+  other_can : positiveDecimal18_2,
+  other_on : positiveDecimal18_2,
+  other_uk : positiveDecimal18_2,
+  other_irl : positiveDecimal18_2,
+  lease_costs_of_computers_nj: positiveDecimal18_2,
+  lease_costs_of_computers_il: positiveDecimal18_2,
+  lease_costs_of_computers_ca: positiveDecimal18_2,
+  lease_costs_of_computers_az: positiveDecimal18_2,
+  lease_costs_of_computers_id: positiveDecimal18_2,
+
   illinois_rd_credit_partnership_corp: positiveDecimal18_2,
   illinois_research_payments_corp_only: positiveDecimal18_2,
-  basic_research_payments: positiveDecimal18_2,
+  basic_research_payments_ma : positiveDecimal18_2,
+  basic_research_payments_id : positiveDecimal18_2,
   qualified_computer_rental_time_expenses: positiveDecimal18_2,
-  credit_carry_forward_py: positiveDecimal18_2,
+  credit_carry_forward_py_ga : positiveDecimal18_2,
+  credit_carry_forward_py_sc : positiveDecimal18_2,
+  credit_carry_forward_py_tx : positiveDecimal18_2,
   current_year_gross_receipts: positiveDecimal18_2,
-  other_credits_total: positiveDecimal18_2
+  other_credits_total_ga: positiveDecimal18_2,
+  other_credits_total_sc: positiveDecimal18_2,
+  amendment_case_info: Joi.array()
+    .items(
+      Joi.object({
+        is_federal: Joi.boolean().required(),
+        history_submission_rid: Joi.string().optional(),
+        fiscal_year: Joi.number().required(),
+        total_project: Joi.number().integer().required(),
+        total_qualified_project: Joi.number().integer().required(),
+        total_project_cost: Joi.number().precision(2).required(),
+        total_qualified_project_cost: Joi.number().precision(2).required(),
+        total_qre: Joi.number().precision(2).required(),
+        total_rd_credits: Joi.number().precision(2).required(),
+        annual_gross_receipts: Joi.number().precision(2).optional(),
+        total_fte_cost: Joi.number().optional(),
+        total_subcon_cost: Joi.number().optional(),
+        total_nonlabor_cost: Joi.number().optional(),
+        country_rid: Joi.string().required(),
+        state_rid: Joi.string().optional().allow("", null),
+        state_name:Joi.string().optional().allow("", null),
+        eid: Joi.string().optional(),
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .optional()
 });
 
 
@@ -85,7 +124,10 @@ const updateCaseSchema = Joi.object({
 
   heat_light_power: positiveDecimal18_2,
   total_nonlabor_cost: positiveDecimal18_2,
-  tax_liability: positiveDecimal18_2,
+
+  tax_liability_sc: positiveDecimal18_2,
+  tax_liability_ct : positiveDecimal18_2,
+  tax_liability_ga: positiveDecimal18_2,
 
   total_expenses: positiveDecimal18_2,
   aggregated_turnover: positiveDecimal18_2,
@@ -98,15 +140,28 @@ const updateCaseSchema = Joi.object({
   employers_pension_contribution: positiveDecimal18_2,
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
-  other: positiveDecimal18_2,
-  lease_costs_of_computers: positiveDecimal18_2,
+
+  lease_costs_of_computers_nj: positiveDecimal18_2,
+  lease_costs_of_computers_il: positiveDecimal18_2,
+  lease_costs_of_computers_ca: positiveDecimal18_2,
+  lease_costs_of_computers_az: positiveDecimal18_2,
+  lease_costs_of_computers_id: positiveDecimal18_2,
+
   illinois_rd_credit_partnership_corp: positiveDecimal18_2,
   illinois_research_payments_corp_only: positiveDecimal18_2,
-  basic_research_payments: positiveDecimal18_2,
+  basic_research_payments_ma : positiveDecimal18_2,
+  basic_research_payments_id : positiveDecimal18_2,
   qualified_computer_rental_time_expenses: positiveDecimal18_2,
-  credit_carry_forward_py: positiveDecimal18_2,
+  credit_carry_forward_py_ga : positiveDecimal18_2,
+  credit_carry_forward_py_sc : positiveDecimal18_2,
+  credit_carry_forward_py_tx : positiveDecimal18_2,
   current_year_gross_receipts: positiveDecimal18_2,
-  other_credits_total: positiveDecimal18_2
+  other_credits_total_ga: positiveDecimal18_2,
+  other_credits_total_sc: positiveDecimal18_2,
+  other_can : positiveDecimal18_2,
+  other_on : positiveDecimal18_2,
+  other_uk : positiveDecimal18_2,
+  other_irl : positiveDecimal18_2
 });
 
 const caseClosedListSchema = Joi.object({
@@ -121,6 +176,7 @@ const exportCasesAccountSchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   timezone: Joi.string().optional(),
+  currency_symbol : Joi.string().optional()
 });
 
 const listCasesAccountSchema = Joi.object({

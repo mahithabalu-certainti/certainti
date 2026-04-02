@@ -1697,17 +1697,24 @@ export class NotesService {
           "Size": "Size",
           "Created By": "Created By",
           "Created On": "Created On",
-          "Modified By": "Modified By",
-          "Modified On": "Modified On",
+          "Modified By": "Updated By",
+          "Modified On": "Updated On",
           "Download": "Download"
         };
         attachments = attachments.map((at) => {
         const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
-          const label = labelMap[fieldKey]; // field_desc
+          let label = labelMap[fieldKey]; // field_desc
+
           if (allowedFieldSet.has(label)) {
-            filtered[label] = value; // export with label name
+            if(label === 'Updated By') {
+             filtered['Modified By'] = value
+            }
+            else if(label === 'Updated On') {
+              filtered['Modified On'] = value
+            }
+            else filtered[label] = value; // export with label name
           }
         }
         return filtered;

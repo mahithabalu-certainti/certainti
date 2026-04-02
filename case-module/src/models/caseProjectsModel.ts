@@ -641,7 +641,8 @@ export class CaseProject
         },
         is_assesed: {
           type: DataTypes.BOOLEAN,
-          allowNull: true
+          allowNull: true,
+          defaultValue: false
         },
       },
       {

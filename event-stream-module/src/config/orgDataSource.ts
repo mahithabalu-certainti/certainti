@@ -80,6 +80,12 @@ export async function initOrgSequelize() {
           rejectUnauthorized: false,
         },
       },
+      pool: {
+        max: 50,        // Maximum concurrent connections
+        min: 5,         // Minimum connections in pool
+        acquire: 60000, // Wait up to 60s for a free connection
+        idle: 30000,    // Release idle connections after 30s
+      },
     }); 
     await sequelize.authenticate();
    logMessage("Database connection established successfully.");

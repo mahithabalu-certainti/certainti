@@ -21,6 +21,7 @@ import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import axios from "axios";
+import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -72,7 +73,7 @@ class InteractionSchemaService {
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
-
+      logMessage(`Created interaction: ${interaction}`);
       return interaction;
     } catch (error) {
       logMessage(`Error creating interaction: ${error}`);
@@ -230,6 +231,10 @@ class InteractionSchemaService {
   ) {
     try {
       const { Interaction, InteractionItem, InteractionSummary } = await this.interactionModelService.getModels(accountNumber);
+      
+      // Sync tables to ensure they exist in the database before bulk operations
+      await this.interactionModelService.syncOrgDbModels(accountNumber);
+      
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
@@ -1097,7 +1102,7 @@ class InteractionSchemaService {
         );
         accountRnumber = accountData?.r_number;
       }
-
+      logMessage(`Fetched account number: ${accountRnumber}`);
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
@@ -1396,27 +1401,61 @@ class InteractionSchemaService {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
       let schemaName = rawQueries.fetchSchemaName(accountNumber)
+
+      // Check if case is closed if caseRid is provided
+      let isCaseClosed = false;
+      let TechnicalSummaryModel = AiTechnicalSummary;
+
+      if (caseRid !== undefined && caseRid !== '') {
+        const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(this.orgDbSequelize, schemaName);
+
+
+        const [caseDetails]: any = await this.orgDbSequelize.query(rawQueries.fetchCaseInfo(schemaName, caseRid), {
+          replacements: { caseId: caseRid },
+          type: 'SELECT'
+        });
+
+        // Fetch closed case status
+        const [closedStatus]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchCaseStatusByType('Closed'),
+          { type: 'SELECT' }
+        );
+
+        // Check if case status matches closed status
+        if (caseDetails && closedStatus && caseDetails.status_rid === closedStatus.rid) {
+          isCaseClosed = true;
+
+          TechnicalSummaryModel = CaseTechnicalSummaryModel;
+        }
+      }
+
       // Fetch technical summaries and count
       let whereCondition;
       if (caseRid !== undefined && caseRid !== '') {
         const projectFiscalIds: any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName, summaryType))
+
+        // Determine the correct table name and model reference based on case status
+        const technicalSummaryTable = isCaseClosed ? 'case_technical_summary' : 'ai_technical_summary';
+        const technicalSummaryModelName = isCaseClosed ? 'CaseTechnicalSummary' : 'AiTechnicalSummary';
+
+        // Build where condition for case-specific queries with dynamic table reference
         whereCondition = {
           account_rid: accountRid,
           project_fiscal_rid: {
             [Op.in]: projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d: any) => d.project_fiscal_rid) : []
           },
           [Op.and]: Sequelize.where(
-            Sequelize.col('"AiTechnicalSummary".version'),
+            Sequelize.col(`"${technicalSummaryModelName}".version`),
             '=',
             Sequelize.literal(`
-          (
-            SELECT MAX(t2.version)
-            FROM ${schemaName}.ai_technical_summary AS t2
-            WHERE 
-              t2.account_rid = "AiTechnicalSummary".account_rid
-              AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
-          )
-        `)),
+              (
+                SELECT MAX(t2.version)
+                FROM ${schemaName}.${technicalSummaryTable} AS t2
+                WHERE 
+                  t2.account_rid = "${technicalSummaryModelName}".account_rid
+                  AND t2.project_fiscal_rid = "${technicalSummaryModelName}".project_fiscal_rid
+              )
+            `)),
           ...whereClause
         }
       } else {
@@ -1425,7 +1464,7 @@ class InteractionSchemaService {
           ...whereClause
         }
       }
-      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+      const { rows: technicalSummary, count } = await TechnicalSummaryModel.findAndCountAll({
         where: whereCondition,
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination
@@ -1451,7 +1490,7 @@ class InteractionSchemaService {
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
-      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff }]))
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff, is_rd_claim_qualified : d.is_rd_claim_qualified }]))
       let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
         return {
           rid: d.rid,
@@ -1460,6 +1499,7 @@ class InteractionSchemaService {
           project_fiscal_rid: d.project_fiscal_rid,
           project_code: projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
           project_name: projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
+          is_rd_claim_qualified : projectDetailsMap.get(d.project_fiscal_rid)?.is_rd_claim_qualified,
           signoff: projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
@@ -1762,16 +1802,45 @@ class InteractionSchemaService {
   }
   async fetchTechnicalSummaryDetailsById(
     accountNumber: string,
-    techSummaryId: string
+    techSummaryId: string,
+    caseRid? : string
   ) {
     if (!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     const { AiTechnicalSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
+    let schemaName = rawQueries.fetchSchemaName(accountNumber)
 
-    let techSummaryDetails = await AiTechnicalSummary.findOne({
+    let isCaseClosed = false;
+    let TechnicalSummaryModel = AiTechnicalSummary;
+    
+    if(caseRid !== undefined && caseRid !== '') {
+      const CaseTechnicalSummaryModel = CaseTechnicalSummary.initialize(this.orgDbSequelize, schemaName);
+      const [caseDetails]: any = await this.orgDbSequelize.query(rawQueries.fetchCaseInfo(schemaName, caseRid), {
+        replacements: { caseId: caseRid },
+        type: 'SELECT'
+      });
+      
+      // Fetch closed case status
+      const [closedStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCaseStatusByType('Closed'),
+        { type: 'SELECT' }
+      );
+      
+      // Check if case status matches closed status
+      if (caseDetails && closedStatus && caseDetails.status_rid === closedStatus.rid) {
+        isCaseClosed = true;
+
+        TechnicalSummaryModel = CaseTechnicalSummaryModel;
+      }
+    }
+
+    let techSummaryDetails = await TechnicalSummaryModel.findOne({
       where: {
         rid: techSummaryId,
       },
@@ -1786,7 +1855,6 @@ class InteractionSchemaService {
       );
       const fetchProjectDetails: string[] = []
       fetchProjectDetails.push(techSummaryDetails.project_fiscal_rid!)
-      let schemaName = rawQueries.fetchSchemaName(accountNumber)
       let projectFiscalDetails = await this.orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
       let projectDetailsMap = new Map(projectFiscalDetails[0].map((d: any) => [d.rid, { project_name: d.project_name, project_code: d.project_code, signoff: d.signoff }]))
 
@@ -4047,7 +4115,7 @@ class InteractionSchemaService {
         is_tech_summary_processed: response.statusCode === 200,
       };
       if (response.statusCode !== 200) {
-        updateData.tech_summary_error_message = response.error_message;
+        updateData.technical_summary_error_message = response.error_message;
       }
       const [aiResponse] = await Promise.all([
         AiTechnicalSummary.create(techSummaryPayload),
@@ -4155,7 +4223,7 @@ class InteractionSchemaService {
     }
   }
 
-  async fetchInteractionBatch(accountNumber: string) {
+  async fetchInteractionBatch(accountNumber: string, accountId: string, transaction?: any) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4166,8 +4234,8 @@ class InteractionSchemaService {
       )}`;
 
       const interactionBatchInfo: any = await this.orgDbSequelize.query(
-        rawQueries.fetchBatchInInteraction(schemaName),
-        { type: "SELECT" }
+        rawQueries.fetchBatchInInteraction(schemaName, accountId),
+        { type: "SELECT", transaction }
       );
       return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
@@ -4176,7 +4244,7 @@ class InteractionSchemaService {
     }
   }
 
-  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId: string) {
+  async fetchInteractionBatchByTransactionId(accountNumber: string, transactionId: string, transaction?: any) {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -4187,12 +4255,35 @@ class InteractionSchemaService {
       )}`;
       const interactionBatchInfo: any = await this.orgDbSequelize.query(
         rawQueries.fetchBatchInInteractionByTransId(schemaName, transactionId),
-        { type: "SELECT" }
+        { type: "SELECT", transaction }
       );
       return interactionBatchInfo[0]?.interaction_batch_id ?? null
     } catch (err) {
       logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+
+  async lockAccount(transaction: any, accountRid: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      // Use PostgreSQL advisory lock to serialize batch generation for the specific account
+      // pg_advisory_xact_lock is automatically released when the transaction ends.
+      // We use hashtext to convert the accountRid string into a deterministic integer for the lock.
+      await this.orgDbSequelize.query(
+        `SELECT pg_advisory_xact_lock(hashtext(:accountRid))`,
+        {
+          replacements: { accountRid },
+          transaction,
+          type: "SELECT"
+        }
+      );
+      logMessage(`Advisory lock acquired for accountRid: ${accountRid}`);
+    } catch (err) {
+      logMessage(`Error locking account: ${err}`);
+      throw err;
     }
   }
 
@@ -4421,6 +4512,25 @@ class InteractionSchemaService {
     }
   }
 
+  async updateFourPartAssessmentAuditStatus(accountNumber: string, response: any) {
+    try {
+      const { AiAssessmentAudit } =
+        await this.interactionModelService.getModels(accountNumber);
+      const updateData: any = {
+        is_four_part_assessment_processed: response.statusCode === 200,
+      };
+      if (response.statusCode !== 200) {
+        updateData.four_part_assessment_error_message = response.error_message;
+      }
+      await AiAssessmentAudit.update(updateData, {
+        where: { transaction_id: response.data.transaction_id },
+      });
+    } catch (err) {
+      logMessage(`Error updating interaction status: ${err}`);
+      throw new Error("Error updating interaction status: " + (err as Error).message);
+    }
+  }
+
   async fetchValidAccountNumberByNumber(accountNumber: string) {
     try {
       if (!this.mainDbSequelize) {
@@ -4548,8 +4658,47 @@ class InteractionSchemaService {
     }
   }
 
-  async createSchedulerTaskRecords(executionRid: string, taskName: string) {
-    const { SchedulerTaskExecution, SchedulerExecution } = await this.interactionModelService.getModels("")
+  async createSchedulerRecordsForSendEmail () {
+    const { SchedulerExecution } = await this.interactionModelService.getModels("");
+    const findSchedulerExists = await SchedulerExecution.findOne({
+      where : {
+        scheduler_name : 'SendEmail',
+        status : schedulerStatus.Running
+      }
+    })
+    if(!findSchedulerExists) {
+      const createSchedulerExecution = await SchedulerExecution.create({
+        created_datetime : new Date(),
+        started_at : new Date(),
+        status : schedulerStatus.Running,
+        scheduler_name : 'SendEmail'
+      })
+      return createSchedulerExecution
+    } else {
+      // Mark existing running record as failed (server crash/deployment detected)
+      await SchedulerExecution.update({
+        status: schedulerStatus.Failed,
+        completed_at: new Date()
+      }, {
+        where: {
+          rid: findSchedulerExists.rid
+        }
+      })
+      logMessage(`Marked stale SendEmail scheduler (rid: ${findSchedulerExists.rid}) as Failed due to server restart/deployment`)
+      
+      // Create new scheduler record
+      const createSchedulerExecution = await SchedulerExecution.create({
+        created_datetime : new Date(),
+        started_at : new Date(),
+        status : schedulerStatus.Running,
+        scheduler_name : 'SendEmail'
+      })
+      return createSchedulerExecution
+    }
+  }
+
+  async createSchedulerTaskRecords (executionRid : string, taskName : string) {
+    const {SchedulerTaskExecution, SchedulerExecution} = await this.interactionModelService.getModels("")
     const findTaskAlreadyRunning = await SchedulerExecution.findOne({
       where: {
         rid: executionRid,
@@ -4571,7 +4720,8 @@ class InteractionSchemaService {
   async updateSchedulerRecords(executionRid: string, status: string) {
     const { SchedulerExecution } = await this.interactionModelService.getModels("")
     await SchedulerExecution.update({
-      status: status
+      completed_at: new Date(),
+      status : status
     }, {
       where: {
         rid: executionRid

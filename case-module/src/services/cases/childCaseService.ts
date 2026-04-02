@@ -4,8 +4,8 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, DOSSIER_NAME, entityTypes, ENV_PREFIX, eventNames, eventTypes, HttpStatus, rawQueries, SignOffTypes, STATUS_MESSAGE, techSummaryFieldMappings } from "../../utils/constants";
-import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
-import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
+import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
+import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
 import { ENV, kafka } from "../../config/kafka";
@@ -23,6 +23,7 @@ import { CaseHistorySubmissionCreationAttributes } from "../../models/caseHistor
 import Decimal from "decimal.js";
 import { generatePdfBuffer } from "../../utils/generatePdf";
 import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
+import { truncate } from "node:fs";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -133,7 +134,14 @@ export class ChildCaseService extends CaseService {
               statusMessage : STATUS_MESSAGE.accountNoFound
           }
         }
-      } catch (error) {
+      } catch (err : any) {
+        logMessage(
+          `Error approving Financial Workings -> ${err?.name}: ${
+            err?.errors?.map((e: any) =>
+              `${e.path}: ${e.message} (value: ${e.value})`
+            ).join(", ") || err?.message
+          }\nStack: ${err?.stack}`
+        );
         await transaction.rollback()
         await mainDbTransaction.rollback()
         return {
@@ -280,7 +288,7 @@ async getCaseClosureRemarks (data : any) {
                         signoff_type_name : mapSignOffTypesWithName.get(s.signoff_type_rid) || null,
                         signoff_at : s.created_datetime
                     }
-                }).sort((a, b) => a.signoff_at.localeCompare(b.signoff_at))
+                })
             }
         })
         if(isSortingRestricted) {
@@ -325,7 +333,7 @@ async initiateCreateDossierForm (data : any) {
     const processingRid = await this.rdCreditSchemaService.markAsInitiated(fetchParentNumber[0][0].r_number, data.case_rid, 'dossier-form');
     const result = await producer.send({
         topic : ENV.DOSSIER_KAFKA_TOPIC,
-        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,token : data.accessToken, fetchParentNumber})}],
+        messages : [{key : processingRid, value : JSON.stringify({accountRid, caseRid, accountNumber, userId, timezones,accessToken : data.accessToken, fetchParentNumber})}],
         
     })
     console.log(`Message : ${JSON.stringify(result)}`)
@@ -450,42 +458,37 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     where : {
       case_rid : caseRid,
       account_rid : accountRid
-    }, raw : true
+    }, raw : true,
+    order : [['created_datetime', 'DESC']]
   })
-
+  let dossierVersion;
+  let now = new Date();
   if(findData) {
-    let dossierVersion = (findData.dossier_version ?? 0) + 1
-    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${dossierVersion}-${findData.created_datetime.toISOString().split('T')[0]}`
+    dossierVersion = Number(findData.dossier_version ?? 0) + 1
     await DossierFormModel.update({
-      modified_by : userId,
-      dossier_metadata : jsonToString,
-      modified_datetime : new Date(),
-      document_name : documentName,
-      dossier_version : dossierVersion
+      is_initiated : true
     }, {
-     where : {
-      case_rid : caseRid,
-      account_rid : accountRid
-    }
+      where : {
+        rid : findData.rid
+      }
     })
   } else {
-    let now = new Date();
-    let documentName = `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${1}-${now.toISOString().split('T')[0]}`
-    await DossierFormModel.create({
-      account_rid : accountRid,
-      case_rid : caseRid,
-      browse_url : '',
-      created_by : userId,
-      document_name : documentName,
-      extension : '',
-      size : '',
-      created_datetime : now,
-      dossier_metadata : jsonToString,
-      dossier_version : 1
-    });
+    dossierVersion = 1
   }
+  await DossierFormModel.create({
+    account_rid : accountRid,
+    case_rid : caseRid,
+    browse_url : '',
+    created_by : userId,
+    document_name : `${fetchParentNumber[0][0].child_account_name?.replace(" ", "") ?? fetchParentNumber[0][0].account_name?.replace(" ", "")}-FY${caseDetails!.fiscal_year}-V${dossierVersion}-${now.toISOString().split('T')[0]}`,
+    extension : '',
+    size : '',
+    created_datetime : now,
+    dossier_metadata : jsonToString,
+    dossier_version : dossierVersion,
+    is_initiated : true
+  });
   await this.cloneTechnicalSummaryForDossierForm(accountNumber, caseRid, accountRid, userId, schemaName);
-
 }
 
 private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid: string, accountRid: string, userId: string, schemaName: string) {
@@ -493,7 +496,15 @@ private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid
   const orgDb = await this.getOrgDb();
   const {  CaseTechnicalSummaryModel } = await this.getModels(schemaName);
 
-  // First, get qualified project IDs for the case
+  // First, delete any existing technical summaries for this case
+  await CaseTechnicalSummaryModel.destroy({
+    where: {
+      case_rid: caseRid,
+      account_rid: accountRid
+    }
+  });
+
+  // Get qualified project IDs for the case
   const projectQuery = `
     SELECT DISTINCT cp.project_fiscal_rid
     FROM ${schemaName}.case_projects cp
@@ -514,7 +525,7 @@ private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid
 
   const projectFiscalRidList = projectIds.map((d: any) => d.project_fiscal_rid);
 
-  // Then, get the max version records for these projects
+  // Get the max version records for these projects from AiTechnicalSummary
   const technicalQuery = `
     SELECT DISTINCT ON (ats.project_fiscal_rid) ats.*
     FROM ${schemaName}.ai_technical_summary ats
@@ -1191,12 +1202,29 @@ async fetchDossierPackage (data : any) : Promise<any> {
   const fetchParentNumber : any = await mainDbSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequelize));
   let schemaName = rawQueries.fetchSchemaName(fetchParentNumber[0][0].r_number)
   const {DossierFormModel} = await this.getModels(schemaName);
-  let getZipPackage = await DossierFormModel.findOne({
-    where : {
-      case_rid : data.case_rid,
-      account_rid : data.account_rid
-    }
-  })
+  let getZipPackage : DossierForm | null
+  if(data.dossier_version === undefined) {
+    getZipPackage = await DossierFormModel.findOne({
+        where : {
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+        },
+        order : [['created_datetime', 'DESC']],
+        limit : 1
+      })
+  } 
+  else {
+    getZipPackage = await DossierFormModel.findOne({
+      where : {
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        dossier_version : data.dossier_version
+      },
+      order : [['created_datetime', 'DESC']],
+      limit : 1
+    })
+  }
+  
   if(getZipPackage) {
     let responsePackage : any[] = [];
     const stringToJson = JSON.parse(getZipPackage.dossier_metadata as string) as any[];
@@ -1216,11 +1244,12 @@ async fetchDossierPackage (data : any) : Promise<any> {
             if(stringToJson[j].url !== '') {
               let splittedName = stringToJson[j].url.split('/').pop() as string
               finalizedName = splittedName.split('_').slice(2,3).join('_')
+
+              responsePackage.push({
+                name : `RD Form-${finalizedName}`,
+                url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
+              })
             }
-            responsePackage.push({
-              name : `RD Form-${finalizedName}`,
-              url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
-            })
           } else {
             responsePackage.push({
               name : '',
@@ -1698,7 +1727,8 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
       if(JSON.stringify(data.user_preference) !== '') {
         const getCaseCloseStatus = await mainDb.query<{rid : string, status_name : string, status_type : string}>(rawQueries.getCaseCloseStatus(), {type : QueryTypes.SELECT, plain : true})
         await Case.update({
-          status_rid : getCaseCloseStatus?.rid
+          status_rid : getCaseCloseStatus?.rid,
+          case_total_rd_cost : data.country_credits.rd_credits_computed,
         }, {
           where : {
             rid : data.case_rid
@@ -1824,6 +1854,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
         const [caseDetails] : any[] = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : data.case_rid}, type : QueryTypes.SELECT})
         if(data.type === 'RD Forms') {
           await orgDb.query(rawQueries.revokRdFormSignOff(schemaName, data.case_rid), {transaction : orgDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
           await orgDbTransaction.commit();
           await mainDbTransaction.commit();
           dynamicEntityType = entityTypes.RD_FORM  
@@ -1847,6 +1878,7 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           await orgDb.query(rawQueries.revokeClaimQualifiedInCaseProject(data.case_rid, caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
           await orgDb.query(rawQueries.revokeClaimQualifiedInProjectFiscal(caseProjectIds, data.account_rid, schemaName), {transaction : orgDbTransaction});
           await mainDb.query(rawQueries.revokeClaimQualifiedInProjectFiscalSummary(caseProjectIds, data.account_rid), {transaction : mainDbTransaction})
+          await orgDb.query(rawQueries.revokeDossierFormInitiateStatus(schemaName, data.case_rid), {transaction : orgDbTransaction})
           let mapIdsForCaseProjectregions : any[] = []
           let mappedValuesForCasesRegions = new Map(getProjectIdsAssignedForCases.map((d : any) => [d.project_fiscal_rid, {case_project_rid : d.rid, project_fiscal_rid : d.project_fiscal_rid, region_rid : d.region_rid}]));
           caseProjectIds.forEach((d) => {
@@ -1893,6 +1925,163 @@ private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
           statusMessage : STATUS_MESSAGE.failedToUpdate
       }
     }
+  }
+   async getDossierFormDetails (data : any) : Promise<any> {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb(); 
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      let paginationAllowed : boolean = false;
+      let sortingAllowed : boolean = false;
+      let filterAllowed : boolean = false;
+      let totalResult = 0;
+      if(Object.keys(data.filter).length > 1) {
+        for(let [key, cond] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') {
+            paginationAllowed = false
+            filterAllowed = true
+            break
+          } else {
+            paginationAllowed = true
+            filterAllowed = true
+            break;
+          }
+        }
+      } else if(Object.keys(data.filter).length === 1) {
+        for(let [key, cond] of Object.entries(data.filter)) {
+          if(key === 'created_by_name') {
+            paginationAllowed = false
+            filterAllowed = false
+            break;
+          } else {
+            paginationAllowed = true
+            filterAllowed = true
+            break;
+          }
+        }
+      }
+      else {
+        paginationAllowed = true
+        filterAllowed = false
+      }
+      if(data.sort === 'created_by_name') {
+        sortingAllowed = false
+      } else {
+        sortingAllowed = true
+      }
+      const schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number);
+      const result = await orgDb.query<DossierFormResponse>(fetchDossierForm(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, schemaName, paginationAllowed, sortingAllowed, filterAllowed, data.account_rid, data.case_rid), {type : QueryTypes.SELECT});
+      if(result.length > 0) {
+        const getUserIds = [...new Set(result.map((d) => d.created_by))];
+        const getUserMetaData : any = await mainDb.query(rawQueries.getOwnerDetails(getUserIds));
+        const mapUser : Map<string, string>= new Map(getUserMetaData[0].map((d : any) => [d.rid, d.name]));
+        let iteratedResult = result.map((d) => {
+          return {
+            ...d,
+            created_by_name : mapUser.get(d.created_by) || ''
+          }
+        })
+        if(!filterAllowed) {
+          if(Object.keys(data.filter).length > 0) {
+            if(Object.keys(data.filter['created_by_name']).some((d) => d ==='equals')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase() === data.filter['created_by_name']['equals'].toLowerCase())
+          }
+          if(Object.keys(data.filter['created_by_name']).some((d) => d === 'not_equals')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase() !== data.filter['created_by_name']['not_equals'].toLowerCase())
+          }
+          if(Object.keys(data.filter['created_by_name']).some((d) => d === 'contains')) {
+            iteratedResult = iteratedResult.filter((d) => d.created_by_name.toLowerCase().includes(data.filter['created_by_name']['contains'].toLowerCase()))
+          }
+          }
+        }
+        if(!sortingAllowed) {
+          if(data.sort_by === 'ASC')
+            iteratedResult.sort((a, b) => a.created_by_name.localeCompare(b.created_by_name))
+          else 
+            iteratedResult.sort((a, b) => b.created_by_name.localeCompare(a.created_by_name))
+        }
+        totalResult = paginationAllowed ? Number(result[0]!.total_result) : iteratedResult.length
+
+        if(!paginationAllowed) {
+          iteratedResult = iteratedResult.slice(((data.page - 1) * data.limit), data.limit)
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : iteratedResult,
+          total : totalResult
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : [],
+          totalResult : 0
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : [],
+          totalResult : 0
+        }
+    }
+  }
+  async updateCaseSettings (data : any) {
+    const mainDb = await this.getMainDb();
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      const {Case} = await this.caseModelService.getModels(fetchParentAccount.r_number);
+      await Case.update({
+        assessment_methodology : data.assessment_methodology,
+        modified_by : data.userId,
+        modified_datetime : new Date()
+      }, {
+        where : {
+          rid : data.rid
+        }
+      });
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.settingsUpdatedSuccess
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNotFound
+      }
+    }
+  }
+  async getCaseSettings (data : any) {
+    const mainDb = await this.getMainDb();
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      const {Case} = await this.caseModelService.getModels(fetchParentAccount.r_number);
+      return await Case.findOne({
+        attributes : ['rid', 'assessment_methodology'],
+        where : {
+          rid : data.rid
+        }, raw : true
+      })
+    }
+  }
+  async getCaseSummary (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const [fetchParentAccount] = await mainDb.query<ParentAccountType>(await rawQueries.fetchParentAccount(data.account_rid, mainDb), {type : QueryTypes.SELECT});
+    if(fetchParentAccount) {
+      const findAccCtryDetails : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(data.account_rid))
+      let schemaName = rawQueries.fetchSchemaName(fetchParentAccount.r_number)
+      const result : any = await orgDb.query(getCaseSummaryData(data.case_rid, schemaName));
+      const finalResult = {
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        title : `${findAccCtryDetails[0][0].account_name} ${findAccCtryDetails[0][0].country_code} ${result[0][0].fiscal_year} Dossier`,
+        company_overview : result[0][0].business_details,
+        assessment_methodology : result[0][0].assessment_methodology,
+        overall_project_summary : "NA"
+      }
+      return finalResult;
+    }
+    return null;
   }
 }
 

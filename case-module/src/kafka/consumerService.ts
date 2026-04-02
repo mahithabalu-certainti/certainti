@@ -148,7 +148,7 @@ export class KafkaConsumerService {
                     let ruleEnginePayload = {
                             entityName: caseInfo.case_name,
                             entity: entityNames.case,
-                            eventName: ruleNames.caseCreated,
+                            eventName: ruleNames.dossierCreated,
                             userId: payload.userId,
                             accountRid: payload.accountRid,
                             targetUserID:payload.userId,

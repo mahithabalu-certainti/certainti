@@ -226,7 +226,7 @@ export const setProject = (dbData: any, requestData: any) => {
   if (requestData.project_classification_rid != undefined) {
     newPrjData.project_classification_rid =
       requestData.project_classification_rid !=
-      dbData.project_classification_rid
+        dbData.project_classification_rid
         ? requestData.project_classification_rid
         : dbData.project_classification_rid;
     let data = `project_classification_rid = '${newPrjData.project_classification_rid}'`;
@@ -235,7 +235,7 @@ export const setProject = (dbData: any, requestData: any) => {
   if (requestData.project_classification_other != undefined) {
     newPrjData.project_classification_other =
       requestData.project_classification_other !=
-      dbData.project_classification_other
+        dbData.project_classification_other
         ? requestData.project_classification_other
         : dbData.project_classification_other;
     let data = `project_classification_other = '${newPrjData.project_classification_other}'`;
@@ -379,7 +379,7 @@ export const setPrjFiscalData = (dbData: any, requestData: any) => {
   if (requestData.project_classification_rid != undefined) {
     newPrjFisData.project_classification_rid =
       requestData.project_classification_rid !=
-      dbData.project_classification_rid
+        dbData.project_classification_rid
         ? requestData.project_classification_rid
         : dbData.project_classification_rid;
     let data = `project_classification_rid = '${newPrjFisData.project_classification_rid}'`;
@@ -388,7 +388,7 @@ export const setPrjFiscalData = (dbData: any, requestData: any) => {
   if (requestData.project_classification_other != undefined) {
     newPrjFisData.project_classification_other =
       requestData.project_classification_other !=
-      dbData.project_classification_other
+        dbData.project_classification_other
         ? requestData.project_classification_other
         : dbData.project_classification_other;
     let data = `project_classification_other = '${newPrjFisData.project_classification_other.replace(
@@ -469,8 +469,8 @@ export const setPrjFiscalData = (dbData: any, requestData: any) => {
       newPrjFisData.total_cost_fte_prj == ""
         ? `total_cost_fte_prj = null`
         : `total_cost_fte_prj = ${parseFloat(
-            newPrjFisData.total_cost_fte_prj
-          )}`;
+          newPrjFisData.total_cost_fte_prj
+        )}`;
     newPrjFisArray.push(data);
   }
   if (requestData.total_cost_subcon != undefined) {
@@ -482,8 +482,8 @@ export const setPrjFiscalData = (dbData: any, requestData: any) => {
       newPrjFisData.total_cost_subcon_prj == ""
         ? `total_cost_subcon_prj = null`
         : `total_cost_subcon_prj = ${parseFloat(
-            newPrjFisData.total_cost_subcon_prj
-          )}`;
+          newPrjFisData.total_cost_subcon_prj
+        )}`;
     newPrjFisArray.push(data);
   }
   if (requestData.total_cost_nonlabor != undefined) {
@@ -495,8 +495,8 @@ export const setPrjFiscalData = (dbData: any, requestData: any) => {
       newPrjFisData.total_cost_nonlabor_prj == ""
         ? `total_cost_nonlabor_prj = null`
         : `total_cost_nonlabor_prj = ${parseFloat(
-            newPrjFisData.total_cost_nonlabor_prj
-          )}`;
+          newPrjFisData.total_cost_nonlabor_prj
+        )}`;
     newPrjFisArray.push(data);
   }
   if (requestData.is_assesed != undefined) {
@@ -550,7 +550,7 @@ export const setProjectSummary = (dbData: any, requestData: any) => {
   if (requestData.project_classification_rid != undefined) {
     newDbPrjSummary.project_classification_rid =
       requestData.project_classification_rid !=
-      dbData.project_classification_rid
+        dbData.project_classification_rid
         ? requestData.project_classification_rid
         : dbData.project_classification_rid;
     let data = `project_classification_rid = '${newDbPrjSummary.project_classification_rid}'`;
@@ -559,7 +559,7 @@ export const setProjectSummary = (dbData: any, requestData: any) => {
   if (requestData.project_classification_other != undefined) {
     newDbPrjSummary.project_classification_other =
       requestData.project_classification_other !=
-      dbData.project_classification_other
+        dbData.project_classification_other
         ? requestData.project_classification_other
         : dbData.project_classification_other;
     let data = `project_classification_other = '${newDbPrjSummary.project_classification_other.replace(
@@ -651,8 +651,8 @@ export const setProjectSummary = (dbData: any, requestData: any) => {
       newDbPrjSummary.total_cost_subcon == ""
         ? `total_cost_subcon = null`
         : `total_cost_subcon = ${parseFloat(
-            newDbPrjSummary.total_cost_subcon
-          )}`;
+          newDbPrjSummary.total_cost_subcon
+        )}`;
     newDbPrjSummaryArray.push(data);
   }
   if (requestData.total_cost_nonlabor != undefined) {
@@ -664,8 +664,8 @@ export const setProjectSummary = (dbData: any, requestData: any) => {
       newDbPrjSummary.total_cost_nonlabor == ""
         ? `total_cost_nonlabor = null`
         : `total_cost_nonlabor = ${parseFloat(
-            newDbPrjSummary.total_cost_nonlabor
-          )}`;
+          newDbPrjSummary.total_cost_nonlabor
+        )}`;
     newDbPrjSummaryArray.push(data);
   }
   let data = `modified_by = '${requestData.userId}'`;
@@ -711,7 +711,7 @@ export const setProjectFiscalSummary = (dbData: any, requestData: any) => {
   if (requestData.project_classification_rid != undefined) {
     newFisSummary.project_classification_rid =
       requestData.project_classification_rid !=
-      dbData.project_classification_rid
+        dbData.project_classification_rid
         ? requestData.project_classification_rid
         : dbData.project_classification_rid;
     let data = `project_classification_rid = '${newFisSummary.project_classification_rid}'`;
@@ -720,7 +720,7 @@ export const setProjectFiscalSummary = (dbData: any, requestData: any) => {
   if (requestData.project_classification_other != undefined) {
     newFisSummary.project_classification_other =
       requestData.project_classification_other !=
-      dbData.project_classification_other
+        dbData.project_classification_other
         ? requestData.project_classification_other
         : dbData.project_classification_other;
     let data = `project_classification_other = '${newFisSummary.project_classification_other.replace(
@@ -801,8 +801,8 @@ export const setProjectFiscalSummary = (dbData: any, requestData: any) => {
       newFisSummary.total_cost_fte_prj == ""
         ? `total_cost_fte_prj = null`
         : `total_cost_fte_prj = ${parseFloat(
-            newFisSummary.total_cost_fte_prj
-          )}`;
+          newFisSummary.total_cost_fte_prj
+        )}`;
     newFisSummaryArray.push(data);
   }
   if (requestData.total_cost_subcon != undefined) {
@@ -814,8 +814,8 @@ export const setProjectFiscalSummary = (dbData: any, requestData: any) => {
       newFisSummary.total_cost_subcon_prj == ""
         ? `total_cost_subcon_prj = null`
         : `total_cost_subcon_prj = ${parseFloat(
-            newFisSummary.total_cost_subcon_prj
-          )}`;
+          newFisSummary.total_cost_subcon_prj
+        )}`;
     newFisSummaryArray.push(data);
   }
   if (requestData.total_cost_nonlabor != undefined) {
@@ -827,8 +827,8 @@ export const setProjectFiscalSummary = (dbData: any, requestData: any) => {
       newFisSummary.total_cost_nonlabor_prj == ""
         ? `total_cost_nonlabor_prj = null`
         : `total_cost_nonlabor_prj = ${parseFloat(
-            newFisSummary.total_cost_nonlabor_prj
-          )}`;
+          newFisSummary.total_cost_nonlabor_prj
+        )}`;
     newFisSummaryArray.push(data);
   }
   if (requestData.fiscal_year != undefined) {
@@ -1240,7 +1240,7 @@ export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
   account_number: string,
-  flag? : string
+  flag?: string
 ): Promise<{
   url: string;
   name: string;
@@ -1285,12 +1285,12 @@ export async function uploadToAzureBlob(
     // Create unique blob name with timestamp
     let timestamp = Date.now();
     let blobName;
-    if(flag === "notes"){
+    if (flag === "notes") {
       blobName = `${account_id}/notes/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     } else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
-    
+
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     // Upload file with content type
@@ -1317,8 +1317,7 @@ export async function uploadToAzureBlob(
   } catch (error) {
     console.error("Azure Blob upload failed:", error);
     throw new Error(
-      `File upload failed: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `File upload failed: ${error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -1559,6 +1558,11 @@ export const setInlineForProjectTask = (
     dataStorage = `task_type_rid = '${newData.task_type_rid}'`;
     newDataArray.push(dataStorage);
   }
+  if (requestData.project_resource_rid != undefined) {
+    newData.project_resource_rid = requestData.project_resource_rid;
+    dataStorage = `project_resource_rid = '${newData.project_resource_rid}'`;
+    newDataArray.push(dataStorage);
+  }
 
   if (newDataArray.length < 1) {
     return {
@@ -1763,8 +1767,7 @@ export async function uploadEntityTemplatesToAzureBlob(
   } catch (error) {
     console.error("Azure Blob upload failed:", error);
     throw new Error(
-      `File upload failed: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `File upload failed: ${error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -1848,11 +1851,11 @@ export const validateTaskSummaryInput = (data: any) => {
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 
- const connectionString = await getSecret(
-      process.env.AZURE_STORAGE_CONNECTION_STRING as string
-    );
-    // const connectionString = "storage-account-connection-string";
-    // const connectionString = await getSecret("storage-account-connection-string");
+  const connectionString = await getSecret(
+    process.env.AZURE_STORAGE_CONNECTION_STRING as string
+  );
+  // const connectionString = "storage-account-connection-string";
+  // const connectionString = await getSecret("storage-account-connection-string");
   const containerName = "account";
 
   const url = new URL(blobUrl);
@@ -1917,7 +1920,7 @@ export const setInlineForTaskSummary = (existingData: any, newData: any) => {
   // Always update modified fields
   setClause.push('modified_by = :modified_by');
   values.modified_by = newData.userId || newData.modified_by;
-  
+
   setClause.push('modified_datetime = :modified_datetime');
   values.modified_datetime = new Date().toISOString();
 
@@ -1928,27 +1931,27 @@ export const setInlineForTaskSummary = (existingData: any, newData: any) => {
   };
 };
 
-export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
-  let columns : string[] = [];
-  if(data.checklist_template_rid !== dbData.checklist_template_rid)
+export const getColumnsNamesForTaskUpdate = (data: UpdateCaseTaskType, dbData: CaseTask) => {
+  let columns: string[] = [];
+  if (data.checklist_template_rid !== dbData.checklist_template_rid)
     columns.push(`checklist_template_rid`)
   // if(data.effective_end_datetime !== dbData.effective_end_datetime) 
   //   columns.push(`effective_end_datetime`)
   // if(data.effective_start_datetime !== dbData.effective_start_datetime)
   //   columns.push(`effective_start_datetime`)
-  if(data.priority_rid !== dbData.priority_rid)
+  if (data.priority_rid !== dbData.priority_rid)
     columns.push(`priority_rid`)
-  if(data.task_description !== dbData.task_description)
+  if (data.task_description !== dbData.task_description)
     columns.push(`task_description`)
-  if(data.task_name !== dbData.task_name)
+  if (data.task_name !== dbData.task_name)
     columns.push(`task_name`)
-  if(data.task_status_rid !== dbData.task_status_rid)
+  if (data.task_status_rid !== dbData.task_status_rid)
     columns.push(`task_status_rid`)
-  if(data.weightage_rid !== dbData.weightage_rid)
+  if (data.weightage_rid !== dbData.weightage_rid)
     columns.push(`weightage_rid`)
-  if(data.task_category_rid !== dbData.task_category_rid)
+  if (data.task_category_rid !== dbData.task_category_rid)
     columns.push(`task_category_rid`)
-  if(data.assigned_to !== dbData.assigned_to)
+  if (data.assigned_to !== dbData.assigned_to)
     columns.push(`assigned_to`)
 
   return columns;
