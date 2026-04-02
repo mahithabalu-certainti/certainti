@@ -26,6 +26,7 @@ import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { HelperMethods } from "../cases/helperMethods";
 import { CaseModelService } from "../caseModelsService";
 import { RdFormHelperService } from "./rdFormHelperService";
+import { processMassachusettsForm } from "./maScheduleRcGenerator";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -490,20 +491,32 @@ export class RdFormMapperService {
             countryName,
             mainDb,
           );
-          filledFormUrl = await this.generatePDFNonFillable(
-            enhancedMapperConfig,
-            accountRid,
-            formInfo.browse_file,
-            accountNumber,
-            caseRid,
-            countryCode,
-            false,
-            countryName,
-            resolvedStateName,
-            fiscalYear,
-            resolvedStateCode,
-            currencySymbol,
-          );
+          filledFormUrl = ''
+          if (resolvedStateCode === "MA") {
+             filledFormUrl = await processMassachusettsForm(
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,
+            );
+            // await this.rdFormMapperSchemaService.saveStateFilledFormUrl(
+            //   caseRid, state, url, orgDb, accountNumber,
+            // );
+            continue;
+          }
+
+          
+          // filledFormUrl = await this.generatePDFNonFillable(
+          //   enhancedMapperConfig,
+          //   accountRid,
+          //   formInfo.browse_file,
+          //   accountNumber,
+          //   caseRid,
+          //   countryCode,
+          //   false,
+          //   countryName,
+          //   resolvedStateName,
+          //   fiscalYear,
+          //   resolvedStateCode,
+          //   currencySymbol,
+          // );
         } else {
           try {
             filledFormUrl = await pdfFiller(
@@ -1373,6 +1386,7 @@ export class RdFormMapperService {
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
+      configLevelKey =  ConfigType.STATE_ONLY;
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
           const federalResult = await this.processFederalForms(
@@ -1516,21 +1530,7 @@ export class RdFormMapperService {
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number,
       );
-      const [isFinancialSignOffDone]: any[] = await orgDb.query(
-        rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
-        { type: "SELECT" },
-      );
-      if (
-        !isFinancialSignOffDone ||
-        !isFinancialSignOffDone.financial_working_signoff
-      ) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-        };
-      }
-
+     
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
       );

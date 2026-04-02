@@ -9,6 +9,7 @@ import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 import { kafkaProducerService } from "../../kafka/producerService";
 import FederalComputationService from "./federalComputation";
 import Decimal from "decimal.js";
+import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook } from "../rdStateProcessors/stateRdCreditExcelGenerators";
 
 enum ConfigType {
     NONE = "NONE",
@@ -188,38 +189,62 @@ export class StateComputationService {
         const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
         let currentFiscalYear = caseDetails.fiscal_year;
+
+        // One combined workbook — each state gets its own sheet
+        const combinedWorkbook = createWorkbook();
+        const sheetsAdded: { stateRid: string }[] = [];
+
         for (const config of configStateLevel) {
             try {
                 const stateComputation = stateCalculators[config.state_code];
                 const extractConfig = this.extractConfigJson(config.config_json);
                 logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                 if (stateComputation) {
-                    
+
                     const date = new Date(effectiveEnd);
                     const formatted = date.toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric"
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric"
                     });
                     const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName, currentFiscalYear);
                     logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
                     let result;
-                    
-                    if(config.state_code === "ON") {
-                        const [getCompletedTaskStatus] = await mainDb.query<{rid : string}>(rawQueries.getCaseTaskCompletedStatus(), {type : QueryTypes.SELECT});
-                        let caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid ? true : false
-                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails, caseClosed)
+
+                    if (config.state_code === "ON") {
+                        const [getCompletedTaskStatus] = await mainDb.query<{rid: string}>(rawQueries.getCaseTaskCompletedStatus(), {type: QueryTypes.SELECT});
+                        const caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid;
+                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails, caseClosed);
                     } else {
                         result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
-                    }                  
-                    
+                    }
+
                     await this.rdCreditSchemaService.insertRDStateCreditCalculation(
-                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,config.state_code,
-                        result.inputFields, result.computedFields, result.finalCredit,result?.totalQRE ?? null,stateRDData,extractConfig,result
+                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid, config.state_code,
+                        result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig, result
                     );
+
+                    // Add this state's sheet to the shared workbook
+                    const added = await addStateSheetToWorkbook(combinedWorkbook, config.state_code, result);
+                    if (added) sheetsAdded.push({ stateRid: config.state_rid });
                 }
             } catch (err) {
                 logMessage(`Error processing state ${config.state_code}: ${err}`);
+            }
+        }
+
+        // Upload the single combined workbook and store the URL against every state that was included
+        if (sheetsAdded.length > 0) {
+            const combinedUrl = await uploadCombinedWorkbook(
+                combinedWorkbook, caseRid, currentFiscalYear,
+                accountRid, fetchParentAccountRnumber[0][0].r_number
+            );
+            if (combinedUrl) {
+                for (const { stateRid } of sheetsAdded) {
+                    await this.rdCreditSchemaService.updateFinancialWorkingUrl(
+                        fetchParentAccountRnumber[0][0].r_number, caseRid, stateRid, combinedUrl
+                    );
+                }
             }
         }
     }

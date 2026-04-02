@@ -102,7 +102,8 @@ export class RdCreditCalculatorForNM {
             creditType:      this.creditType,
             currency:        this.currency,
             fiscalYearEnded: fiscalYear,
-        });
+            currentYear:     year,
+        }, config);
         const computedFields = this.buildComputedFields(
             {
                 line3_qre:     this.round2(line3),
@@ -132,8 +133,25 @@ export class RdCreditCalculatorForNM {
     }
 
     // ── Input params ──────────────────────────────────────────────────────
-    private buildInputParams(stateRdData: StateRDData, cd: any, metadata: any = {}) {
-        const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
+    private buildInputParams(stateRdData: StateRDData, _cd: any, metadata: any = {}, config: ConfigJson) {
+        const { wages = 0, contract = 0 } = stateRdData.currentYearQREs;
+        const currentYearContract = new Decimal(contract).mul(config.sub_con_percent / 100);
+
+        const storeData: any[] = [];
+        storeData.push({
+            year:     metadata.currentYear,
+            wages:    this.round2(new Decimal(wages)),
+            contract: this.round2(currentYearContract),
+            sum:      this.round2(new Decimal(wages).plus(currentYearContract)),
+        });
+        (stateRdData.prior3YearsQREs ?? []).forEach(item => {
+            storeData.push({
+                year:     item.fiscalYear,
+                wages:    item.wages,
+                contract: item.contract,
+                sum:      this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))),
+            });
+        });
 
         return {
             metadata: {
@@ -144,16 +162,13 @@ export class RdCreditCalculatorForNM {
                 "Description":       "Research Tax Credit",
                 stateDetails:        "New Mexico - Credit Calculation",
             },
-            qreSummary: {
-                wages,
-                supplies,
-                contract,
-                nm_rural_qre: cd.nm_rural_qre ?? 0,
-            },
+            "Current & Prior years information": storeData,
         };
     }
 
-    // ── Computed fields — exact Excel label text ──────────────────────────
+    // ── Computed fields — dual-column array format (like IL)
+    //    [0] = "Qualified Expenditures" column (col M)
+    //    [1] = "Credit" column (col N)
     private buildComputedFields(
         lines: {
             line3_qre: number;
@@ -163,36 +178,40 @@ export class RdCreditCalculatorForNM {
             line7_qre: number; line7_credit: number;
             line9: number;
         },
-        config: ConfigJson
+        _config: ConfigJson
     ) {
         return {
-            computed_fields: {
-                "Technology Jobs and Research and Development Tax Credit (RPD-41326)": {
-                    "[3] Qualified Expenditures":
-                        lines.line3_qre,
+            computed_fields: [
+                {
+                    "Column Name": "Qualified Expenditures",
+                    "SubColumn Name": "",
+                    "[3] Qualified Expenditures": "",
                     "[4] Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures.":
-                        lines.line4_credit,
-                    "[4] Qualified Expenditures — Basic":
                         lines.line4_qre,
                     "[5] Rural Area Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
-                        lines.line5_credit,
-                    "[5] Qualified Expenditures — Rural Basic":
                         lines.line5_qre,
                     "[6] Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
-                        lines.line6_credit,
-                    "[6] Qualified Expenditures — Additional":
                         lines.line6_qre,
                     "[7] Rural Area Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
-                        lines.line7_credit,
-                    "[7] Qualified Expenditures — Rural Additional":
                         lines.line7_qre,
+                    "[9] Total Technology Jobs and Research and Development Tax Credit. Add lines 4,5, 6, and 7,enter total here": "",
+                },
+                {
+                    "Column Name": "Credit",
+                    "SubColumn Name": "",
+                    "[3] Qualified Expenditures": "",
+                    "[4] Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures.":
+                        lines.line4_credit,
+                    "[5] Rural Area Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                        lines.line5_credit,
+                    "[6] Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                        lines.line6_credit,
+                    "[7] Rural Area Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                        lines.line7_credit,
                     "[9] Total Technology Jobs and Research and Development Tax Credit. Add lines 4,5, 6, and 7,enter total here":
                         lines.line9,
                 },
-                "BOLD": [
-                    "[9] Total Technology Jobs and Research and Development Tax Credit. Add lines 4,5, 6, and 7,enter total here",
-                ],
-            },
+            ],
         };
     }
 

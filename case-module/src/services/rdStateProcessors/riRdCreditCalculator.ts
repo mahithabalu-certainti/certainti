@@ -74,6 +74,7 @@ export interface ConfigJson {
 
     /** Credit rate when line 4 > tier_threshold — default 16.9 (i.e. 16.9%) */
     qre_credit_percentage_c2: number;
+    qre_credit_percentage_c3: number;
 }
 
 export class RdCreditCalculatorForRI {
@@ -136,7 +137,7 @@ export class RdCreditCalculatorForRI {
 
         //---- Line 9: Maximum credit = Line 8 × 50%
         //    When line 8 = 0, max credit = 0 and full credit carries over via line 10
-        const line9 = line8.mul(0.50);
+        const line9 = line8.mul(config.qre_credit_percentage_c3 / 100);
 
         //---- Line 10: Carryover = Line 7 − Line 9 (min 0)
         const line10 = Decimal.max(line7.minus(line9), 0);
@@ -250,15 +251,11 @@ export class RdCreditCalculatorForRI {
                         lines.line7,
                     "[8] Tax amount (Form RI-1120C, line 11 or Form T-71, line 7)":
                         lines.line8,
-                    "[9] Maximum R&D Expense Credit (line 8 × 50%) — current-year usage cap":
+                    [`[9] MAXIMUM R&D Expense Credit. Multiply line 8 by ${config.qre_credit_percentage_c3}%. Enter here and on the applicable line on Schedule B-CR`]:
                         lines.line9,
                     "[10] Credit carryover. Subtract line 9 from line 7":
                         lines.line10,
-                },
-                "BOLD": [
-                    "[4] Amount of Federal Excess Expenses from line 3 incurred in Rhode Island",
-                    "[7] Total R&D Expense Credit Available (line 5 + line 6)",
-                ],
+                }
             },
         };
     }

@@ -540,6 +540,14 @@ class RDCreditSchemaService {
      * @param region_name 
      * @returns 
      */
+    async updateFinancialWorkingUrl(accountNumber: string, case_rid: string, state_rid: string, financial_working_url: string) {
+        const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
+        await RdCreditStateCalculations.update(
+            { financial_working_url },
+            { where: { case_rid, state_rid } }
+        );
+    }
+
     async findRdCreditResultsByCaseIdAndState(accountNumber: string, case_rid: string, state_rid: string) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
 

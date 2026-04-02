@@ -26,6 +26,7 @@ export interface RdCreditStateCalcAttributes {
     rd_form_url? : string | null
     form_error_message? : string | null;
     config_json?:JSON
+    financial_working_url?: string | null;
 }
 
 export interface RdCreditStateCalcCreationAttributes
@@ -59,7 +60,8 @@ export class RdCreditStateCalculations
     public final_credit_approved?: number | null;
     public rd_form_url? : string | null
     public form_error_message? : string | null;
-     public config_json?: JSON;
+    public config_json?: JSON;
+    public financial_working_url?: string | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditStateCalculations.init(
@@ -146,9 +148,13 @@ export class RdCreditStateCalculations
                     type : DataTypes.STRING(500),
                     allowNull : true
                 },
-                 config_json: { 
-                    type: DataTypes.JSONB, 
-                    allowNull: true 
+                config_json: {
+                    type: DataTypes.JSONB,
+                    allowNull: true
+                },
+                financial_working_url: {
+                    type: DataTypes.STRING(1000),
+                    allowNull: true,
                 },
             },
             {

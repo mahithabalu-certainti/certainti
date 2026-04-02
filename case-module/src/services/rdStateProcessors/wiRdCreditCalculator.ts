@@ -326,60 +326,103 @@ export class RdCreditCalculatorForWI {
                 currency:            metadata.currency   || "USD",
                 "Fiscal Year Ended": metadata.fiscalYearEnded,
                 "Description":       "Research Tax Credit",
-                stateDetails:        "Wisconsin - Credit Calculation",
+                stateDetails:        "Wisconsin - Credit Calculations",
             },
             qreSummary,
         };
     }
 
-    // ── Computed fields ────────────────────────────────────────────────────
+    // ── Computed fields — exact Excel label text (Wisconsin Schedule R) ───
     private buildComputedFields(
         qre:    ReturnType<RdCreditCalculatorForWI["computeQRE"]>,
         credit: ReturnType<RdCreditCalculatorForWI["computeCredit"]>,
         split:  ReturnType<RdCreditCalculatorForWI["computeSplit"]>,
         config: ConfigJson
     ) {
-        const priorLabel  = qre.has_prior_qres ? "(prior QREs present)" : "(no prior QREs — halved rates)";
-        const rateLabel   = `${credit.rate_used}% — ${config.activity_type} ${priorLabel}`;
+        // Line 14 label: show which rate line was used (12a/12b/12c or 13a/13b/13c)
+        const rateLine = qre.has_prior_qres
+            ? (config.activity_type === "combustion_engine" ? "12b"
+                : config.activity_type === "energy_efficient" ? "12c" : "12a")
+            : (config.activity_type === "combustion_engine" ? "13b"
+                : config.activity_type === "energy_efficient" ? "13c" : "13a");
 
         return {
             computed_fields: {
-                "Wisconsin Schedule R — QRE Computation (Lines 1–11)": {
-                    "[1] Wisconsin research wage expenses":                                    qre.line1,
-                    "[2] Wisconsin research supplies expenses":                                qre.line2,
-                    "[3] Wisconsin research computer rental expenses":                         qre.line3,
-                    "[4] Applicable percentage of Wisconsin contract research expenses":       qre.line4,
-                    "[5] Orphan drug credit wages qualifying as WI research expenses":         qre.line5,
-                    "[6] Add lines 1 through 5":                                              qre.line6,
-                    "[7] Development zones wages included in line 6":                         qre.line7,
-                    "[8] Total Wisconsin research expenses (line 6 − line 7)":               qre.line8,
-                    "[9a] 1st prior year qualified research expenses":                        qre.line9a,
-                    "[9b] 2nd prior year qualified research expenses":                        qre.line9b,
-                    "[9c] 3rd prior year qualified research expenses":                        qre.line9c,
-                    "[9d] Total prior 3yr QRE (add 9a–9c)":                                  qre.line9d,
-                    "[9e] Average prior 3yr QRE (line 9d ÷ 3)":                             qre.line9e,
-                    "[10] Multiply line 9e by 50%":                                          qre.line10,
-                    "[11] Eligible Wisconsin QRE (line 8 − line 10, min 0)":                qre.line11,
-                },
-                "Credit Rate Selection & Computation (Lines 12–16)": {
-                    "[12a] Standard qualified research rate (5.75%)":                        "5.75%",
-                    "[12b] Internal combustion engines rate (11.5%)":                        "11.5%",
-                    "[12c] Energy efficient products rate (11.5%)":                          "11.5%",
-                    "[13a] Standard — no prior QREs (2.875%)":                               "2.875%",
-                    "[13b] Combustion — no prior QREs (5.75%)":                              "5.75%",
-                    "[13c] Energy efficient — no prior QREs (5.75%)":                        "5.75%",
-                    [`[14] Line 11 × ${rateLabel}`]:                                         credit.line14,
-                    "[15d] Total pass-through credits from other entities":                  credit.line15d,
-                    "[16] Total research credits (line 14 + line 15d)":                      credit.line16,
-                },
-                "Refundable / Nonrefundable Split (Lines 17–23)": {
-                    "[17] Maximum refundable portion (line 16 × 25%)":                       split.line17,
-                    "[18] Credit used to offset tax":                                        split.line18,
-                    "[19] Subtract line 18 from line 16":                                   split.line19,
-                    "[20] Refundable portion (lesser of line 17 or line 19)":               split.line20,
-                    "[21] Nonrefundable portion (line 19 − line 20)":                       split.line21,
-                    "[22] Carryover of prior year unused research credit":                   split.line22,
-                    "[23] Total nonrefundable credit (lines 18 + 21 + 22)":                 split.line23,
+                "Wisconsin Schedule R — Research Credits": {
+                    "[1] Enter Wisconsin research wage expenses":
+                        qre.line1,
+                    "[2] Enter Wisconsin research supplies expenses":
+                        qre.line2,
+                    "[3] Enter Wisconsin research computer rental expenses":
+                        qre.line3,
+                    "[4] Enter applicable percentage of Wisconsin contract research expenses":
+                        qre.line4,
+                    "[5] Enter expenses used to compute the federal orphan drug credit that qualify as Wisconsin research expenses":
+                        qre.line5,
+                    "[6] Add lines 1 through 5":
+                        qre.line6,
+                    "[7] Wages included on line 6 that qualify for the Wisconsin development zones credit":
+                        qre.line7,
+                    "[8] Subtract line 7 from line 6. This is total Wisconsin research expenses .":
+                        qre.line8,
+                    "[9] Enter average Wisconsin qualified research expenses for the three prior years. If you did not have qualified Wisconsin research expenses in one or more of the three prior years, check the box, skip to line 10, and enter 0 on that line .":
+                        qre.has_prior_qres ? qre.line9e : 0,
+                    "[9a] 1st prior year qualified research expenses":
+                        qre.line9a,
+                    "[9b] 2nd prior year qualified research expenses":
+                        qre.line9b,
+                    "[9c] 3rd prior year qualified research expenses":
+                        qre.line9c,
+                    "[9d] Total (add lines 9a through 9c) .":
+                        qre.line9d,
+                    "[9e] Divide line 9d by 3 .":
+                        qre.line9e,
+                    "[10] Multiply line 9e by 50% (0.50) .":
+                        qre.line10,
+                    "[11] Subtract line 10 from line 8. This is your eligible Wisconsin qualified research expenses":
+                        qre.line11,
+                    "[12a] Qualified research activities (5.75%)":
+                        config.rate_standard_percentage,
+                    "[12b] Qualified research activities related to internal combustion engines (11.5%)":
+                        config.rate_combustion_percentage,
+                    "[12c] Qualified research activities related to certain energy efficient products (11.5%)":
+                        config.rate_energy_percentage,
+                    "[13a] Qualified research activities (2.875%) .":
+                        config.rate_standard_no_prior_percentage,
+                    "[13b] Qualified research activities related to internal combustion engines (5.75%)":
+                        config.rate_combustion_no_prior_percentage,
+                    "[13c] Qualified research activities related to certain energy efficient products (5.75%)":
+                        config.rate_energy_no_prior_percentage,
+                    [`[14] Multiply line 11 by the credit rate indicated on line ${rateLine} .`]:
+                        credit.line14,
+                    "[15a] Entity Name":
+                        0,
+                    "[15b] Entity Name":
+                        0,
+                    "[15c] Total pass through credits from additional schedule":
+                        0,
+                    "[15d] Total pass through credits (add lines 15a through 15c)":
+                        credit.line15d,
+                    "[16] Total research credits (add lines 14 and 15d). Form 3 and 5S filers stop here .":
+                        credit.line16,
+                    "[16a] Fiduciaries - Fill in the amount of credit allocated to beneficiaries":
+                        0,
+                    "[16b] Fiduciaries - Subtract line 16a from line 16 .":
+                        0,
+                    "[17] Multiply line 16 (line 16b for fiduciary) by .25 (25%)":
+                        split.line17,
+                    "[18] Amount of credit from line 16 (line 16b for fiduciary) used to offset tax":
+                        split.line18,
+                    "[19] Subtract line 18 from line 16 (line 16b for fiduciary)":
+                        split.line19,
+                    "[20] Enter the lesser of line 17 or line 19. This is the refundable portion of the credit":
+                        split.line20,
+                    "[21] Subtract line 20 from line 19. This is the remaining nonrefundable portion of the credit":
+                        split.line21,
+                    "[22] Carryover of prior year\u2019s unused research credit. Include Schedule CF":
+                        split.line22,
+                    "[23] Add lines 18, 21, and 22. This is the total nonrefundable portion of the credit. Include Schedule CF if the credit was not used in full":
+                        split.line23,
                 }
             },
         };
