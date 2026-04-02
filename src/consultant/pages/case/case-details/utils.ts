@@ -132,6 +132,9 @@ export const transformCaseData = (
           value: cases?.final_credit
             ? costDisplay(cases.final_credit, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['total_rd_credits']?.edit &&
+            !permissionMap?.['total_rd_credits']?.read,
         },
       ],
     },
@@ -172,6 +175,9 @@ export const transformCaseData = (
           value: cases.case_completion_percentage
             ? `${cases.case_completion_percentage}%`
             : '-',
+          hide:
+            !permissionMap?.['case_progress_percentage']?.edit &&
+            !permissionMap?.['case_progress_percentage']?.read,
         },
       ],
     },
@@ -206,6 +212,9 @@ export const transformCaseData = (
             if (progress === 'Critical') return 'text-[#FF3C03] font-semibold';
             return '';
           })(),
+          hide:
+            !permissionMap?.['case_progress']?.edit &&
+            !permissionMap?.['case_progress']?.read,
         },
       ],
     },

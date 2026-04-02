@@ -213,9 +213,9 @@ export const transformProjectData = (
           label: 'QRE Percent Potential',
           value: aiEstimatedQre ? `${aiEstimatedQre}%` : '-',
           key: 'ai_estimated_qre',
-          // hide:
-          //   !permissionMap?.['ai_estimated_qre']?.read &&
-          //   !permissionMap?.['ai_estimated_qre']?.edit,
+          hide:
+            !permissionMap?.['qre_percent_potential']?.read &&
+            !permissionMap?.['qre_percent_potential']?.edit,
         },
       ],
     },
