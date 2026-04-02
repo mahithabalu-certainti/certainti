@@ -53,6 +53,31 @@ routes.get(
   controller.interactionsController.getInteractionLevel
 );
 routes.get(
+  "/mailbox/folders",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listMailboxFolders
+);
+routes.get(
+  "/mailbox/messages",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listMailboxMessages
+);
+routes.get(
+  "/mailbox/inbox",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listInboxMessages
+);
+routes.get(
+  "/mailbox/messages/:messageId",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getMailboxMessageById
+);
+routes.get(
+  "/mailbox/messages/:messageId/attachments/:attachmentId",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getMailboxAttachmentById
+);
+routes.get(
   "/interactionSource",
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionSource

@@ -313,7 +313,26 @@ export interface IInteractionService {
   getFpaDetailsById(data: any): Promise<any>
   exportFpaList(data: any): Promise<any>
   updateInteractionStatus(data: any, userId: string): Promise<any>
-  getInteractionAssessmentSource(): Promise<any>;
+  getInteractionAssessmentSource(): Promise<any>
+  listInboxMessages(data: { account_rid: string; limit?: number }): Promise<any>
+  listMailboxFolders(data: { account_rid: string }): Promise<any>
+  listMailboxMessages(data: {
+    account_rid: string;
+    folderId?: string;
+    folderPath?: string;
+    limit?: number;
+    pageToken?: string;
+    search?: string;
+  }): Promise<any>
+  getMailboxMessageById(data: {
+    account_rid: string;
+    messageId: string;
+  }): Promise<any>
+  getMailboxAttachmentById(data: {
+    account_rid: string;
+    messageId: string;
+    attachmentId: string;
+  }): Promise<any>
 }
 
 export interface IInteractionChildService {

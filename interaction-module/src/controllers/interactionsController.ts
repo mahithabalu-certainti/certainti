@@ -40,6 +40,11 @@ import {
   updateInteractionSchema,
   updateTechSummaryContextSchema,
   refineSummarySchema,
+  inboxMessageDetailsSchema,
+  inboxAttachmentDetailsSchema,
+  listInboxMessagesSchema,
+  listMailboxFoldersSchema,
+  listMailboxMessagesSchema,
   listAiAssessmentAuditSchema,
 } from "../lib/joi/schemas/schema";
 
@@ -3015,6 +3020,78 @@ async function getInteractionAssessmentSource(req: Request, res: Response) {
     });
   }
 }
+
+/**
+ * Handles the mailbox inbox listing endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.query.limit`: optional number of inbox messages to return.
+ *
+ * Output:
+ * - Sends a normalized inbox message list response or an error response.
+ */
+async function listInboxMessages(req: Request, res: Response): Promise<void> {
+  const methodName = "List inbox messages";
+  try {
+    const value = await validateRequest(
+      req,
+      listInboxMessagesSchema,
+      res,
+      "GET"
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      errorLog(methodName, "Request is empty");
+      return;
+    }
+
+    const result = await interactionService.listInboxMessages({
+      account_rid: value.account_rid,
+      limit: Number(value.limit || 50),
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
 /**
  * Handles listing of AI assessment audits based on provided filters and sorting options.
  *
@@ -3061,16 +3138,16 @@ async function listAiAssessmentAudit(req: Request, res: Response): Promise<void>
       successLog(methodName);
       handleCustomResponse(res, result.data, result.message);
       return;
-    } else {
-      errorLog(methodName, result.errorMessage);
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        result.errorMessage
-      );
-      return;
     }
+
+    errorLog(methodName, result.errorMessage);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.errorMessage
+    );
+    return;
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -3081,6 +3158,214 @@ async function listAiAssessmentAudit(req: Request, res: Response): Promise<void>
       error.message
     );
     return;
+  }
+}
+
+/**
+ * Handles the mailbox folder tree endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ *
+ * Output:
+ * - Sends the normalized mailbox folder tree or an error response.
+ */
+async function listMailboxFolders(req: Request, res: Response): Promise<void> {
+  const methodName = "List mailbox folders";
+  try {
+    const value = await validateRequest(req, listMailboxFoldersSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.listMailboxFolders({
+      account_rid: value.account_rid,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Handles the mailbox messages endpoint for folder browsing, search, and pagination.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.query.folderId` / `req.query.folderPath`: optional folder selector.
+ * - `req.query.limit`: optional page size.
+ * - `req.query.pageToken`: optional next-page token from a previous response.
+ * - `req.query.search`: optional mailbox search text.
+ *
+ * Output:
+ * - Sends normalized mailbox message data or an error response.
+ */
+async function listMailboxMessages(req: Request, res: Response): Promise<void> {
+  const methodName = "List mailbox messages";
+  try {
+    const value = await validateRequest(req, listMailboxMessagesSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.listMailboxMessages({
+      account_rid: value.account_rid,
+      folderId: value.folderId || undefined,
+      folderPath: value.folderPath || undefined,
+      limit: Number(value.limit || 50),
+      pageToken: value.pageToken || undefined,
+      search: value.search || undefined,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Handles the mailbox message details endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.params.messageId`: mailbox message identifier.
+ *
+ * Output:
+ * - Sends the normalized mailbox message detail payload or an error response.
+ */
+async function getMailboxMessageById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get mailbox message by id";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        query: {
+          ...req.query,
+          messageId: req.params.messageId,
+        },
+      } as unknown) as Request,
+      inboxMessageDetailsSchema,
+      res,
+      "GET"
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      errorLog(methodName, "Request is empty");
+      return;
+    }
+
+    const result = await interactionService.getMailboxMessageById({
+      account_rid: value.account_rid,
+      messageId: value.messageId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
   }
 }
 
@@ -3103,7 +3388,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
     }
 
     const page: number = 1;
-    const limit: number = Number.MAX_SAFE_INTEGER; // Fetch all for export
+    const limit: number = Number.MAX_SAFE_INTEGER;
 
     const result = await interactionChildService.listAiAssessmentAudit(
       value,
@@ -3147,7 +3432,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
       const finalStructuredData = (!result?.data?.auditInfo || result.data.auditInfo.length < 1)
         ? []
         : result.data.auditInfo.map((d: any) => {
-          let resultMap: { [key: string]: any } = {
+          const resultMap: { [key: string]: any } = {
             rid: d.rid || "",
             transaction_id: d.transaction_id || "",
             account_name: d.account_name || "",
@@ -3169,7 +3454,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
         });
 
       if (finalStructuredData.length === 0) {
-        finalStructuredData.push({ "Message": "No data available" });
+        finalStructuredData.push({ Message: "No data available" });
       }
 
       if (value.project_fiscal_rid) {
@@ -3191,6 +3476,83 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
     errorLog(methodName, error.message);
     handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, error.message);
     return;
+  }
+}
+
+/**
+ * Handles the mailbox attachment details endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.params.messageId`: parent mailbox message identifier.
+ * - `req.params.attachmentId`: mailbox attachment identifier.
+ *
+ * Output:
+ * - Sends the normalized attachment payload or an error response.
+ */
+async function getMailboxAttachmentById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get mailbox attachment by id";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        query: {
+          ...req.query,
+          messageId: req.params.messageId,
+          attachmentId: req.params.attachmentId,
+        },
+      } as unknown) as Request,
+      inboxAttachmentDetailsSchema,
+      res,
+      "GET"
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.getMailboxAttachmentById({
+      account_rid: value.account_rid,
+      messageId: value.messageId,
+      attachmentId: value.attachmentId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
   }
 }
 
@@ -3236,6 +3598,11 @@ export default {
   exportFetchFourPartAssessmentList,
   updateInteractionStatus,
   getInteractionAssessmentSource,
+  listInboxMessages,
+  listMailboxFolders,
+  listMailboxMessages,
+  getMailboxMessageById,
+  getMailboxAttachmentById,
   saveRefineSummary,
   refineSummary
 };
