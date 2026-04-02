@@ -29,11 +29,13 @@ import { ProjectQreAdjustmentResponse } from '../../../utils';
 interface FinancialSummaryProps {
   projectDetails: NewProjectData | null;
   onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
+  refetchProjectDetails: () => void;
 }
 
 const SummayListTable: React.FC<FinancialSummaryProps> = ({
   projectDetails,
   onQreAdjustmentUpdated,
+  refetchProjectDetails,
 }) => {
   const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
     client: resourceClient,
@@ -70,6 +72,28 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     financialSummaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [financialSummaryViewEditFields]);
+
+  const projectViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<
+      string,
+      {
+        read: boolean;
+        edit: boolean;
+      }
+    > = {};
+    projectViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
@@ -122,13 +146,19 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   const getRdPercentRowId = (row: SummaryRdPercent) => row.rid;
   const getClaimJurisdictionRowId = (row: SummaryClaimJurisdiction) => row.rid;
   const getQRERowId = (row: SummaryQRE) => row.rid;
-
+  const isProjectSignedOff = projectDetails?.is_rd_claim_qualified;
+  const aiEstimatedQre = projectDetails?.rd_percent_potential_ai;
   const resourceMetricColumns = getResourceMetricColumns(permissionMap);
   const claimJurisdictionColumns = getClaimJurisdictionColumns(
     permissionMap,
     currencySymbol
   );
-  const rdPercentColumns = getRdPercentColumns(permissionMap);
+  const rdPercentColumns = getRdPercentColumns(
+    permissionMap,
+    projectPermissionMap,
+    isProjectSignedOff,
+    aiEstimatedQre
+  );
 
   const handleRdPercentCellEdit = async (
     rowId: string,
@@ -174,6 +204,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           )
         );
         onQreAdjustmentUpdated?.(result as ProjectQreAdjustmentResponse);
+        refetchProjectDetails();
       }
     } catch (e) {
       console.error('Failed to update QRE adjustment from summary:', e);

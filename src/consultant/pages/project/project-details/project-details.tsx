@@ -274,6 +274,33 @@ export const ProjectDetails = () => {
   const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
     client: resourceClient,
   });
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
@@ -284,7 +311,14 @@ export const ProjectDetails = () => {
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
-      setProjectDetails(transformProjectData(project));
+      setProjectDetails(
+        transformProjectData(
+          project,
+          permissionMap,
+          accountPermissionMap,
+          isProjectSignedOff
+        )
+      );
       setProjectData(project);
       handleGetFiscalYear(project?.fiscal_year, {
         startDate: project?.fiscal_start_date || '',
@@ -791,6 +825,7 @@ export const ProjectDetails = () => {
             setResCostExportParams={setFinancialResCostParams}
             onQreAdjustmentUpdated={handleQreAdjustmentUpdated}
             activityMenuItems={activityMenuItems}
+            refetchProjectDetails={refetch}
           />
         );
       case 'projectDetails':
