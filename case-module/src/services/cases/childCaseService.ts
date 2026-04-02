@@ -134,7 +134,14 @@ export class ChildCaseService extends CaseService {
               statusMessage : STATUS_MESSAGE.accountNoFound
           }
         }
-      } catch (error) {
+      } catch (err : any) {
+        logMessage(
+          `Error approving Financial Workings -> ${err?.name}: ${
+            err?.errors?.map((e: any) =>
+              `${e.path}: ${e.message} (value: ${e.value})`
+            ).join(", ") || err?.message
+          }\nStack: ${err?.stack}`
+        );
         await transaction.rollback()
         await mainDbTransaction.rollback()
         return {
