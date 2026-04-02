@@ -4667,6 +4667,117 @@ export class InteractionService {
     return decodedToken;
   }
 
+  private getValidatedCalendarPageToken(
+    pageToken: string,
+    supportEmail: string
+  ) {
+    let decodedToken: string;
+
+    try {
+      decodedToken = decodeURIComponent(pageToken);
+    } catch (error) {
+      throw new Error("Invalid calendar page token");
+    }
+
+    const encodedEmail = encodeURIComponent(supportEmail);
+    const absolutePrefix = `https://graph.microsoft.com/v1.0/users/${encodedEmail}/calendarView`;
+    const relativePrefix = `/users/${encodedEmail}/calendarView`;
+
+    if (
+      !decodedToken.startsWith(absolutePrefix) &&
+      !decodedToken.startsWith(relativePrefix)
+    ) {
+      throw new Error("Invalid calendar page token");
+    }
+
+    return decodedToken;
+  }
+
+  private getCalendarRange(startDate?: string, endDate?: string) {
+    const start = startDate ? new Date(startDate) : new Date();
+    const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
+    safeStart.setHours(0, 0, 0, 0);
+
+    const end = endDate ? new Date(endDate) : new Date(safeStart);
+    if (!endDate) {
+      end.setDate(end.getDate() + 30);
+    }
+    const safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
+    safeEnd.setHours(23, 59, 59, 999);
+
+    return {
+      start: safeStart.toISOString(),
+      end: safeEnd.toISOString(),
+    };
+  }
+
+  private extractMeetingLink(event: any) {
+    const directJoinUrl = event?.onlineMeeting?.joinUrl || "";
+    if (directJoinUrl) {
+      return {
+        join_url: directJoinUrl,
+        link_source: "onlineMeeting.joinUrl",
+      };
+    }
+
+    const content = event?.body?.content || "";
+    const match = content.match(/https:\/\/teams\.microsoft\.com\/[^\s"'<)]+/i);
+    return {
+      join_url: match?.[0] || "",
+      link_source: match?.[0] ? "body.content" : null,
+    };
+  }
+
+  private normalizeCalendarEventSummary(event: any) {
+    const { join_url, link_source } = this.extractMeetingLink(event);
+    return {
+      event_id: event.id,
+      subject: event.subject || "(No Subject)",
+      start: event.start?.dateTime || null,
+      start_timezone: event.start?.timeZone || null,
+      end: event.end?.dateTime || null,
+      end_timezone: event.end?.timeZone || null,
+      is_all_day: Boolean(event.isAllDay),
+      status: event.showAs || "unknown",
+      response_status: event.responseStatus?.response || "unknown",
+      organizer_name: event.organizer?.emailAddress?.name || "",
+      organizer_email: event.organizer?.emailAddress?.address || "",
+      location_display_name: event.location?.displayName || "",
+      is_online_meeting: Boolean(event.isOnlineMeeting),
+      online_meeting_provider: event.onlineMeetingProvider || null,
+      has_join_link: Boolean(join_url),
+      join_link: join_url || null,
+      join_link_source: link_source,
+      web_link: event.webLink || "",
+      can_cancel: !Boolean(event.isCancelled),
+    };
+  }
+
+  private normalizeCalendarEventDetails(event: any) {
+    const base = this.normalizeCalendarEventSummary(event);
+    return {
+      ...base,
+      body_preview: event.bodyPreview || "",
+      body: {
+        content_type: event.body?.contentType || "html",
+        content: event.body?.content || "",
+      },
+      attendees: (event.attendees || []).map((attendee: any) => ({
+        name: attendee?.emailAddress?.name || "",
+        email: attendee?.emailAddress?.address || "",
+        type: attendee?.type || "",
+        response_status: attendee?.status?.response || "",
+      })),
+      created_datetime: event.createdDateTime || null,
+      modified_datetime: event.lastModifiedDateTime || null,
+      is_cancelled: Boolean(event.isCancelled),
+      importance: event.importance || "normal",
+      series_master_id: event.seriesMasterId || null,
+      i_cal_u_id: event.iCalUId || null,
+      transaction_id: event.transactionId || null,
+    };
+  }
+
   private async getMailboxSettings(accountRid: string) {
     const { accountNumber, accountId, parentAccountId } =
       await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(
@@ -5103,6 +5214,271 @@ export class InteractionService {
     } catch (err) {
       const error = err as Error;
       errorLog("getMailboxAttachmentById", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  async getCalendarMetadata(data: { account_rid: string }) {
+    try {
+      const { supportEmail } = await this.getMailboxSettings(data.account_rid);
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Calendar metadata fetched successfully",
+        data: {
+          calendar_owner_email: supportEmail,
+          mode: "read_only",
+          allowed_actions: {
+            view_calendar: true,
+            view_event_detail: true,
+            view_join_link: true,
+            cancel_invite: true,
+            create_event: false,
+            edit_event: false,
+            delete_event: false,
+          },
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getCalendarMetadata", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  async listCalendarEvents(data: {
+    account_rid: string;
+    start_date?: string;
+    end_date?: string;
+    search?: string;
+    limit?: number;
+    pageToken?: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+      const limit = Math.min(Math.max(data.limit || 50, 1), 100);
+      const { start, end } = this.getCalendarRange(data.start_date, data.end_date);
+
+      let request;
+      if (data.pageToken) {
+        const validatedPageToken = this.getValidatedCalendarPageToken(
+          data.pageToken,
+          supportEmail
+        );
+        request = graphClient.api(validatedPageToken);
+      } else {
+        request = graphClient
+          .api(`/users/${encodeURIComponent(supportEmail)}/calendarView`)
+          .query({
+            startDateTime: start,
+            endDateTime: end,
+          })
+          .select(
+            [
+              "id",
+              "subject",
+              "start",
+              "end",
+              "isAllDay",
+              "showAs",
+              "responseStatus",
+              "organizer",
+              "location",
+              "isOnlineMeeting",
+              "onlineMeetingProvider",
+              "onlineMeeting",
+              "webLink",
+              "bodyPreview",
+              "body",
+              "isCancelled",
+            ].join(",")
+          )
+          .top(limit)
+          .orderby("start/dateTime");
+
+        if (data.search) {
+          request = request
+            .header("ConsistencyLevel", "eventual")
+            .search(`"${data.search.replace(/"/g, '\\"')}"`);
+        }
+      }
+
+      const result: any = await request.get();
+      const nextLink = result?.["@odata.nextLink"] || null;
+      const events = (result?.value || []).map((event: any) =>
+        this.normalizeCalendarEventSummary(event)
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Calendar events fetched successfully",
+        data: {
+          calendar_owner_email: supportEmail,
+          range: {
+            start_date: start,
+            end_date: end,
+          },
+          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          events,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listCalendarEvents", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          calendar_owner_email: "",
+          range: null,
+          next_page_token: null,
+          events: [],
+        },
+      };
+    }
+  }
+
+  async getCalendarEventById(data: { account_rid: string; eventId: string }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const event: any = await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/events/${encodeURIComponent(data.eventId)}`)
+        .select(
+          [
+            "id",
+            "subject",
+            "start",
+            "end",
+            "isAllDay",
+            "showAs",
+            "responseStatus",
+            "organizer",
+            "attendees",
+            "location",
+            "isOnlineMeeting",
+            "onlineMeetingProvider",
+            "onlineMeeting",
+            "webLink",
+            "bodyPreview",
+            "body",
+            "createdDateTime",
+            "lastModifiedDateTime",
+            "isCancelled",
+            "importance",
+            "seriesMasterId",
+            "iCalUId",
+            "transactionId",
+          ].join(",")
+        )
+        .get();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Calendar event fetched successfully",
+        data: this.normalizeCalendarEventDetails(event),
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getCalendarEventById", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  async cancelCalendarEvent(data: {
+    account_rid: string;
+    eventId: string;
+    comment?: string;
+    userId: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const event: any = await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/events/${encodeURIComponent(data.eventId)}`)
+        .select("id,subject,isCancelled,organizer")
+        .get();
+
+      const organizerEmail =
+        event?.organizer?.emailAddress?.address ||
+        supportEmail;
+
+      if (
+        organizerEmail &&
+        organizerEmail.toLowerCase() !== supportEmail.toLowerCase()
+      ) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          statusMessage:
+            "Only meetings organized by the configured mailbox can be cancelled.",
+          data: null,
+        };
+      }
+
+      if (event?.isCancelled) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: "Meeting invite is already cancelled",
+          data: {
+            event_id: data.eventId,
+            status: "cancelled",
+            cancelled_by: data.userId,
+            already_cancelled: true,
+          },
+        };
+      }
+
+      await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/events/${encodeURIComponent(data.eventId)}/cancel`)
+        .post({
+          Comment:
+            data.comment ||
+            "This meeting has been cancelled from the Certainti platform.",
+        });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Meeting invite cancelled successfully",
+        data: {
+          event_id: data.eventId,
+          subject: event?.subject || "(No Subject)",
+          status: "cancelled",
+          cancelled_by: data.userId,
+          already_cancelled: false,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("cancelCalendarEvent", error.message);
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         statusMessage: error.message,
