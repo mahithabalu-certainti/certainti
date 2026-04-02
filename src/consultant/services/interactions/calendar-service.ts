@@ -77,6 +77,8 @@ export interface CancelCalendarEventResponse {
   already_cancelled: boolean;
 }
 
+const MAX_AUTO_CALENDAR_PAGES = 3;
+
 /**
  * Fetches calendar metadata for the supplied account.
  *
@@ -136,13 +138,13 @@ export const fetchCalendarEvents = async (params: {
 };
 
 /**
- * Fetches all calendar events for a range by following every paginated response.
+ * Fetches calendar events for a range while capping automatic pagination.
  *
  * Input:
  * - `params`: account RID, range, search, and page size inputs for event retrieval.
  *
  * Output:
- * - Returns a single aggregated calendar event response with all pages combined.
+ * - Returns a partially aggregated calendar event response and preserves any remaining next-page token.
  */
 export const fetchAllCalendarEvents = async (params: {
   accountRid: string;
@@ -153,6 +155,8 @@ export const fetchAllCalendarEvents = async (params: {
 }): Promise<CalendarEventsResponse> => {
   const aggregatedEvents: CalendarEventSummary[] = [];
   let pageToken: string | null | undefined;
+  let lastNextPageToken: string | null = null;
+  let pageCount = 0;
   let firstPageMetadata: Omit<CalendarEventsResponse, 'events' | 'next_page_token'> | null =
     null;
 
@@ -171,12 +175,14 @@ export const fetchAllCalendarEvents = async (params: {
 
     aggregatedEvents.push(...page.events);
     pageToken = page.next_page_token;
-  } while (pageToken);
+    lastNextPageToken = page.next_page_token;
+    pageCount += 1;
+  } while (pageToken && pageCount < MAX_AUTO_CALENDAR_PAGES);
 
   return {
     calendar_owner_email: firstPageMetadata?.calendar_owner_email || '',
     range: firstPageMetadata?.range || null,
-    next_page_token: null,
+    next_page_token: pageToken ? lastNextPageToken : null,
     events: aggregatedEvents,
   };
 };
