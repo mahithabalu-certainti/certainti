@@ -53,6 +53,7 @@ interface ProjectFinancialProps {
   setExportType: (type: ExportType) => void;
   onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
   activityMenuItems: ActivityDropdownItem[];
+  refetchProjectDetails: () => void;
 }
 
 const Financial: React.FC<ProjectFinancialProps> = ({
@@ -61,6 +62,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   setResCostExportParams,
   onQreAdjustmentUpdated,
   activityMenuItems,
+  refetchProjectDetails,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -249,6 +251,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
               <SummayListTable
                 projectDetails={projectDetails}
                 onQreAdjustmentUpdated={onQreAdjustmentUpdated}
+                refetchProjectDetails={refetchProjectDetails}
               />
             )}
             {tabParam === 'resource_cost' && isResourceCostViewEnable && (
