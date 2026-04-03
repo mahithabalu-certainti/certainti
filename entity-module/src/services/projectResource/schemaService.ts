@@ -5976,6 +5976,7 @@ export class ProjectResourceSchemaService {
     if (fieldsToUpdate.resource_code) {
       fieldsToUpdate.resource_rid = resourceData.rid;
     }
+    fieldsToUpdate.total_hours_pro_res = fieldsToUpdate.total_hours_pro_res || null
 
     const updateProjectResource = await ProjectResource.update(
       {
@@ -5993,6 +5994,7 @@ export class ProjectResourceSchemaService {
       }
     );
 
+    
     const updatedResource = await ProjectResource.findOne({
       where: { rid: project_resource_rid },
       transaction,
