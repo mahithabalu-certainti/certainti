@@ -1397,7 +1397,6 @@ export class RdFormMapperService {
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
-      configLevelKey =  ConfigType.STATE_ONLY;
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
           const federalResult = await this.processFederalForms(
@@ -1541,6 +1540,20 @@ export class RdFormMapperService {
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number,
       );
+      const [isFinancialSignOffDone]: any[] = await orgDb.query(
+        rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
+        { type: "SELECT" },
+      );
+      if (
+        !isFinancialSignOffDone ||
+        !isFinancialSignOffDone.financial_working_signoff
+      ) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+        };
+      }
      
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
