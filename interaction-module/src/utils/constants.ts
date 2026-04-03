@@ -1241,18 +1241,14 @@ export const rawQueries = {
   },
   fetchBatchInInteraction(schemaName: string, accountId: string) {
     return `
-      WITH ranked AS (
-        SELECT interaction_batch_id,
-        ROW_NUMBER() OVER(ORDER BY interaction_batch_id DESC) AS rn
-        FROM ${schemaName}.interactions
-        WHERE account_rid = '${accountId}'
-        AND four_part_assessment_rid IS NOT NULL
-      )
-      SELECT interaction_batch_id
-      FROM ranked
-      WHERE rn = 1
-      FOR UPDATE OF interactions
-      `
+    SELECT interaction_batch_id 
+    FROM ${schemaName}.interactions
+    WHERE account_rid = '${accountId}'
+    AND four_part_assessment_rid IS NOT NULL
+    ORDER BY interaction_batch_id DESC
+    LIMIT 1
+    FOR UPDATE
+    `
   },
   fetchBatchInInteractionByTransId(schemaName: string, transactionId: string) {
     return `
