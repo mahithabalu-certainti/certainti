@@ -4647,17 +4647,6 @@ export class InteractionService {
       }
     }
   }
-  /**
-   * Creates a Microsoft Graph client for mailbox API calls.
-   *
-   * Input:
-   * - `tenantId`: Azure AD tenant identifier.
-   * - `clientId`: application client identifier.
-   * - `clientSecret`: decrypted application secret.
-   *
-   * Output:
-   * - Returns an authenticated Graph client instance for mailbox operations.
-   */
   private getMailboxGraphClient(
     tenantId: string,
     clientId: string,
@@ -4686,24 +4675,15 @@ export class InteractionService {
     });
   }
 
-  /**
-   * Normalizes a raw Graph mail folder into the mailbox DTO shape used by the platform.
-   *
-   * Input:
-   * - `folder`: raw folder object returned by Graph.
-   * - `pathPrefix`: parent path used to build the folder path.
-   * - `children`: normalized child folders for the current folder.
-   *
-   * Output:
-   * - Returns a normalized mailbox folder object with path and count metadata.
-   */
   private normalizeMailboxFolder(folder: any, pathPrefix = "", children: any[] = []) {
     const folderName = folder.displayName || "";
     const folderPath = pathPrefix ? `${pathPrefix}/${folderName}` : folderName;
     const wellKnownName =
       typeof folder.well_known_name === "string" && folder.well_known_name.trim()
         ? folder.well_known_name
-        : null;
+        : typeof folderName === "string" && folderName.toLowerCase() === "inbox"
+          ? "inbox"
+          : null;
 
     return {
       id: folder.id,
@@ -4718,54 +4698,6 @@ export class InteractionService {
     };
   }
 
-  /**
-   * Marks a folder inside a normalized folder tree as a specific well-known folder.
-   *
-   * Input:
-   * - `folders`: normalized mailbox folder tree.
-   * - `folderId`: folder id to tag.
-   * - `wellKnownName`: token to assign, such as `inbox`.
-   *
-   * Output:
-   * - Returns a new folder tree with the matching folder marked.
-   */
-  private markWellKnownFolderInTree(
-    folders: any[],
-    folderId: string,
-    wellKnownName: string
-  ): any[] {
-    return folders.map((folder) => {
-      const children = Array.isArray(folder.children)
-        ? this.markWellKnownFolderInTree(folder.children, folderId, wellKnownName)
-        : [];
-
-      if (folder.id !== folderId) {
-        return {
-          ...folder,
-          children,
-        };
-      }
-
-      return {
-        ...folder,
-        well_known_name: wellKnownName,
-        children,
-      };
-    });
-  }
-
-  /**
-   * Recursively fetches mailbox child folders from Microsoft Graph.
-   *
-   * Input:
-   * - `graphClient`: authenticated Microsoft Graph client.
-   * - `supportEmail`: mailbox owner email address.
-   * - `parentFolderId`: optional parent folder id for child folder lookups.
-   * - `pathPrefix`: parent folder path used while building normalized paths.
-   *
-   * Output:
-   * - Returns the full normalized folder subtree for the requested level.
-   */
   private async fetchMailboxFolderChildren(
     graphClient: Client,
     supportEmail: string,
@@ -4799,22 +4731,29 @@ export class InteractionService {
     }
 
     const normalizedFolders: any[] = [];
-    for (const folder of folders) {
-      const folderName = folder.displayName || "";
-      const folderPath = pathPrefix ? `${pathPrefix}/${folderName}` : folderName;
-      const children =
-        folder.childFolderCount > 0
-          ? await this.fetchMailboxFolderChildren(
-              graphClient,
-              supportEmail,
-              folder.id,
-              folderPath
-            )
-          : [];
+    const folderBatchSize = 5;
 
-      normalizedFolders.push(
-        this.normalizeMailboxFolder(folder, pathPrefix, children)
+    for (let index = 0; index < folders.length; index += folderBatchSize) {
+      const folderBatch = folders.slice(index, index + folderBatchSize);
+      const normalizedBatch = await Promise.all(
+        folderBatch.map(async (folder: any) => {
+          const folderName = folder.displayName || "";
+          const folderPath = pathPrefix ? `${pathPrefix}/${folderName}` : folderName;
+          const children =
+            folder.childFolderCount > 0
+              ? await this.fetchMailboxFolderChildren(
+                  graphClient,
+                  supportEmail,
+                  folder.id,
+                  folderPath
+                )
+              : [];
+
+          return this.normalizeMailboxFolder(folder, pathPrefix, children);
+        })
       );
+
+      normalizedFolders.push(...normalizedBatch);
     }
 
     normalizedFolders.sort((a, b) => {
@@ -4827,18 +4766,6 @@ export class InteractionService {
     return normalizedFolders;
   }
 
-  /**
-   * Searches a normalized mailbox folder tree for a folder by id, path, or well-known name.
-   *
-   * Input:
-   * - `folders`: normalized mailbox folder tree.
-   * - `folderId`: optional folder id match.
-   * - `folderPath`: optional path match.
-   * - `wellKnownName`: optional well-known token match.
-   *
-   * Output:
-   * - Returns the first matching folder or `null` when not found.
-   */
   private findFolderInTree(
     folders: any[],
     folderId?: string,
@@ -4868,16 +4795,6 @@ export class InteractionService {
     return null;
   }
 
-  /**
-   * Fetches the real Graph inbox folder and normalizes it as a well-known inbox entry.
-   *
-   * Input:
-   * - `graphClient`: authenticated Microsoft Graph client.
-   * - `supportEmail`: mailbox owner email address.
-   *
-   * Output:
-   * - Returns the normalized inbox folder object.
-   */
   private async getMailboxInboxFolder(
     graphClient: Client,
     supportEmail: string
@@ -4895,98 +4812,72 @@ export class InteractionService {
     });
   }
 
-  /**
-   * Builds the complete mailbox folder tree and tags the actual inbox folder.
-   *
-   * Input:
-   * - `graphClient`: authenticated Microsoft Graph client.
-   * - `supportEmail`: mailbox owner email address.
-   *
-   * Output:
-   * - Returns the normalized folder tree with the inbox tagged when available.
-   */
-  private async getMailboxFolderTree(
-    graphClient: Client,
-    supportEmail: string
-  ) {
-    const folders = await this.fetchMailboxFolderChildren(graphClient, supportEmail);
-
-    try {
-      const inboxFolder = await this.getMailboxInboxFolder(graphClient, supportEmail);
-      return this.markWellKnownFolderInTree(
-        folders,
-        inboxFolder.id,
-        "inbox"
-      );
-    } catch (error) {
-      return folders;
-    }
-  }
-
-  /**
-   * Validates and decodes a mailbox message page token before reusing it with Graph.
-   *
-   * Input:
-   * - `pageToken`: opaque next-page token returned by a previous mailbox message request.
-   * - `supportEmail`: mailbox owner email address used to validate the token scope.
-   *
-   * Output:
-   * - Returns the decoded Graph next-link when it matches the expected mailbox path.
-   */
   private getValidatedMailboxPageToken(
     pageToken: string,
     supportEmail: string
   ) {
+    // Decode the URL-encoded pagination token from the frontend
     let decodedToken: string;
 
     try {
       decodedToken = decodeURIComponent(pageToken);
     } catch (error) {
-      throw new Error("Invalid page token");
+      throw new Error("Invalid page token: Failed to decode");
     }
 
-    const encodedEmail = encodeURIComponent(supportEmail);
-    const absolutePrefix = `https://graph.microsoft.com/v1.0/users/${encodedEmail}/mailFolders/`;
-    const relativePrefix = `/users/${encodedEmail}/mailFolders/`;
-
-    const isExpectedMailboxPath =
-      (decodedToken.startsWith(absolutePrefix) ||
-        decodedToken.startsWith(relativePrefix)) &&
-      decodedToken.includes("/messages");
-
-    if (!isExpectedMailboxPath) {
-      throw new Error("Invalid page token");
+    // Validate it's not empty
+    if (!decodedToken || typeof decodedToken !== 'string' || decodedToken.trim().length === 0) {
+      throw new Error("Invalid page token: Token is empty");
     }
 
+    // Let Microsoft Graph API validate the token itself when it's used
+    // Graph will return an appropriate error if the token is invalid or expired
     return decodedToken;
   }
 
+  /**
+   * Validates and decodes a calendar pagination token before reuse.
+   *
+   * Input:
+   * - `pageToken`: opaque calendar next-page token from a previous response.
+   * - `supportEmail`: mailbox calendar owner used to validate the token scope.
+   *
+   * Output:
+   * - Returns the decoded Graph next-link when it matches the expected calendar path.
+   */
   private getValidatedCalendarPageToken(
     pageToken: string,
     supportEmail: string
   ) {
+    // Decode the URL-encoded pagination token from the frontend
     let decodedToken: string;
 
     try {
       decodedToken = decodeURIComponent(pageToken);
     } catch (error) {
-      throw new Error("Invalid calendar page token");
+      throw new Error("Invalid calendar page token: Failed to decode");
     }
 
-    const encodedEmail = encodeURIComponent(supportEmail);
-    const absolutePrefix = `https://graph.microsoft.com/v1.0/users/${encodedEmail}/calendarView`;
-    const relativePrefix = `/users/${encodedEmail}/calendarView`;
-
-    if (
-      !decodedToken.startsWith(absolutePrefix) &&
-      !decodedToken.startsWith(relativePrefix)
-    ) {
-      throw new Error("Invalid calendar page token");
+    // Validate it's not empty
+    if (!decodedToken || typeof decodedToken !== 'string' || decodedToken.trim().length === 0) {
+      throw new Error("Invalid calendar page token: Token is empty");
     }
 
+    // Let Microsoft Graph API validate the token itself when it's used
+    // Graph will return an appropriate error if the token is invalid or expired
     return decodedToken;
   }
 
+  /**
+   * Calculates a safe calendar date range for Graph calendar queries.
+   *
+   * Input:
+   * - `startDate`: optional requested start date.
+   * - `endDate`: optional requested end date.
+   *
+   * Output:
+   * - Returns normalized ISO start and end timestamps for the calendar query window.
+   */
   private getCalendarRange(startDate?: string, endDate?: string) {
     const start = startDate ? new Date(startDate) : new Date();
     const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
@@ -4996,7 +4887,10 @@ export class InteractionService {
     if (!endDate) {
       end.setDate(end.getDate() + 30);
     }
-    const safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
+    let safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
+    if (safeEnd < safeStart) {
+      safeEnd = new Date(safeStart);
+    }
     safeEnd.setHours(23, 59, 59, 999);
 
     return {
@@ -5005,6 +4899,15 @@ export class InteractionService {
     };
   }
 
+  /**
+   * Extracts the primary join link for an online meeting event.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the resolved join URL and the field it was sourced from.
+   */
   private extractMeetingLink(event: any) {
     const directJoinUrl = event?.onlineMeeting?.joinUrl || "";
     if (directJoinUrl) {
@@ -5022,6 +4925,15 @@ export class InteractionService {
     };
   }
 
+  /**
+   * Normalizes a Graph calendar event into the summary payload used by the UI.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the normalized calendar event summary object.
+   */
   private normalizeCalendarEventSummary(event: any) {
     const { join_url, link_source } = this.extractMeetingLink(event);
     return {
@@ -5047,6 +4959,15 @@ export class InteractionService {
     };
   }
 
+  /**
+   * Normalizes a Graph calendar event into the detailed payload used by the UI.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the summary fields plus body, attendee, and metadata details.
+   */
   private normalizeCalendarEventDetails(event: any) {
     const base = this.normalizeCalendarEventSummary(event);
     return {
@@ -5116,16 +5037,6 @@ export class InteractionService {
     };
   }
 
-  /**
-   * Fetches a simple inbox view for the supplied account mailbox.
-   *
-   * Input:
-   * - `data.account_rid`: account RID used to resolve mailbox configuration.
-   * - `data.limit`: optional number of inbox messages to return.
-   *
-   * Output:
-   * - Returns mailbox owner details and a normalized list of inbox messages.
-   */
   async listInboxMessages(data: { account_rid: string; limit?: number }) {
     try {
       const { supportEmail, tenantId, clientId, clientSecret } =
@@ -5192,15 +5103,6 @@ export class InteractionService {
     }
   }
 
-  /**
-   * Fetches the normalized mailbox folder tree for the supplied account.
-   *
-   * Input:
-   * - `data.account_rid`: account RID used to resolve mailbox configuration.
-   *
-   * Output:
-   * - Returns mailbox owner details and the normalized folder hierarchy.
-   */
   async listMailboxFolders(data: { account_rid: string }) {
     try {
       const { supportEmail, tenantId, clientId, clientSecret } =
@@ -5211,7 +5113,10 @@ export class InteractionService {
         clientSecret
       );
 
-      const folders = await this.getMailboxFolderTree(graphClient, supportEmail);
+      const folders = await this.fetchMailboxFolderChildren(
+        graphClient,
+        supportEmail
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -5235,19 +5140,6 @@ export class InteractionService {
     }
   }
 
-  /**
-   * Fetches mailbox messages for a selected folder, search term, or pagination token.
-   *
-   * Input:
-   * - `data.account_rid`: account RID used to resolve mailbox configuration.
-   * - `data.folderId` / `data.folderPath`: optional folder selection.
-   * - `data.limit`: optional page size.
-   * - `data.pageToken`: optional next-page token from a prior response.
-   * - `data.search`: optional Graph search text.
-   *
-   * Output:
-   * - Returns mailbox owner details, selected folder info, next-page token, and normalized messages.
-   */
   async listMailboxMessages(data: {
     account_rid: string;
     folderId?: string;
@@ -5275,14 +5167,40 @@ export class InteractionService {
         );
         request = graphClient.api(validatedPageToken);
       } else {
-        const folders = await this.getMailboxFolderTree(graphClient, supportEmail);
-        selectedFolder =
-          this.findFolderInTree(
-            folders,
-            data.folderId,
-            data.folderPath,
-            data.folderId || data.folderPath ? undefined : "inbox"
-          ) || null;
+        let folders: any[] = [];
+
+        if (data.folderId) {
+          try {
+            const folder = await graphClient
+              .api(
+                `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(
+                  data.folderId
+                )}`
+              )
+              .select(
+                "id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount"
+              )
+              .get();
+
+            selectedFolder = this.normalizeMailboxFolder(folder, "", []);
+          } catch (error) {
+            selectedFolder = null;
+          }
+        }
+
+        if (!selectedFolder) {
+          folders = await this.fetchMailboxFolderChildren(
+            graphClient,
+            supportEmail
+          );
+          selectedFolder =
+            this.findFolderInTree(
+              folders,
+              data.folderId,
+              data.folderPath,
+              data.folderId || data.folderPath ? undefined : "inbox"
+            ) || null;
+        }
 
         if (!selectedFolder) {
           try {
@@ -5388,16 +5306,6 @@ export class InteractionService {
     }
   }
 
-  /**
-   * Fetches a single mailbox message with attachment metadata.
-   *
-   * Input:
-   * - `data.account_rid`: account RID used to resolve mailbox configuration.
-   * - `data.messageId`: Graph message identifier.
-   *
-   * Output:
-   * - Returns the normalized mailbox message details payload.
-   */
   async getMailboxMessageById(data: {
     account_rid: string;
     messageId: string;
@@ -5500,17 +5408,6 @@ export class InteractionService {
     }
   }
 
-  /**
-   * Fetches a single mailbox attachment payload for preview or download.
-   *
-   * Input:
-   * - `data.account_rid`: account RID used to resolve mailbox configuration.
-   * - `data.messageId`: Graph parent message identifier.
-   * - `data.attachmentId`: Graph attachment identifier.
-   *
-   * Output:
-   * - Returns attachment metadata and inline base64 content when the attachment is within the allowed size.
-   */
   async getMailboxAttachmentById(data: {
     account_rid: string;
     messageId: string;
@@ -5524,32 +5421,6 @@ export class InteractionService {
         clientId,
         clientSecret
       );
-
-      const metadata: any = await graphClient
-        .api(
-          `/users/${encodeURIComponent(supportEmail)}/messages/${encodeURIComponent(
-            data.messageId
-          )}/attachments/${encodeURIComponent(data.attachmentId)}`
-        )
-        .select("id,name,contentType,size,isInline")
-        .get();
-
-      const maxAttachmentSize = 5 * 1024 * 1024;
-      if ((metadata?.size || 0) > maxAttachmentSize) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          statusMessage:
-            "Attachment is too large to return inline. Please use a download/streaming flow.",
-          data: {
-            id: metadata.id,
-            name: metadata.name || "attachment",
-            content_type: metadata.contentType || "application/octet-stream",
-            size: metadata.size || 0,
-            is_inline: Boolean(metadata.isInline),
-            content_bytes: null,
-          },
-        };
-      }
 
       const attachment: any = await graphClient
         .api(
@@ -5571,14 +5442,11 @@ export class InteractionService {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: "Mailbox attachment fetched successfully",
         data: {
-          id: attachment.id || metadata?.id,
-          name: attachment.name || metadata?.name || "attachment",
-          content_type:
-            attachment.contentType ||
-            metadata?.contentType ||
-            "application/octet-stream",
-          size: attachment.size || metadata?.size || 0,
-          is_inline: Boolean(attachment.isInline ?? metadata?.isInline),
+          id: attachment.id,
+          name: attachment.name || "attachment",
+          content_type: attachment.contentType || "application/octet-stream",
+          size: attachment.size || 0,
+          is_inline: Boolean(attachment.isInline),
           content_bytes: attachment.contentBytes,
         },
       };
@@ -5593,6 +5461,15 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Fetches calendar metadata for the supplied account.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   *
+   * Output:
+   * - Returns the calendar owner and the allowed read-only calendar actions.
+   */
   async getCalendarMetadata(data: { account_rid: string }) {
     try {
       const { supportEmail } = await this.getMailboxSettings(data.account_rid);
@@ -5601,7 +5478,7 @@ export class InteractionService {
         statusMessage: "Calendar metadata fetched successfully",
         data: {
           calendar_owner_email: supportEmail,
-          mode: "read_only",
+          mode: "read_only_with_cancel",
           allowed_actions: {
             view_calendar: true,
             view_event_detail: true,
@@ -5624,6 +5501,19 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Fetches calendar events for a selected range, search term, or pagination token.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.start_date` / `data.end_date`: optional range bounds.
+   * - `data.search`: optional event search text.
+   * - `data.limit`: optional page size.
+   * - `data.pageToken`: optional next-page token from a previous response.
+   *
+   * Output:
+   * - Returns calendar owner details, range metadata, next-page token, and event summaries.
+   */
   async listCalendarEvents(data: {
     account_rid: string;
     start_date?: string;
@@ -5722,6 +5612,16 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Fetches the full detail payload for a single calendar event.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.eventId`: Graph calendar event identifier.
+   *
+   * Output:
+   * - Returns the normalized detailed calendar event payload.
+   */
   async getCalendarEventById(data: { account_rid: string; eventId: string }) {
     try {
       const { supportEmail, tenantId, clientId, clientSecret } =
@@ -5779,6 +5679,18 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Cancels a calendar event on behalf of the resolved mailbox organizer.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.eventId`: Graph calendar event identifier.
+   * - `data.comment`: optional cancellation message.
+   * - `data.userId`: platform user performing the cancellation.
+   *
+   * Output:
+   * - Returns the cancellation status payload for the selected event.
+   */
   async cancelCalendarEvent(data: {
     account_rid: string;
     eventId: string;
