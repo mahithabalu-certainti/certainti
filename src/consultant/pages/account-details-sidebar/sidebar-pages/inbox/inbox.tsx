@@ -252,7 +252,7 @@ const renderFolderIcon = (folder: MailboxFolder, collapsed = false) => {
 
 const Inbox = () => {
   const { accountid } = useParams();
-  const [selectedFolder, setSelectedFolder] = useState<MailboxFolder | null>(
+  const [selectedFolder, setSelectedFolder] = useState<FlattenedMailboxFolder | null>(
     null
   );
   const [selectedMessageId, setSelectedMessageId] = useState('');
@@ -677,7 +677,7 @@ const Inbox = () => {
     [folderPaneWidth, isFolderPaneCollapsed, messagePaneWidth, isDesktopLayout]
   );
 
-  const renderFolder = (folder: MailboxFolder & { level: number }) => {
+  const renderFolder = (folder: FlattenedMailboxFolder) => {
     const active = selectedFolder?.id === folder.id;
     const countDisplay = getFolderCountDisplay(folder);
 
@@ -742,7 +742,7 @@ const Inbox = () => {
 
   const renderFolderGroup = (
     title: string,
-    folders: (MailboxFolder & { level: number })[],
+    folders: FlattenedMailboxFolder[],
     groupClassName = ''
   ) => {
     if (!folders.length) return null;
