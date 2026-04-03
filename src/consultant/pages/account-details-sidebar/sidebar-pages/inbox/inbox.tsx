@@ -27,6 +27,10 @@ import {
 } from '../../../../services/interactions/mailbox-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
+type FlattenedMailboxFolder = MailboxFolder & {
+  level: number;
+};
+
 /**
  * Flattens the nested mailbox folder tree into a list while preserving nesting level.
  *
@@ -37,8 +41,11 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
  * Output:
  * - Returns a flat array of folders with an added `level` property.
  */
-const flattenFolders = (folders: MailboxFolder[], level = 0) =>
-  folders.flatMap((folder) => [
+const flattenFolders = (
+  folders: MailboxFolder[],
+  level = 0
+): FlattenedMailboxFolder[] =>
+  folders.flatMap((folder: MailboxFolder): FlattenedMailboxFolder[] => [
     { ...folder, level },
     ...flattenFolders(folder.children || [], level + 1),
   ]);
@@ -52,10 +59,14 @@ const flattenFolders = (folders: MailboxFolder[], level = 0) =>
  * Output:
  * - Returns the inbox folder when available, otherwise the first folder, otherwise `null`.
  */
-const findDefaultFolder = (folders: MailboxFolder[]) => {
+const findDefaultFolder = (
+  folders: MailboxFolder[]
+): FlattenedMailboxFolder | null => {
   const allFolders = flattenFolders(folders);
   return (
-    allFolders.find((folder) => folder.well_known_name === 'inbox') ||
+    allFolders.find(
+      (folder: FlattenedMailboxFolder) => folder.well_known_name === 'inbox'
+    ) ||
     allFolders[0] ||
     null
   );
@@ -296,7 +307,7 @@ const Inbox = () => {
 
   const favoriteFolders = useMemo(
     () =>
-      flatFolders.filter((folder) =>
+      flatFolders.filter((folder: FlattenedMailboxFolder) =>
         FAVORITE_WELL_KNOWN_NAMES.includes(
           normalizeFolderToken(folder.well_known_name || folder.name)
         )
@@ -307,7 +318,7 @@ const Inbox = () => {
   const regularFolders = useMemo(
     () =>
       flatFolders.filter(
-        (folder) =>
+        (folder: FlattenedMailboxFolder) =>
           !HIDDEN_FOLDER_TOKENS.includes(
             normalizeFolderToken(folder.well_known_name || folder.name)
           ) &&
