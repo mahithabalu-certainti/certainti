@@ -68,14 +68,14 @@ routes.get(
   controller.interactionsController.listInboxMessages
 );
 routes.get(
+  "/mailbox/messages/attachments",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getMailboxAttachmentById
+);
+routes.get(
   "/mailbox/messages/:messageId",
   checkUserStatusMiddleware("accounts_view_edit"),
   controller.interactionsController.getMailboxMessageById
-);
-routes.get(
-  "/mailbox/messages/:messageId/attachments/:attachmentId",
-  checkUserStatusMiddleware("accounts_view_edit"),
-  controller.interactionsController.getMailboxAttachmentById
 );
 routes.get(
   "/calendar/metadata",
