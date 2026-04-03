@@ -22,6 +22,7 @@ import {
   TaskCreateIcon,
   DraftEmailIcon,
   MeetingIcon,
+  CalendarIcon,
   CallLogIcon,
   ConfigRuleIcon,
   AccountDeatilsIcon,
@@ -46,6 +47,7 @@ import {
   Checklist,
   Details,
   FinancialSummary,
+  Inbox,
   Import,
   Notes,
   Projects,
@@ -53,6 +55,7 @@ import {
   Timesheet,
   Configuration,
   Cases,
+  Calendar,
   Interactions,
 } from '../account-details-sidebar';
 import {
@@ -950,6 +953,10 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'inbox':
+        return <Inbox />;
+      case 'calendar':
+        return <Calendar />;
       case 'four_part_assessment':
         return (
           <FourPartAssessment
@@ -1108,6 +1115,22 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Mailbox',
+        key: 'inbox',
+        id: AllModules.ACCOUNTS,
+        disabled: !disable,
+        hide: !disable,
+        icon: DraftEmailIcon,
+      },
+      {
+        name: 'Calendar',
+        key: 'calendar',
+        id: AllModules.ACCOUNTS,
+        disabled: false,
+        hide: false,
+        icon: CalendarIcon,
       },
       {
         name: 'Interactions',
