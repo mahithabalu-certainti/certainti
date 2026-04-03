@@ -953,7 +953,13 @@ const Calendar = () => {
             placeholder='Optional cancellation note'
             className='w-full rounded-lg border border-[#D2D0CE] px-3 py-2 text-sm outline-none focus:border-[#0078D4]'
           />
-
+          {cancelMutation.isError ? (
+            <p className='mt-3 text-sm text-[#A4262C]'>
+              {(cancelMutation.error as any)?.response?.data?.statusMessage ||
+                (cancelMutation.error as any)?.message ||
+                'Failed to cancel the invite. Please try again.'}
+            </p>
+          ) : null}
         </DialogContent>
         <DialogActions>
           <button
