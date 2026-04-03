@@ -3688,7 +3688,7 @@ export class InteractionService {
             logMessage(`fetchAccountFpaInfo result: ${JSON.stringify(findFpaRid)}`);
             fourPartAssessmentRid = findFpaRid.rid;
             logMessage(`fourPartAssessmentRid: ${fourPartAssessmentRid}`);
-            four_part_assessment.follow_up_questions = follow_up_questions
+            fourPartPayload.follow_up_questions = follow_up_questions
             logMessage(`four_part_assessment follow_up_questions: ${JSON.stringify(fourPartPayload?.follow_up_questions)}`);
             dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => ({ question: d }));
             logMessage(`dynamicQuestions mapped (count: ${dynamicQuestions.length}): ${JSON.stringify(dynamicQuestions)}`);
