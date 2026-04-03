@@ -89,7 +89,7 @@ export const CreateProfile: React.FC = () => {
     formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
   };
   const { permission } = useSelector((state: RootState) => state.permission);
-  const projectViewEditFields = useMemo(
+  const profileViewEditFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
         ?.fields ?? [],
@@ -97,11 +97,11 @@ export const CreateProfile: React.FC = () => {
   );
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
-    projectViewEditFields.forEach((item) => {
+    profileViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
     return map;
-  }, [projectViewEditFields]);
+  }, [profileViewEditFields]);
 
   const isProfileviewEdit =
     permissionMap?.['profile_permissions']?.read &&

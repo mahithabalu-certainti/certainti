@@ -90,7 +90,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     return map;
   }, [profilePermissionViewEditFields]);
 
-  const isProfileviewEdit =
+  const isProfilePermissionsHidden =
     !profilePermissionMap?.['profile_permissions']?.read &&
     !profilePermissionMap?.['profile_permissions']?.edit;
 
@@ -177,7 +177,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
-      hide: isProfileviewEdit,
+      hide: isProfilePermissionsHidden,
     },
     {
       label: 'Delete',

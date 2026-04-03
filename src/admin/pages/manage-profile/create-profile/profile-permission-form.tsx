@@ -100,7 +100,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
   outData,
   isProfileviewEdit,
 }) => {
-  // When isProfileviewEdit is false, all checkboxes in the form should be disabled
+  // When isProfileviewEdit is true, all checkboxes in the form should be disabled
   const isFormDisabled = isProfileviewEdit;
   const [menus, setMenus] = useState<TransformForRender[]>([]);
   const [expandMenus, setExpandMenus] = useState<string[]>([]);
