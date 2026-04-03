@@ -181,10 +181,12 @@ export const fetchInboxAttachmentById = async (
   const { data } = await interactionServiceApi.get<{
     data: InboxAttachmentDetails;
   }>(
-    `/api/interactions/mailbox/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    `/api/interactions/mailbox/messages/attachments`,
     {
       params: {
         account_rid: accountRid,
+        messageId,
+        attachmentId,
       },
     }
   );
