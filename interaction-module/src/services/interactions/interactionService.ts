@@ -3618,7 +3618,7 @@ export class InteractionService {
           let fourPartPayload: FourPartAssessmentResponse;
           fourPartPayload = four_part_assessment;
           logMessage(`four_part_assessment payload: ${JSON.stringify(fourPartPayload)}`);
-          await this.interactionSchemaService.createFourPartAssessment(
+          const fourPartRid = await this.interactionSchemaService.createFourPartAssessment(
             four_part_assessment,
             accountNumber,
             project_id,
@@ -3626,6 +3626,11 @@ export class InteractionService {
             transaction_id
           );
           logMessage(`createFourPartAssessment done for transaction_id: ${transaction_id}`);
+          await this.interactionSchemaService.updateInteractionFpaRid(
+            accountNumber,
+            transaction_id,
+            fourPartRid
+          );
           await this.interactionSchemaService.updateFourPartAssessmentAuditStatus(
             accountNumber,
             parsedMessage
