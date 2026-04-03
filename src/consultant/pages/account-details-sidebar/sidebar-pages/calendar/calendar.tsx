@@ -911,6 +911,7 @@ const Calendar = () => {
                     </div>
                   ) : null}
 
+                  {/* COMMENTED OUT - Cancel invite functionality disabled
                   {metadata?.allowed_actions.cancel_invite && eventDetail.can_cancel ? (
                     <div>
                       <button
@@ -922,6 +923,7 @@ const Calendar = () => {
                       </button>
                     </div>
                   ) : null}
+                  */}
                 </div>
               </div>
             ) : (
@@ -934,6 +936,7 @@ const Calendar = () => {
         )}
       </div>
 
+      {/* COMMENTED OUT - Cancel meeting dialog disabled
       <Dialog
         open={cancelDialogOpen}
         onClose={() => setCancelDialogOpen(false)}
@@ -979,6 +982,7 @@ const Calendar = () => {
           </button>
         </DialogActions>
       </Dialog>
+      */}
     </div>
   );
 };
