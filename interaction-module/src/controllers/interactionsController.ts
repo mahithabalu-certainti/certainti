@@ -3451,15 +3451,14 @@ async function getMailboxAttachmentById(req: Request, res: Response): Promise<vo
     const value = await validateRequest(
       ({
         ...req,
-        query: {
-          ...req.query,
-          messageId: req.params.messageId,
-          attachmentId: req.params.attachmentId,
+        body: {
+          account_rid: req.query.account_rid,
+          messageId: req.query.messageId,
+          attachmentId: req.query.attachmentId,
         },
       } as unknown) as Request,
       inboxAttachmentDetailsSchema,
-      res,
-      "GET"
+      res
     );
     const userId = req.headers["x-user-id"] as string;
 
