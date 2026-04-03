@@ -434,61 +434,12 @@ const Calendar = () => {
 
   const cancelMutation = useCancelCalendarEvent();
 
-  /**
-   * Converts technical error messages to business-friendly messages
-   */
-  const getBusinessErrorMessage = (error: any): string => {
-    const message = error?.response?.data?.message || error?.message || '';
-    const status = error?.response?.status;
-
-    // If it's already a user-friendly message from backend, return it
-    if (error?.response?.data?.statusMessage) {
-      return error.response.data.statusMessage;
-    }
-
-    // Map HTTP status codes and technical errors to business messages
-    if (status === 400) {
-      if (message.toLowerCase().includes('mailbox configuration') || message.toLowerCase().includes('calendar')) {
-        return 'Calendar is not configured for this account.';
-      }
-      return 'Unable to process this request. Please try again.';
-    }
-    if (status === 401) {
-      return 'Your session has expired. Please log in again.';
-    }
-    if (status === 403) {
-      return 'You do not have permission to access this resource.';
-    }
-    if (status === 404) {
-      return 'The requested resource was not found.';
-    }
-    if (status === 500) {
-      return 'A server error occurred. Please try again later.';
-    }
-    if (status) {
-      return `An error occurred (${status}). Please try again.`;
-    }
-
-    // Fallback for network errors
-    if (message.toLowerCase().includes('network')) {
-      return 'Network error. Please check your connection.';
-    }
-
-    return 'Unable to load the calendar for this account.';
-  };
-
   const errorMessage =
     ((metadataError || eventsError) as AxiosError<{ message?: string }>)?.response?.data?.message ||
-    getBusinessErrorMessage(metadataError || eventsError) ||
     'Unable to load the calendar for this account.';
 
   // Check if error is due to missing calendar configuration
   const isNoEmailConfigError = errorMessage?.toLowerCase().includes('calendar is not configured');
-
-  const cancelErrorMessage =
-    getBusinessErrorMessage(cancelMutation.error) ||
-    (cancelMutation.error as AxiosError<{ message?: string }> | null)?.response?.data?.message ||
-    'Unable to cancel the invite.';
 
   const handleShift = (direction: -1 | 1) => {
     const next = new Date(anchorDate);
@@ -1002,9 +953,7 @@ const Calendar = () => {
             placeholder='Optional cancellation note'
             className='w-full rounded-lg border border-[#D2D0CE] px-3 py-2 text-sm outline-none focus:border-[#0078D4]'
           />
-          {cancelMutation.isError ? (
-            <p className='mt-3 text-sm text-[#A4262C]'>{cancelErrorMessage}</p>
-          ) : null}
+
         </DialogContent>
         <DialogActions>
           <button
