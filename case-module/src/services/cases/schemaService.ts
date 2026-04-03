@@ -286,11 +286,12 @@ class CaseSchemaService {
           });
           
           for (const checklist of originalChecklists) {
-            const { rid: checklistRid, checklist_template_rid: templateRid, created_datetime: checklistCreatedDate, ...checklistRest } = checklist;
+            const { rid: checklistRid, checklist_template_rid: templateRid, created_datetime: checklistCreatedDate,r_number, ...checklistRest } = checklist;
             const newChecklistRid = `${ENV_PREFIX}${uuidv4()}`;
             
-            await CheckList.create({
+            const createdChecklist = await CheckList.create({
               ...checklistRest,
+              rid: newChecklistRid,
               case_rid: casecreationResponse.rid,
               checklist_template_rid: templateRid,
             }, { transaction });
@@ -305,7 +306,7 @@ class CaseSchemaService {
               const { rid: itemRid, checklist_rid: itemChecklistRid, ...itemRest } = item;
               await CheckListItem.create({
                 ...itemRest,
-                checklist_rid: newChecklistRid,
+                checklist_rid: createdChecklist.rid,
               }, { transaction });
             }
           }
@@ -537,8 +538,11 @@ class CaseSchemaService {
       }
 
     } catch (error) {
-      logMessage(`Error creating case: ${error}`);
-      throw new Error("Error creating case: " + error);
+      const errorDetails = error instanceof Error 
+        ? `${error.message} | Stack: ${error.stack}` 
+        : String(error);
+      logMessage(`Error creating case: ${errorDetails}`);
+      throw new Error("Error creating case: " + (error instanceof Error ? error.message : String(error)));
     }
   }
 
