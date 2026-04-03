@@ -5993,7 +5993,8 @@ export class ProjectResourceSchemaService {
         transaction,
       }
     );
-    console.log("Line 5997 ======> ")
+
+    
     const updatedResource = await ProjectResource.findOne({
       where: { rid: project_resource_rid },
       transaction,
