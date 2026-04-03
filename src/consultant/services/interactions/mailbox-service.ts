@@ -227,10 +227,21 @@ export const useMailboxMessages = (params: {
   search?: string;
 }) =>
   useQuery<MailboxMessagesResponse, AxiosError>({
-    queryKey: ['mailbox-messages', params],
+    // pageToken is intentionally excluded from the key so that paginating
+    // does not create a new cache entry — it refetches the same query in-place
+    // and the component accumulates results via the useEffect.
+    queryKey: [
+      'mailbox-messages',
+      params.accountRid,
+      params.folderId,
+      params.folderPath,
+      params.search,
+      params.pageToken,
+    ],
     queryFn: () => fetchMailboxMessages(params),
     enabled: Boolean(params.accountRid),
     retry: 0,
+    gcTime: 0,
   });
 
 /**
