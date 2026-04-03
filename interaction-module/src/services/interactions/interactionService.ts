@@ -3584,7 +3584,8 @@ export class InteractionService {
         transaction_id,
         interaction_questions,
         detailed_breakdown,
-        four_part_assessment
+        four_part_assessment,
+        follow_up_questions
       } = parsedMessage.data;
 
       logMessage(`Extracted fields — company_id: ${company_id}, project_id: ${project_id}, type: ${type}, transaction_id: ${transaction_id}`);
@@ -3618,7 +3619,7 @@ export class InteractionService {
           let fourPartPayload: FourPartAssessmentResponse;
           fourPartPayload = four_part_assessment;
           logMessage(`four_part_assessment payload: ${JSON.stringify(fourPartPayload)}`);
-          await this.interactionSchemaService.createFourPartAssessment(
+          const fourPartRid = await this.interactionSchemaService.createFourPartAssessment(
             four_part_assessment,
             accountNumber,
             project_id,
@@ -3626,6 +3627,11 @@ export class InteractionService {
             transaction_id
           );
           logMessage(`createFourPartAssessment done for transaction_id: ${transaction_id}`);
+          await this.interactionSchemaService.updateInteractionFpaRid(
+            accountNumber,
+            transaction_id,
+            fourPartRid
+          );
           await this.interactionSchemaService.updateFourPartAssessmentAuditStatus(
             accountNumber,
             parsedMessage
@@ -3682,7 +3688,7 @@ export class InteractionService {
             logMessage(`fetchAccountFpaInfo result: ${JSON.stringify(findFpaRid)}`);
             fourPartAssessmentRid = findFpaRid.rid;
             logMessage(`fourPartAssessmentRid: ${fourPartAssessmentRid}`);
-
+            four_part_assessment.follow_up_questions = follow_up_questions
             logMessage(`four_part_assessment follow_up_questions: ${JSON.stringify(fourPartPayload?.follow_up_questions)}`);
             dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => ({ question: d }));
             logMessage(`dynamicQuestions mapped (count: ${dynamicQuestions.length}): ${JSON.stringify(dynamicQuestions)}`);
