@@ -14,10 +14,13 @@ import { ProfileDetail } from '../../../types';
 import { ProfileHeaderDetail } from './profile-header-details';
 import { MANAGE_PROFILE } from '../../../../routes';
 import {
+  AllPermissions,
   ManageProfileResponse,
   ProfileResponse,
 } from '../../../../common-service';
 import { ProfilePermissionForm } from './profile-permission-form';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
 
 export const CreateProfile: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -85,6 +88,24 @@ export const CreateProfile: React.FC = () => {
   const handleSaveProfile = () => {
     formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
   };
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const profileViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    profileViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [profileViewEditFields]);
+
+  const isProfileviewEdit =
+    permissionMap?.['profile_permissions']?.read &&
+    permissionMap?.['profile_permissions']?.edit;
 
   const outData = (data: ProfileResponse[]) => {
     if (data.length === 0) {
@@ -144,6 +165,7 @@ export const CreateProfile: React.FC = () => {
             formRef={formRef}
             outData={outData}
             oldData={JSON.parse(JSON.stringify(formData))}
+            isProfileviewEdit={!isProfileviewEdit}
           />
         </>
       )}
