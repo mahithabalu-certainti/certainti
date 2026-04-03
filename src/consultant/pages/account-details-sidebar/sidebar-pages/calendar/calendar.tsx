@@ -486,8 +486,8 @@ const Calendar = () => {
   const isNoEmailConfigError = errorMessage?.toLowerCase().includes('calendar is not configured');
 
   const cancelErrorMessage =
-    (cancelMutation.error as AxiosError<{ message?: string }> | null)?.response?.data?.message ||
     getBusinessErrorMessage(cancelMutation.error) ||
+    (cancelMutation.error as AxiosError<{ message?: string }> | null)?.response?.data?.message ||
     'Unable to cancel the invite.';
 
   const handleShift = (direction: -1 | 1) => {
@@ -683,7 +683,7 @@ const Calendar = () => {
                   <span className='text-white text-xs font-bold'>!</span>
                 </div>
                 <p className='text-[14px] font-medium text-[#B71C1C]'>
-                  Configure the Calendar for the account configurations
+                  Calendar isn't configured for this account. Configure it in account settings.
                 </p>
               </div>
               <div className='flex-1 bg-[#FAFAFA]' />

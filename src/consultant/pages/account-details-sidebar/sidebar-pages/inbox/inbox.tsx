@@ -801,7 +801,7 @@ const Inbox = () => {
     Boolean(filters.receivedFrom),
     Boolean(filters.receivedTo),
   ].filter(Boolean).length;
-  
+
   /**
    * Converts technical error messages to business-friendly messages
    */
@@ -1082,7 +1082,7 @@ const Inbox = () => {
                   <span className='text-white text-xs font-bold'>!</span>
                 </div>
                 <p className='text-[14px] font-medium text-[#B71C1C]'>
-                  Configure the Email for the account configurations
+                  Email isn't configured for this account. Configure it in Account Settings.
                 </p>
               </div>
               <div className='flex-1 bg-[#FAFAFA]' />
