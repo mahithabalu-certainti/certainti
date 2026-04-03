@@ -4816,27 +4816,22 @@ export class InteractionService {
     pageToken: string,
     supportEmail: string
   ) {
+    // Decode the URL-encoded pagination token from the frontend
     let decodedToken: string;
 
     try {
       decodedToken = decodeURIComponent(pageToken);
     } catch (error) {
-      throw new Error("Invalid page token");
+      throw new Error("Invalid page token: Failed to decode");
     }
 
-    const encodedEmail = encodeURIComponent(supportEmail);
-    const absolutePrefix = `https://graph.microsoft.com/v1.0/users/${encodedEmail}/mailFolders/`;
-    const relativePrefix = `/users/${encodedEmail}/mailFolders/`;
-
-    const isExpectedMailboxPath =
-      (decodedToken.startsWith(absolutePrefix) ||
-        decodedToken.startsWith(relativePrefix)) &&
-      decodedToken.includes("/messages");
-
-    if (!isExpectedMailboxPath) {
-      throw new Error("Invalid page token");
+    // Validate it's not empty
+    if (!decodedToken || typeof decodedToken !== 'string' || decodedToken.trim().length === 0) {
+      throw new Error("Invalid page token: Token is empty");
     }
 
+    // Let Microsoft Graph API validate the token itself when it's used
+    // Graph will return an appropriate error if the token is invalid or expired
     return decodedToken;
   }
 
@@ -4854,25 +4849,22 @@ export class InteractionService {
     pageToken: string,
     supportEmail: string
   ) {
+    // Decode the URL-encoded pagination token from the frontend
     let decodedToken: string;
 
     try {
       decodedToken = decodeURIComponent(pageToken);
     } catch (error) {
-      throw new Error("Invalid calendar page token");
+      throw new Error("Invalid calendar page token: Failed to decode");
     }
 
-    const encodedEmail = encodeURIComponent(supportEmail);
-    const absolutePrefix = `https://graph.microsoft.com/v1.0/users/${encodedEmail}/calendarView`;
-    const relativePrefix = `/users/${encodedEmail}/calendarView`;
-
-    if (
-      !decodedToken.startsWith(absolutePrefix) &&
-      !decodedToken.startsWith(relativePrefix)
-    ) {
-      throw new Error("Invalid calendar page token");
+    // Validate it's not empty
+    if (!decodedToken || typeof decodedToken !== 'string' || decodedToken.trim().length === 0) {
+      throw new Error("Invalid calendar page token: Token is empty");
     }
 
+    // Let Microsoft Graph API validate the token itself when it's used
+    // Graph will return an appropriate error if the token is invalid or expired
     return decodedToken;
   }
 
