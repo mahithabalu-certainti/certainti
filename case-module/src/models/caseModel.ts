@@ -75,6 +75,20 @@ interface CaseAttributes {
   parent_case_rid?: string;
   assessment_methodology? : string
 
+  machinery_equipments_ks?: number;
+  tax_liability_ks?: number;
+
+  llet_credit_ky?:number;
+  corporation_tax_credit_ky?:number;
+  individual_tax_credit_ky? : number;
+
+  energy_consortia_amount_dc? :number;
+  basic_research_payments_dc? :number;
+  qualified_org_baseamount_dc? :number;
+
+
+
+
 }
 
 export interface CaseCreationAttributes
@@ -136,7 +150,7 @@ export class Case
   public lease_costs_of_computers_az? : number;
   public lease_costs_of_computers_id? : number;
   public illinois_rd_credit_partnership_corp? : number;
-  public llinois_research_payments_corp_only? : number;
+  public illinois_research_payments_corp_only? : number;
   public basic_research_payments_ma? : number
   public basic_research_payments_id? : number
   public qualified_computer_rental_time_expenses? : number;
@@ -151,6 +165,17 @@ export class Case
   public credit_carry_forward_py_tx? : number
   public assessment_methodology? : string
 
+
+  public tax_liability_ks?: number ;
+  public machinery_equipments_ks?: number;
+
+  public llet_credit_ky?:number;
+  public corporation_tax_credit_ky?: number;
+  public individual_tax_credit_ky?: number;
+
+  public energy_consortia_amount_dc? :number;
+  public basic_research_payments_dc? :number;
+  public qualified_org_baseamount_dc? :number;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -239,6 +264,16 @@ export class Case
         credit_carry_forward_py_sc : {type : DataTypes.DECIMAL, allowNull : true},
         credit_carry_forward_py_tx : {type : DataTypes.DECIMAL, allowNull : true},
         assessment_methodology : {type : DataTypes.TEXT, allowNull : true},
+
+        tax_liability_ks: { type : DataTypes.DECIMAL, allowNull : true},
+        machinery_equipments_ks: { type : DataTypes.DECIMAL, allowNull : true},
+         llet_credit_ky: { type : DataTypes.DECIMAL, allowNull : true},
+        corporation_tax_credit_ky: { type : DataTypes.DECIMAL, allowNull : true},
+        individual_tax_credit_ky: { type : DataTypes.DECIMAL, allowNull : true},
+
+        basic_research_payments_dc: {type : DataTypes.DECIMAL, allowNull : true},
+        energy_consortia_amount_dc: {type : DataTypes.DECIMAL, allowNull : true},
+        qualified_org_baseamount_dc: {type : DataTypes.DECIMAL, allowNull : true},
       },
       {
         sequelize,

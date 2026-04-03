@@ -62,20 +62,20 @@ import { Case } from "../../models/caseModel";
 export interface ConfigJson {
     /** Applicable % of contract expenses (Section F line 45) — default 65 */
     sub_con_percent: number;
-    qre_credit_percentage_c1:number;
-    qre_credit_percentage_c2:number;
+    rrc_qre_credit_percentage:number;
+    asc_qre_credit_percentage_c1:number;
 
     /** Fixed-base % for RRC (Section A line 6, max 16) — default 16 */
-    fixed_base_percentage: number;
-      elect_280c_yes:number;
-    elect_280c_no :number;
+    rrc_fixed_base_percentage: number;
+    rrc_elect_280c_yes:number;
+    rrc_elect_280c_no :number;
     asc_elect_280c_yes: number;
 
     /** ASC rate when prior 3yr QREs all > 0 (Section B line 24) — default 14 */
-    asc_rate_percentage: number;
+    asc_qre_credit_percentage_c2: number;
 
     /** ASC rate when no prior QREs in one or more years — default 6 */
-    asc_no_prior_rate_percentage: number;
+    asc_qre_credit_percentage_c3: number;
 
 }
 
@@ -139,16 +139,16 @@ export class RdCreditCalculatorForDC {
         const line1  = new Decimal(0);
         const line4  = new Decimal(0);
         const line5  = line48;
-        const fixedBasePct = Math.min(config.fixed_base_percentage, 16);
+        const fixedBasePct = Math.min(config.rrc_fixed_base_percentage, 16);
         const gr     = stateRdData.annualGrossReceipts ?? [];
         const totalGR = new Decimal(gr.reduce((s, r) => s + (r.grossReceipts ?? 0), 0));
         const line7  = gr.length > 0 ? totalGR.div(gr.length) : new Decimal(0);
         const line8  = line7.mul(fixedBasePct / 100);
         const line9  = Decimal.max(line5.minus(line8), 0);
-        const line10 = line5.mul(0.50);
+        const line10 = line5.mul(config.rrc_qre_credit_percentage / 100);
         const line11 = Decimal.min(line9, line10);
         const line12 = line1.plus(line4).plus(line11);
-        const rrcMultiplier = caseData.rrc_credit_280_c ? config.elect_280c_yes :  config.elect_280c_no;
+        const rrcMultiplier = caseData.rrc_credit_280_c ? config.rrc_elect_280c_yes :  config.rrc_elect_280c_no;
         const line13 = line12.mul(rrcMultiplier);
 
         return {
@@ -176,7 +176,7 @@ export class RdCreditCalculatorForDC {
         caseData:Case,
         sectionA:any
     ) {
-        const line19 = new Decimal(0);
+        const line19 = new Decimal(config.asc_qre_credit_percentage_c1 / 100);
         const line20 = sectionA.line48;
         const prior3 = stateRdData.prior3YearsQREs ?? [];
         const line21 = new Decimal(prior3.reduce((s, y) => s + (y.qre ?? 0), 0));
@@ -189,10 +189,10 @@ export class RdCreditCalculatorForDC {
         if (hasPriorQREs) {
             line22 = line21.div(6);
             line23 = Decimal.max(line20.minus(line22), 0);
-            line24 = line23.mul(config.asc_rate_percentage / 100);
+            line24 = line23.mul(config.asc_qre_credit_percentage_c2 / 100);
         } else {
-            line24 = line20.mul(config.asc_no_prior_rate_percentage / 100);
-            logMessage(`DC ASC — no prior QREs. Using no-prior rate: ${config.asc_no_prior_rate_percentage}%`);
+            line24 = line20.mul(config.asc_qre_credit_percentage_c3 / 100);
+            logMessage(`DC ASC — no prior QREs. Using no-prior rate: ${config.asc_qre_credit_percentage_c3}%`);
         }
 
         const line25 = line19.plus(line24);
@@ -208,7 +208,7 @@ export class RdCreditCalculatorForDC {
             line25:         this.round2(line25),
             line26:         this.round2(line26),
             has_prior_qres: hasPriorQREs,
-            asc_rate_used:  hasPriorQREs ? config.asc_rate_percentage : config.asc_no_prior_rate_percentage,
+            asc_rate_used:  hasPriorQREs ? config.asc_qre_credit_percentage_c2 : config.asc_qre_credit_percentage_c3,
             _line26:        line26,
         };
     }
@@ -264,14 +264,14 @@ export class RdCreditCalculatorForDC {
                     "Subtract line 3 from line 2. If zero or less, enter -0- ":0,
                     "[4] Note: Complete Section F before going to line 5.":                           a.line5,
         
-                    [`[6] Enter fixed-base percentage, but not more than ${config.fixed_base_percentage}% (${config.fixed_base_percentage / 100}). See instructions`]:  `${a.fixed_base_pct}%`,
+                    [`[6] Enter fixed-base percentage, but not more than ${config.rrc_fixed_base_percentage}% (${config.rrc_fixed_base_percentage / 100}). See instructions`]:  `${a.fixed_base_pct}%`,
                     "[7] Enter average annual gross receipts. See instructions":                     a.line7,
                     "[8] Multiply line 7 by the percentage on line 6":                    a.line8,
                     "[9] Subtract line 8 from line 5. If zero or less, enter -0- ":             a.line9,
-                    [`[10] Multiply line 5 by ${config.qre_credit_percentage_c1}% (${config.qre_credit_percentage_c1 / 100}) "`]:                                    a.line10,
+                    [`[10] Multiply line 5 by ${config.rrc_qre_credit_percentage}% (${config.rrc_qre_credit_percentage / 100}) "`]:                                    a.line10,
                     "[11] Enter the smaller of line 9 or line 10":                    a.line11,
                     "[12] Add lines 1, 4, and 11":                          a.line12,
-                    [`[13]If you elect to reduce the credit under section 280C, then multiply line 12 by ${config.elect_280c_yes}% (${config.elect_280c_yes / 100}).If not, multiply line 12 by ${config.elect_280c_no}% (${config.elect_280c_no /100}) and see instructions for the statement that must be attached`]: a.line13,
+                    [`[13]If you elect to reduce the credit under section 280C, then multiply line 12 by ${config.rrc_elect_280c_yes}% (${config.rrc_elect_280c_yes / 100}).If not, multiply line 12 by ${config.rrc_elect_280c_no}% (${config.rrc_elect_280c_no /100}) and see instructions for the statement that must be attached`]: a.line13,
                 },
                  "Section B—Alternative Simplified Credit. Skip this section if you are completing Section A.": {
                     "[14] Certain amounts paid or incurred to energy consortia (see the line 1 instructions)":
@@ -284,7 +284,7 @@ export class RdCreditCalculatorForDC {
                        0,
                     "[18] Add lines 14 and 17":
                         0,
-                    [`[19] Multiply line 18 by ${config.qre_credit_percentage_c2}% (${config.qre_credit_percentage_c2 / 100})`]:
+                    [`[19] Multiply line 18 by ${config.asc_qre_credit_percentage_c1}% (${config.asc_qre_credit_percentage_c2 / 100})`]:
                         b.line19,
                     "[20] Total qualified research expenses (QREs). Enter amount from line 48":
                         b.line20,

@@ -52,8 +52,8 @@ export class RdCreditCalculatorForKS {
     ) {
         logMessage(`Computing KS Credit — fiscal year: ${fiscalYear}`);
 
-        const partAResult    = await this.partA(config, stateRdData);
-        const partBResult    = await this.partB(partAResult.maximumAnnualCredit, stateRdData);
+        const partAResult    = await this.partA(config, stateRdData,caseData);
+        const partBResult    = await this.partB(partAResult.maximumAnnualCredit, stateRdData,caseData);
        
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
@@ -78,11 +78,11 @@ export class RdCreditCalculatorForKS {
     // -------------------------------------------------------------------------
     // Part A — Maximum Allowable Credit
     // -------------------------------------------------------------------------
-    private partA(config: ConfigJson, stateRdData: StateRDData) {
+    private partA(config: ConfigJson, stateRdData: StateRDData,caseData:Case) {
         const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
 
         //---- Line 1a: Machinery and Equipment — mapped to supplies
-        const line1a = new Decimal(supplies);
+        const line1a = new Decimal(caseData.machinery_equipments_ks ?? 0);
 
         //---- Line 1b: Payroll — mapped to wages
         const line1b = new Decimal(wages);
@@ -135,9 +135,10 @@ export class RdCreditCalculatorForKS {
     // -------------------------------------------------------------------------
     // Part B — Allowed Credit for Current Year
     // -------------------------------------------------------------------------
-    private partB(maximumAnnualCredit: number, stateRdData: StateRDData) {
+    private partB(maximumAnnualCredit: number, stateRdData: StateRDData,caseData:Case) {
         //---- Line 8: Tax liability after all other credits
-        const line8 = new Decimal((stateRdData as any).taxLiability ?? 0);
+        //const line8 = new Decimal((stateRdData as any).taxLiability ?? 0);
+        const line8 = new Decimal(caseData.tax_liability_ks ?? 0);
 
         //---- Line 9: Allowable credit = min(Line 7, Line 8)
         //    When line 8 is zero (not supplied), report line 7 as the final credit

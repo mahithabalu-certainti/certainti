@@ -61,14 +61,6 @@ export interface ConfigJson {
     /** Credit rate applied to total qualified costs — default 5 (i.e. 5%) */
     qre_credit_percentage: number;
 
-    /**
-     * Entity type — determines which PART II line the credit is allocated to.
-     * "llet"        → Line 1: LLET Credit (Schedule TCS, Part II, Column E)
-     * "corporation" → Line 2: Corporation Income Tax Credit (Schedule TCS, Part II, Column F)
-     * "individual"  → Line 3: Individual Income Tax Credit (Form 740, 740-NP, or 741)
-     * Default: "corporation"
-     */
-    entity_type: KyEntityType ;
 }
 
 export class RdCreditCalculatorForKY {
@@ -110,7 +102,6 @@ export class RdCreditCalculatorForKY {
         // [3] Total qualified costs (add lines 1 and 2)
         //     When line1 + line2 = 0, fall back to derived total QRE
         const derivedQRE = new Decimal(wages)
-            .plus(new Decimal(supplies))
             .plus(new Decimal(contract).mul(config.sub_con_percent / 100));
 
         const sumLines1And2 = line1.plus(line2);
@@ -121,8 +112,7 @@ export class RdCreditCalculatorForKY {
 
         logMessage(
             `KY — Line 3 (total qualified costs): ${this.round2(line3)}, ` +
-            `Line 4 (${config.qre_credit_percentage}% credit): ${this.round2(line4)}, ` +
-            `entity type: ${config.entity_type}`
+            `Line 4 (${config.qre_credit_percentage}% credit): ${this.round2(line4)}, `
         );
 
         // ─────────────────────────────────────────────────────────────────────
@@ -131,19 +121,13 @@ export class RdCreditCalculatorForKY {
         // ─────────────────────────────────────────────────────────────────────
 
         // [1] LLET Credit—Enter on Schedule TCS, Part II, Column E
-        const partII_line1 = config.entity_type === "llet"
-            ? line4
-            : new Decimal(0);
+        const partII_line1 = new Decimal(cd.llet_credit_ky ?? 0);
 
         // [2] Corporation Income Tax Credit—Enter on Schedule TCS, Part II, Column F
-        const partII_line2 = config.entity_type === "corporation"
-            ? line4
-            : new Decimal(0);
+        const partII_line2 = new Decimal(cd.corporation_tax_credit_ky ?? 0);
 
         // [3] Individual Income Tax Credit—Enter on Form 740, 740-NP, or 741
-        const partII_line3 = config.entity_type === "individual"
-            ? line4
-            : new Decimal(0);
+        const partII_line3 =  new Decimal(cd.individual_tax_credit_ky ?? 0);
 
        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
@@ -172,8 +156,7 @@ export class RdCreditCalculatorForKY {
             totalQRE:      this.round2(line3),         // PART I Line 3
             totalWages:    this.round2(new Decimal(wages)),
             totalContract: this.round2(new Decimal(contract)),
-            totalSupplies: this.round2(new Decimal(supplies)),
-            entityType:    config.entity_type,
+            totalSupplies: this.round2(new Decimal(supplies))
         };
     }
 
