@@ -802,57 +802,13 @@ const Inbox = () => {
     Boolean(filters.receivedTo),
   ].filter(Boolean).length;
 
-  /**
-   * Converts technical error messages to business-friendly messages
-   */
-  const getBusinessErrorMessage = (error: any): string => {
-    const message = error?.response?.data?.message || error?.message || '';
-    const status = error?.response?.status;
-    const statusMessage = error?.response?.data?.statusMessage;
-
-    // If it's already a user-friendly message from backend, return it
-    if (statusMessage) {
-      return statusMessage;
-    }
-
-    // Map HTTP status codes and technical errors to business messages
-    if (status === 400) {
-      if (message.toLowerCase().includes('mailbox configuration')) {
-        return 'Email configuration is not set for this account.';
-      }
-      return 'Unable to process this request. Please try again.';
-    }
-    if (status === 401) {
-      return 'Your session has expired. Please log in again.';
-    }
-    if (status === 403) {
-      return 'You do not have permission to access this resource.';
-    }
-    if (status === 404) {
-      return 'The requested resource was not found.';
-    }
-    if (status === 500) {
-      return 'A server error occurred. Please try again later.';
-    }
-    if (status) {
-      return `An error occurred (${status}). Please try again.`;
-    }
-
-    // Fallback for network errors
-    if (message.toLowerCase().includes('network')) {
-      return 'Network error. Please check your connection.';
-    }
-
-    return 'Unable to load the mailbox for this account.';
-  };
-  
   const mailboxErrorMessage =
     (
       (folderError as AxiosError<{ statusMessage?: string }>)?.response?.data
         ?.statusMessage ||
       (messagesError as AxiosError<{ statusMessage?: string }>)?.response?.data
         ?.statusMessage
-    )?.trim() || getBusinessErrorMessage(folderError || messagesError) || 'Unable to load the mailbox for this account.';
+    )?.trim() || 'Unable to load the mailbox for this account.';
 
   // Check if error is due to missing email configuration
   const isNoEmailConfigError = mailboxErrorMessage?.toLowerCase().includes('email configuration');
