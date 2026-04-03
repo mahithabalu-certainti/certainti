@@ -20,6 +20,7 @@ interface ProfilePermissionFormProps {
   formRef: React.RefObject<HTMLFormElement>;
   oldData: ProfileResponse[];
   outData: (e: ProfileResponse[]) => void;
+  isProfileviewEdit?: boolean;
 }
 
 export type Field = {
@@ -97,7 +98,10 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
   formRef,
   oldData,
   outData,
+  isProfileviewEdit,
 }) => {
+  // When isProfileviewEdit is false, all checkboxes in the form should be disabled
+  const isFormDisabled = isProfileviewEdit;
   const [menus, setMenus] = useState<TransformForRender[]>([]);
   const [expandMenus, setExpandMenus] = useState<string[]>([]);
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>(
@@ -808,7 +812,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                       }
                       value={menu.is_enabled}
                       dependsOn={menu.updatedByDependsOn}
-                      disabled={isDisabled}
+                      disabled={isDisabled || isFormDisabled}
                     />
                   </div>
                 </div>
@@ -859,7 +863,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                 }
                                 value={module.is_enabled}
                                 dependsOn={module.updatedByDependsOn}
-                                disabled={isDisabled}
+                                disabled={isDisabled || isFormDisabled}
                               />
                             </div>
                           </div>
@@ -937,7 +941,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                         dependsOn={
                                           permission.updatedByDependsOn
                                         }
-                                        disabled={isDisabled}
+                                        disabled={isDisabled || isFormDisabled}
                                       />
                                     </div>
                                   </div>
@@ -979,6 +983,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                       'leftReadAll'
                                                     )
                                                   }
+                                                  disabled={isFormDisabled}
                                                 />
                                               </div>
                                               <div className='flex items-center gap-3'>
@@ -1010,7 +1015,8 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                     )
                                                   }
                                                   disabled={
-                                                    !firstHalfFieldsWithoutReadHasValue
+                                                    !firstHalfFieldsWithoutReadHasValue ||
+                                                    isFormDisabled
                                                   }
                                                 />
                                               </div>
@@ -1060,7 +1066,8 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                     }
                                                     disabled={
                                                       isDisabledRead ||
-                                                      field.is_edit_only
+                                                      field.is_edit_only ||
+                                                      isFormDisabled
                                                     }
                                                   />
                                                 </div>
@@ -1088,7 +1095,8 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                     value={field.edit}
                                                     disabled={
                                                       isDisabledEdit ||
-                                                      field.is_read_only
+                                                      field.is_read_only ||
+                                                      isFormDisabled
                                                     }
                                                     dependsOn={
                                                       field.updatedByDependsOn
@@ -1139,6 +1147,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                           'rightReadAll'
                                                         )
                                                       }
+                                                      disabled={isFormDisabled}
                                                     />
                                                   </div>
                                                   <div className='flex items-center gap-3'>
@@ -1171,7 +1180,8 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                         )
                                                       }
                                                       disabled={
-                                                        !secondHalfFieldsWithoutReadHasValue
+                                                        !secondHalfFieldsWithoutReadHasValue ||
+                                                        isFormDisabled
                                                       }
                                                     />
                                                   </div>
@@ -1223,7 +1233,8 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                     }
                                                     disabled={
                                                       isDisabledRead ||
-                                                      field.is_edit_only
+                                                      field.is_edit_only ||
+                                                      isFormDisabled
                                                     }
                                                   />
                                                 </div>
@@ -1251,7 +1262,8 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                                                     value={field.edit}
                                                     disabled={
                                                       isDisabledEdit ||
-                                                      field.is_read_only
+                                                      field.is_read_only ||
+                                                      isFormDisabled
                                                     }
                                                     dependsOn={
                                                       field.updatedByDependsOn
