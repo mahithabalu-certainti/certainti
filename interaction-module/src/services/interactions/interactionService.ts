@@ -233,8 +233,11 @@ export class InteractionService {
           }
         } else if (transaction_id) {
           // For RD Assessment, fetch by transaction_id
-          const findBatch = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id, transaction);
-          interactionData.interaction_batch_id = findBatch;
+          const findBatch = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(
+            accountNumber, transaction_id, transaction
+          );
+          // findBatch will always have a value because FPA always comes first
+          interactionData.interaction_batch_id = findBatch ?? null;
         }
         logMessage(`Resolved interaction_batch_id: ${interactionData.interaction_batch_id}`);
       }
