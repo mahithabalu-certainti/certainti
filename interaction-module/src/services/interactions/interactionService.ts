@@ -3584,8 +3584,7 @@ export class InteractionService {
         transaction_id,
         interaction_questions,
         detailed_breakdown,
-        four_part_assessment,
-        follow_up_questions
+        four_part_assessment
       } = parsedMessage.data;
 
       logMessage(`Extracted fields — company_id: ${company_id}, project_id: ${project_id}, type: ${type}, transaction_id: ${transaction_id}`);
@@ -3688,9 +3687,9 @@ export class InteractionService {
             logMessage(`fetchAccountFpaInfo result: ${JSON.stringify(findFpaRid)}`);
             fourPartAssessmentRid = findFpaRid.rid;
             logMessage(`fourPartAssessmentRid: ${fourPartAssessmentRid}`);
-            fourPartPayload.follow_up_questions = follow_up_questions
+
             logMessage(`four_part_assessment follow_up_questions: ${JSON.stringify(fourPartPayload?.follow_up_questions)}`);
-            dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => ({ question: d }));
+            dynamicQuestions = fourPartPayload?.follow_up_questions?.map((d) => ({ question: d }));
             logMessage(`dynamicQuestions mapped (count: ${dynamicQuestions.length}): ${JSON.stringify(dynamicQuestions)}`);
 
             batchId = ""; // Will be generated atomically in createInteraction
