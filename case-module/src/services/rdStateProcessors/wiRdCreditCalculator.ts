@@ -95,6 +95,9 @@ export interface ConfigJson {
      */
     activity_type: WiActivityType;
 
+    qre_credit_percentage_c1: number;
+    qre_credit_percentage_c2: number;
+
     // Standard credit rates (when prior QREs exist — line 12)
     /** Standard research rate — default 5.75 */
     rate_standard_percentage: number;
@@ -129,8 +132,8 @@ export class RdCreditCalculatorForWI {
         logMessage(`WI config: ${JSON.stringify(config)}`);
 
         const qreResult      = this.computeQRE(config, stateRdData, caseData);
-        const creditResult   = this.computeCredit(config, qreResult);
-        const splitResult    = this.computeSplit(creditResult, caseData);
+        const creditResult   = this.computeCredit(config, qreResult,caseData);
+        const splitResult    = this.computeSplit(creditResult, caseData,config);
         const inputFields    = this.buildInputParams(stateRdData, caseData, {
             country:         this.country,
             creditType:      this.creditType,
@@ -162,10 +165,10 @@ export class RdCreditCalculatorForWI {
 
         //---- Lines 1–5: WI expense components
         const line1 = new Decimal(wages);
-        const line2 = new Decimal(supplies);
-        const line3 = new Decimal(cd.lease_costs_of_computers_wi ?? 0);
+        const line2 = new Decimal(cd.research_supplies_expenses_wi);
+        const line3 = new Decimal(cd.qualified_computer_rental_time_expenses_wi ?? 0);
         const line4 = new Decimal(contract).mul(config.sub_con_percent / 100);
-        const line5 = new Decimal(0);   // orphan drug credit wages — not in scope
+        const line5 = new Decimal(cd.orphan_drug_qualified_expenses_wi ?? 0);   // orphan drug credit wages — not in scope
 
         //---- Line 6: Total WI expenses
         const line6 = line1.plus(line2).plus(line3).plus(line4).plus(line5);
@@ -192,7 +195,7 @@ export class RdCreditCalculatorForWI {
         const line9e = hasPriorQREs ? line9d.div(3) : new Decimal(0);
 
         //---- Line 10: line9e × 50%
-        const line10 = line9e.mul(0.50);
+        const line10 = line9e.mul(config.qre_credit_percentage_c1 / 100);
 
         //---- Line 11: eligible WI QRE = max(line8 − line10, 0)
         const line11 = hasPriorQREs
@@ -228,7 +231,8 @@ export class RdCreditCalculatorForWI {
     // ── Credit Computation (lines 12–16) ──────────────────────────────────
     private computeCredit(
         config: ConfigJson,
-        qre: ReturnType<RdCreditCalculatorForWI["computeQRE"]>
+        qre: ReturnType<RdCreditCalculatorForWI["computeQRE"]>,
+        caseDetails: Case
     ) {
         //---- Resolve credit rate based on activity type and prior QRE presence
         const rate = this.resolveRate(config, qre.has_prior_qres);
@@ -236,8 +240,12 @@ export class RdCreditCalculatorForWI {
         //---- Line 14: Line 11 × selected rate
         const line14 = qre._line11.mul(rate / 100);
 
+
         //---- Lines 15a–15d: Pass-through credits (default 0)
-        const line15d = new Decimal(0);
+        const line15a = new Decimal(0);
+        const line15b = new Decimal(0);
+        const line15c = new Decimal(caseDetails.additional_pass_through_credits_wi ?? 0);
+        const line15d = line15a.plus(line15b).plus(line15c);
 
         //---- Line 16: Total research credits = line14 + line15d
         const line16 = line14.plus(line15d);
@@ -254,21 +262,23 @@ export class RdCreditCalculatorForWI {
     // ── Refundable / Nonrefundable Split (lines 17–23) ────────────────────
     private computeSplit(
         credit: ReturnType<RdCreditCalculatorForWI["computeCredit"]>,
-        caseData: Case
+        caseData: Case,
+        config: ConfigJson
     ) {
         const cd = caseData as any;
 
         //---- Line 16a/16b: Fiduciary allocation (hardcoded 0)
-        const line16b = credit._line16;   // same as line16 for non-fiduciaries
+        const line16a = new Decimal(caseData.fiduciary_beneficiary_credit_wi ?? 0);
+        const line16b = credit._line16.minus(line16a);   // same as line16 for non-fiduciaries
 
         //---- Line 17: Max refundable portion = line16 × 25%
-        const line17 = line16b.mul(0.25);
+        const line17 = line16b.mul(config.qre_credit_percentage_c2  / 100);
 
         //---- Line 18: Credit used to offset tax (caseData input)
-        const line18 = new Decimal(cd.wi_credit_offset_tax ?? 0);
+        const line18 = new Decimal(cd.credit_offset_tax_wi ?? 0);
 
         //---- Line 19: line16 − line18
-        const line19 = Decimal.max(line16b.minus(line18), 0);
+        const line19 = Decimal.max(credit._line16.minus(line18), 0);
 
         //---- Line 20: Actual refundable = min(line17, line19)
         const line20 = Decimal.min(line17, line19);
@@ -277,7 +287,7 @@ export class RdCreditCalculatorForWI {
         const line21 = line19.minus(line20);
 
         //---- Line 22: Prior year carryover
-        const line22 = new Decimal(cd.wi_prior_year_carryover ?? 0);
+        const line22 = new Decimal(cd.credit_carry_forward_py_wi ?? 0);
 
         //---- Line 23: Total nonrefundable = line18 + line21 + line22
         const line23 = line18.plus(line21).plus(line22);

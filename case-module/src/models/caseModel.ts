@@ -64,6 +64,7 @@ interface CaseAttributes {
   basic_research_payments_id? : number
 
   qualified_computer_rental_time_expenses? : number
+ 
   credit_carry_forward_py_ga? : number
   credit_carry_forward_py_sc? : number
   credit_carry_forward_py_tx? : number
@@ -85,6 +86,15 @@ interface CaseAttributes {
   energy_consortia_amount_dc? :number;
   basic_research_payments_dc? :number;
   qualified_org_baseamount_dc? :number;
+
+  qualified_computer_rental_time_expenses_wi?: number;
+  research_supplies_expenses_wi?: number;
+  additional_pass_through_credits_wi?: number;
+  fiduciary_beneficiary_credit_wi?: number;
+  orphan_drug_qualified_expenses_wi?: number;
+  credit_offset_tax_wi?:number;
+  credit_carry_forward_py_wi?: number;
+  
 
 
 
@@ -154,6 +164,13 @@ export class Case
   public basic_research_payments_ma? : number
   public basic_research_payments_id? : number
   public qualified_computer_rental_time_expenses? : number;
+  public qualified_computer_rental_time_expenses_wi?: number;
+  public research_supplies_expenses_wi?: number;
+  public additional_pass_through_credits_wi?: number;
+  public fiduciary_beneficiary_credit_wi?: number;
+  public orphan_drug_qualified_expenses_wi?: number;
+  public credit_offset_tax_wi?:number;
+  public credit_carry_forward_py_wi? : number
   public current_year_gross_receipts?: number
   public other_credits_total_ga?: number
   public other_credits_total_sc?: number
@@ -254,6 +271,13 @@ export class Case
         basic_research_payments_ma : {type : DataTypes.DECIMAL, allowNull : true},
         basic_research_payments_id : {type : DataTypes.DECIMAL, allowNull : true},
         qualified_computer_rental_time_expenses : {type : DataTypes.DECIMAL, allowNull : true},
+        qualified_computer_rental_time_expenses_wi: {type : DataTypes.DECIMAL, allowNull : true},
+        research_supplies_expenses_wi: {type : DataTypes.DECIMAL, allowNull : true},
+        additional_pass_through_credits_wi: {type : DataTypes.DECIMAL, allowNull : true},
+        fiduciary_beneficiary_credit_wi: {type : DataTypes.DECIMAL, allowNull : true},
+        orphan_drug_qualified_expenses_wi: {type : DataTypes.DECIMAL, allowNull : true},
+        credit_offset_tax_wi:{type : DataTypes.DECIMAL, allowNull : true},
+        credit_carry_forward_py_wi: {type : DataTypes.DECIMAL, allowNull : true},
         current_year_gross_receipts: {type : DataTypes.DECIMAL, allowNull : true},
         other_credits_total_ga: {type : DataTypes.DECIMAL, allowNull : true},
         other_credits_total_sc: {type : DataTypes.DECIMAL, allowNull : true},

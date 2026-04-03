@@ -27,6 +27,8 @@ import { HelperMethods } from "../cases/helperMethods";
 import { CaseModelService } from "../caseModelsService";
 import { RdFormHelperService } from "./rdFormHelperService";
 import { processMassachusettsForm } from "./maScheduleRcGenerator";
+import { processNewJerseyForm } from "./njForm306Generator";
+import { processSouthCarolinaForm } from "./scSchTC18Generator";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -496,9 +498,18 @@ export class RdFormMapperService {
              filledFormUrl = await processMassachusettsForm(
               caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,
             );
-            // await this.rdFormMapperSchemaService.saveStateFilledFormUrl(
-            //   caseRid, state, url, orgDb, accountNumber,
-            // );
+            continue;
+          }
+          if (resolvedStateCode === "NJ") {
+            filledFormUrl = await processNewJerseyForm(
+                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state
+              );
+              continue;
+          }
+          if (resolvedStateCode === "SC") {
+            filledFormUrl = await processSouthCarolinaForm(
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,
+            );
             continue;
           }
 
