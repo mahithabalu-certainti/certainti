@@ -322,6 +322,7 @@ const Inbox = () => {
     isLoading: isMessagesLoading,
     isError: isMessagesError,
     error: messagesError,
+    refetch: refetchMessages,
   } = useMailboxMessages({
     accountRid: accountid || '',
     folderId: selectedFolder?.id,
@@ -340,6 +341,12 @@ const Inbox = () => {
         : mailboxMessages.messages
     );
   }, [mailboxMessages, pageToken]);
+
+  useEffect(() => {
+    if (pageToken) {
+      refetchMessages();
+    }
+  }, [pageToken, refetchMessages]);
 
   const filteredMessageItems = useMemo(() => {
     const fromFilter = normalizeFilterText(filters.from);
@@ -794,13 +801,61 @@ const Inbox = () => {
     Boolean(filters.receivedFrom),
     Boolean(filters.receivedTo),
   ].filter(Boolean).length;
+  
+  /**
+   * Converts technical error messages to business-friendly messages
+   */
+  const getBusinessErrorMessage = (error: any): string => {
+    const message = error?.response?.data?.message || error?.message || '';
+    const status = error?.response?.status;
+    const statusMessage = error?.response?.data?.statusMessage;
+
+    // If it's already a user-friendly message from backend, return it
+    if (statusMessage) {
+      return statusMessage;
+    }
+
+    // Map HTTP status codes and technical errors to business messages
+    if (status === 400) {
+      if (message.toLowerCase().includes('mailbox configuration')) {
+        return 'Email configuration is not set for this account.';
+      }
+      return 'Unable to process this request. Please try again.';
+    }
+    if (status === 401) {
+      return 'Your session has expired. Please log in again.';
+    }
+    if (status === 403) {
+      return 'You do not have permission to access this resource.';
+    }
+    if (status === 404) {
+      return 'The requested resource was not found.';
+    }
+    if (status === 500) {
+      return 'A server error occurred. Please try again later.';
+    }
+    if (status) {
+      return `An error occurred (${status}). Please try again.`;
+    }
+
+    // Fallback for network errors
+    if (message.toLowerCase().includes('network')) {
+      return 'Network error. Please check your connection.';
+    }
+
+    return 'Unable to load the mailbox for this account.';
+  };
+  
   const mailboxErrorMessage =
     (
       (folderError as AxiosError<{ statusMessage?: string }>)?.response?.data
         ?.statusMessage ||
       (messagesError as AxiosError<{ statusMessage?: string }>)?.response?.data
         ?.statusMessage
-    )?.trim() || 'Unable to load the mailbox for this account.';
+    )?.trim() || getBusinessErrorMessage(folderError || messagesError) || 'Unable to load the mailbox for this account.';
+
+  // Check if error is due to missing email configuration
+  const isNoEmailConfigError = mailboxErrorMessage?.toLowerCase().includes('email configuration');
 
   return (
     <div className='h-[calc(100vh-235px)] w-full overflow-hidden p-2 pr-4'>
@@ -1020,9 +1075,23 @@ const Inbox = () => {
             <CircularProgress size={28} />
           </div>
         ) : isFolderError || isMessagesError ? (
-          <div className='p-4 text-sm text-[#B42318]'>
-            {mailboxErrorMessage}
-          </div>
+          isNoEmailConfigError ? (
+            <div className='flex h-full flex-col'>
+              <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
+                <div className='h-5 w-5 rounded-full bg-[#D32F2F] flex items-center justify-center flex-shrink-0'>
+                  <span className='text-white text-xs font-bold'>!</span>
+                </div>
+                <p className='text-[14px] font-medium text-[#B71C1C]'>
+                  Configure the Email for the account configurations
+                </p>
+              </div>
+              <div className='flex-1 bg-[#FAFAFA]' />
+            </div>
+          ) : (
+            <div className='p-4 text-sm text-[#B42318]'>
+              {mailboxErrorMessage}
+            </div>
+          )
         ) : (
           <div
             ref={desktopLayoutRef}

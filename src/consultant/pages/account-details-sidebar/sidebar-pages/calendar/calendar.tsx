@@ -434,14 +434,60 @@ const Calendar = () => {
 
   const cancelMutation = useCancelCalendarEvent();
 
+  /**
+   * Converts technical error messages to business-friendly messages
+   */
+  const getBusinessErrorMessage = (error: any): string => {
+    const message = error?.response?.data?.message || error?.message || '';
+    const status = error?.response?.status;
+
+    // If it's already a user-friendly message from backend, return it
+    if (error?.response?.data?.statusMessage) {
+      return error.response.data.statusMessage;
+    }
+
+    // Map HTTP status codes and technical errors to business messages
+    if (status === 400) {
+      if (message.toLowerCase().includes('mailbox configuration') || message.toLowerCase().includes('calendar')) {
+        return 'Calendar is not configured for this account.';
+      }
+      return 'Unable to process this request. Please try again.';
+    }
+    if (status === 401) {
+      return 'Your session has expired. Please log in again.';
+    }
+    if (status === 403) {
+      return 'You do not have permission to access this resource.';
+    }
+    if (status === 404) {
+      return 'The requested resource was not found.';
+    }
+    if (status === 500) {
+      return 'A server error occurred. Please try again later.';
+    }
+    if (status) {
+      return `An error occurred (${status}). Please try again.`;
+    }
+
+    // Fallback for network errors
+    if (message.toLowerCase().includes('network')) {
+      return 'Network error. Please check your connection.';
+    }
+
+    return 'Unable to load the calendar for this account.';
+  };
+
   const errorMessage =
     ((metadataError || eventsError) as AxiosError<{ message?: string }>)?.response?.data?.message ||
-    (metadataError || eventsError)?.message ||
+    getBusinessErrorMessage(metadataError || eventsError) ||
     'Unable to load the calendar for this account.';
+
+  // Check if error is due to missing calendar configuration
+  const isNoEmailConfigError = errorMessage?.toLowerCase().includes('calendar is not configured');
 
   const cancelErrorMessage =
     (cancelMutation.error as AxiosError<{ message?: string }> | null)?.response?.data?.message ||
-    cancelMutation.error?.message ||
+    getBusinessErrorMessage(cancelMutation.error) ||
     'Unable to cancel the invite.';
 
   const handleShift = (direction: -1 | 1) => {
@@ -630,12 +676,25 @@ const Calendar = () => {
         </div>
 
         {isMetadataError || isEventsError ? (
-          <div className='m-6 rounded-xl border border-[#F3D6D8] bg-[#FDF3F4] px-4 py-3 text-sm text-[#A4262C]'>
-            {errorMessage}
-          </div>
-        ) : null}
-
-        <div className='flex min-h-0 flex-1' ref={containerRef}>
+          isNoEmailConfigError ? (
+            <div className='flex h-full flex-col'>
+              <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
+                <div className='h-5 w-5 rounded-full bg-[#D32F2F] flex items-center justify-center flex-shrink-0'>
+                  <span className='text-white text-xs font-bold'>!</span>
+                </div>
+                <p className='text-[14px] font-medium text-[#B71C1C]'>
+                  Configure the Calendar for the account configurations
+                </p>
+              </div>
+              <div className='flex-1 bg-[#FAFAFA]' />
+            </div>
+          ) : (
+            <div className='m-6 rounded-xl border border-[#F3D6D8] bg-[#FDF3F4] px-4 py-3 text-sm text-[#A4262C]'>
+              {errorMessage}
+            </div>
+          )
+        ) : (
+          <div className='flex min-h-0 flex-1' ref={containerRef}>
           <div
             className='flex min-w-0 flex-col bg-[#FAF9F8]'
             style={{ flexBasis: `${splitPercent}%`, flexGrow: 0, flexShrink: 0 }}
@@ -921,6 +980,7 @@ const Calendar = () => {
             )}
           </aside>
         </div>
+        )}
       </div>
 
       <Dialog
