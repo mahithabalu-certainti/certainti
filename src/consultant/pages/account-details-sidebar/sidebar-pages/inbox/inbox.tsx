@@ -59,9 +59,7 @@ const flattenFolders = (
  * Output:
  * - Returns the inbox folder when available, otherwise the first folder, otherwise `null`.
  */
-const findDefaultFolder = (
-  folders: MailboxFolder[]
-): FlattenedMailboxFolder | null => {
+const findDefaultFolder = (folders: MailboxFolder[]): FlattenedMailboxFolder | null => {
   const allFolders = flattenFolders(folders);
   return (
     allFolders.find(

@@ -22,6 +22,7 @@ import {
   TaskCreateIcon,
   DraftEmailIcon,
   MeetingIcon,
+  CalendarIcon,
   CallLogIcon,
   ConfigRuleIcon,
   AccountDeatilsIcon,
@@ -54,6 +55,7 @@ import {
   Timesheet,
   Configuration,
   Cases,
+  Calendar,
   Interactions,
 } from '../account-details-sidebar';
 import {
@@ -953,6 +955,8 @@ export const AccountDetails = () => {
         );
       case 'inbox':
         return <Inbox />;
+      case 'calendar':
+        return <Calendar />;
       case 'four_part_assessment':
         return (
           <FourPartAssessment
@@ -1119,6 +1123,14 @@ export const AccountDetails = () => {
         disabled: !disable,
         hide: !disable,
         icon: DraftEmailIcon,
+      },
+      {
+        name: 'Calendar',
+        key: 'calendar',
+        id: AllModules.ACCOUNTS,
+        disabled: false,
+        hide: false,
+        icon: CalendarIcon,
       },
       {
         name: 'Interactions',
