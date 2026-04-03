@@ -138,28 +138,6 @@ const getEndOfDayTime = (dateValue: string) => {
   return new Date(`${dateValue}T23:59:59.999`).getTime();
 };
 
-/**
- * Computes the unread or item-count badge shown beside a folder.
- *
- * Input:
- * - `folder`: normalized mailbox folder.
- *
- * Output:
- * - Returns the badge text for supported folders or an empty string when no badge should be shown.
- */
-const getFolderCountDisplay = (folder: MailboxFolder) => {
-  const token = normalizeFolderToken(folder.well_known_name || folder.name);
-
-  if (token === 'deleteditems') {
-    return folder.total_item_count > 0 ? String(folder.total_item_count) : '';
-  }
-
-  if (token === 'inbox' || token === 'junkemail' || token === 'junkmail') {
-    return folder.unread_item_count > 0 ? String(folder.unread_item_count) : '';
-  }
-
-  return '';
-};
 
 /**
  * Renders the visual icon for a mailbox folder row.
@@ -679,7 +657,6 @@ const Inbox = () => {
 
   const renderFolder = (folder: FlattenedMailboxFolder) => {
     const active = selectedFolder?.id === folder.id;
-    const countDisplay = getFolderCountDisplay(folder);
 
     if (isFolderPaneCollapsed) {
       return (
@@ -698,13 +675,8 @@ const Inbox = () => {
             }}
             aria-label={folder.name}
           >
-            <span className='relative flex h-8 w-8 items-center justify-center rounded-[8px]'>
+            <span className='flex h-8 w-8 items-center justify-center rounded-[8px]'>
               {renderFolderIcon(folder, true)}
-              {countDisplay ? (
-                <span className='absolute -right-2 -top-1 min-w-[20px] rounded-full bg-[#0F6CBD] px-1.5 text-center text-[10px] font-semibold leading-4 text-white'>
-                  {countDisplay}
-                </span>
-              ) : null}
             </span>
           </button>
         </Tooltip>
@@ -716,7 +688,7 @@ const Inbox = () => {
         key={folder.id}
         type='button'
         onClick={() => setSelectedFolder(folder)}
-        className={`grid min-h-[36px] w-full grid-cols-[20px_minmax(0,1fr)_44px] items-center rounded-[6px] px-3 py-1.5 text-left text-[14px] leading-5 transition-colors ${
+        className={`flex min-h-[36px] w-full items-center gap-2 rounded-[6px] px-3 py-1.5 text-left text-[14px] leading-5 transition-colors ${
           active
             ? 'bg-[#CFE5FF] font-medium text-[#1B1B1B]'
             : 'text-[#2C2C2C] hover:bg-[#F3F6FA]'
@@ -727,15 +699,8 @@ const Inbox = () => {
         }}
         title={folder.name}
       >
-        <span className='text-[#5F6368]'>{renderFolderIcon(folder)}</span>
-        <span className='min-w-0 truncate pr-4'>{folder.name}</span>
-        <span
-          className={`pr-4 text-right text-[14px] tabular-nums leading-5 font-medium ${
-            countDisplay ? 'text-[#0B57A3]' : 'text-transparent'
-          }`}
-        >
-          {countDisplay || '0'}
-        </span>
+        <span className='flex-shrink-0 text-[#5F6368]'>{renderFolderIcon(folder)}</span>
+        <span className='min-w-0 truncate'>{folder.name}</span>
       </button>
     );
   };
