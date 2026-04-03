@@ -181,10 +181,12 @@ export const fetchInboxAttachmentById = async (
   const { data } = await interactionServiceApi.get<{
     data: InboxAttachmentDetails;
   }>(
-    `/api/interactions/mailbox/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    `/api/interactions/mailbox/messages/attachments`,
     {
       params: {
         account_rid: accountRid,
+        messageId,
+        attachmentId,
       },
     }
   );
@@ -227,21 +229,16 @@ export const useMailboxMessages = (params: {
   search?: string;
 }) =>
   useQuery<MailboxMessagesResponse, AxiosError>({
-    // pageToken is intentionally excluded from the key so that paginating
-    // does not create a new cache entry — it refetches the same query in-place
-    // and the component accumulates results via the useEffect.
     queryKey: [
       'mailbox-messages',
       params.accountRid,
       params.folderId,
       params.folderPath,
       params.search,
-      params.pageToken,
     ],
     queryFn: () => fetchMailboxMessages(params),
     enabled: Boolean(params.accountRid),
     retry: 0,
-    gcTime: 0,
   });
 
 /**

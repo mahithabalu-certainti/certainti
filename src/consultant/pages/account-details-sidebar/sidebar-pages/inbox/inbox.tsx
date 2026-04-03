@@ -322,6 +322,7 @@ const Inbox = () => {
     isLoading: isMessagesLoading,
     isError: isMessagesError,
     error: messagesError,
+    refetch: refetchMessages,
   } = useMailboxMessages({
     accountRid: accountid || '',
     folderId: selectedFolder?.id,
@@ -340,6 +341,12 @@ const Inbox = () => {
         : mailboxMessages.messages
     );
   }, [mailboxMessages, pageToken]);
+
+  useEffect(() => {
+    if (pageToken) {
+      refetchMessages();
+    }
+  }, [pageToken, refetchMessages]);
 
   const filteredMessageItems = useMemo(() => {
     const fromFilter = normalizeFilterText(filters.from);
@@ -794,6 +801,7 @@ const Inbox = () => {
     Boolean(filters.receivedFrom),
     Boolean(filters.receivedTo),
   ].filter(Boolean).length;
+
   const mailboxErrorMessage =
     (
       (folderError as AxiosError<{ statusMessage?: string }>)?.response?.data
@@ -801,6 +809,9 @@ const Inbox = () => {
       (messagesError as AxiosError<{ statusMessage?: string }>)?.response?.data
         ?.statusMessage
     )?.trim() || 'Unable to load the mailbox for this account.';
+
+  // Check if error is due to missing email configuration
+  const isNoEmailConfigError = mailboxErrorMessage?.toLowerCase().includes('email configuration');
 
   return (
     <div className='h-[calc(100vh-235px)] w-full overflow-hidden p-2 pr-4'>
@@ -1020,9 +1031,23 @@ const Inbox = () => {
             <CircularProgress size={28} />
           </div>
         ) : isFolderError || isMessagesError ? (
-          <div className='p-4 text-sm text-[#B42318]'>
-            {mailboxErrorMessage}
-          </div>
+          isNoEmailConfigError ? (
+            <div className='flex h-full flex-col'>
+              <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
+                <div className='h-5 w-5 rounded-full bg-[#D32F2F] flex items-center justify-center flex-shrink-0'>
+                  <span className='text-white text-xs font-bold'>!</span>
+                </div>
+                <p className='text-[14px] font-medium text-[#B71C1C]'>
+                  Email isn't configured for this account. Configure it in Account Settings.
+                </p>
+              </div>
+              <div className='flex-1 bg-[#FAFAFA]' />
+            </div>
+          ) : (
+            <div className='p-4 text-sm text-[#B42318]'>
+              {mailboxErrorMessage}
+            </div>
+          )
         ) : (
           <div
             ref={desktopLayoutRef}

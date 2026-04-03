@@ -436,13 +436,10 @@ const Calendar = () => {
 
   const errorMessage =
     ((metadataError || eventsError) as AxiosError<{ message?: string }>)?.response?.data?.message ||
-    (metadataError || eventsError)?.message ||
     'Unable to load the calendar for this account.';
 
-  const cancelErrorMessage =
-    (cancelMutation.error as AxiosError<{ message?: string }> | null)?.response?.data?.message ||
-    cancelMutation.error?.message ||
-    'Unable to cancel the invite.';
+  // Check if error is due to missing calendar configuration
+  const isNoEmailConfigError = errorMessage?.toLowerCase().includes('calendar is not configured');
 
   const handleShift = (direction: -1 | 1) => {
     const next = new Date(anchorDate);
@@ -630,12 +627,25 @@ const Calendar = () => {
         </div>
 
         {isMetadataError || isEventsError ? (
-          <div className='m-6 rounded-xl border border-[#F3D6D8] bg-[#FDF3F4] px-4 py-3 text-sm text-[#A4262C]'>
-            {errorMessage}
-          </div>
-        ) : null}
-
-        <div className='flex min-h-0 flex-1' ref={containerRef}>
+          isNoEmailConfigError ? (
+            <div className='flex h-full flex-col'>
+              <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
+                <div className='h-5 w-5 rounded-full bg-[#D32F2F] flex items-center justify-center flex-shrink-0'>
+                  <span className='text-white text-xs font-bold'>!</span>
+                </div>
+                <p className='text-[14px] font-medium text-[#B71C1C]'>
+                  Calendar isn't configured for this account. Configure it in account settings.
+                </p>
+              </div>
+              <div className='flex-1 bg-[#FAFAFA]' />
+            </div>
+          ) : (
+            <div className='m-6 rounded-xl border border-[#F3D6D8] bg-[#FDF3F4] px-4 py-3 text-sm text-[#A4262C]'>
+              {errorMessage}
+            </div>
+          )
+        ) : (
+          <div className='flex min-h-0 flex-1' ref={containerRef}>
           <div
             className='flex min-w-0 flex-col bg-[#FAF9F8]'
             style={{ flexBasis: `${splitPercent}%`, flexGrow: 0, flexShrink: 0 }}
@@ -901,6 +911,7 @@ const Calendar = () => {
                     </div>
                   ) : null}
 
+                  {/* COMMENTED OUT - Cancel invite functionality disabled
                   {metadata?.allowed_actions.cancel_invite && eventDetail.can_cancel ? (
                     <div>
                       <button
@@ -912,6 +923,7 @@ const Calendar = () => {
                       </button>
                     </div>
                   ) : null}
+                  */}
                 </div>
               </div>
             ) : (
@@ -921,8 +933,10 @@ const Calendar = () => {
             )}
           </aside>
         </div>
+        )}
       </div>
 
+      {/* COMMENTED OUT - Cancel meeting dialog disabled
       <Dialog
         open={cancelDialogOpen}
         onClose={() => setCancelDialogOpen(false)}
@@ -943,7 +957,11 @@ const Calendar = () => {
             className='w-full rounded-lg border border-[#D2D0CE] px-3 py-2 text-sm outline-none focus:border-[#0078D4]'
           />
           {cancelMutation.isError ? (
-            <p className='mt-3 text-sm text-[#A4262C]'>{cancelErrorMessage}</p>
+            <p className='mt-3 text-sm text-[#A4262C]'>
+              {(cancelMutation.error as any)?.response?.data?.statusMessage ||
+                (cancelMutation.error as any)?.message ||
+                'Failed to cancel the invite. Please try again.'}
+            </p>
           ) : null}
         </DialogContent>
         <DialogActions>
@@ -964,6 +982,7 @@ const Calendar = () => {
           </button>
         </DialogActions>
       </Dialog>
+      */}
     </div>
   );
 };
