@@ -1120,8 +1120,8 @@ export const AccountDetails = () => {
         name: 'Mailbox',
         key: 'inbox',
         id: AllModules.ACCOUNTS,
-        disabled: !disable,
-        hide: !disable,
+        disabled: false,
+        hide: false,
         icon: DraftEmailIcon,
       },
       {
