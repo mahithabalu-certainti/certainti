@@ -1,18 +1,11 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-} from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import type { AxiosError } from 'axios';
 import {
   useCalendarEventById,
   useCalendarEvents,
   useCalendarMetadata,
-  useCancelCalendarEvent,
   type CalendarEventSummary,
 } from '../../../../services/interactions/calendar-service';
 
@@ -339,8 +332,6 @@ const Calendar = () => {
   const [searchText, setSearchText] = useState('');
   const deferredSearch = useDeferredValue(searchText.trim());
   const [selectedEventId, setSelectedEventId] = useState('');
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [cancelComment, setCancelComment] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [splitPercent, setSplitPercent] = useState(50);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -432,8 +423,6 @@ const Calendar = () => {
     isLoading: isDetailLoading,
   } = useCalendarEventById(accountid || '', selectedEventId || undefined);
 
-  const cancelMutation = useCancelCalendarEvent();
-
   const errorMessage =
     ((metadataError || eventsError) as AxiosError<{ message?: string }>)?.response?.data?.message ||
     'Unable to load the calendar for this account.';
@@ -500,21 +489,6 @@ const Calendar = () => {
       window.removeEventListener('pointerup', handlePointerUp);
     };
   }, []);
-
-  const handleCancelInvite = async () => {
-    if (!accountid || !selectedEventId) return;
-    try {
-      await cancelMutation.mutateAsync({
-        accountRid: accountid,
-        eventId: selectedEventId,
-        comment: cancelComment || undefined,
-      });
-      setCancelDialogOpen(false);
-      setCancelComment('');
-    } catch {
-      // Shown in UI
-    }
-  };
 
   const descriptionText =
     stripHtml(eventDetail?.body?.content) ||
