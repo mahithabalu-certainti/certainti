@@ -158,10 +158,18 @@ export const renderTableSection = (
             (rowLabel && boldRows.includes(rowLabel)) || rowLabel === 'Total';
           const isBold = isFirstColumn || isRowBold;
 
+          // Check if this column is exactly "Fiscal Year" (case-insensitive)
+          // If so, display the raw value without number formatting
+          const isYearColumn =
+            headerId.toLowerCase() === '3 previous years' ||
+            headerLabel.toLowerCase() === '3 previous years';
+
           const formattedValue =
             value === 0 || value === '0'
               ? '-'
-              : formatCurrency(value as string | number | null | undefined);
+              : isYearColumn
+                ? (value ?? '')
+                : formatCurrency(value as string | number | null | undefined);
 
           const shouldLeftAlign =
             leftAlignColumnIndices.includes(index) ||
