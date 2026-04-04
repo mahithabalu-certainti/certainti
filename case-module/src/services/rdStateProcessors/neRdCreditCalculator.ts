@@ -69,14 +69,14 @@ import { Case } from "../../models/caseModel";
 
 export interface ConfigJson {
     /** Regular credit rate applied to off-campus research — default 15 (i.e. 15%) */
-    regular_credit_rate_percentage: number;
+    off_campus_research_tax_percentage: number;
     sub_con_percent:number;
 
     /**
      * Enhanced credit rate applied to on-campus / university research — default 35 (i.e. 35%).
      * Applies when R&D is conducted on the campus of a Nebraska college or university.
      */
-    enhanced_credit_rate_percentage: number;
+    on_campus_research_tax_percentage: number;
 }
 
 export class RdCreditCalculatorForNE {
@@ -141,12 +141,12 @@ export class RdCreditCalculatorForNE {
         const line2 = new Decimal(cd.federal_rd_credit ?? 0);
 
         //---- Lines 3a/3b: NE property factors (supplied as decimals, e.g. 0.30)
-        const line3a = new Decimal(cd.ne_property_factor_offcampus ?? 0);
-        const line3b = new Decimal(cd.ne_property_factor_oncampus  ?? 0);
+        const line3a = new Decimal(cd.property_factor_off_campus_ne ?? 0);
+        const line3b = new Decimal(cd.property_factor_on_campus_ne  ?? 0);
 
         //---- Lines 4a/4b: NE payroll factors
-        const line4a = new Decimal(cd.ne_payroll_factor_offcampus ?? 0);
-        const line4b = new Decimal(cd.ne_payroll_factor_oncampus  ?? 0);
+        const line4a = new Decimal(cd.payroll_factor_off_campus_ne ?? 0);
+        const line4b = new Decimal(cd.payroll_factor_on_campus_ne  ?? 0);
 
         //---- Lines 5a/5b: Sum of property + payroll per campus type
         const line5a = line3a.plus(line4a);
@@ -157,12 +157,12 @@ export class RdCreditCalculatorForNE {
         const line6b = line5b.div(2);
 
         //---- Lines 7a/7b: Federal credit apportioned by average factor
-        const line7a = line2.mul(line6a);
-        const line7b = line2.mul(line6b);
+        const line7a = line2.mul(line6a.div(100));
+        const line7b = line2.mul(line6b.div(100));
 
         //---- Lines 8a/8b: Apply credit rates
-        const line8a = line7a.mul(config.regular_credit_rate_percentage  / 100);
-        const line8b = line7b.mul(config.enhanced_credit_rate_percentage / 100);
+        const line8a = line7a.mul(config.off_campus_research_tax_percentage  / 100);
+        const line8b = line7b.mul(config.on_campus_research_tax_percentage / 100);
 
         //---- Line 9: Method 1 total
         const line9 = line8a.plus(line8b);
@@ -214,8 +214,8 @@ export class RdCreditCalculatorForNE {
         const line17 = line2.mul(line15);
 
         //---- Lines 18/19: Apply credit rates
-        const line18 = line16.mul(config.regular_credit_rate_percentage  / 100);
-        const line19 = line17.mul(config.enhanced_credit_rate_percentage / 100);
+        const line18 = line16.mul(config.off_campus_research_tax_percentage  / 100);
+        const line19 = line17.mul(config.on_campus_research_tax_percentage / 100);
 
         //---- Line 20: Method 2 total
         const line20 = line18.plus(line19);
@@ -337,8 +337,8 @@ export class RdCreditCalculatorForNE {
                     "[6b] Average on-campus factor (line 5b ÷ 2)":                               m1.avg_factor_oncampus,
                     "[7a] Federal credit apportioned off-campus (line 2 × line 6a)":             m1.apportioned_offcampus,
                     "[7b] Federal credit apportioned on-campus (line 2 × line 6b)":              m1.apportioned_oncampus,
-                    [`[8a] Regular research tax credit (line 7a × ${config.regular_credit_rate_percentage}%) — off-campus`]:  m1.regular_credit_offcampus,
-                    [`[8b] Enhanced research tax credit (line 7b × ${config.enhanced_credit_rate_percentage}%) — on-campus`]: m1.enhanced_credit_oncampus,
+                    [`[8a] Regular research tax credit (line 7a × ${config.off_campus_research_tax_percentage}%) — off-campus`]:  m1.regular_credit_offcampus,
+                    [`[8b] Enhanced research tax credit (line 7b × ${config.on_campus_research_tax_percentage}%) — on-campus`]: m1.enhanced_credit_oncampus,
                     "[9] Method 1 total (line 8a + line 8b)":                                    m1.method1_total,
                 },
                 "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)": {
@@ -350,8 +350,8 @@ export class RdCreditCalculatorForNE {
                     "[15] On-campus NE ratio (line 12 ÷ line 13)":                               m2.ratio_oncampus,
                     "[16] Federal credit × off-campus ratio (line 2 × line 14)":                 m2.apportioned_offcampus,
                     "[17] Federal credit × on-campus ratio (line 2 × line 15)":                  m2.apportioned_oncampus,
-                    [`[18] Regular research tax credit (line 16 × ${config.regular_credit_rate_percentage}%) — off-campus`]:  m2.regular_credit_offcampus,
-                    [`[19] Enhanced research tax credit (line 17 × ${config.enhanced_credit_rate_percentage}%) — on-campus`]: m2.enhanced_credit_oncampus,
+                    [`[18] Regular research tax credit (line 16 × ${config.off_campus_research_tax_percentage}%) — off-campus`]:  m2.regular_credit_offcampus,
+                    [`[19] Enhanced research tax credit (line 17 × ${config.on_campus_research_tax_percentage}%) — on-campus`]: m2.enhanced_credit_oncampus,
                     "[20] Method 2 total (line 18 + line 19)":                                   m2.method2_total,
                 },
                 "Final Credit and Usage Allocation (Lines 21–25)": {
