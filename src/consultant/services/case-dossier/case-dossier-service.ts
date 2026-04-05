@@ -13,11 +13,9 @@ import {
   VersionControlItem,
   VersionControlParams,
   VersionControlResponse,
+  DossierSummaryResponse,
 } from '../../types';
-import {
-  ResourceSummaryMockData,
-  DossierSummaryMockData,
-} from '../../mockdata/dossier';
+import { ResourceSummaryMockData } from '../../mockdata/dossier';
 import { caseServiceApi } from '../../../api/api';
 import {
   getClosingRemarksListURL,
@@ -67,15 +65,10 @@ export const fetchDossierSummary = async (
   accountRid: string,
   caseRid: string
 ): Promise<DossierSummary> => {
-  // const response = await caseServiceApi.get<DossierSummaryResponse>(
-  //   `/api/dossier/summary?account_rid=${accountRid}&case_rid=${caseRid}`
-  // );
-
-  // Mock usage
-  console.log('dossier-summary-params', { accountRid, caseRid });
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  return DossierSummaryMockData.data.dossierSummary;
+  const response = await caseServiceApi.get<DossierSummaryResponse>(
+    `/api/cases/dossier/summary?account_rid=${accountRid}&case_rid=${caseRid}`
+  );
+  return response.data.data;
 };
 
 export const useDossierSummary = (

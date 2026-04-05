@@ -3,7 +3,6 @@ import {
   ResourceSummaryListResponse,
   ProjectSummaryListResponse,
   QualifiedProjectListResponse,
-  DossierSummaryResponse,
 } from '../types';
 
 export const ProjectDocumentListMockData: ProjectDocumentListResponse = {
@@ -480,101 +479,6 @@ export const QualifiedProjectsMockData: QualifiedProjectListResponse = {
         currency_symbol: '$',
       },
     ],
-  },
-};
-
-export const DossierSummaryMockData: DossierSummaryResponse = {
-  statusCode: 200,
-  statusCodeValue: 'Success',
-  statusMessage: 'Operation completed successfully!',
-  data: {
-    dossierSummary: {
-      title: 'TechM USA 2024 - Dossier',
-      account_name: 'TechM',
-      country_name: 'USA',
-      fiscal_year: 2024,
-      company_overview: [
-        {
-          title: 'Company Background',
-          summary: `TechM is a leading global technology company specializing in digital transformation, cloud solutions, and enterprise software development. Founded in 2010, the company has grown to serve over 500 Fortune 1000 clients across various industries including healthcare, finance, manufacturing, and retail.
-
-With offices in 25 countries and a workforce of over 15,000 professionals, TechM maintains a strong global presence while delivering localized solutions. The company has consistently achieved year-over-year revenue growth of 20%+ and maintains a client retention rate of 95%.`,
-        },
-        {
-          title: 'Core Competencies',
-          summary: `* **Digital Transformation**: End-to-end digital transformation services helping businesses modernize their operations
-* **Cloud Solutions**: Expertise in AWS, Azure, and Google Cloud Platform
-* **AI & Machine Learning**: Advanced analytics and AI-driven solutions
-* **Cybersecurity**: Comprehensive security solutions and compliance services`,
-        },
-        {
-          title: 'Innovation Focus',
-          summary: `TechM invests heavily in R&D, allocating approximately 15% of annual revenue to research and development activities. This commitment to innovation has resulted in numerous patents and industry-leading solutions in areas such as:
-
-* Quantum computing
-* Blockchain technology
-* Advanced AI applications
-* Edge computing solutions
-* Next-generation cybersecurity`,
-        },
-      ],
-      overall_projects_summary: [
-        {
-          title: 'Portfolio Overview',
-          summary: `During fiscal year 2024, TechM executed a comprehensive portfolio of R&D projects totaling $2.5M in qualified research expenditures. The project portfolio demonstrates significant innovation across multiple technology domains.
-
-**Key Statistics:**
-* Total Projects: 15 qualified R&D projects
-* Total QRE: $2,500,000
-* Average Project Duration: 8-12 months
-* Success Rate: 87% of projects met or exceeded technical objectives`,
-        },
-        {
-          title: 'Project Categories',
-          summary: `**Software Development (40%)**
-Advanced software engineering projects focusing on next-generation platforms:
-* AI-powered healthcare diagnostic systems
-* Quantum computing algorithms
-* Blockchain-based supply chain solutions
-
-**Data Analytics & AI (30%)**
-Machine learning and data science initiatives:
-* Predictive analytics for financial services
-* Natural language processing for customer service automation
-* Computer vision applications for manufacturing quality control
-
-**Infrastructure & Cloud (20%)**
-Cloud architecture and infrastructure modernization:
-* Hybrid cloud migration frameworks
-* Edge computing solutions
-* Serverless architecture implementations
-
-**Emerging Technologies (10%)**
-Exploratory research in cutting-edge technologies:
-* Quantum cryptography
-* Advanced materials for semiconductor manufacturing
-* Biotechnology applications`,
-        },
-        {
-          title: 'Geographic Distribution',
-          summary: `Projects were conducted across multiple US locations:
-* **California**: 35% (focus on AI/ML and cloud solutions)
-* **Texas**: 25% (healthcare and enterprise systems)
-* **New York**: 20% (financial technology)
-* **Florida**: 15% (mobile and wellness applications)
-* **Other**: 5%`,
-        },
-        {
-          title: 'Key Achievements',
-          summary: `* Successfully completed 13 out of 15 projects on time and within budget
-* Filed 8 patent applications for innovative solutions developed during FY 2024
-* Achieved 92% average QRE qualification rate across all projects
-* Implemented new documentation standards improving audit readiness by 40%
-* Established cross-functional R&D teams increasing collaboration efficiency by 35%`,
-        },
-      ],
-      assessment_methodology: `All projects were evaluated using the four-part test criteria (Permitted Purpose, Elimination of Uncertainty, Process of Experimentation, and Technological Information) in compliance with IRC Section 41 requirements. Comprehensive documentation standards were maintained including technical design documents, time tracking, and financial records. Multi-level technical reviews and compliance checks ensured accuracy and audit readiness.`,
-    },
   },
 };
 

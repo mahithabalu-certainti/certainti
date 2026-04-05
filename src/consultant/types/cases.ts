@@ -303,6 +303,11 @@ export interface updateCaseJurisdictionPayload {
   states: string[];
   level?: string;
 }
+export interface updateCaseSettingsPayload {
+  rid?: string;
+  account_rid: string;
+  assessment_methodology?: string;
+}
 
 export interface CreateCaseApiResponse {
   statusCode: number;

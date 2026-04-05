@@ -1,7 +1,7 @@
 import { ManageSettingsIcon } from '../../../assets';
 import { FormBuilder } from '../../../components';
 import { ConfigureSettingsFormFields } from './helper';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { AllPermissions } from '../../../common-service';
@@ -14,6 +14,8 @@ import { useToast } from '../../../hooks';
 import TextButton from '../../../components/button/text-button';
 import { BUTTON_STYLES } from '../manage-user-detail/styles';
 import { ColorCode } from '../../../consultant/types';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 type FormValueType = string | number | boolean | object | string[] | null;
 interface UpdateSettingsSuccess {
@@ -25,12 +27,57 @@ interface FormValues extends Record<string, FormValueType> {
   auto_send_ai_interaction: string;
   rid: string;
 }
+
+const quillModules = {
+  toolbar: {
+    container: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      [{ font: [] }],
+      [{ size: ['small', false, 'large', 'huge'] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ color: [] }, { background: [] }],
+      [{ script: 'sub' }, { script: 'super' }],
+      ['blockquote', 'code-block'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ indent: '-1' }, { indent: '+1' }],
+      [{ direction: 'rtl' }],
+      [{ align: [] }],
+      ['link'],
+      ['clean'],
+    ],
+  },
+};
+
+const quillFormats = [
+  'header',
+  'font',
+  'size',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'color',
+  'background',
+  'script',
+  'blockquote',
+  'code-block',
+  'list',
+  'bullet',
+  'indent',
+  'direction',
+  'align',
+  'link',
+];
+
 const ConfigureSetting = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const updateManageSettings = useUpdateManageSettings();
   const { successToast } = useToast();
   const { data, isLoading, refetch } = useManageSettingDetails();
   const { permission } = useSelector((state: RootState) => state.permission);
+
+  const [assessmentMethodology, setAssessmentMethodology] =
+    useState<string>('');
 
   const settingsViewEditFields = useMemo(
     () =>
@@ -46,6 +93,7 @@ const ConfigureSetting = () => {
     });
     return map;
   }, [settingsViewEditFields]);
+
   const defaultValues: FormValues = {
     email: '',
     auto_assessment: 'No',
@@ -53,6 +101,7 @@ const ConfigureSetting = () => {
     four_part_assessment: 'Yes',
     rid: '',
   };
+
   const formValues = useMemo<FormValues>(() => {
     if (!data) return defaultValues;
 
@@ -69,6 +118,13 @@ const ConfigureSetting = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  // Sync assessment_methodology from API data
+  useEffect(() => {
+    if (data?.data.settings?.assessment_methodology !== undefined) {
+      setAssessmentMethodology(data.data.settings.assessment_methodology ?? '');
+    }
+  }, [data]);
+
   const handleFormSubmit = (values: object) => {
     const formData = values as FormValues;
 
@@ -77,6 +133,7 @@ const ConfigureSetting = () => {
       auto_send_interaction: formData.auto_send_ai_interaction === 'Yes',
       auto_access_rd: formData.auto_assessment === 'Yes',
       auto_send_four_part_assessment: formData.four_part_assessment === 'Yes',
+      assessment_methodology: assessmentMethodology,
     };
     updateManageSettings.mutate(payload, {
       onSuccess: (res: UpdateSettingsSuccess) => {
@@ -109,7 +166,6 @@ const ConfigureSetting = () => {
           <div className='flex gap-3 justify-center items-center'>
             <TextButton
               label='Save'
-              // onClick={() => navigate(MANAGE_USER_GROUP_CREATE)}
               onClick={() => {
                 if (formRef.current) {
                   formRef.current.requestSubmit();
@@ -131,6 +187,7 @@ const ConfigureSetting = () => {
         <SkeletonForm />
       ) : (
         <div className='flex flex-col gap-0 border-b border-[#CBD6E2] rounded-[2px]'>
+          {/* Existing 3 radio fields — untouched */}
           <FormBuilder
             key={JSON.stringify(data?.data.settings)}
             data={ConfigureSettingsFormFields(permissionMap)}
@@ -138,6 +195,28 @@ const ConfigureSetting = () => {
             outData={handleFormSubmit}
             values={formValues}
           />
+
+          {/* Assessment Methodology — ReactQuill rich text editor */}
+          <div className='email-template-editor grid grid-cols-1 px-4 pt-2 pb-4 relative'>
+            <label
+              htmlFor='assessment_methodology'
+              className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] mb-1'
+            >
+              Assessment Methodology
+            </label>
+            <div className='email-body-editor w-full relative'>
+              <ReactQuill
+                id='assessment_methodology'
+                value={assessmentMethodology}
+                onChange={(value) => setAssessmentMethodology(value)}
+                theme='snow'
+                placeholder='Enter Assessment Methodology'
+                className='rounded-[2px] bg-white'
+                modules={quillModules}
+                formats={quillFormats}
+              />
+            </div>
+          </div>
         </div>
       )}
     </>

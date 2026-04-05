@@ -30,11 +30,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import {
-  ComingSoon,
-  DetailsKeyContactErrorIcon,
-  DossierIcon,
-} from '../../../../../assets';
+import { DetailsKeyContactErrorIcon, DossierIcon } from '../../../../../assets';
 import {
   FinancialWorkingForm,
   ProjectDocuments,
@@ -43,6 +39,7 @@ import {
   RDForm,
   ResourceSummary,
   CloseCaseForm,
+  DossierSummary,
 } from './tab';
 import {
   getProjectDocumentsFilterFields,
@@ -819,11 +816,7 @@ const Dossier: React.FC<DossierProps> = ({
                     isDetailLoading={isDetailLoading}
                   />
                 )}
-                {tabParam === 'summary' && (
-                  <div className='flex items-center justify-center h-full'>
-                    <ComingSoon alt='comingSoon' />
-                  </div>
-                )}
+                {tabParam === 'summary' && <DossierSummary />}
 
                 {tabParam === 'qualified_projects' && (
                   <QualifiedProjects
