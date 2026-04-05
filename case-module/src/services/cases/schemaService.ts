@@ -245,6 +245,7 @@ class CaseSchemaService {
         filing_type_rid: amendmentType?.rid,
         created_by: caseRequest.created_by,
         created_datetime: new Date(),
+        assessment_methodology : caseRequest.assessment_methodology
       }, {
         transaction,
       });

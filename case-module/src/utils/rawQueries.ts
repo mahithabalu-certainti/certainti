@@ -2584,3 +2584,15 @@ export const fetchDossierForm = (page : number, limit : number, sort : string, s
   `
   return query;
 }
+
+export const getCaseSummaryData = (caseRid : string, schemaName : string) => {
+  let query = `
+  SELECT ad.business_details, c.assessment_methodology, c.fiscal_year
+  FROM
+  ${schemaName}.account_details ad
+  LEFT JOIN ${schemaName}.cases c ON c.account_rid = ad.account_rid
+  WHERE
+  c.rid = '${caseRid}'
+  `
+  return query;
+}

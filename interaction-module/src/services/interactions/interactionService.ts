@@ -72,9 +72,17 @@ import ExcelJS from "exceljs";
 import axios from "axios";
 import { Kafka, Producer } from "kafkajs";
 import { SchedulerExecutions } from "../../models/schedulerExecution";
-import { errorLog, getFiscalEndYear, logMessage, parseFiscalDate } from "../../utils/helpers";
+import {
+  decryptClientSecret,
+  errorLog,
+  getFiscalEndYear,
+  logMessage,
+  parseFiscalDate,
+} from "../../utils/helpers";
 import "moment-timezone";
 import moment from "moment";
+import { ClientSecretCredential } from "@azure/identity";
+import { Client } from "@microsoft/microsoft-graph-client";
 
 type filterType = {
   [key: string]: {
@@ -2318,20 +2326,18 @@ export class InteractionService {
       }
       return null;
     };
-    if (data.filters?.created_user_name) {
-      createdByFilter = data.filters.created_user_name;
+    const requestFilters = data.filters || {};
+
+    if (requestFilters.created_user_name) {
+      createdByFilter = requestFilters.created_user_name;
       createdByConditions = detectConditions(createdByFilter);
     }
-    if (data.filters?.updated_user_name) {
-      modifiedByFilter = data.filters.updated_user_name;
+    if (requestFilters.updated_user_name) {
+      modifiedByFilter = requestFilters.updated_user_name;
       modifiedByConditions = detectConditions(modifiedByFilter);
     }
-    if (data.filters?.interaction_source_name) {
-      sourceFilter = data.filters.interaction_source_name;
-      sourceConditions = detectConditions(sourceFilter);
-    }
-    if (data.filters?.interaction_source_name) {
-      sourceFilter = data.filters.interaction_source_name;
+    if (requestFilters.interaction_source_name) {
+      sourceFilter = requestFilters.interaction_source_name;
       sourceConditions = detectConditions(sourceFilter);
     }
 
@@ -2340,9 +2346,9 @@ export class InteractionService {
       "updated_user_name",
       "interaction_source_name",
     ].forEach((key) => {
-      if (data.filters[key]) {
+      if (requestFilters[key]) {
         disablePagination = true;
-        delete data.filters[key];
+        delete requestFilters[key];
       }
     });
     if (mainTableFilters[data.sort] !== undefined) {
@@ -2363,7 +2369,7 @@ export class InteractionService {
         data.fiscal_year,
         data.sort,
         data.sort_by,
-        data.filters,
+        requestFilters,
         data.page,
         data.limit,
         data.flag,
@@ -4641,6 +4647,1129 @@ export class InteractionService {
       }
     }
   }
+  private getMailboxGraphClient(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string
+  ) {
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientId,
+      clientSecret
+    );
+
+    return Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: async () => {
+          const token = await credential.getToken(
+            "https://graph.microsoft.com/.default"
+          );
+          if (!token?.token) {
+            throw new Error(
+              "Failed to acquire access token for Microsoft Graph using ClientSecretCredential."
+            );
+          }
+          return token.token;
+        },
+      },
+    });
+  }
+
+  private normalizeMailboxFolder(folder: any, pathPrefix = "", children: any[] = []) {
+    const folderName = folder.displayName || "";
+    const folderPath = pathPrefix ? `${pathPrefix}/${folderName}` : folderName;
+    const wellKnownName =
+      typeof folder.well_known_name === "string" && folder.well_known_name.trim()
+        ? folder.well_known_name
+        : typeof folderName === "string" && folderName.toLowerCase() === "inbox"
+          ? "inbox"
+          : null;
+
+    return {
+      id: folder.id,
+      name: folderName,
+      path: folderPath,
+      parent_folder_id: folder.parentFolderId || null,
+      child_folder_count: folder.childFolderCount || 0,
+      total_item_count: folder.totalItemCount || 0,
+      unread_item_count: folder.unreadItemCount || 0,
+      well_known_name: wellKnownName,
+      children,
+    };
+  }
+
+  private async fetchMailboxFolderChildren(
+    graphClient: Client,
+    supportEmail: string,
+    parentFolderId?: string,
+    pathPrefix = ""
+  ): Promise<any[]> {
+    const basePath = parentFolderId
+      ? `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(parentFolderId)}/childFolders`
+      : `/users/${encodeURIComponent(supportEmail)}/mailFolders`;
+
+    const folders: any[] = [];
+    let request = graphClient
+      .api(basePath)
+      .select(
+        "id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount"
+      )
+      .top(100);
+
+    while (true) {
+      const page: any = await request.get();
+      if (Array.isArray(page?.value)) {
+        folders.push(...page.value);
+      }
+
+      const nextLink = page?.["@odata.nextLink"];
+      if (!nextLink) {
+        break;
+      }
+
+      request = graphClient.api(nextLink);
+    }
+
+    const normalizedFolders: any[] = [];
+    const folderBatchSize = 5;
+
+    for (let index = 0; index < folders.length; index += folderBatchSize) {
+      const folderBatch = folders.slice(index, index + folderBatchSize);
+      const normalizedBatch = await Promise.all(
+        folderBatch.map(async (folder: any) => {
+          const folderName = folder.displayName || "";
+          const folderPath = pathPrefix ? `${pathPrefix}/${folderName}` : folderName;
+          const children =
+            folder.childFolderCount > 0
+              ? await this.fetchMailboxFolderChildren(
+                  graphClient,
+                  supportEmail,
+                  folder.id,
+                  folderPath
+                )
+              : [];
+
+          return this.normalizeMailboxFolder(folder, pathPrefix, children);
+        })
+      );
+
+      normalizedFolders.push(...normalizedBatch);
+    }
+
+    normalizedFolders.sort((a, b) => {
+      const aInbox = a.well_known_name === "inbox" ? -1 : 0;
+      const bInbox = b.well_known_name === "inbox" ? -1 : 0;
+      if (aInbox !== bInbox) return aInbox - bInbox;
+      return a.name.localeCompare(b.name);
+    });
+
+    return normalizedFolders;
+  }
+
+  private findFolderInTree(
+    folders: any[],
+    folderId?: string,
+    folderPath?: string,
+    wellKnownName?: string
+  ): any | null {
+    for (const folder of folders) {
+      if (
+        (folderId && folder.id === folderId) ||
+        (folderPath && folder.path === folderPath) ||
+        (wellKnownName && folder.well_known_name === wellKnownName)
+      ) {
+        return folder;
+      }
+
+      if (folder.children?.length) {
+        const found = this.findFolderInTree(
+          folder.children,
+          folderId,
+          folderPath,
+          wellKnownName
+        );
+        if (found) return found;
+      }
+    }
+
+    return null;
+  }
+
+  private async getMailboxInboxFolder(
+    graphClient: Client,
+    supportEmail: string
+  ) {
+    const folder: any = await graphClient
+      .api(`/users/${encodeURIComponent(supportEmail)}/mailFolders/inbox`)
+      .select(
+        "id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount"
+      )
+      .get();
+
+    return this.normalizeMailboxFolder({
+      ...folder,
+      well_known_name: "inbox",
+    });
+  }
+
+  private getValidatedMailboxPageToken(
+    pageToken: string,
+    supportEmail: string
+  ) {
+    // Decode the URL-encoded pagination token from the frontend
+    let decodedToken: string;
+
+    try {
+      decodedToken = decodeURIComponent(pageToken);
+    } catch (error) {
+      throw new Error("Invalid page token: Failed to decode");
+    }
+
+    // Validate it's not empty
+    if (!decodedToken || typeof decodedToken !== 'string' || decodedToken.trim().length === 0) {
+      throw new Error("Invalid page token: Token is empty");
+    }
+
+    // Let Microsoft Graph API validate the token itself when it's used
+    // Graph will return an appropriate error if the token is invalid or expired
+    return decodedToken;
+  }
+
+  /**
+   * Validates and decodes a calendar pagination token before reuse.
+   *
+   * Input:
+   * - `pageToken`: opaque calendar next-page token from a previous response.
+   * - `supportEmail`: mailbox calendar owner used to validate the token scope.
+   *
+   * Output:
+   * - Returns the decoded Graph next-link when it matches the expected calendar path.
+   */
+  private getValidatedCalendarPageToken(
+    pageToken: string,
+    supportEmail: string
+  ) {
+    // Decode the URL-encoded pagination token from the frontend
+    let decodedToken: string;
+
+    try {
+      decodedToken = decodeURIComponent(pageToken);
+    } catch (error) {
+      throw new Error("Invalid calendar page token: Failed to decode");
+    }
+
+    // Validate it's not empty
+    if (!decodedToken || typeof decodedToken !== 'string' || decodedToken.trim().length === 0) {
+      throw new Error("Invalid calendar page token: Token is empty");
+    }
+
+    // Let Microsoft Graph API validate the token itself when it's used
+    // Graph will return an appropriate error if the token is invalid or expired
+    return decodedToken;
+  }
+
+  /**
+   * Calculates a safe calendar date range for Graph calendar queries.
+   *
+   * Input:
+   * - `startDate`: optional requested start date.
+   * - `endDate`: optional requested end date.
+   *
+   * Output:
+   * - Returns normalized ISO start and end timestamps for the calendar query window.
+   */
+  private getCalendarRange(startDate?: string, endDate?: string) {
+    const start = startDate ? new Date(startDate) : new Date();
+    const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
+    safeStart.setHours(0, 0, 0, 0);
+
+    const end = endDate ? new Date(endDate) : new Date(safeStart);
+    if (!endDate) {
+      end.setDate(end.getDate() + 30);
+    }
+    let safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
+    if (safeEnd < safeStart) {
+      safeEnd = new Date(safeStart);
+    }
+    safeEnd.setHours(23, 59, 59, 999);
+
+    return {
+      start: safeStart.toISOString(),
+      end: safeEnd.toISOString(),
+    };
+  }
+
+  /**
+   * Extracts the primary join link for an online meeting event.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the resolved join URL and the field it was sourced from.
+   */
+  private extractMeetingLink(event: any) {
+    const directJoinUrl = event?.onlineMeeting?.joinUrl || "";
+    if (directJoinUrl) {
+      return {
+        join_url: directJoinUrl,
+        link_source: "onlineMeeting.joinUrl",
+      };
+    }
+
+    const content = event?.body?.content || "";
+    const match = content.match(/https:\/\/teams\.microsoft\.com\/[^\s"'<)]+/i);
+    return {
+      join_url: match?.[0] || "",
+      link_source: match?.[0] ? "body.content" : null,
+    };
+  }
+
+  /**
+   * Normalizes a Graph calendar event into the summary payload used by the UI.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the normalized calendar event summary object.
+   */
+  private normalizeCalendarEventSummary(event: any) {
+    const { join_url, link_source } = this.extractMeetingLink(event);
+    return {
+      event_id: event.id,
+      subject: event.subject || "(No Subject)",
+      start: event.start?.dateTime || null,
+      start_timezone: event.start?.timeZone || null,
+      end: event.end?.dateTime || null,
+      end_timezone: event.end?.timeZone || null,
+      is_all_day: Boolean(event.isAllDay),
+      status: event.showAs || "unknown",
+      response_status: event.responseStatus?.response || "unknown",
+      organizer_name: event.organizer?.emailAddress?.name || "",
+      organizer_email: event.organizer?.emailAddress?.address || "",
+      location_display_name: event.location?.displayName || "",
+      is_online_meeting: Boolean(event.isOnlineMeeting),
+      online_meeting_provider: event.onlineMeetingProvider || null,
+      has_join_link: Boolean(join_url),
+      join_link: join_url || null,
+      join_link_source: link_source,
+      web_link: event.webLink || "",
+      can_cancel: !Boolean(event.isCancelled),
+    };
+  }
+
+  /**
+   * Normalizes a Graph calendar event into the detailed payload used by the UI.
+   *
+   * Input:
+   * - `event`: raw Graph calendar event payload.
+   *
+   * Output:
+   * - Returns the summary fields plus body, attendee, and metadata details.
+   */
+  private normalizeCalendarEventDetails(event: any) {
+    const base = this.normalizeCalendarEventSummary(event);
+    return {
+      ...base,
+      body_preview: event.bodyPreview || "",
+      body: {
+        content_type: event.body?.contentType || "html",
+        content: event.body?.content || "",
+      },
+      attendees: (event.attendees || []).map((attendee: any) => ({
+        name: attendee?.emailAddress?.name || "",
+        email: attendee?.emailAddress?.address || "",
+        type: attendee?.type || "",
+        response_status: attendee?.status?.response || "",
+      })),
+      created_datetime: event.createdDateTime || null,
+      modified_datetime: event.lastModifiedDateTime || null,
+      is_cancelled: Boolean(event.isCancelled),
+      importance: event.importance || "normal",
+      series_master_id: event.seriesMasterId || null,
+      i_cal_u_id: event.iCalUId || null,
+      transaction_id: event.transactionId || null,
+    };
+  }
+
+  private async getMailboxSettings(accountRid: string) {
+    const { accountNumber, accountId, parentAccountId } =
+      await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(
+        accountRid
+      );
+
+    if (!accountNumber) {
+      throw new Error(STATUS_MESSAGE.accountNoFound);
+    }
+
+    const mailboxAccountId = parentAccountId || accountId;
+    const schemaName = rawQueries.fetchSchemaName(accountNumber);
+    const orgDb = await this.getOrgDb();
+
+    const accountDetails: any[] = await orgDb.query(
+      rawQueries.fetchAccountDetailsById(schemaName),
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          accountId: mailboxAccountId,
+        },
+      }
+    );
+
+    const settings = accountDetails?.[0];
+    if (
+      !settings?.support_email ||
+      !settings?.tenant_id ||
+      !settings?.client_id ||
+      !settings?.client_secret
+    ) {
+      throw new Error("Mailbox is not configured for this account");
+    }
+
+    const clientSecret = await decryptClientSecret(settings.client_secret);
+
+    return {
+      supportEmail: settings.support_email,
+      tenantId: settings.tenant_id,
+      clientId: settings.client_id,
+      clientSecret,
+    };
+  }
+
+  async listInboxMessages(data: { account_rid: string; limit?: number }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+      const limit = Math.min(Math.max(data.limit || 50, 1), 100);
+
+      const result: any = await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/mailFolders/inbox/messages`)
+        .select(
+          [
+            "id",
+            "subject",
+            "from",
+            "receivedDateTime",
+            "isRead",
+            "hasAttachments",
+            "bodyPreview",
+            "importance",
+          ].join(",")
+        )
+        .top(limit)
+        .orderby("receivedDateTime DESC")
+        .get();
+
+      const messages = (result?.value || []).map((message: any) => ({
+        id: message.id,
+        subject: message.subject || "(No Subject)",
+        sender:
+          message.from?.emailAddress?.name ||
+          message.from?.emailAddress?.address ||
+          "",
+        sender_email: message.from?.emailAddress?.address || "",
+        received_datetime: message.receivedDateTime,
+        is_read: Boolean(message.isRead),
+        has_attachments: Boolean(message.hasAttachments),
+        body_preview: message.bodyPreview || "",
+        importance: message.importance || "normal",
+      }));
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Inbox fetched successfully",
+        data: {
+          support_email: supportEmail,
+          messages,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listInboxMessages", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          support_email: "",
+          messages: [],
+        },
+      };
+    }
+  }
+
+  async listMailboxFolders(data: { account_rid: string }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const folders = await this.fetchMailboxFolderChildren(
+        graphClient,
+        supportEmail
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Mailbox folders fetched successfully",
+        data: {
+          support_email: supportEmail,
+          folders,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listMailboxFolders", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          support_email: "",
+          folders: [],
+        },
+      };
+    }
+  }
+
+  async listMailboxMessages(data: {
+    account_rid: string;
+    folderId?: string;
+    folderPath?: string;
+    limit?: number;
+    pageToken?: string;
+    search?: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+      const limit = Math.min(Math.max(data.limit || 50, 1), 100);
+      let request;
+      let selectedFolder = null;
+
+      if (data.pageToken) {
+        const validatedPageToken = this.getValidatedMailboxPageToken(
+          data.pageToken,
+          supportEmail
+        );
+        request = graphClient.api(validatedPageToken);
+      } else {
+        let folders: any[] = [];
+
+        if (data.folderId) {
+          try {
+            const folder = await graphClient
+              .api(
+                `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(
+                  data.folderId
+                )}`
+              )
+              .select(
+                "id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount"
+              )
+              .get();
+
+            selectedFolder = this.normalizeMailboxFolder(folder, "", []);
+          } catch (error) {
+            selectedFolder = null;
+          }
+        }
+
+        if (!selectedFolder) {
+          folders = await this.fetchMailboxFolderChildren(
+            graphClient,
+            supportEmail
+          );
+          selectedFolder =
+            this.findFolderInTree(
+              folders,
+              data.folderId,
+              data.folderPath,
+              data.folderId || data.folderPath ? undefined : "inbox"
+            ) || null;
+        }
+
+        if (!selectedFolder) {
+          try {
+            selectedFolder = await this.getMailboxInboxFolder(
+              graphClient,
+              supportEmail
+            );
+          } catch (error) {
+            selectedFolder = folders[0] || null;
+          }
+        }
+
+        if (!selectedFolder) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            statusMessage: "Mailbox messages fetched successfully",
+            data: {
+              support_email: supportEmail,
+              selected_folder: null,
+              next_page_token: null,
+              messages: [],
+            },
+          };
+        }
+
+        request = graphClient
+          .api(
+            `/users/${encodeURIComponent(supportEmail)}/mailFolders/${encodeURIComponent(selectedFolder.id)}/messages`
+          )
+          .select(
+            [
+              "id",
+              "subject",
+              "from",
+              "toRecipients",
+              "receivedDateTime",
+              "isRead",
+              "hasAttachments",
+              "bodyPreview",
+              "importance",
+              "conversationId",
+              "webLink",
+            ].join(",")
+          )
+          .top(limit);
+
+        if (data.search) {
+          request = request
+            .header("ConsistencyLevel", "eventual")
+            .search(`"${data.search.replace(/"/g, '\\"')}"`);
+        } else {
+          request = request.orderby("receivedDateTime DESC");
+        }
+      }
+
+      const result: any = await request.get();
+      const nextLink = result?.["@odata.nextLink"] || null;
+
+      const messages = (result?.value || []).map((message: any) => ({
+        id: message.id,
+        subject: message.subject || "(No Subject)",
+        sender:
+          message.from?.emailAddress?.name ||
+          message.from?.emailAddress?.address ||
+          "",
+        sender_email: message.from?.emailAddress?.address || "",
+        to_recipients: (message.toRecipients || []).map((recipient: any) => ({
+          name: recipient?.emailAddress?.name || "",
+          email: recipient?.emailAddress?.address || "",
+        })),
+        received_datetime: message.receivedDateTime,
+        is_read: Boolean(message.isRead),
+        has_attachments: Boolean(message.hasAttachments),
+        body_preview: message.bodyPreview || "",
+        importance: message.importance || "normal",
+        conversation_id: message.conversationId || "",
+        web_link: message.webLink || "",
+      }));
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Mailbox messages fetched successfully",
+        data: {
+          support_email: supportEmail,
+          selected_folder: selectedFolder,
+          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          messages,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listMailboxMessages", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          support_email: "",
+          selected_folder: null,
+          next_page_token: null,
+          messages: [],
+        },
+      };
+    }
+  }
+
+  async getMailboxMessageById(data: {
+    account_rid: string;
+    messageId: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const message: any = await graphClient
+        .api(
+          `/users/${encodeURIComponent(supportEmail)}/messages/${encodeURIComponent(
+            data.messageId
+          )}`
+        )
+        .select(
+          [
+            "id",
+            "subject",
+            "from",
+            "toRecipients",
+            "ccRecipients",
+            "receivedDateTime",
+            "createdDateTime",
+            "lastModifiedDateTime",
+            "body",
+            "bodyPreview",
+            "isRead",
+            "hasAttachments",
+            "importance",
+          ].join(",")
+        )
+        .get();
+
+      let attachments: any[] = [];
+      if (message?.hasAttachments) {
+        const attachmentResult: any = await graphClient
+          .api(
+            `/users/${encodeURIComponent(supportEmail)}/messages/${encodeURIComponent(
+              data.messageId
+            )}/attachments`
+          )
+          .select("id,name,contentType,size,isInline")
+          .get();
+
+        attachments = (attachmentResult?.value || []).map((attachment: any) => ({
+          id: attachment.id,
+          name: attachment.name,
+          content_type: attachment.contentType,
+          size: attachment.size,
+          is_inline: Boolean(attachment.isInline),
+        }));
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Mailbox message fetched successfully",
+        data: {
+          id: message.id,
+          subject: message.subject || "(No Subject)",
+          sender:
+            message.from?.emailAddress?.name ||
+            message.from?.emailAddress?.address ||
+            "",
+          sender_email: message.from?.emailAddress?.address || "",
+          to_recipients: (message.toRecipients || []).map((recipient: any) => ({
+            name: recipient.emailAddress?.name || "",
+            email: recipient.emailAddress?.address || "",
+          })),
+          cc_recipients: (message.ccRecipients || []).map((recipient: any) => ({
+            name: recipient.emailAddress?.name || "",
+            email: recipient.emailAddress?.address || "",
+          })),
+          received_datetime: message.receivedDateTime,
+          created_datetime: message.createdDateTime,
+          modified_datetime: message.lastModifiedDateTime,
+          body: {
+            content_type: message.body?.contentType || "text",
+            content: message.body?.content || "",
+          },
+          body_preview: message.bodyPreview || "",
+          is_read: Boolean(message.isRead),
+          has_attachments: Boolean(message.hasAttachments),
+          importance: message.importance || "normal",
+          attachments,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getMailboxMessageById", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  async getMailboxAttachmentById(data: {
+    account_rid: string;
+    messageId: string;
+    attachmentId: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const attachment: any = await graphClient
+        .api(
+          `/users/${encodeURIComponent(supportEmail)}/messages/${encodeURIComponent(
+            data.messageId
+          )}/attachments/${encodeURIComponent(data.attachmentId)}`
+        )
+        .get();
+
+      if (!attachment?.contentBytes) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          statusMessage: "Attachment content is not available for this mailbox item",
+          data: null,
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Mailbox attachment fetched successfully",
+        data: {
+          id: attachment.id,
+          name: attachment.name || "attachment",
+          content_type: attachment.contentType || "application/octet-stream",
+          size: attachment.size || 0,
+          is_inline: Boolean(attachment.isInline),
+          content_bytes: attachment.contentBytes,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getMailboxAttachmentById", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Fetches calendar metadata for the supplied account.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   *
+   * Output:
+   * - Returns the calendar owner and the allowed read-only calendar actions.
+   */
+  async getCalendarMetadata(data: { account_rid: string }) {
+    try {
+      const { supportEmail } = await this.getMailboxSettings(data.account_rid);
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Calendar metadata fetched successfully",
+        data: {
+          calendar_owner_email: supportEmail,
+          mode: "read_only_with_cancel",
+          allowed_actions: {
+            view_calendar: true,
+            view_event_detail: true,
+            view_join_link: true,
+            cancel_invite: true,
+            create_event: false,
+            edit_event: false,
+            delete_event: false,
+          },
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getCalendarMetadata", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Fetches calendar events for a selected range, search term, or pagination token.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.start_date` / `data.end_date`: optional range bounds.
+   * - `data.search`: optional event search text.
+   * - `data.limit`: optional page size.
+   * - `data.pageToken`: optional next-page token from a previous response.
+   *
+   * Output:
+   * - Returns calendar owner details, range metadata, next-page token, and event summaries.
+   */
+  async listCalendarEvents(data: {
+    account_rid: string;
+    start_date?: string;
+    end_date?: string;
+    search?: string;
+    limit?: number;
+    pageToken?: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+      const limit = Math.min(Math.max(data.limit || 50, 1), 100);
+      const { start, end } = this.getCalendarRange(data.start_date, data.end_date);
+
+      let request;
+      if (data.pageToken) {
+        const validatedPageToken = this.getValidatedCalendarPageToken(
+          data.pageToken,
+          supportEmail
+        );
+        request = graphClient.api(validatedPageToken);
+      } else {
+        request = graphClient
+          .api(`/users/${encodeURIComponent(supportEmail)}/calendarView`)
+          .query({
+            startDateTime: start,
+            endDateTime: end,
+          })
+          .select(
+            [
+              "id",
+              "subject",
+              "start",
+              "end",
+              "isAllDay",
+              "showAs",
+              "responseStatus",
+              "organizer",
+              "location",
+              "isOnlineMeeting",
+              "onlineMeetingProvider",
+              "onlineMeeting",
+              "webLink",
+              "bodyPreview",
+              "body",
+              "isCancelled",
+            ].join(",")
+          )
+          .top(limit)
+          .orderby("start/dateTime");
+
+        if (data.search) {
+          request = request
+            .header("ConsistencyLevel", "eventual")
+            .search(`"${data.search.replace(/"/g, '\\"')}"`);
+        }
+      }
+
+      const result: any = await request.get();
+      const nextLink = result?.["@odata.nextLink"] || null;
+      const events = (result?.value || []).map((event: any) =>
+        this.normalizeCalendarEventSummary(event)
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Calendar events fetched successfully",
+        data: {
+          calendar_owner_email: supportEmail,
+          range: {
+            start_date: start,
+            end_date: end,
+          },
+          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          events,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("listCalendarEvents", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: {
+          calendar_owner_email: "",
+          range: null,
+          next_page_token: null,
+          events: [],
+        },
+      };
+    }
+  }
+
+  /**
+   * Fetches the full detail payload for a single calendar event.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.eventId`: Graph calendar event identifier.
+   *
+   * Output:
+   * - Returns the normalized detailed calendar event payload.
+   */
+  async getCalendarEventById(data: { account_rid: string; eventId: string }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const event: any = await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/events/${encodeURIComponent(data.eventId)}`)
+        .select(
+          [
+            "id",
+            "subject",
+            "start",
+            "end",
+            "isAllDay",
+            "showAs",
+            "responseStatus",
+            "organizer",
+            "attendees",
+            "location",
+            "isOnlineMeeting",
+            "onlineMeetingProvider",
+            "onlineMeeting",
+            "webLink",
+            "bodyPreview",
+            "body",
+            "createdDateTime",
+            "lastModifiedDateTime",
+            "isCancelled",
+            "importance",
+            "seriesMasterId",
+            "iCalUId",
+            "transactionId",
+          ].join(",")
+        )
+        .get();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Calendar event fetched successfully",
+        data: this.normalizeCalendarEventDetails(event),
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("getCalendarEventById", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Cancels a calendar event on behalf of the resolved mailbox organizer.
+   *
+   * Input:
+   * - `data.account_rid`: account RID used to resolve calendar ownership.
+   * - `data.eventId`: Graph calendar event identifier.
+   * - `data.comment`: optional cancellation message.
+   * - `data.userId`: platform user performing the cancellation.
+   *
+   * Output:
+   * - Returns the cancellation status payload for the selected event.
+   */
+  async cancelCalendarEvent(data: {
+    account_rid: string;
+    eventId: string;
+    comment?: string;
+    userId: string;
+  }) {
+    try {
+      const { supportEmail, tenantId, clientId, clientSecret } =
+        await this.getMailboxSettings(data.account_rid);
+      const graphClient = this.getMailboxGraphClient(
+        tenantId,
+        clientId,
+        clientSecret
+      );
+
+      const event: any = await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/events/${encodeURIComponent(data.eventId)}`)
+        .select("id,subject,isCancelled,organizer")
+        .get();
+
+      const organizerEmail =
+        event?.organizer?.emailAddress?.address ||
+        supportEmail;
+
+      if (
+        organizerEmail &&
+        organizerEmail.toLowerCase() !== supportEmail.toLowerCase()
+      ) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          statusMessage:
+            "Only meetings organized by the configured mailbox can be cancelled.",
+          data: null,
+        };
+      }
+
+      if (event?.isCancelled) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: "Meeting invite is already cancelled",
+          data: {
+            event_id: data.eventId,
+            status: "cancelled",
+            cancelled_by: data.userId,
+            already_cancelled: true,
+          },
+        };
+      }
+
+      await graphClient
+        .api(`/users/${encodeURIComponent(supportEmail)}/events/${encodeURIComponent(data.eventId)}/cancel`)
+        .post({
+          Comment:
+            data.comment ||
+            "This meeting has been cancelled from the Certainti platform.",
+        });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "Meeting invite cancelled successfully",
+        data: {
+          event_id: data.eventId,
+          subject: event?.subject || "(No Subject)",
+          status: "cancelled",
+          cancelled_by: data.userId,
+          already_cancelled: false,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      errorLog("cancelCalendarEvent", error.message);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusMessage: error.message,
+        data: null,
+      };
+    }
+  }
+
   async getInteractionAssessmentSource() {
     const mainDb = await this.getMainDb();
     const result = await mainDb.query(rawQueries.fetchInteractionAllAssessmentSource());

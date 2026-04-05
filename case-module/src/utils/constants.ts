@@ -227,6 +227,9 @@ export const STATUS_MESSAGE = {
   computedDataFetchedSuccess: "Computed data fetched successfully",
   revokedSuccessfully : "Approval revoked successfully",
   dossierFormFetchedSuccess: "Dossier Form fetched successfully",
+  settingsUpdatedSuccess : "Settings updated successfully",
+  settingsFetchedSuccess : "Settings fetched successfully",
+  caseSummaryFetched : "Case Summary fetched successfully"
 };
 
 export const RD_FORM_HEADER_BY_COUNTRY: Record<string, string> = {
@@ -2198,6 +2201,9 @@ fetchRegularFieldValue(
   },
   updateStatusForWorkFlowConnector(statusRid : string, templateRid : string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.workflow_connector_mapping SET status_rid = '${statusRid}' WHERE source_rid = '${templateRid}' OR target_rid = '${templateRid}'`
+  },
+  getPlatformCaseSetting () {
+    return `SELECT assessment_methodology FROM ${MAIN_SCHEMA_NAME}.organization_licenses`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
