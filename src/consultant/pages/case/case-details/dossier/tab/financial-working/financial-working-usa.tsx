@@ -574,6 +574,15 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       });
     }
 
+    // Keys whose values should be displayed as-is (no number formatting)
+    const yearLikeKeys = new Set(
+      dataKeys.filter(
+        (key) =>
+          key.toLowerCase().includes('fiscal year') ||
+          key.toLowerCase() === 'fiscal year'
+      )
+    );
+
     // Add other columns
     dataKeys.forEach((key) => {
       // Determine label
@@ -582,6 +591,8 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       if (key === 'contract') label = 'QRE Contract';
       if (key === 'grossReceipts') label = 'Gross Receipts';
       if (key === 'sum') label = 'Total';
+
+      const isYearLikeKey = yearLikeKeys.has(key);
 
       columns.push({
         id: key,
@@ -600,11 +611,16 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               val.trim() !== '' &&
               (!isNaN(Number(val)) || val.endsWith('%')));
 
+          // For year-like keys (e.g. "Fiscal Year"), display the raw value without number formatting
+          const displayValue = isYearLikeKey
+            ? (val ?? '-')
+            : formatValue(val) || '-';
+
           return (
             <div
               className={`px-2 w-full flex ${isNumeric ? 'justify-end text-right' : 'justify-start text-left'} ${isTotal ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'}`}
             >
-              {formatValue(val) || '-'}
+              {displayValue}
             </div>
           );
         },
