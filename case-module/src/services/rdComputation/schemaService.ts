@@ -483,7 +483,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string,state_code:string, input_params: any, computed_fields: any, final_credit: number, total_qre: number, stateRdData: any,config:any, result?: any,) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string,state_code:string, input_params: any, computed_fields: any, final_credit: number, total_qre: number, stateRdData: any,config:any, resource_count:any,result?: any,) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         const [calculationEntry] = await RdCreditStateCalculations.upsert(
             {
@@ -498,10 +498,12 @@ class RDCreditSchemaService {
                 prev_year1_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev1yearQRE || 0) : (stateRdData.prior3YearsQREs[0]?.qre || 0),
                 prev_year2_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev2yearQRE || 0) : (stateRdData.prior3YearsQREs[1]?.qre || 0),
                 prev_year3_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev3yearQRE || 0) : (stateRdData.prior3YearsQREs[2]?.qre || 0),
+                prev_year4_qre: (state_code === 'NJ' || state_code === 'TX') ? (result?.prev3yearQRE || 0) : (stateRdData.prior3YearsQREs[3]?.qre || 0),
                 total_wages: result?.totalWages,
                 total_supplies: result?.totalSupplies,
                 total_subcontract: result?.totalContract,
-                config_json: config
+                config_json: config,
+                total_resources:resource_count
                 
             },
             {
@@ -540,6 +542,14 @@ class RDCreditSchemaService {
      * @param region_name 
      * @returns 
      */
+    // async updateFinancialWorkingUrl(accountNumber: string, case_rid: string, state_rid: string, financial_working_url: string) {
+    //     const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
+    //     await RdCreditStateCalculations.update(
+    //         { financial_working_url },
+    //         { where: { case_rid, state_rid } }
+    //     );
+    // }
+
     async findRdCreditResultsByCaseIdAndState(accountNumber: string, case_rid: string, state_rid: string) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
 
