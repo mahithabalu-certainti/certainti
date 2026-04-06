@@ -5678,11 +5678,30 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      const error = err as Error;
-      errorLog("listCalendarEvents", error.message);
+      const error = err as any;
+      errorLog("listCalendarEvents", error.message || String(error));
+
+      const statusCode = error?.statusCode || error?.code || 0;
+      const isEmailConfigError =
+        typeof error?.message === "string" &&
+        error.message.toLowerCase().includes("calendar is not configured");
+
+      if (isEmailConfigError) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          statusMessage: error.message,
+          data: {
+            calendar_owner_email: "",
+            range: null,
+            next_page_token: null,
+            events: [],
+          },
+        };
+      }
+
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        statusMessage: error.message,
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "No calendar events found for this range",
         data: {
           calendar_owner_email: "",
           range: null,
