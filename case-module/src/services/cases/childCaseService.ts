@@ -7,7 +7,7 @@ import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, D
 import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
 import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
-import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids } from "../../utils/dossierRawquery";
+import { fetchCaseClosingRemarks, fetchCountryCalcDataForDossier, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids } from "../../utils/dossierRawquery";
 import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook } from "../rdStateProcessors/stateRdCreditExcelGenerators";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
@@ -25,6 +25,8 @@ import Decimal from "decimal.js";
 import { generatePdfBuffer } from "../../utils/generatePdf";
 import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
 import { truncate } from "node:fs";
+import { generateCanadaRdExcelBase64 } from "../../utils/canadaExcelExport";
+import { generateIrelandRdExcelBase64 } from "../../utils/irelandExcelExport";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -362,13 +364,6 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const generateQualifiedProjectsCSV = await generateExcelBase64(getProjectQualifiedData.data,"Qualified-Projects")
     const getProjectResourceSummary = await this.projectResourceService.exportProjectResources(accountRid, caseRid,caseDetails!.fiscal_year, {}, "resource_code", "ASC", userId, "", "qualifiedProjects");
     const generateResourceSummaryCSV = await generateExcelBase64(getProjectResourceSummary.data?.projectResources,"Resource-Summary")
-    let caseClosingPayload : any = {}
-    caseClosingPayload.case_rid = caseRid;
-    caseClosingPayload.account_rid = accountRid;
-    caseClosingPayload.sort = 'signoff_at';
-    caseClosingPayload.sort_by = 'ASC';
-    caseClosingPayload.timezone = timez
-    const closingRemarksData = await this.exportCaseClosingRemarks(caseClosingPayload);
     const fetchCountryUrl : any = await orgDb.query(fetchRdFormUrlForCountry(schemaName, caseRid));
     const fetchStateUrl : any = await orgDb.query(fetchRdFormUrlForState(schemaName, caseRid));
     let countryUrlData = fetchCountryUrl[0].filter((c : any) => c.country_url !== null);
@@ -411,10 +406,19 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
     const finalStructuredData = techSummary.technicalSummary.length < 1 ? [] : await generatePdfBuffer(techSummary.technicalSummary)
 
-    // Generate combined state financial calculations Excel from stored results
     let stateFinancialCalcUrl: string | null = null;
+    let countryFinancialCalUrl : string | null = null;
+    let countryCode : string | null = null;
     try {
       const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossier(schemaName, caseRid)))[0];
+      const countryRow : any = await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid));
+      if(countryRow[0].length > 0) {
+        countryFinancialCalUrl = countryRow[0][0].country_export_data
+      } else {
+        countryFinancialCalUrl = ''
+      }
+      const countryRes : any = await mainDB.query(rawQueries.fetchCountryById(), {replacements : {id : countryRow[0][0].country_rid}})
+      countryCode = countryRes[0][0].country_code ?? ''
       if (stateCalcRows.length > 0) {
         const stateRids = stateCalcRows.map((r: any) => r.state_rid);
         const stateCodeRows: any[] = (await mainDB.query(fetchStateCodesByRids(stateRids)))[0];
@@ -456,18 +460,18 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       urls : exportedUrls
     },
     {
-      name: "Approval Status",
-      project_code : null,
-      buffer: closingRemarksData,
-      extension: ".xlsx"
-    },
-    {
       name: "RD Form Federal",
       url: countryUrls
     },
     {
       name: "RD Form State",
       urls: stateUrls
+    },
+    {
+      name : `Financial Calculations-${countryCode}`,
+      project_code : null,
+      buffer : countryFinancialCalUrl,
+      extension: ".xlsx"
     },
     {
       name: "Financial Calculations State",
@@ -571,7 +575,6 @@ private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid
     bind: [accountRid, projectFiscalRidList],
     type: QueryTypes.SELECT
   });
-  console.log("Technical Summary Data : ", technicalSummaryData)
 
   if (technicalSummaryData.length > 0) {
     // Minimal mapping to reduce processing time

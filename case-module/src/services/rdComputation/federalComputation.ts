@@ -7,6 +7,8 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { federalCalculators } from "../rdFederalProcessors";
 import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 import { fetchCountryData, updateRRCASC280C } from "../../utils/rdFinancialWorkingQueries";
+import { generateIrelandRdExcelBase64 } from "../../utils/irelandExcelExport";
+import { generateUKRdExcelBase64 } from "../../utils/ukExcelExport";
 
 export class FederalComputationService {
     private rdCreditSchemaService: RDCreditSchemaService;
@@ -137,7 +139,7 @@ export class FederalComputationService {
                                 totalProjectSharedWithHmrc += f["Total Project Value/Labor"]
                             })
                         }
-                        const saveData = {
+                        const saveData : any = {
                         Title : {
                             "Account ID" : accountRid,
                             "Account Name" : countryInfo.accountName,
@@ -191,14 +193,24 @@ export class FederalComputationService {
                         },
                         BOLD : ["Total Project Value/Labor","LABOUR", "Total Salary + EPW Expenses", 
                             "Technical Submissions by Cost that are 50% or more of Total QRE"
-                        ]
+                        ],
+                        base64: ''
                     }
-                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData,grossReduction,result,extractConfig); 
+                    saveData.reductionKey = reductionValue
+                    saveData.grossRdecKey = grossReductionValue
+                    saveData.grossRdecPct = extractConfig.gross_rdec 
+                    const excelBase64 = await generateUKRdExcelBase64(
+                            saveData,
+                            result.inputFields
+                        );
+                        saveData.base64 = excelBase64;
+                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData,grossReduction,result,extractConfig, saveData.base64); 
+                        const {base64,reductionKey,grossRdecPct,grossRdecKey, ...rest} = saveData
                         return {
                             statusCode : HttpStatus.SUCCESS,
                             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
                             statusMessage : STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
-                            data : saveData
+                            data : rest
                         };
                     }
                 }
@@ -282,7 +294,12 @@ export class FederalComputationService {
                             }),
                             "BOLD" : ["Total Labour", "LABOUR", "Total QRE", dynamicRdCredit]
                         } 
-                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData,parseFloat(researchDevelopmentTaxCredit),computedResult,extractConfig); 
+                        const base64Result = await generateIrelandRdExcelBase64(finalData, computedResult.inputFields, {
+                            dynamicReductionKey,
+                            dynamicRdCreditKey: dynamicRdCredit,
+                            creditRatePct: extractConfig.research_development_tax_credit,
+                        });
+                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData,parseFloat(researchDevelopmentTaxCredit),computedResult,extractConfig, base64Result);
                         return {
                             statusCode : HttpStatus.SUCCESS,
                             statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -313,7 +330,9 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
                     const result = await federalComputation.computeForCanada(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo, caseClosed);
-                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit,result,extractConfig); 
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields,result.finalCredit,result,extractConfig, result.computedFields.base64Result); 
+                    const {base64Result, ...rest} = result.computedFields
+                    result.computedFields = rest
                     return {
                         statusCode : HttpStatus.SUCCESS,
                         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,

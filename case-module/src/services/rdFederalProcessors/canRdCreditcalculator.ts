@@ -4,6 +4,7 @@ import { fetchAssignedProjectIds, fetchProjectCostDetailsBasedOnCases, fetchRequ
 import { ProjectCalculatedDataCanada, ProjectComputeValue, ProjectFiscalIds } from "../../utils/types";
 import { Case } from "../../models/caseModel";
 import Decimal from "decimal.js";
+import { generateCanadaRdExcelBase64 } from "../../utils/canadaExcelExport";
 
 type extractConfig = {
     fte_proxy : number,
@@ -189,8 +190,15 @@ export class RdCreditCalculatorForCAN {
                     })
                 )
             }),
-            BOLD : ["TOTAL Credit with ORDTC", "TOTAL Credit with No ORDTC", "Total Cost"]
+            BOLD : ["TOTAL Credit with ORDTC", "TOTAL Credit with No ORDTC", "Total Cost"],
+            base64Result : ''
         }
+        const base64Result = await generateCanadaRdExcelBase64(finalData,{
+            country : this.country,
+            credit_type : this.creditType,
+            currency : this.currency
+        });
+        finalData.base64Result = base64Result
         return {
             inputFields : {
                 country : this.country,

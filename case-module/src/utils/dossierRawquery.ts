@@ -80,3 +80,17 @@ export const fetchStateCodesByRids = (stateRids: string[]) => {
   const ridList = stateRids.map(r => `'${r}'`).join(', ');
   return `SELECT rid, state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (${ridList})`
 }
+
+export const fetchCountryCalcDataForDossier = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
+    rs.country_rid,
+    rs.country_export_data
+  FROM
+    ${schemaName}.rd_credit_country_calculations rs
+  WHERE
+    rs.case_rid = '${caseRid}'
+    AND rs.input_params IS NOT NULL
+    AND rs.computed_fields IS NOT NULL
+  `
+}
