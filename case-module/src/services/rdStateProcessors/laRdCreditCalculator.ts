@@ -73,7 +73,7 @@ export class RdCreditCalculatorForLA {
         logMessage(`Computing LA Credit — fiscal year: ${fiscalYear}`);
         logMessage(`LA config: ${JSON.stringify(config)}`);
 
-        const employeeCount: number = (caseData as any).la_employee_count ?? 0;
+        const employeeCount: number = (caseData as any).employee_count ?? 0;
         const bracket: EmployeeBracket = employeeCount >= 100 ? "large" : employeeCount >= 50 ? "mid" : "small";
         logMessage(`LA employee count from DB: ${employeeCount}, bracket resolved: ${bracket}`);
 

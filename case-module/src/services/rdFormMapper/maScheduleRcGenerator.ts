@@ -436,16 +436,6 @@ async function _generatePdf(
   // Serialize and upload
     const pdfBuffer = Buffer.from(await pdfDoc.save());
     const pdfBuf = pdfBuffer;
-      const localDir = path.resolve(__dirname, "../../../output/pdfs");
-      if (!fs.existsSync(localDir)) {
-        fs.mkdirSync(localDir, { recursive: true });
-      }
-      const localPath = path.join(
-        localDir,
-        `ma_credit_${caseRid}_${Date.now()}.pdf`,
-      );
-      fs.writeFileSync(localPath, pdfBuf);
-      logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
   
   const blobName  = `cases/${caseRid}/rdForms/ma_schedule_rc_${caseRid}_${Date.now()}.pdf`;
   const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, blobName, accountNumber);

@@ -499,27 +499,25 @@ export class RdFormMapperService {
              filledFormUrl = await processMassachusettsForm(
               caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,
             );
-            continue;
+            
           }
           if (resolvedStateCode === "NJ") {
             filledFormUrl = await processNewJerseyForm(
                 caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state
               );
-              continue;
+             
           }
           if (resolvedStateCode === "SC") {
             filledFormUrl = await processSouthCarolinaForm(
               caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,
             );
-            continue;
+           
           }
 
           if (resolvedStateCode === "WI") {
               filledFormUrl= await processWisconsinForm(
                 caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb, state,
               );
-
-  continue;
 }
           // filledFormUrl = await this.generatePDFNonFillable(
           //   enhancedMapperConfig,
@@ -1404,7 +1402,6 @@ export class RdFormMapperService {
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
-      configLevelKey = ConfigType.STATE_ONLY;
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
           const federalResult = await this.processFederalForms(
@@ -1552,16 +1549,16 @@ export class RdFormMapperService {
         rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
         { type: "SELECT" },
       );
-      // if (
-      //   !isFinancialSignOffDone ||
-      //   !isFinancialSignOffDone.financial_working_signoff
-      // ) {
-      //   return {
-      //     statusCode: HttpStatus.FAILED,
-      //     message: HttpStatus.FAILED_MESSAGE,
-      //     errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-      //   };
-      // }
+      if (
+        !isFinancialSignOffDone ||
+        !isFinancialSignOffDone.financial_working_signoff
+      ) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+        };
+      }
      
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),

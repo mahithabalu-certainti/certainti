@@ -373,16 +373,6 @@ async function _generatePdf(
 
   // --- Serialize and upload ------------------------------------------------
   const pdfBuffer = Buffer.from(await pdfDoc.save());
-  const pdfBuf = pdfBuffer;
-        const localDir = path.resolve(__dirname, "../../../output/pdfs");
-        if (!fs.existsSync(localDir)) {
-          fs.mkdirSync(localDir, { recursive: true });
-        }
-        const localPath = path.join(
-          localDir,
-          `wi_credit_${caseRid}_${Date.now()}.pdf`,
-        );
-        fs.writeFileSync(localPath, pdfBuf);
   const outBlob   = `cases/${caseRid}/rdForms/wi_schedule_r_${caseRid}_${Date.now()}.pdf`;
   const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outBlob, accountNumber);
 

@@ -217,7 +217,7 @@ export class StateComputationService {
                             type: QueryTypes.SELECT
                         });
                         const laStateCount = employeeCounts.find((r: any) => r.state_rid === config.state_rid);
-                        caseDetails.la_employee_count = laStateCount ? Number(laStateCount.employee_count) : 0;
+                        caseDetails.employee_count = laStateCount ? Number(laStateCount.employee_count) : 0;
                         logMessage(`[LA] Employee count resolved from DB: ${caseDetails.la_employee_count}`);
                     }
                     if (config.state_code === "RI") {
@@ -236,7 +236,7 @@ export class StateComputationService {
 
                 await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                     fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid, config.state_code,
-                    result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig,caseDetails.la_employee_count ?? 0,result
+                    result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig,caseDetails.employee_count ?? 0,result
                 );
 
                 }
