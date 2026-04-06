@@ -328,12 +328,19 @@ const rangeLabel = (mode: RangeMode, anchorDate: Date) => {
   return `${MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
 };
 
+const sanitizeSearchText = (value: string) =>
+  value
+    .replace(/[\r\n\t\0]+/g, ' ')
+    .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const Calendar = () => {
   const { accountid } = useParams();
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [anchorDate, setAnchorDate] = useState(() => startOfDay(new Date()));
   const [searchText, setSearchText] = useState('');
-  const deferredSearch = useDeferredValue(searchText.trim());
+  const deferredSearch = useDeferredValue(sanitizeSearchText(searchText).slice(0, 200));
   const [selectedEventId, setSelectedEventId] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [splitPercent, setSplitPercent] = useState(50);
