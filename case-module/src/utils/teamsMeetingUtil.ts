@@ -82,7 +82,7 @@ export async function scheduleTeamsMeetingUtil(
 
   const tz = activityRequest.time_zone || "UTC";
   const startDateTime = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`, "YYYY-MM-DD HH:mm", tz);
-  const endDateTimepayload = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
+  const endDateTimepayload = moment.tz(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
   const payload: any = {
     subject: activityRequest.subject,
     start: {
@@ -309,8 +309,7 @@ export async function updateTeamsMeetingUtil(
 
   const tz = activityRequest.time_zone || "UTC";
   const startDateTime = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`, "YYYY-MM-DD HH:mm", tz);
-  // Using endDateTimepayload logic from schedule function to maintain consistency
-  const endDateTimepayload = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
+  const endDateTimepayload = moment.tz(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
 
   const payload: any = {
     subject: activityRequest.subject,

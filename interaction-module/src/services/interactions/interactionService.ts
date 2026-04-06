@@ -4881,21 +4881,16 @@ export class InteractionService {
   private getCalendarRange(startDate?: string, endDate?: string) {
     const start = startDate ? new Date(startDate) : new Date();
     const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
-    safeStart.setHours(0, 0, 0, 0);
 
     const end = endDate ? new Date(endDate) : new Date(safeStart);
     if (!endDate) {
       end.setDate(end.getDate() + 30);
     }
-    let safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
-    if (safeEnd < safeStart) {
-      safeEnd = new Date(safeStart);
-    }
-    safeEnd.setHours(23, 59, 59, 999);
+    const safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
 
     return {
       start: safeStart.toISOString(),
-      end: safeEnd.toISOString(),
+      end: safeEnd < safeStart ? safeStart.toISOString() : safeEnd.toISOString(),
     };
   }
 
