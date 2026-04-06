@@ -149,7 +149,7 @@ export class RdCreditCalculatorForDC {
         const line10 = line5.mul(config.rrc_qre_credit_percentage / 100);
         const line11 = Decimal.min(line9, line10);
         const line12 = line1.plus(line4).plus(line11);
-        const rrcMultiplier = caseData.rrc_credit_280_c ? config.rrc_elect_280c_yes :  config.rrc_elect_280c_no;
+        const rrcMultiplier = caseData.rrc_credit_280_c === "Yes" ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
         const line13 = line12.mul(rrcMultiplier);
 
         return {
