@@ -696,18 +696,6 @@ const Calendar = () => {
                                   </div>
                                 </div>
 
-                                <div className='flex flex-wrap items-center gap-1'>
-                                  {event.has_join_link ? (
-                                    <span className='rounded-full bg-[#EEF3F8] px-1.5 py-[2px] text-[9px] font-semibold text-[#35526B]'>
-                                      Online
-                                    </span>
-                                  ) : null}
-                                  {event.can_cancel ? (
-                                    <span className='rounded-full bg-[#F3F2F1] px-1.5 py-[2px] text-[9px] font-semibold text-[#605E5C]'>
-                                      Cancel
-                                    </span>
-                                  ) : null}
-                                </div>
                               </div>
                             </button>
                           );
@@ -777,11 +765,6 @@ const Calendar = () => {
                       >
                         {responseLabel(eventDetail.response_status)}
                       </span>
-                      {eventDetail.is_online_meeting ? (
-                        <span className='rounded-full bg-[#EEF3F8] px-2 py-[3px] text-[10px] font-semibold text-[#35526B]'>
-                          {eventDetail.online_meeting_provider || 'Online meeting'}
-                        </span>
-                      ) : null}
                     </div>
                   </div>
 
@@ -813,14 +796,6 @@ const Calendar = () => {
                       </p>
                     </div>
 
-                    <div className='rounded-lg bg-white px-3 py-2'>
-                      <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                        Organizer
-                      </p>
-                      <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
-                        {eventDetail.organizer_name || eventDetail.organizer_email || '-'}
-                      </p>
-                    </div>
 
                     {eventDetail.location_display_name ? (
                       <div className='col-span-2 rounded-lg bg-white px-3 py-2'>
