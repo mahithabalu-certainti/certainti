@@ -687,9 +687,6 @@ const Calendar = () => {
                                         ? 'All day'
                                         : `${formatTime(event.start)} - ${formatTime(event.end)}`}
                                     </span>
-                                    <span className='line-clamp-1'>
-                                      {event.organizer_name || event.organizer_email || 'Organizer unavailable'}
-                                    </span>
                                     {event.location_display_name ? (
                                       <span className='line-clamp-1'>{event.location_display_name}</span>
                                     ) : null}
