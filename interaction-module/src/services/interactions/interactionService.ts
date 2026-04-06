@@ -4925,8 +4925,10 @@ export class InteractionService {
     return (value || "")
       .replace(/[\r\n\t\0]+/g, " ")
       .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, " ")
+      .replace(/[^\w\s@.\-]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
+      .slice(0, 200)
       .toLowerCase();
   }
 
