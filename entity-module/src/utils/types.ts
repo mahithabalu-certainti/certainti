@@ -387,7 +387,7 @@ export interface IUpdateInlineProjectResource {
   resource_name?: string;
   resource_type_rid: string;
   resource_role?: string | null;
-  total_hours_pro_res?: number;
+  total_hours_pro_res?: number | null;
   total_cost_pro_res?: number;
   net_total_cost_pro_res?: number;
   region_rid?: string | null;

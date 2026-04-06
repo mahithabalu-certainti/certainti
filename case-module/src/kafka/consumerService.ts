@@ -166,8 +166,21 @@ export class KafkaConsumerService {
                     }, payload.accessToken);
                     await this.rdCreditSchemaService.markAsCompleted(payload.accountNumber, key,'dossier-form');
                     console.log(`Dossier processing complete for ID: ${key}`);
-                } catch (error) {
-                    console.error("Error processing dossier message", error);
+                } catch (error: any) {
+                    logMessage("Error processing dossier message");
+
+                    logMessage(`Message: ${error?.message}`);
+                    logMessage(`Stack: ${error?.stack}`);
+
+                    if (error?.parent) {
+                        console.error(`DB Error (parent):  ${error.parent}`);
+                    }
+                    if (error?.original) {
+                        console.error(`DB Error (original): ${error.original}`);
+                    }
+                    if (error?.sql) {
+                        console.error(`Executed SQL:  ${error.sql}`);
+                    }
                 }
             }
         })
