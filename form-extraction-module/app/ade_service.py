@@ -11,6 +11,28 @@ from .config import get_settings
 from .schemas import ExtractionResponse
 from .pdf_field_mapper import attach_field_ids_to_extraction
 
+def _sanitize_extraction_positions(extraction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    ADE / vision models sometimes emit bounding boxes with null components, e.g.
+    [x0, null, null, null]. Pydantic expects List[float] with no null elements, so we
+    coerce missing coordinates to 0.0 before validation.
+    """
+
+    def walk(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            out: Dict[str, Any] = {}
+            for k, v in obj.items():
+                if k == "position" and isinstance(v, list):
+                    out[k] = [0.0 if x is None else float(x) for x in v]
+                else:
+                    out[k] = walk(v)
+            return out
+        if isinstance(obj, list):
+            return [walk(item) for item in obj]
+        return obj
+
+    return walk(extraction)
+
 
 class ADEForm6765Service:
     """
@@ -60,5 +82,7 @@ class ADEForm6765Service:
             extraction=raw_extraction,
         )
 
+        sanitized = _sanitize_extraction_positions(enriched)
+
         # 4) Validate against Pydantic model (extra fields allowed)
-        return ExtractionResponse.model_validate(enriched)
+        return ExtractionResponse.model_validate(sanitized)
