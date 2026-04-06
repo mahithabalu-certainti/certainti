@@ -241,8 +241,11 @@ export class InteractionService {
           }
         } else if (transaction_id) {
           // For RD Assessment, fetch by transaction_id
-          const findBatch = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(accountNumber, transaction_id, transaction);
-          interactionData.interaction_batch_id = findBatch;
+          const findBatch = await this.interactionSchemaService.fetchInteractionBatchByTransactionId(
+            accountNumber, transaction_id, transaction
+          );
+          // findBatch will always have a value because FPA always comes first
+          interactionData.interaction_batch_id = findBatch ?? null;
         }
         logMessage(`Resolved interaction_batch_id: ${interactionData.interaction_batch_id}`);
       }
@@ -3624,7 +3627,7 @@ export class InteractionService {
           let fourPartPayload: FourPartAssessmentResponse;
           fourPartPayload = four_part_assessment;
           logMessage(`four_part_assessment payload: ${JSON.stringify(fourPartPayload)}`);
-          await this.interactionSchemaService.createFourPartAssessment(
+          const fourPartRid = await this.interactionSchemaService.createFourPartAssessment(
             four_part_assessment,
             accountNumber,
             project_id,
@@ -3632,6 +3635,11 @@ export class InteractionService {
             transaction_id
           );
           logMessage(`createFourPartAssessment done for transaction_id: ${transaction_id}`);
+          await this.interactionSchemaService.updateInteractionFpaRid(
+            accountNumber,
+            transaction_id,
+            fourPartRid
+          );
           await this.interactionSchemaService.updateFourPartAssessmentAuditStatus(
             accountNumber,
             parsedMessage
@@ -3690,7 +3698,7 @@ export class InteractionService {
             logMessage(`fourPartAssessmentRid: ${fourPartAssessmentRid}`);
 
             logMessage(`four_part_assessment follow_up_questions: ${JSON.stringify(fourPartPayload?.follow_up_questions)}`);
-            dynamicQuestions = fourPartPayload.follow_up_questions.map((d) => ({ question: d }));
+            dynamicQuestions = fourPartPayload?.follow_up_questions?.map((d) => ({ question: d }));
             logMessage(`dynamicQuestions mapped (count: ${dynamicQuestions.length}): ${JSON.stringify(dynamicQuestions)}`);
 
             batchId = ""; // Will be generated atomically in createInteraction
