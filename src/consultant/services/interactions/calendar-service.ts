@@ -277,6 +277,8 @@ export const useCalendarEvents = (params: {
     queryFn: () => fetchAllCalendarEvents(params),
     enabled: Boolean(params.accountRid),
     retry: 0,
+    staleTime: 0,
+    gcTime: 0,
   });
 
 /**
