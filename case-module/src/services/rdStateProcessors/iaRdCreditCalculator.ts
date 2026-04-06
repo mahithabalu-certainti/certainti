@@ -170,7 +170,7 @@ export class RdCreditCalculatorForIA {
         const line13 = Decimal.max(line9.minus(line12), 0);
 
         //---- Line 14: line 9 × 50%
-        const line14 = line9.mul(config.qre_credit_percentage_c1);
+        const line14 = line9.mul(config.qre_credit_percentage_c1 / 100);
 
         //---- Line 15: min(line 13, line 14)
         const line15 = Decimal.min(line13, line14);
