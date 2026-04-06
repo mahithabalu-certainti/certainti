@@ -71,11 +71,11 @@ class InteractionSchemaService {
       interactionData.recipient_name = interactionData.email_info?.name || null
       interactionData.recipient_email = interactionData.email_info?.email || null
 
-      // Determine is_primary: first interaction for the project_fiscal_rid (or account) is primary
-      const scopeWhere = interactionData.project_fiscal_rid
-        ? { project_fiscal_rid: interactionData.project_fiscal_rid }
-        : { account_rid: interactionData.account_rid };
-      const existingCount = await Interaction.count({ where: scopeWhere, transaction });
+      // Determine is_primary: first interaction for the project_fiscal_rid is primary
+      const existingCount = await Interaction.count({
+        where: { project_fiscal_rid: interactionData.project_fiscal_rid },
+        transaction,
+      });
       interactionData.is_primary = existingCount === 0;
 
       const interaction = await Interaction.create(interactionData, {
