@@ -478,26 +478,6 @@ const Inbox = () => {
   };
 
   /**
-   * Determines whether an attachment can be previewed inline in the mailbox UI.
-   *
-   * Input:
-   * - `contentType`: attachment MIME type.
-   *
-   * Output:
-   * - Returns `true` for previewable image, PDF, text, and JSON files.
-   */
-  const isInlinePreviewable = (contentType: string) => {
-    const normalizedType = contentType.toLowerCase();
-
-    return (
-      normalizedType.startsWith('image/') ||
-      normalizedType === 'application/pdf' ||
-      normalizedType.startsWith('text/') ||
-      normalizedType.includes('json')
-    );
-  };
-
-  /**
    * Loads a mailbox attachment and either previews or downloads it.
    *
    * Input:
@@ -529,34 +509,31 @@ const Inbox = () => {
       const objectUrl = window.URL.createObjectURL(blob);
 
       if (action === 'view') {
-        if (isInlinePreviewable(attachment.content_type)) {
-          const previewData: {
-            name: string;
-            contentType: string;
-            objectUrl: string;
-            textContent?: string;
-          } = {
-            name: attachment.name,
-            contentType: attachment.content_type,
-            objectUrl,
-          };
+        // Always set preview data for view action
+        const previewData: {
+          name: string;
+          contentType: string;
+          objectUrl: string;
+          textContent?: string;
+        } = {
+          name: attachment.name,
+          contentType: attachment.content_type,
+          objectUrl,
+        };
 
-          if (
-            attachment.content_type.toLowerCase().startsWith('text/') ||
-            attachment.content_type.toLowerCase().includes('json')
-          ) {
-            previewData.textContent = await blob.text();
-          }
-
-          setPreviewAttachment(previewData);
-          return;
+        // Extract text content for text-based files
+        if (
+          attachment.content_type.toLowerCase().startsWith('text/') ||
+          attachment.content_type.toLowerCase().includes('json')
+        ) {
+          previewData.textContent = await blob.text();
         }
 
-        window.open(objectUrl, '_blank', 'noopener,noreferrer');
-        window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60_000);
+        setPreviewAttachment(previewData);
         return;
       }
 
+      // Handle download action
       const link = document.createElement('a');
       link.href = objectUrl;
       link.download = attachmentName;
