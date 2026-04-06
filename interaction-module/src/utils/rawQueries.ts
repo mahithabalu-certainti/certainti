@@ -194,6 +194,7 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
             pf.project_code,pf.project_name, fpr.r_number AS four_part_r_number, i.interaction_batch_id,
             i.interaction_assessment_source_rid, i.four_part_assessment_rid,
+            i.is_primary,
             CASE 
                 WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
                 ELSE pf.fiscal_year
@@ -292,7 +293,8 @@ export const fetchInteractionForProjectLevelQuery = (
         'four_part_r_number', i.four_part_r_number,
         'interaction_assessment_source_rid', i.interaction_assessment_source_rid,
         'four_part_assessment_rid', i.four_part_assessment_rid,
-        'interaction_status_rid', i.interaction_status_rid
+        'interaction_status_rid', i.interaction_status_rid,
+        'is_primary', i.is_primary
         ${aggregatedQuery}
         ) ) AS interactions
 

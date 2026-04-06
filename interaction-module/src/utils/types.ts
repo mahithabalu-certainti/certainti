@@ -39,6 +39,7 @@ export interface ICreateInteraction {
   transaction_id?: string
   four_part_assessment_rid?: string | null
   interaction_batch_id?: string
+  is_primary?: boolean | null
 }
 
 export interface IProject {
