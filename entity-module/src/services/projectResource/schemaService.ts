@@ -6028,6 +6028,7 @@ export class ProjectResourceSchemaService {
     if (fieldsToUpdate.resource_code) {
       fieldsToUpdate.resource_rid = resourceData.rid;
     }
+    fieldsToUpdate.total_hours_pro_res = fieldsToUpdate.total_hours_pro_res || null
 
     const updateProjectResource = await CaseProjectResource.update(
       {
