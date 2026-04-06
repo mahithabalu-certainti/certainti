@@ -92,6 +92,59 @@ const listAccountInteractionSchema = Joi.object({
   sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
+const listInboxMessagesSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/).default("50"),
+});
+
+const listMailboxFoldersSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+});
+
+const listMailboxMessagesSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  folderId: Joi.string().optional().allow("", null),
+  folderPath: Joi.string().optional().allow("", null),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/).default("50"),
+  pageToken: Joi.string().optional().allow("", null),
+  search: Joi.string().optional().allow("", null),
+});
+
+const inboxMessageDetailsSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  messageId: Joi.string().required(),
+});
+
+const inboxAttachmentDetailsSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  messageId: Joi.string().required(),
+  attachmentId: Joi.string().required(),
+});
+
+const calendarMetadataSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+});
+
+const listCalendarEventsSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  start_date: Joi.string().isoDate().optional(),
+  end_date: Joi.string().isoDate().optional(),
+  search: Joi.string().optional().allow("", null),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/).default("50"),
+  pageToken: Joi.string().optional().allow("", null),
+});
+
+const calendarEventDetailsSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  eventId: Joi.string().required(),
+});
+
+const cancelCalendarEventSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  comment: Joi.string().optional().allow("", null).max(1000),
+  eventId: Joi.string().required(),
+});
+
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   is_interaction_followup: Joi.boolean().optional().default(false),
@@ -322,6 +375,15 @@ export {
   createInteractionSchema,
   createAccountInteractionSchema,
   listAccountInteractionSchema,
+  listInboxMessagesSchema,
+  listMailboxFoldersSchema,
+  listMailboxMessagesSchema,
+  inboxMessageDetailsSchema,
+  inboxAttachmentDetailsSchema,
+  calendarMetadataSchema,
+  listCalendarEventsSchema,
+  calendarEventDetailsSchema,
+  cancelCalendarEventSchema,
   updateInteractionSchema,
   updateInteractionResponseSchema,
   listTechnicalSummarySchema,
