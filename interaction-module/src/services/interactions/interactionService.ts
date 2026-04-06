@@ -5778,11 +5778,19 @@ export class InteractionService {
         data: this.normalizeCalendarEventDetails(event),
       };
     } catch (err) {
-      const error = err as Error;
-      errorLog("getCalendarEventById", error.message);
+      const error = err as any;
+      const httpStatus = error?.statusCode || error?.code;
+      if (httpStatus === 404 || httpStatus === "404") {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: "Calendar event not found",
+          data: null,
+        };
+      }
+      errorLog("getCalendarEventById", error.message || String(error));
       return {
         statusCode: HttpStatus.BAD_REQUEST,
-        statusMessage: error.message,
+        statusMessage: error.message || "Failed to fetch calendar event",
         data: null,
       };
     }
