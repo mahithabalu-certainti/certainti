@@ -400,6 +400,8 @@ const Calendar = () => {
     setSelectedEventId(events[0]?.event_id || '');
   }, [events, selectedEventId]);
 
+  const anchorDateKey = toIsoDate(anchorDate);
+
   const groupedEvents = useMemo(() => {
     const grouped = new Map<string, CalendarEventSummary[]>();
 
@@ -409,6 +411,7 @@ const Calendar = () => {
         (parseDate(event.start) ? toIsoDate(parseDate(event.start) as Date) : null);
 
       if (!key) return;
+      if (rangeMode === 'day' && key !== anchorDateKey) return;
 
       const current = grouped.get(key) || [];
       current.push(event);
@@ -419,7 +422,7 @@ const Calendar = () => {
       date,
       items,
     }));
-  }, [events]);
+  }, [events, rangeMode, anchorDateKey]);
 
   const {
     data: eventDetail,
