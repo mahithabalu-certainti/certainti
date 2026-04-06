@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   CircularProgress,
@@ -25,7 +25,8 @@ import {
   type InboxMessageListItem,
   type MailboxFolder,
 } from '../../../../services/interactions/mailbox-service';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
+import { formatDateToYYYYMMDDWithTime, sanitizeUrl } from '../../../../../common-utils';
+import { sanitizeHtml } from '../../../../../utils/html-utils';
 
 type FlattenedMailboxFolder = MailboxFolder & {
   level: number;
@@ -138,6 +139,64 @@ const getEndOfDayTime = (dateValue: string) => {
   return new Date(`${dateValue}T23:59:59.999`).getTime();
 };
 
+/**
+ * Renders plain-text email content with clickable URLs and email addresses.
+ *
+ * Input:
+ * - `text`: plain text content already normalized for display.
+ *
+ * Output:
+ * - Returns JSX with platform text styling while preserving clickable links.
+ */
+const renderTextWithLinks = (text: string) => {
+  const lines = text.split('\n');
+  const urlOrEmailPattern = /(https?:\/\/[^\s]+|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi;
+
+  return lines.map((line, lineIndex) => {
+    const parts = line.split(urlOrEmailPattern);
+
+    return (
+      <Fragment key={`line-${lineIndex}`}>
+        {parts.map((part, partIndex) => {
+          if (!part) return null;
+
+          if (/^https?:\/\//i.test(part)) {
+            const safeUrl = sanitizeUrl(part);
+            if (!safeUrl) return <Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</Fragment>;
+
+            return (
+              <a
+                key={`part-${lineIndex}-${partIndex}`}
+                href={safeUrl}
+                target='_blank'
+                rel='noreferrer'
+                className='text-[#0F6CBD] underline break-all'
+              >
+                {part}
+              </a>
+            );
+          }
+
+          if (/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(part)) {
+            return (
+              <a
+                key={`part-${lineIndex}-${partIndex}`}
+                href={`mailto:${part}`}
+                className='text-[#0F6CBD] underline break-all'
+              >
+                {part}
+              </a>
+            );
+          }
+
+          return <Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</Fragment>;
+        })}
+        {lineIndex < lines.length - 1 ? <br /> : null}
+      </Fragment>
+    );
+  });
+};
+
 
 /**
  * Renders the visual icon for a mailbox folder row.
@@ -228,6 +287,13 @@ const renderFolderIcon = (folder: MailboxFolder, collapsed = false) => {
   );
 };
 
+const sanitizeSearchText = (value: string) =>
+  value
+    .replace(/[\r\n\t\0]+/g, ' ')
+    .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const Inbox = () => {
   const { accountid } = useParams();
   const [selectedFolder, setSelectedFolder] = useState<FlattenedMailboxFolder | null>(
@@ -235,7 +301,7 @@ const Inbox = () => {
   );
   const [selectedMessageId, setSelectedMessageId] = useState('');
   const [searchText, setSearchText] = useState('');
-  const deferredSearchText = useDeferredValue(searchText.trim());
+  const deferredSearchText = useDeferredValue(sanitizeSearchText(searchText));
   const [pageToken, setPageToken] = useState<string | null>(null);
   const [messageItems, setMessageItems] = useState<InboxMessageListItem[]>([]);
   const [attachmentActionId, setAttachmentActionId] = useState('');
@@ -311,11 +377,23 @@ const Inbox = () => {
     }
   }, [folderData, selectedFolder]);
 
+  const [activeFolderId, setActiveFolderId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const newFolderId = selectedFolder?.id;
+    if (newFolderId !== activeFolderId) {
+      setActiveFolderId(newFolderId);
+      setPageToken(null);
+      setMessageItems([]);
+      setSelectedMessageId('');
+    }
+  }, [selectedFolder?.id, activeFolderId]);
+
   useEffect(() => {
     setPageToken(null);
     setMessageItems([]);
     setSelectedMessageId('');
-  }, [selectedFolder?.id, deferredSearchText]);
+  }, [deferredSearchText]);
 
   const {
     data: mailboxMessages,
@@ -334,13 +412,14 @@ const Inbox = () => {
 
   useEffect(() => {
     if (!mailboxMessages) return;
+    if (mailboxMessages.selected_folder?.id && mailboxMessages.selected_folder.id !== selectedFolder?.id) return;
 
     setMessageItems((previous) =>
       pageToken
         ? [...previous, ...mailboxMessages.messages]
         : mailboxMessages.messages
     );
-  }, [mailboxMessages, pageToken]);
+  }, [mailboxMessages, pageToken, selectedFolder?.id]);
 
   useEffect(() => {
     if (pageToken) {
@@ -414,6 +493,23 @@ const Inbox = () => {
     isError: isMessageError,
   } = useInboxMessageById(accountid || '', selectedMessageId);
 
+  const formattedMessageBody = useMemo(() => {
+    if (!messageDetails) return '';
+
+    return (
+      messageDetails.body.content ||
+      messageDetails.body_preview ||
+      'No content available'
+    );
+  }, [messageDetails]);
+
+  const sanitizedHtmlMessageBody = useMemo(() => {
+    if (!messageDetails) return '';
+    if (messageDetails.body.content_type?.toLowerCase() !== 'html') return '';
+
+    return sanitizeHtml(messageDetails.body.content || '');
+  }, [messageDetails]);
+
   useEffect(() => {
     const syncDesktopLayout = () => {
       const isDesktop = window.innerWidth >= 1024;
@@ -441,19 +537,41 @@ const Inbox = () => {
    * - `recipients`: optional list of recipient name/email pairs.
    *
    * Output:
-   * - Returns a comma-separated string or `-` when no recipients exist.
+   * - Returns a compact preview with a tooltip that exposes the full recipient list.
    */
   const renderRecipientList = (
     recipients: { name: string; email: string }[] | undefined
   ) => {
     if (!recipients?.length) return '-';
-    return recipients
-      .map((recipient) =>
-        recipient.name
-          ? `${recipient.name} <${recipient.email}>`
-          : recipient.email || '-'
-      )
-      .join(', ');
+
+    const formattedRecipients = recipients.map((recipient) =>
+      recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email || '-'
+    );
+    const previewRecipients = formattedRecipients.slice(0, 3);
+    const remainingCount = formattedRecipients.length - previewRecipients.length;
+    const previewText = previewRecipients.join(', ');
+    const fullRecipientText = formattedRecipients.join('\n');
+
+    return (
+      <Tooltip
+        title={
+          <div className='max-w-[420px] whitespace-pre-wrap break-words text-[12px] leading-5'>
+            {fullRecipientText}
+          </div>
+        }
+        placement='top-start'
+        arrow
+      >
+        <span className='inline cursor-help break-words'>
+          {previewText}
+          {remainingCount > 0 ? (
+            <span className='font-medium text-[#0F6CBD]'>
+              {` +${remainingCount} more`}
+            </span>
+          ) : null}
+        </span>
+      </Tooltip>
+    );
   };
 
   /**
@@ -768,6 +886,8 @@ const Inbox = () => {
     );
   };
 
+  const todayDateString = new Date().toISOString().split('T')[0];
+
   const showInitialLoading = isFolderLoading || (!selectedFolder && isMessagesLoading);
   const activeFilterCount = [
     filters.status !== 'all',
@@ -791,14 +911,13 @@ const Inbox = () => {
   const isNoEmailConfigError = mailboxErrorMessage?.toLowerCase().includes('email configuration');
 
   return (
-    <div className='h-[calc(100vh-235px)] w-full overflow-hidden p-2 pr-4'>
-      <div className='flex h-full flex-col overflow-hidden rounded-[6px] border border-[#CBD6E2] bg-white shadow-[0_10px_32px_rgba(15,23,42,0.06)]'>
+    <div className='max-h-[calc(100vh-235px)] h-full w-full overflow-hidden p-2 pr-4'>
+      <div className='flex h-full w-full flex-col overflow-hidden rounded-[6px] border border-[#CBD6E2] bg-white shadow-[0_10px_32px_rgba(15,23,42,0.06)]'>
         <div className='flex h-[49px] items-center justify-between border-b border-[#CBD6E2] bg-white px-4'>
           <div className='flex min-w-0 items-center gap-2'>
             <DraftEmailIcon className='h-7 w-7 rounded-[2px] bg-[#0F6CBD] p-1 text-white' />
             <div className='min-w-0'>
               <p className='truncate text-[14px] font-semibold text-[#253240]'>Mailbox</p>
-              <p className='truncate text-[11px] text-[#5E6B78]'>{filteredMessageItems.length} items</p>
             </div>
           </div>
           <div className='ml-4 flex items-center gap-2'>
@@ -913,6 +1032,7 @@ const Inbox = () => {
                 <input
                   type='date'
                   value={filters.receivedFrom}
+                  max={todayDateString}
                   onChange={(event) =>
                     setFilters((current) => ({
                       ...current,
@@ -927,6 +1047,7 @@ const Inbox = () => {
                 <input
                   type='date'
                   value={filters.receivedTo}
+                  max={todayDateString}
                   onChange={(event) =>
                     setFilters((current) => ({
                       ...current,
@@ -1116,10 +1237,6 @@ const Inbox = () => {
                   <p className='text-[14px] font-semibold text-[#16202A]'>
                     {selectedFolder?.name || 'Messages'}
                   </p>
-                  <p className='truncate text-[11px] text-[#5E6B78]'>
-                    {filteredMessageItems.length}
-                    {activeFilterCount ? ' filtered' : ' loaded'}
-                  </p>
                 </div>
               </div>
 
@@ -1191,77 +1308,65 @@ const Inbox = () => {
                   Unable to load the selected email.
                 </div>
               ) : (
-                <div className='flex h-full min-h-0 flex-col bg-white'>
-                  <div className='flex h-[56px] items-center border-b border-[#E5EAF0] bg-[#FBFCFE] px-5'>
+                <div className='flex h-full min-h-0 min-w-0 flex-col bg-white'>
+                  <div className='flex min-h-[56px] min-w-0 items-center border-b border-[#E5EAF0] bg-[#FBFCFE] px-5 py-3'>
                     <h2 className='min-w-0 break-words text-[18px] font-semibold text-[#16202A]'>
                       {messageDetails.subject || '(No Subject)'}
                     </h2>
                   </div>
 
-                  <div className='min-h-0 flex-1 overflow-auto bg-[#FFFFFF] p-4'>
-                    <div className='min-h-full rounded-[4px] border border-[#D9E2EC] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]'>
-                      <div className='flex items-start justify-between gap-4 px-3 py-2.5'>
-                        <div className='flex min-w-0 items-start gap-3'>
-                          <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#B8D8F7] text-[12px] font-semibold text-[#1D4F91]'>
-                            {(messageDetails.sender || messageDetails.sender_email || 'M')
-                              .split(' ')
-                              .filter(Boolean)
-                              .slice(0, 2)
-                              .map((part) => part.charAt(0).toUpperCase())
-                              .join('')}
+                  <div className='min-h-0 min-w-0 flex-1 overflow-auto bg-[#FFFFFF]'>
+                    <div className='m-3 flex min-h-full min-w-0 flex-col rounded-[4px] border border-[#D9E2EC] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]'>
+                      <div className='border-b border-[#E5EAF0] px-4 py-3'>
+                        <div className='mb-2 flex flex-wrap items-start justify-between gap-3'>
+                          <div className='flex min-w-0 flex-1 items-start gap-3'>
+                            <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#B8D8F7] text-[12px] font-semibold text-[#1D4F91]'>
+                              {(messageDetails.sender || messageDetails.sender_email || 'M')
+                                .split(' ')
+                                .filter(Boolean)
+                                .slice(0, 2)
+                                .map((part) => part.charAt(0).toUpperCase())
+                                .join('')}
+                            </div>
+                            <div className='min-w-0 flex-1'>
+                              <p className='break-words text-[13px] font-medium text-[#16202A]'>
+                                {messageDetails.sender || '-'}
+                              </p>
+                              <p className='break-all text-[12px] text-[#5E6B78]'>
+                                {messageDetails.sender_email || ''}
+                              </p>
+                            </div>
                           </div>
-                          <div className='min-w-0 text-[13px] text-[#16202A]'>
-                            <p className='truncate'>
-                              {messageDetails.sender || '-'}
-                              {messageDetails.sender_email
-                                ? ` <${messageDetails.sender_email}>`
-                                : ''}
-                            </p>
-                            <p className='mt-0.5 truncate text-[12px] text-[#253240]'>
-                              <span className='font-medium'>To:</span>{' '}
-                              {renderRecipientList(messageDetails.to_recipients)}
-                            </p>
-                            <p className='mt-0.5 truncate text-[12px] text-[#253240]'>
-                              <span className='font-medium'>Cc:</span>{' '}
-                              {renderRecipientList(messageDetails.cc_recipients)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className='flex shrink-0 flex-col items-end gap-2'>
-                          <p className='text-[11px] text-[#5E6B78]'>
+                          <p className='shrink-0 text-[11px] text-[#5E6B78]'>
                             {formatDateToYYYYMMDDWithTime(
                               messageDetails.received_datetime
                             )}
                           </p>
                         </div>
+                        <div className='min-w-0 space-y-1 text-[12px] text-[#253240]'>
+                          <p className='break-words'>
+                            <span className='font-medium'>To:</span>{' '}
+                            {renderRecipientList(messageDetails.to_recipients)}
+                          </p>
+                          <p className='break-words'>
+                            <span className='font-medium'>Cc:</span>{' '}
+                            {renderRecipientList(messageDetails.cc_recipients)}
+                          </p>
+                        </div>
                       </div>
 
-                        <div className='px-4 pb-4 pt-2'>
+                      <div className='min-h-0 min-w-0 flex-1 overflow-auto px-4 py-3'>
                         {messageDetails.attachments?.length ? (
-                          <div className='mb-4 flex flex-wrap gap-2'>
+                          <div className='mb-3 flex flex-wrap gap-2'>
                             {messageDetails.attachments.map((attachment) => (
                               <div
                                 key={attachment.id}
-                                className='flex items-center gap-2 rounded-full border border-[#D6DEE8] bg-[#F8FAFC] px-3 py-1.5 text-[12px] text-[#16202A]'
+                                className='flex min-w-0 max-w-full flex-wrap items-center gap-2 rounded-[18px] border border-[#D6DEE8] bg-[#F8FAFC] px-3 py-1.5 text-[12px] text-[#16202A]'
                               >
-                                <PaperclipIcon className='h-3.5 w-3.5' />
-                                <span>{attachment.name}</span>
-                                <button
-                                  type='button'
-                                  onClick={() =>
-                                    handleAttachmentAction(
-                                      attachment.id,
-                                      attachment.name,
-                                      'view'
-                                    )
-                                  }
-                                  disabled={attachmentActionId !== ''}
-                                  className='rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#0F6CBD] disabled:opacity-50'
-                                >
-                                  {attachmentActionId === `${attachment.id}-view`
-                                    ? 'Opening...'
-                                    : 'View'}
-                                </button>
+                                <PaperclipIcon className='h-3.5 w-3.5 shrink-0' />
+                                <span className='min-w-0 break-all'>
+                                  {attachment.name}
+                                </span>
                                 <button
                                   type='button'
                                   onClick={() =>
@@ -1272,7 +1377,7 @@ const Inbox = () => {
                                     )
                                   }
                                   disabled={attachmentActionId !== ''}
-                                  className='rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#16202A] disabled:opacity-50'
+                                  className='shrink-0 rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#16202A] disabled:opacity-50'
                                 >
                                   {attachmentActionId === `${attachment.id}-download`
                                     ? 'Downloading...'
@@ -1283,21 +1388,22 @@ const Inbox = () => {
                           </div>
                         ) : null}
 
-                        {messageDetails.body.content_type?.toLowerCase() ===
-                        'html' ? (
-                          <iframe
-                            title='inbox-message-body'
-                            srcDoc={messageDetails.body.content || ''}
-                            sandbox='allow-same-origin allow-popups allow-popups-to-escape-sandbox'
-                            className='max-h-[calc(100vh-600px)] w-full min-h-[200px] rounded-[4px] bg-white'
-                          />
-                        ) : (
-                          <pre className='max-h-[calc(100vh-600px)] w-full min-h-[200px] overflow-auto whitespace-pre-wrap break-words rounded-[4px] bg-white font-sans text-[13px] leading-6 text-[#16202A]'>
-                            {messageDetails.body.content ||
-                              messageDetails.body_preview ||
-                              'No content available'}
-                          </pre>
-                        )}
+                        <div className='min-h-[420px] w-full min-w-0 flex-1 rounded-[4px] bg-white'>
+                          {messageDetails.body.content_type?.toLowerCase() === 'html' ? (
+                            <div
+                              className='h-full w-full overflow-auto whitespace-normal break-words text-[13px] leading-6 text-[#16202A] [&>*]:m-0 [&>*+*]:mt-3 [&_a]:break-all [&_a]:text-[#0F6CBD] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-[#CBD6E2] [&_blockquote]:pl-3 [&_blockquote]:italic [&_code]:rounded [&_code]:bg-[#F3F4F6] [&_code]:px-1 [&_code]:font-mono [&_img]:max-w-full [&_img]:rounded [&_li]:ml-5 [&_ol]:list-decimal [&_p]:whitespace-pre-wrap [&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-[#F8FAFC] [&_pre]:p-3 [&_pre]:font-mono [&_table]:block [&_table]:max-w-full [&_table]:overflow-auto [&_table]:border-collapse [&_table]:border [&_td]:border [&_td]:border-[#D6DEE8] [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-[#D6DEE8] [&_th]:bg-[#F8FAFC] [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc'
+                              dangerouslySetInnerHTML={{
+                                __html: sanitizedHtmlMessageBody || '<p>No content available</p>',
+                              }}
+                            />
+                          ) : (
+                            <div className='h-full w-full overflow-auto whitespace-pre-wrap break-words font-sans text-[13px] leading-6 text-[#16202A]'>
+                              {renderTextWithLinks(
+                                formattedMessageBody || 'No content available'
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

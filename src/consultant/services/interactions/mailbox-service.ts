@@ -234,11 +234,14 @@ export const useMailboxMessages = (params: {
       params.accountRid,
       params.folderId,
       params.folderPath,
+      params.pageToken,
       params.search,
     ],
     queryFn: () => fetchMailboxMessages(params),
     enabled: Boolean(params.accountRid),
     retry: 0,
+    staleTime: 0,
+    gcTime: 0,
   });
 
 /**
