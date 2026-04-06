@@ -5647,22 +5647,29 @@ export class InteractionService {
               "isCancelled",
             ].join(",")
           )
-          .top(limit)
+          .top(data.search ? Math.max(limit, 250) : limit)
           .orderby("start/dateTime");
-
-        if (data.search) {
-          const searchQuery = this.buildGraphSearchQuery(data.search);
-          request = request
-            .header("ConsistencyLevel", "eventual")
-            .search(searchQuery);
-        }
       }
 
       const result: any = await request.get();
       const nextLink = result?.["@odata.nextLink"] || null;
-      const events = (result?.value || []).map((event: any) =>
+
+      const normalizedSearch = data.search
+        ? this.normalizeMailboxSearchText(data.search)
+        : "";
+
+      const allEvents = (result?.value || []).map((event: any) =>
         this.normalizeCalendarEventSummary(event)
       );
+
+      const events = normalizedSearch
+        ? allEvents.filter((event: any) => {
+            const haystack = this.normalizeMailboxSearchText(
+              [event.subject || "", event.organizer_name || "", event.organizer_email || ""].join(" ")
+            );
+            return haystack.includes(normalizedSearch);
+          })
+        : allEvents;
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -5673,7 +5680,7 @@ export class InteractionService {
             start_date: start,
             end_date: end,
           },
-          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          next_page_token: data.search ? null : nextLink ? encodeURIComponent(nextLink) : null,
           events,
         },
       };
