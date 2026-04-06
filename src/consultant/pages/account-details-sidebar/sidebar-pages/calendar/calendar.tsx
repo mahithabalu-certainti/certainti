@@ -400,6 +400,8 @@ const Calendar = () => {
     setSelectedEventId(events[0]?.event_id || '');
   }, [events, selectedEventId]);
 
+  const anchorDateKey = toIsoDate(anchorDate);
+
   const groupedEvents = useMemo(() => {
     const grouped = new Map<string, CalendarEventSummary[]>();
 
@@ -409,6 +411,7 @@ const Calendar = () => {
         (parseDate(event.start) ? toIsoDate(parseDate(event.start) as Date) : null);
 
       if (!key) return;
+      if (rangeMode === 'day' && key !== anchorDateKey) return;
 
       const current = grouped.get(key) || [];
       current.push(event);
@@ -419,7 +422,7 @@ const Calendar = () => {
       date,
       items,
     }));
-  }, [events]);
+  }, [events, rangeMode, anchorDateKey]);
 
   const {
     data: eventDetail,
@@ -603,7 +606,7 @@ const Calendar = () => {
           </div>
         </div>
 
-        {isMetadataError || isEventsError ? (
+        {isMetadataError || (isEventsError && isNoEmailConfigError) ? (
           isNoEmailConfigError ? (
             <div className='flex h-full flex-col'>
               <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
