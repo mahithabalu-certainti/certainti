@@ -7,7 +7,8 @@ import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, D
 import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
 import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
-import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState } from "../../utils/dossierRawquery";
+import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids } from "../../utils/dossierRawquery";
+import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook } from "../rdStateProcessors/stateRdCreditExcelGenerators";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
 import RDCreditSchemaService from "../rdComputation/schemaService";
@@ -409,6 +410,34 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
 
     const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
     const finalStructuredData = techSummary.technicalSummary.length < 1 ? [] : await generatePdfBuffer(techSummary.technicalSummary)
+
+    // Generate combined state financial calculations Excel from stored results
+    let stateFinancialCalcUrl: string | null = null;
+    try {
+      const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossier(schemaName, caseRid)))[0];
+      if (stateCalcRows.length > 0) {
+        const stateRids = stateCalcRows.map((r: any) => r.state_rid);
+        const stateCodeRows: any[] = (await mainDB.query(fetchStateCodesByRids(stateRids)))[0];
+        const stateCodeMap: Record<string, string> = {};
+        stateCodeRows.forEach((r: any) => { stateCodeMap[r.rid] = r.state_code; });
+
+        const combinedWorkbook = createWorkbook();
+        const sheetsAdded: string[] = [];
+        for (const row of stateCalcRows) {
+          const stateCode = stateCodeMap[row.state_rid];
+          if (!stateCode) continue;
+          const computeResult = { inputFields: row.input_params, computedFields: row.computed_fields };
+          const added = await addStateSheetToWorkbook(combinedWorkbook, stateCode, computeResult);
+          if (added) sheetsAdded.push(stateCode);
+        }
+        if (sheetsAdded.length > 0) {
+          stateFinancialCalcUrl = await uploadCombinedWorkbook(combinedWorkbook, caseRid, caseDetails!.fiscal_year, accountRid, accountNumber);
+        }
+      }
+    } catch (err) {
+      logMessage(`Error generating state financial calculations Excel for dossier: ${err}`);
+    }
+
     const files: any[] = [
     {
       name: "Qualified Projects",
@@ -439,6 +468,10 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     {
       name: "RD Form State",
       urls: stateUrls
+    },
+    {
+      name: "Financial Calculations State",
+      url: stateFinancialCalcUrl ?? ''
     }
   ];
   if (Array.isArray(finalStructuredData)) {
