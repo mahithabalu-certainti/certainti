@@ -2,9 +2,6 @@ import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from
 import { useParams } from 'react-router-dom';
 import {
   CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   Popover,
   Tooltip,
 } from '@mui/material';
@@ -322,12 +319,6 @@ const Inbox = () => {
   const [isDesktopLayout, setIsDesktopLayout] = useState(
     () => typeof window !== 'undefined' && window.innerWidth >= 1024
   );
-  const [previewAttachment, setPreviewAttachment] = useState<{
-    name: string;
-    contentType: string;
-    objectUrl: string;
-    textContent?: string;
-  } | null>(null);
   const desktopLayoutRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{
     startX: number;
@@ -400,7 +391,6 @@ const Inbox = () => {
     isLoading: isMessagesLoading,
     isError: isMessagesError,
     error: messagesError,
-    refetch: refetchMessages,
   } = useMailboxMessages({
     accountRid: accountid || '',
     folderId: selectedFolder?.id,
@@ -421,11 +411,8 @@ const Inbox = () => {
     );
   }, [mailboxMessages, pageToken, selectedFolder?.id]);
 
-  useEffect(() => {
-    if (pageToken) {
-      refetchMessages();
-    }
-  }, [pageToken, refetchMessages]);
+  // Note: pageToken is already in the queryKey, so React Query will automatically
+  // trigger a new fetch when pageToken changes. No need to call refetchMessages().
 
   const filteredMessageItems = useMemo(() => {
     const fromFilter = normalizeFilterText(filters.from);
@@ -609,7 +596,7 @@ const Inbox = () => {
   const handleAttachmentAction = async (
     attachmentId: string,
     attachmentName: string,
-    action: 'view' | 'download'
+    action: 'download'
   ) => {
     if (!accountid || !selectedMessageId) return;
 
@@ -626,32 +613,7 @@ const Inbox = () => {
       );
       const objectUrl = window.URL.createObjectURL(blob);
 
-      if (action === 'view') {
-        // Always set preview data for view action
-        const previewData: {
-          name: string;
-          contentType: string;
-          objectUrl: string;
-          textContent?: string;
-        } = {
-          name: attachment.name,
-          contentType: attachment.content_type,
-          objectUrl,
-        };
-
-        // Extract text content for text-based files
-        if (
-          attachment.content_type.toLowerCase().startsWith('text/') ||
-          attachment.content_type.toLowerCase().includes('json')
-        ) {
-          previewData.textContent = await blob.text();
-        }
-
-        setPreviewAttachment(previewData);
-        return;
-      }
-
-      // Handle download action
+      // Download the attachment
       const link = document.createElement('a');
       link.href = objectUrl;
       link.download = attachmentName;
@@ -673,20 +635,6 @@ const Inbox = () => {
    * Output:
    * - Clears the preview state and revokes the browser object URL when present.
    */
-  const closePreview = () => {
-    if (previewAttachment?.objectUrl) {
-      window.URL.revokeObjectURL(previewAttachment.objectUrl);
-    }
-    setPreviewAttachment(null);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (previewAttachment?.objectUrl) {
-        window.URL.revokeObjectURL(previewAttachment.objectUrl);
-      }
-    };
-  }, [previewAttachment]);
 
   useEffect(() => {
     if (!activeDivider || !isDesktopLayout) return;
@@ -886,7 +834,11 @@ const Inbox = () => {
     );
   };
 
-  const todayDateString = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+    2,
+    '0'
+  )}-${String(today.getDate()).padStart(2, '0')}`;
 
   const showInitialLoading = isFolderLoading || (!selectedFolder && isMessagesLoading);
   const activeFilterCount = [
@@ -1413,40 +1365,6 @@ const Inbox = () => {
           </div>
         )}
       </div>
-
-      <Dialog
-        open={Boolean(previewAttachment)}
-        onClose={closePreview}
-        maxWidth='lg'
-        fullWidth
-      >
-        <DialogTitle className='border-b border-[#E5EAF0] text-[16px] font-semibold text-[#16202A]'>
-          {previewAttachment?.name || 'Attachment Preview'}
-        </DialogTitle>
-        <DialogContent className='bg-[#F7F9FC] p-0 max-h-[80vh] overflow-y-auto'>
-          {!previewAttachment ? null : previewAttachment.contentType
-              .toLowerCase()
-              .startsWith('image/') ? (
-            <div className='flex items-center justify-center p-6'>
-              <img
-                src={previewAttachment.objectUrl}
-                alt={previewAttachment.name}
-                className='max-h-[70vh] max-w-full rounded-[8px] border border-[#D8E1EB] bg-white object-contain shadow-[0_1px_2px_rgba(16,24,40,0.08)]'
-              />
-            </div>
-          ) : previewAttachment.contentType.toLowerCase() === 'application/pdf' ? (
-            <iframe
-              title='attachment-preview'
-              src={previewAttachment.objectUrl}
-              className='w-full h-[70vh] bg-white'
-            />
-          ) : (
-            <pre className='min-h-[75vh] overflow-auto whitespace-pre-wrap break-words bg-white p-6 font-mono text-[13px] text-[#16202A]'>
-              {previewAttachment.textContent || 'Preview unavailable'}
-            </pre>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

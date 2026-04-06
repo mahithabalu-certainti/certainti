@@ -145,10 +145,14 @@ const toIsoDate = (date: Date) =>
  * Output:
  * - Returns the date key when present, otherwise `null`.
  */
+const toUtcNormalized = (value: string) =>
+  /Z$|[+\-]\d{2}:\d{2}$/.test(value) ? value : `${value}Z`;
+
 const getRawDateKey = (value?: string | null) => {
   if (!value) return null;
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match?.[1] || null;
+  const date = new Date(toUtcNormalized(value));
+  if (Number.isNaN(date.getTime())) return null;
+  return toIsoDate(date);
 };
 
 /**
@@ -162,7 +166,7 @@ const getRawDateKey = (value?: string | null) => {
  */
 const parseDate = (value?: string | null) => {
   if (!value) return null;
-  const parsed = new Date(value);
+  const parsed = new Date(toUtcNormalized(value));
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
@@ -177,9 +181,8 @@ const parseDate = (value?: string | null) => {
  */
 const formatTime = (value?: string | null) => {
   if (!value) return 'All day';
-  const match = value.match(/T(\d{2}):(\d{2})/);
-  if (!match) return 'All day';
-  const date = new Date(2026, 0, 1, Number(match[1]), Number(match[2]));
+  const date = new Date(toUtcNormalized(value));
+  if (Number.isNaN(date.getTime())) return 'All day';
   return date.toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit',

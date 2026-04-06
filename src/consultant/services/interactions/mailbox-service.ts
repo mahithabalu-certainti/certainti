@@ -234,6 +234,7 @@ export const useMailboxMessages = (params: {
       params.accountRid,
       params.folderId,
       params.folderPath,
+      params.limit,
       params.pageToken,
       params.search,
     ],
