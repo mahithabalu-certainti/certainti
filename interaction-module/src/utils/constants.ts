@@ -1240,31 +1240,25 @@ export const rawQueries = {
     return `SELECT rid FROM ${schemaName}.four_part_assessment WHERE transaction_id = '${transactionId}'`
   },
   fetchBatchInInteraction(schemaName: string, accountId: string) {
-    return `
-    SELECT interaction_batch_id 
-    FROM 
-    (
-    SELECT interaction_batch_id, 
-    ROW_NUMBER() OVER(ORDER BY interaction_batch_id DESC) AS rn
-    FROM
-    ${schemaName}.interactions
-    where
-    account_rid = '${accountId}'
-    AND
-	  four_part_assessment_rid IS NOT NULL
-    )
-    WHERE
-    rn = 1
-    `
+      return `
+        SELECT interaction_batch_id 
+        FROM ${schemaName}.interactions
+        WHERE account_rid = '${accountId}'
+        AND interaction_batch_id IS NOT NULL
+        ORDER BY interaction_batch_id DESC
+        LIMIT 1
+        FOR UPDATE
+      `
   },
   fetchBatchInInteractionByTransId(schemaName: string, transactionId: string) {
     return `
-    SELECT interaction_batch_id 
-    FROM
-    ${schemaName}.interactions
-    WHERE
-    transaction_id = '${transactionId}'
-    ORDER BY interaction_batch_id DESC
+      SELECT interaction_batch_id 
+      FROM ${schemaName}.interactions
+      WHERE transaction_id = '${transactionId}'
+      AND interaction_batch_id IS NOT NULL
+      ORDER BY interaction_batch_id DESC
+      LIMIT 1
+      FOR UPDATE
     `
   },
   fetchCaseStatusByType(type: string) {

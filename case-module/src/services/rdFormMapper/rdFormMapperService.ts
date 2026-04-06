@@ -26,6 +26,10 @@ import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { HelperMethods } from "../cases/helperMethods";
 import { CaseModelService } from "../caseModelsService";
 import { RdFormHelperService } from "./rdFormHelperService";
+import { processMassachusettsForm } from "./maScheduleRcGenerator";
+import { processNewJerseyForm } from "./njForm306Generator";
+import { processSouthCarolinaForm } from "./scSchTC18Generator";
+import { processWisconsinForm } from "./wiScheduleRGenerator";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -490,20 +494,45 @@ export class RdFormMapperService {
             countryName,
             mainDb,
           );
-          filledFormUrl = await this.generatePDFNonFillable(
-            enhancedMapperConfig,
-            accountRid,
-            formInfo.browse_file,
-            accountNumber,
-            caseRid,
-            countryCode,
-            false,
-            countryName,
-            resolvedStateName,
-            fiscalYear,
-            resolvedStateCode,
-            currencySymbol,
-          );
+          filledFormUrl = ''
+          if (resolvedStateCode === "MA") {
+             filledFormUrl = await processMassachusettsForm(
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,
+            );
+            
+          }
+          if (resolvedStateCode === "NJ") {
+            filledFormUrl = await processNewJerseyForm(
+                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state
+              );
+             
+          }
+          if (resolvedStateCode === "SC") {
+            filledFormUrl = await processSouthCarolinaForm(
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,
+            );
+           
+          }
+
+          if (resolvedStateCode === "WI") {
+              filledFormUrl= await processWisconsinForm(
+                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb, state,
+              );
+}
+          // filledFormUrl = await this.generatePDFNonFillable(
+          //   enhancedMapperConfig,
+          //   accountRid,
+          //   formInfo.browse_file,
+          //   accountNumber,
+          //   caseRid,
+          //   countryCode,
+          //   false,
+          //   countryName,
+          //   resolvedStateName,
+          //   fiscalYear,
+          //   resolvedStateCode,
+          //   currencySymbol,
+          // );
         } else {
           try {
             filledFormUrl = await pdfFiller(
@@ -1530,7 +1559,7 @@ export class RdFormMapperService {
           errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
         };
       }
-
+     
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
       );
