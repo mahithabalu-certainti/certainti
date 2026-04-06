@@ -1311,11 +1311,11 @@ const Inbox = () => {
                           <iframe
                             title='inbox-message-body'
                             srcDoc={messageDetails.body.content || ''}
-                            sandbox=''
-                            className='h-full min-h-[520px] w-full rounded-[4px] bg-white'
+                            sandbox='allow-same-origin allow-popups allow-popups-to-escape-sandbox'
+                            className='max-h-[calc(100vh-600px)] w-full min-h-[200px] rounded-[4px] bg-white'
                           />
                         ) : (
-                          <pre className='h-full min-h-[520px] overflow-auto whitespace-pre-wrap break-words rounded-[4px] bg-white font-sans text-[13px] leading-6 text-[#16202A]'>
+                          <pre className='max-h-[calc(100vh-600px)] w-full min-h-[200px] overflow-auto whitespace-pre-wrap break-words rounded-[4px] bg-white font-sans text-[13px] leading-6 text-[#16202A]'>
                             {messageDetails.body.content ||
                               messageDetails.body_preview ||
                               'No content available'}
@@ -1340,22 +1340,22 @@ const Inbox = () => {
         <DialogTitle className='border-b border-[#E5EAF0] text-[16px] font-semibold text-[#16202A]'>
           {previewAttachment?.name || 'Attachment Preview'}
         </DialogTitle>
-        <DialogContent className='bg-[#F7F9FC] p-0'>
+        <DialogContent className='bg-[#F7F9FC] p-0 max-h-[80vh] overflow-y-auto'>
           {!previewAttachment ? null : previewAttachment.contentType
               .toLowerCase()
               .startsWith('image/') ? (
-            <div className='flex min-h-[70vh] items-center justify-center p-6'>
+            <div className='flex items-center justify-center p-6'>
               <img
                 src={previewAttachment.objectUrl}
                 alt={previewAttachment.name}
-                className='max-h-[65vh] max-w-full rounded-[8px] border border-[#D8E1EB] bg-white object-contain shadow-[0_1px_2px_rgba(16,24,40,0.08)]'
+                className='max-h-[70vh] max-w-full rounded-[8px] border border-[#D8E1EB] bg-white object-contain shadow-[0_1px_2px_rgba(16,24,40,0.08)]'
               />
             </div>
           ) : previewAttachment.contentType.toLowerCase() === 'application/pdf' ? (
             <iframe
               title='attachment-preview'
               src={previewAttachment.objectUrl}
-              className='min-h-[75vh] w-full bg-white'
+              className='w-full h-[70vh] bg-white'
             />
           ) : (
             <pre className='min-h-[75vh] overflow-auto whitespace-pre-wrap break-words bg-white p-6 font-mono text-[13px] text-[#16202A]'>
