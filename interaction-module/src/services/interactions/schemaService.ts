@@ -5211,7 +5211,7 @@ class InteractionSchemaService {
 
   async createFourPartAssessment(fourPartAssessment: FourPartAssessmentResponse, accountNumber: string, project_id: string, company_id: string, transaction_id: string) {
     const { FourPartAssessment } = await this.interactionModelService.getModels(accountNumber);
-    await FourPartAssessment.create({
+    const result = await FourPartAssessment.create({
       account_rid: company_id,
       project_fiscal_rid: project_id,
       created_by: process.env.SYSTEM_USER_ID!,
@@ -5232,7 +5232,16 @@ class InteractionSchemaService {
       tracker_one_liner: fourPartAssessment.assessment.tracker_one_liner,
       transaction_id: transaction_id
     })
+    return result.rid
   }
+
+  async updateInteractionFpaRid(accountNumber: string, transaction_id: string, fpaRid: string) {
+  const { Interaction } = await this.interactionModelService.getModels(accountNumber);
+  await Interaction.update(
+    { four_part_assessment_rid: fpaRid },
+    { where: { transaction_id: transaction_id } }
+  );
+}
 
   async getStatus() {
     if (!this.mainDbSequelize) {
