@@ -287,7 +287,6 @@ const renderFolderIcon = (folder: MailboxFolder, collapsed = false) => {
 const sanitizeSearchText = (value: string) =>
   value
     .replace(/[\r\n\t\0]+/g, ' ')
-    .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
