@@ -40,24 +40,24 @@ import { Case } from "../../models/caseModel";
 export interface ConfigJson {
     /** Applicable % of contract expenses (Section F line 45) — default 65 (i.e. 65%) */
     sub_con_percent: number;
-    qre_credit_percentage_c1:number;
-    qre_credit_percentage_c2:number;
-    elect_280c_yes:number;
-    elect_280c_no :number;
+    rrc_qre_credit_percentage:number;
+    asc_qre_credit_percentage_c1:number;
+    rrc_elect_280c_yes:number;
+    rrc_elect_280c_no :number;
     asc_elect_280c_yes: number;
 
     /** Fixed-base % for RRC base amount (Section A line 6, max 16) — default 16 */
-    fixed_base_percentage: number;
+    rrc_fixed_base_percentage: number;
 
     /** ASC rate when prior 3yr QREs all > 0 (Section B line 24) — default 14 (i.e. 14%) */
-    asc_rate_percentage: number;
+    asc_qre_credit_percentage_c2: number;
 
     /**
      * ASC rate when no QREs in one or more prior years (Section B line 24).
      * Lines 22 and 23 are skipped; line 20 × this rate is used instead.
      * Default 6 (i.e. 6%)
      */
-    asc_no_prior_rate_percentage: number;
+    asc_qre_credit_percentage_c3: number;
 
    
 
@@ -84,7 +84,7 @@ export class RdCreditCalculatorForVT {
         const sectionF = this.computeSectionF(config, stateRdData, caseData);
         const sectionA = this.computeSectionA(config, stateRdData, sectionF,caseData);
         const sectionB = this.computeSectionB(config, stateRdData, sectionF,caseData);
-      //  const sectionC = this.computeSectionC(config, sectionA, sectionB, caseData);
+        const sectionC = this.computeSectionC(config, sectionA, sectionB, caseData);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
@@ -93,7 +93,7 @@ export class RdCreditCalculatorForVT {
             fiscalYearEnded : fiscalYear,
             currentYear : year
         },config);
-        const computedFields = this.buildComputedFields(sectionF, sectionA, sectionB, config);
+        const computedFields = this.buildComputedFields(sectionF, sectionA, sectionB,sectionC, config);
 
         return {
             inputFields,
@@ -158,20 +158,22 @@ export class RdCreditCalculatorForVT {
         config: ConfigJson,
         stateRdData: StateRDData,
         sectionF: ReturnType<RdCreditCalculatorForVT["computeSectionF"]>,
-        caseData: any
+        caseData: Case
     ) {
         // [1] Certain amounts paid or incurred to energy consortia (see instructions)
-        const line1 = new Decimal(0);
+        const line1 = new Decimal(caseData.energy_consortia_amount_vt ?? 0);
+        const line2 = new Decimal(caseData.basic_research_payments_vt ?? 0);
+         const line3 = new Decimal(caseData.qualified_org_baseamount_vt ?? 0);
 
         // [4] Subtract line 3 from line 2. If zero or less, enter -0-
-        const line4 = new Decimal(0);
+        const line4 = new Decimal(line2.minus(line3));
 
         // Note: Complete Section F before going to line 5.
         // [5] Total qualified research expenses (QREs). Enter amount from line 48
         const line5 = sectionF._line48;
 
         // [6] Enter fixed-base percentage, but not more than 16% (0.16). See instructions
-        const fixedBasePct = Math.min(config.fixed_base_percentage, 16);
+        const fixedBasePct = Math.min(config.rrc_fixed_base_percentage, 16);
 
         // [7] Enter average annual gross receipts. See instructions
         const gr      = stateRdData.annualGrossReceipts ?? [];
@@ -185,7 +187,7 @@ export class RdCreditCalculatorForVT {
         const line9 = Decimal.max(line5.minus(line8), 0);
 
         // [10] Multiply line 5 by 50% (0.50)
-        const line10 = line5.mul(config.qre_credit_percentage_c1);
+        const line10 = line5.mul(config.rrc_qre_credit_percentage / 100);
 
         // [11] Enter the smaller of line 9 or line 10
         const line11 = Decimal.min(line9, line10);
@@ -196,7 +198,7 @@ export class RdCreditCalculatorForVT {
         // [13] If you elect to reduce the credit under section 280C, then multiply line 12
         //      by 15.8% (0.158). If not, multiply line 12 by 20% (0.20) and see instructions
         //      for the statement that must be attached
-        const rrcMultiplier = caseData.rrc_credit_280_c ? config.elect_280c_yes : config.elect_280c_no;
+        const rrcMultiplier = caseData.rrc_credit_280_c ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
         const line13        = line12.mul(rrcMultiplier / 100);
 
         return {
@@ -227,13 +229,13 @@ export class RdCreditCalculatorForVT {
         caseData:any
     ) {
         // [14] Certain amounts paid or incurred to energy consortia (see the line 1 instructions)
-        const line14 = new Decimal(0);
+        const line14 = new Decimal(caseData.energy_consortia_amount_vt ?? 0);;
 
         // [15] Basic research payments to qualified organizations (see the line 2 instructions)
-        const line15 = new Decimal(0);
+        const line15 = new Decimal(caseData.basic_research_payments_vt ?? 0);;
 
         // [16] Qualified organization base period amount (see the line 3 instructions)
-        const line16 = new Decimal(0);
+        const line16 = new Decimal(caseData.qualified_org_baseamount_vt ?? 0);;
 
         // [17] Subtract line 16 from line 15. If zero or less, enter -0-
         const line17 = Decimal.max(line15.minus(line16), 0);
@@ -242,7 +244,7 @@ export class RdCreditCalculatorForVT {
         const line18 = line14.plus(line17);
 
         // [19] Multiply line 18 by 20% (0.20)
-        const line19 = line18.mul(config.qre_credit_percentage_c2);
+        const line19 = line18.mul(config.asc_qre_credit_percentage_c1 / 100);
 
         // Note: Complete Section F before going to line 20.
         // [20] Total qualified research expenses (QREs). Enter amount from line 48
@@ -267,12 +269,12 @@ export class RdCreditCalculatorForVT {
 
             // [24] Multiply line 23 by 14% (0.14). If you skipped lines 22 and 23,
             //      multiply line 20 by 6% (0.06)
-            line24 = line23.mul(config.asc_rate_percentage / 100);
+            line24 = line23.mul(config.asc_qre_credit_percentage_c2 / 100);
         } else {
             // Skipped lines 22 and 23 — multiply line 20 by 6% (0.06)
-            line24 = line20.mul(config.asc_no_prior_rate_percentage / 100);
+            line24 = line20.mul(config.asc_qre_credit_percentage_c3 / 100);
             logMessage(`VT ASC — no prior QREs in one or more years. ` +
-                `Using ${config.asc_no_prior_rate_percentage}% on line 20.`);
+                `Using ${config.asc_qre_credit_percentage_c3}% on line 20.`);
         }
 
         // [25] Add lines 19 and 24
@@ -299,9 +301,52 @@ export class RdCreditCalculatorForVT {
             line26:          this.round2(line26),
             has_prior_qres:  hasPriorQREs,
             asc_rate_used:   hasPriorQREs
-                ? config.asc_rate_percentage
-                : config.asc_no_prior_rate_percentage,
+                ? config.asc_qre_credit_percentage_c2
+                : config.asc_qre_credit_percentage_c3,
             _line26:         line26,
+        };
+    }
+
+      // ─────────────────────────────────────────────────────────────────────────
+    // Section C — Current Year Credit (lines 27–32)
+    // ─────────────────────────────────────────────────────────────────────────
+    private computeSectionC(
+        config: ConfigJson,
+        sectionA: ReturnType<RdCreditCalculatorForVT["computeSectionA"]>,
+        sectionB: ReturnType<RdCreditCalculatorForVT["computeSectionB"]>,
+        caseData: Case
+    ) {
+        const cd = caseData as any;
+
+        //---- Active method credit: Line 13 (RRC) or Line 26 (ASC)
+        //const activeMethodCredit = config.use_asc ? sectionB._line26 : sectionA._line13;
+        const activeMethodCredit =  sectionA._line13;
+
+        //---- Line 27: Form 8932 payroll tax wages
+        const line27 = new Decimal(cd.credit_shared_wages_vt ?? 0);
+
+        //---- Line 28: max(active credit − Line 27, 0)
+        const line28 = Decimal.max(activeMethodCredit.minus(line27), 0);
+
+        //---- Line 29: Pass-through credit from partnerships/S-corps/trusts
+        const line29 = new Decimal(cd.pass_through_research_credit_vt ?? 0);
+
+        //---- Line 30: Line 28 + Line 29  ← FINAL CREDIT
+        const line30 = line28.plus(line29);
+
+        //---- Line 31: Allocated to beneficiaries (hardcoded 0)
+        const line31 = new Decimal(cd.amount_allocated_beneficiaries_vt ?? 0);
+
+        //---- Line 32: Line 30 − Line 31
+        const line32 = line30.minus(line31);
+
+        return {
+            line27:         this.round2(line27),
+            line28:         this.round2(line28),
+            line29:         this.round2(line29),
+            line30:         this.round2(line30),   // final credit
+            line31:         this.round2(line31),
+            line32:         this.round2(line32),
         };
     }
 
@@ -398,6 +443,7 @@ export class RdCreditCalculatorForVT {
         f: ReturnType<RdCreditCalculatorForVT["computeSectionF"]>,
         a: ReturnType<RdCreditCalculatorForVT["computeSectionA"]>,
         b: ReturnType<RdCreditCalculatorForVT["computeSectionB"]>,
+        c: ReturnType<RdCreditCalculatorForVT["computeSectionC"]>,
         config: ConfigJson
     ) {
         // const method280c_a = config.elect_280c
@@ -454,7 +500,7 @@ export class RdCreditCalculatorForVT {
                         a.line11,
                     "[12] Add lines 1, 4, and 11":
                         a.line12,
-                    [`[13] If you elect to reduce the credit under section 280C, then multiply line 12 by ${config.elect_280c_yes} (${config.elect_280c_yes / 100}). If not, multiply line 12 by ${config.elect_280c_no}% (${config.elect_280c_no / 100}) and see instructions for the statement that must be attached`]:
+                    [`[13] If you elect to reduce the credit under section 280C, then multiply line 12 by ${config.rrc_elect_280c_yes} (${config.rrc_elect_280c_yes / 100}). If not, multiply line 12 by ${config.rrc_elect_280c_no}% (${config.rrc_elect_280c_no / 100}) and see instructions for the statement that must be attached`]:
                         a.line13,
                 },
 
@@ -491,17 +537,17 @@ export class RdCreditCalculatorForVT {
                 // ── Section C ────────────────────────────────────────────────
                 "Section C—Current Year Credit": {
                     "[27] Enter  the  portion  of  the  credit  from  Form  8932,  line  2,  that  is  attributable  to  wages  that  were also used to figure the credit on line 13 or line 26 (whichever applies)":
-                        0,
+                        c.line27,
                     "[28] Subtract line 27 from line 13 or line 26 (whichever applies). If zero or less, enter -0-":
-                       0,
+                       c.line28,
                     "[29] Credit for increasing research activities from partnerships, S corporations, estates, and trusts":
-                        0,
+                        c.line29,
                     "[30] Add lines 28 and 29":
-                        0,
+                        c.line30,
                     "[31] Amount allocated to beneficiaries of the estate or trust (see instructions)":
-                        0,
+                        c.line31,
                     "[32] Estates and trusts, subtract line 31 from line 30. For eligible small businesses, report the credit on Form 3800, Part III, line 4i. See instructions. For filers other than eligible small businesses, report the credit on Form 3800, Part III, line 1c":
-                        0,
+                        c.line32,
                 },
 
                 // ── Section D ────────────────────────────────────────────────

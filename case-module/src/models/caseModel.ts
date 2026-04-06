@@ -74,7 +74,18 @@ interface CaseAttributes {
   rrc_credit_280_c? : string
   asc_credit_280_c? : string
   parent_case_rid?: string;
-  assessment_methodology? : string
+  assessment_methodology? : string;
+
+  tax_liability_ri?: number;
+  credit_carry_forward_py_ri?: number;
+
+  basic_research_payments_ia?: number;
+  basic_period_amount_ia?: number;
+  non_qualifying_wages_ia?: number;
+  cost_of_supplies_ia?: number;
+  rac_share_ia?: number;
+  supplement_rac_ia?: number;
+  passthrough_supplement_rac_ia?: number;
 
   machinery_equipments_ks?: number;
   tax_liability_ks?: number;
@@ -86,6 +97,10 @@ interface CaseAttributes {
   energy_consortia_amount_dc? :number;
   basic_research_payments_dc? :number;
   qualified_org_baseamount_dc? :number;
+  lease_costs_of_computers_dc?:number;
+   credit_shared_wages_dc?:number;
+  pass_through_research_credit_dc?:number;
+  amount_allocated_beneficiaries_dc?:number;
 
   qualified_computer_rental_time_expenses_wi?: number;
   research_supplies_expenses_wi?: number;
@@ -94,6 +109,29 @@ interface CaseAttributes {
   orphan_drug_qualified_expenses_wi?: number;
   credit_offset_tax_wi?:number;
   credit_carry_forward_py_wi?: number;
+
+  credit_carry_forward_py_me?: number;
+
+  lease_costs_of_computers_mn?:number;
+  credit_tax_limit_mn?:number;
+  basic_research_amount_mn?:number;
+  nonprofit_development_contributions_mn?:number;
+
+  property_factor_off_campus_ne?: number;
+  property_factor_on_campus_ne?: number;
+  payroll_factor_off_campus_ne?: number;
+  payroll_factor_on_campus_ne?: number;
+  off_campus_research_expenses_ne?: number;
+  credit_tax_refunds_ne?: number;
+  credit_distributed_ne?: number;
+
+  energy_consortia_amount_vt? :number;
+  basic_research_payments_vt? :number;
+  qualified_org_baseamount_vt? :number;
+  lease_costs_of_computers_vt?:number;
+  credit_shared_wages_vt?:number;
+  pass_through_research_credit_vt?:number;
+  amount_allocated_beneficiaries_vt?:number;
   
 
 
@@ -182,6 +220,16 @@ export class Case
   public credit_carry_forward_py_tx? : number
   public assessment_methodology? : string
 
+  public tax_liability_ri?:number;
+  public credit_carry_forward_py_ri?:number;
+
+  public basic_research_payments_ia?:number;
+  public basic_period_amount_ia?:number;
+  public non_qualifying_wages_ia?:number;
+  public cost_of_supplies_ia?:number;
+  public rac_share_ia?:number;
+  public supplement_rac_ia?:number;
+  public passthrough_supplement_rac_ia?:number;
 
   public tax_liability_ks?: number ;
   public machinery_equipments_ks?: number;
@@ -193,6 +241,27 @@ export class Case
   public energy_consortia_amount_dc? :number;
   public basic_research_payments_dc? :number;
   public qualified_org_baseamount_dc? :number;
+
+  public lease_costs_of_computers_dc?:number;
+  public energy_consortia_amount_vt? :number;
+  public basic_research_payments_vt? :number;
+  public qualified_org_baseamount_vt? :number;
+  public lease_costs_of_computers_vt?:number;
+
+  public credit_carry_forward_py_me?:number;
+
+  public lease_costs_of_computers_mn?:number;
+  public basic_research_amount?:number;
+  public nonprofit_development_contributions?:number;
+  public credit_tax_limit_mn?:number;
+
+  public property_factor_off_campus_ne?: number;
+  public property_factor_on_campus_ne?: number;
+  public payroll_factor_off_campus_ne?: number;
+  public payroll_factor_on_campus_ne?: number;
+  public off_campus_research_expenses_ne?: number;
+  public credit_tax_refunds_ne?: number;
+  public credit_distributed_ne?: number;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -284,20 +353,52 @@ export class Case
         rrc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
         asc_credit_280_c : {type : DataTypes.STRING(10), defaultValue : "No"},
         parent_case_rid : {type : DataTypes.STRING(50), allowNull : true   },
+        
         credit_carry_forward_py_ga : {type : DataTypes.DECIMAL, allowNull : true},
         credit_carry_forward_py_sc : {type : DataTypes.DECIMAL, allowNull : true},
         credit_carry_forward_py_tx : {type : DataTypes.DECIMAL, allowNull : true},
         assessment_methodology : {type : DataTypes.TEXT, allowNull : true},
+        tax_liability_ri: { type : DataTypes.DECIMAL, allowNull : true},
+        credit_carry_forward_py_ri:{ type : DataTypes.DECIMAL, allowNull : true},
+
+        basic_research_payments_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        basic_period_amount_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        non_qualifying_wages_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        cost_of_supplies_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        rac_share_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        supplement_rac_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        passthrough_supplement_rac_ia: { type : DataTypes.DECIMAL, allowNull : true},
 
         tax_liability_ks: { type : DataTypes.DECIMAL, allowNull : true},
         machinery_equipments_ks: { type : DataTypes.DECIMAL, allowNull : true},
-         llet_credit_ky: { type : DataTypes.DECIMAL, allowNull : true},
+        llet_credit_ky: { type : DataTypes.DECIMAL, allowNull : true},
         corporation_tax_credit_ky: { type : DataTypes.DECIMAL, allowNull : true},
         individual_tax_credit_ky: { type : DataTypes.DECIMAL, allowNull : true},
 
         basic_research_payments_dc: {type : DataTypes.DECIMAL, allowNull : true},
         energy_consortia_amount_dc: {type : DataTypes.DECIMAL, allowNull : true},
         qualified_org_baseamount_dc: {type : DataTypes.DECIMAL, allowNull : true},
+        lease_costs_of_computers_dc: {type : DataTypes.DECIMAL, allowNull : true},
+
+        basic_research_payments_vt: {type : DataTypes.DECIMAL, allowNull : true},
+        energy_consortia_amount_vt: {type : DataTypes.DECIMAL, allowNull : true},
+        qualified_org_baseamount_vt: {type : DataTypes.DECIMAL, allowNull : true},
+        lease_costs_of_computers_vt: {type : DataTypes.DECIMAL, allowNull : true},
+
+        credit_carry_forward_py_me: {type : DataTypes.DECIMAL, allowNull : true},
+
+        lease_costs_of_computers_mn: { type: DataTypes.DECIMAL, allowNull: true },
+        credit_tax_limit_mn: { type: DataTypes.DECIMAL, allowNull: true },
+        basic_research_amount_mn: { type: DataTypes.DECIMAL, allowNull: true },
+        nonprofit_development_contributions_mn: { type: DataTypes.DECIMAL, allowNull: true },
+
+         property_factor_off_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
+         property_factor_on_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
+         payroll_factor_off_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
+         payroll_factor_on_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
+         off_campus_research_expenses_ne: { type: DataTypes.DECIMAL, allowNull: true },
+         credit_tax_refunds_ne: { type: DataTypes.DECIMAL, allowNull: true },
+         credit_distributed_ne: { type: DataTypes.DECIMAL, allowNull: true },
       },
       {
         sequelize,

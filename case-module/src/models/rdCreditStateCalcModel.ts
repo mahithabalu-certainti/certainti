@@ -16,6 +16,7 @@ export interface RdCreditStateCalcAttributes {
     prev_year1_qre?: number | null;
     prev_year2_qre?: number | null;
     prev_year3_qre?: number | null;
+    prev_year4_qre?: number | null;
     total_wages?: number | null;
     total_supplies?: number | null;
     total_subcontract?: number | null;
@@ -26,7 +27,8 @@ export interface RdCreditStateCalcAttributes {
     rd_form_url? : string | null
     form_error_message? : string | null;
     config_json?:JSON
-    financial_working_url?: string | null;
+    total_resources?: number | null;
+    //financial_working_url?: string | null;
 }
 
 export interface RdCreditStateCalcCreationAttributes
@@ -51,6 +53,7 @@ export class RdCreditStateCalculations
     public prev_year1_qre?: number | null;
     public prev_year2_qre?: number | null
     public prev_year3_qre?: number | null;
+    public prev_year4_qre?: number | null;
     public total_wages?: number | null;
     public total_supplies?: number | null;
     public total_subcontract?: number | null;
@@ -61,7 +64,8 @@ export class RdCreditStateCalculations
     public rd_form_url? : string | null
     public form_error_message? : string | null;
     public config_json?: JSON;
-    public financial_working_url?: string | null;
+    public total_resources?: number | null;
+   // public financial_working_url?: string | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditStateCalculations.init(
@@ -119,6 +123,10 @@ export class RdCreditStateCalculations
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },
+                prev_year4_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
                 total_wages: {type: DataTypes.DECIMAL(18, 2), allowNull: true, }, 
                 total_supplies: { type: DataTypes.DECIMAL(18, 2), allowNull: true, },
                 total_subcontract: { type: DataTypes.DECIMAL(18, 2), allowNull: true, },
@@ -152,10 +160,14 @@ export class RdCreditStateCalculations
                     type: DataTypes.JSONB,
                     allowNull: true
                 },
-                financial_working_url: {
-                    type: DataTypes.STRING(1000),
+                 total_resources: {
+                    type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },
+                // financial_working_url: {
+                //     type: DataTypes.STRING(1000),
+                //     allowNull: true,
+                // },
             },
             {
                 sequelize,

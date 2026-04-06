@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import { StateRDData } from "../rdComputation/rdCreditTypes";
+import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 import { Case } from "../../models/caseModel";
 
 /**
@@ -97,15 +97,16 @@ export class RdCreditCalculatorForDC {
 
         const sectionA = this.computeSectionA(config, stateRdData,caseData );
         const sectionB = this.computeSectionB(config, stateRdData, caseData,sectionA);
-       // const sectionC = this.computeSectionC(config, sectionA, sectionB, caseData);
+       const sectionC = this.computeSectionC(config, sectionA, sectionB, caseData);
 
-        const inputFields    = this.buildInputParams(stateRdData, caseData, {
-            country:         this.country,
-            creditType:      this.creditType,
-            currency:        this.currency,
-            fiscalYearEnded: fiscalYear,
-        });
-        const computedFields = this.buildComputedFields( sectionA, sectionB, config);
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
+            country: this.country,
+            creditType: this.creditType,
+            currency: this.currency,
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
+        },config);
+        const computedFields = this.buildComputedFields( sectionA, sectionB,sectionC, config);
 
         return {
             inputFields,
@@ -177,7 +178,7 @@ export class RdCreditCalculatorForDC {
         sectionA:any
     ) {
         const line19 = new Decimal(config.asc_qre_credit_percentage_c1 / 100);
-        const line20 = sectionA.line48;
+        const line20 = new Decimal(sectionA.line48);
         const prior3 = stateRdData.prior3YearsQREs ?? [];
         const line21 = new Decimal(prior3.reduce((s, y) => s + (y.qre ?? 0), 0));
         const hasPriorQREs = prior3.length >= 3 && prior3.every(y => (y.qre ?? 0) > 0);
@@ -213,37 +214,90 @@ export class RdCreditCalculatorForDC {
         };
     }
 
+        // ─────────────────────────────────────────────────────────────────────────
+        // Section C — Current Year Credit (lines 27–32)
+        // ─────────────────────────────────────────────────────────────────────────
+        private computeSectionC(
+            config: ConfigJson,
+            sectionA: ReturnType<RdCreditCalculatorForDC["computeSectionA"]>,
+            sectionB: ReturnType<RdCreditCalculatorForDC["computeSectionB"]>,
+            caseData: Case
+        ) {
+            const cd = caseData as any;
+    
+            //---- Active method credit: Line 13 (RRC) or Line 26 (ASC)
+            //const activeMethodCredit = config.use_asc ? sectionB._line26 : sectionA._line13;
+            const activeMethodCredit =  sectionA._line13;
+    
+            //---- Line 27: Form 8932 payroll tax wages
+            const line27 = new Decimal(cd.credit_shared_wages_dc ?? 0);
+    
+            //---- Line 28: max(active credit − Line 27, 0)
+            const line28 = Decimal.max(activeMethodCredit.minus(line27), 0);
+    
+            //---- Line 29: Pass-through credit from partnerships/S-corps/trusts
+            const line29 = new Decimal(cd.pass_through_research_credit_dc ?? 0);
+    
+            //---- Line 30: Line 28 + Line 29  ← FINAL CREDIT
+            const line30 = line28.plus(line29);
+    
+            //---- Line 31: Allocated to beneficiaries (hardcoded 0)
+            const line31 = new Decimal(cd.amount_allocated_beneficiaries_dc ?? 0);
+    
+            //---- Line 32: Line 30 − Line 31
+            const line32 = line30.minus(line31);
+    
+            return {
+                line27:         this.round2(line27),
+                line28:         this.round2(line28),
+                line29:         this.round2(line29),
+                line30:         this.round2(line30),   // final credit
+                line31:         this.round2(line31),
+                line32:         this.round2(line32),
+            };
+        }
+
 
     // ── Input params ───────────────────────────────────────────────────────
-    private buildInputParams(stateRdData: StateRDData, caseData: Case, metadata: any = {}) {
-        const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
-        const qreSummary: Record<string, any> = { wages, supplies, contract };
-
-        (stateRdData.prior3YearsQREs ?? []).forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre ?? 0;
-        });
-        (stateRdData.annualGrossReceipts ?? []).forEach((item, i) => {
-            qreSummary[`prior_year_gross_receipts_${i + 1}`] = item.grossReceipts ?? 0;
-        });
-
-        return {
-            metadata: {
-                country:             metadata.country    || "US",
-                credit_type:         metadata.creditType || "STATE_RD_DC",
-                currency:            metadata.currency   || "USD",
-                "Fiscal Year Ended": metadata.fiscalYearEnded,
-                "Description":       "Research Tax Credit",
-                stateDetails:        "District of Columbia - Credit Calculation",
-            },
-            qreSummary,
-        };
-    }
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson ) {
+              
+                      let storeData : any[] = []
+                      let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+                      storeData.push({
+                          year : metadata.currentYear,
+                          wages: this.round2(currentYearQREs.wages),
+                          contract: this.round2(currentYearContract),
+                          sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
+                      })
+               
+                      prior3YearsQREs.forEach((item) => {
+                          storeData.push({
+                              year : item.fiscalYear,
+                              wages: item.wages,
+                              contract: item.contract,
+                              sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
+                          })
+                      });
+              
+                      return {
+                          metadata: {
+                              country: metadata.country || "US",
+                              credit_type: metadata.creditType || "STATE_RD_DC",
+                              currency: metadata.currency || "USD",
+                              "Fiscal Year Ended" : metadata.fiscalYearEnded,
+                              "Description": "Research Tax Credit",
+                              stateDetails : "District of Columbia - Credit Calculations"
+                          },
+                          "Current & Prior years information" : storeData
+                      };
+                  }
+    
 
     // ── Computed fields ────────────────────────────────────────────────────
     private buildComputedFields(
         a: ReturnType<RdCreditCalculatorForDC["computeSectionA"]>,
         b: ReturnType<RdCreditCalculatorForDC["computeSectionB"]>,
-      //  c: ReturnType<RdCreditCalculatorForDC["computeSectionC"]>,
+        c: ReturnType<RdCreditCalculatorForDC["computeSectionC"]>,
         config: ConfigJson
     ) {
         // const method280c   = config.elect_280c ? "280C elected" : "No 280C election";
@@ -301,14 +355,20 @@ export class RdCreditCalculatorForDC {
                     [`[26] If you elect to reduce the credit under section 280C, then multiply line 25 by ${config.asc_elect_280c_yes}% (${config.asc_elect_280c_yes / 100}). If not, enter the amount from line 25 and see the line 13 instructions for the statement that must be attached `]:
                         b.line26,
                 },
-                "Section C — Current Year Credit": {
-                    "[27] Enter the portion of the credit from Form 8932, line 2, that is attributable to wages that were also used to figure the credit on line 13 or line 26 (whichever applies)": 0,
-                    "[28] Subtract line 27 from line 13 or line 26 (whichever applies). If zero or less, enter -0-":        0,
-                    "[29] Credit for increasing research activities from partnerships, S corporations, estates, and trusts":   0,
-                    "[30] Add lines 28 and 29":                             0,
-                    "[31] Amount allocated to beneficiaries of the estate or trust (see instructions)":                   0,
-                    "[32] Estates and trusts, subtract line 31 from line 30. For eligible small businesses, report the credit on Form 3800, Part III, line 4i. See instructions. For filers other than eligible small businesses, report the credit on Form 3800, Part III, line 1c": 0,
-                }
+                "Section C—Current Year Credit": {
+                    "[27] Enter  the  portion  of  the  credit  from  Form  8932,  line  2,  that  is  attributable  to  wages  that  were also used to figure the credit on line 13 or line 26 (whichever applies)":
+                        c.line27,
+                    "[28] Subtract line 27 from line 13 or line 26 (whichever applies). If zero or less, enter -0-":
+                       c.line28,
+                    "[29] Credit for increasing research activities from partnerships, S corporations, estates, and trusts":
+                        c.line29,
+                    "[30] Add lines 28 and 29":
+                        c.line30,
+                    "[31] Amount allocated to beneficiaries of the estate or trust (see instructions)":
+                        c.line31,
+                    "[32] Estates and trusts, subtract line 31 from line 30. For eligible small businesses, report the credit on Form 3800, Part III, line 4i. See instructions. For filers other than eligible small businesses, report the credit on Form 3800, Part III, line 1c":
+                        c.line32,
+                },
             },
         };
     }

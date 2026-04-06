@@ -304,11 +304,11 @@ export class RdCreditCalculatorForNE {
                 return {
                     metadata: {
                         country: metadata.country || "US",
-                        credit_type: metadata.creditType || "STATE_RD_KS",
+                        credit_type: metadata.creditType || "STATE_RD_NE",
                         currency: metadata.currency || "USD",
                         "Fiscal Year Ended" : metadata.fiscalYearEnded,
                         "Description": "Research Tax Credit",
-                        stateDetails : "Kansas - Credit Calculations"
+                        stateDetails : "Nebraska - Credit Calculations"
                     },
                     "Current & Prior years information" : storeData
                 };
@@ -325,47 +325,56 @@ export class RdCreditCalculatorForNE {
     ) {
         return {
             computed_fields: {
-                "Method 1 — Property and Payroll Factor Apportionment (Lines 2–9)": {
-                    "[2] Federal research credit (Form 6765, line 38 or 40)":                    m1.federal_credit,
-                    "[3a] Nebraska property factor — off-campus (%)":                            m1.property_factor_offcampus,
-                    "[3b] Nebraska property factor — on-campus (%)":                             m1.property_factor_oncampus,
-                    "[4a] Nebraska payroll factor — off-campus (%)":                             m1.payroll_factor_offcampus,
-                    "[4b] Nebraska payroll factor — on-campus (%)":                              m1.payroll_factor_oncampus,
-                    "[5a] Add lines 3a and 4a (off-campus)":                                     m1.sum_factors_offcampus,
-                    "[5b] Add lines 3b and 4b (on-campus)":                                      m1.sum_factors_oncampus,
-                    "[6a] Average off-campus factor (line 5a ÷ 2)":                              m1.avg_factor_offcampus,
-                    "[6b] Average on-campus factor (line 5b ÷ 2)":                               m1.avg_factor_oncampus,
-                    "[7a] Federal credit apportioned off-campus (line 2 × line 6a)":             m1.apportioned_offcampus,
-                    "[7b] Federal credit apportioned on-campus (line 2 × line 6b)":              m1.apportioned_oncampus,
-                    [`[8a] Regular research tax credit (line 7a × ${config.off_campus_research_tax_percentage}%) — off-campus`]:  m1.regular_credit_offcampus,
-                    [`[8b] Enhanced research tax credit (line 7b × ${config.on_campus_research_tax_percentage}%) — on-campus`]: m1.enhanced_credit_oncampus,
-                    "[9] Method 1 total (line 8a + line 8b)":                                    m1.method1_total,
-                },
-                "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)": {
-                    "[10] Total NE qualified R&D expenses":                                      m2.ne_qre_total,
-                    "[11] NE expenses — off-campus portion":                                     m2.ne_qre_offcampus,
-                    "[12] NE expenses — on-campus portion (line 10 minus line 11)":              m2.ne_qre_oncampus,
-                    "[13] Total US QREs from Federal Form 6765 (line 9 or line 28)":             m2.us_qre_total_federal,
-                    "[14] Off-campus NE ratio (line 11 ÷ line 13)":                              m2.ratio_offcampus,
-                    "[15] On-campus NE ratio (line 12 ÷ line 13)":                               m2.ratio_oncampus,
-                    "[16] Federal credit × off-campus ratio (line 2 × line 14)":                 m2.apportioned_offcampus,
-                    "[17] Federal credit × on-campus ratio (line 2 × line 15)":                  m2.apportioned_oncampus,
-                    [`[18] Regular research tax credit (line 16 × ${config.off_campus_research_tax_percentage}%) — off-campus`]:  m2.regular_credit_offcampus,
-                    [`[19] Enhanced research tax credit (line 17 × ${config.on_campus_research_tax_percentage}%) — on-campus`]: m2.enhanced_credit_oncampus,
-                    "[20] Method 2 total (line 18 + line 19)":                                   m2.method2_total,
-                },
-                "Final Credit and Usage Allocation (Lines 21–25)": {
-                    "[21] Nebraska R&D credit — larger of line 9 or line 20":                    final.ne_rd_credit,
-                    [`[21] Winning method: ${final.winning_method}`]:                            "",
-                    "[22] Credit used on Nebraska income tax return (refundable — Form 3800N line 18)": final.income_tax_credit,
-                    "[23] Credit used for refund of state sales/use taxes":                      final.sales_tax_refund,
-                    "[24] Credit distributed to partners, shareholders, or beneficiaries (nonrefundable)": final.distributed_credit,
-                    "[25] Total credit usage (lines 22 + 23 + 24, must not exceed line 21)":     final.total_credit_usage,
+                "NoTitle": {
+                    "[2] Enter total amount of federal research credit allowed for this tax year from Federal Form 6765, line 38 or line 40. (Attach Federal Form 6765.) Do not include any amounts which were distributed on Federal Form 6765, line 39 (see instructions)":
+                        m1.federal_credit,
+                    "[3] Nebraska property factor (attach schedule showing calculations)": "",
+                    "[3a] Off-campus, but in Nebraska.":                                         m1.property_factor_offcampus,
+                    "[3b] On-campus in Nebraska. Address of college or university campus or facility in Nebraska:":
+                        m1.property_factor_oncampus,
+                    "[4] Nebraska payroll factor (attach schedule showing calculations)": "",
+                    "[4a] Off-campus, but in Nebraska.":                                         m1.payroll_factor_offcampus,
+                    "[4b] On-campus in Nebraska.":                                                m1.payroll_factor_oncampus,
+                    "[5a] Add lines 3a and 4a (off-campus).":                                    m1.sum_factors_offcampus,
+                    "[5b] Add lines 3b and 4b (on-campus).":                                     m1.sum_factors_oncampus,
+                    "[6] Average property and payroll factors": "",
+                    "[6a] Off-campus (line 5a ÷ 2).":                                            m1.avg_factor_offcampus,
+                    "[6b] On-campus (line 5b ÷ 2).":                                             m1.avg_factor_oncampus,
+                    "[7a] Multiply line 2 x line 6a (off-campus) .":                             m1.apportioned_offcampus,
+                    "[7b] Multiply line 2 x line 6b (on-campus).":                               m1.apportioned_oncampus,
+                    "[8a] Regular research tax credit (line 7a x 15%) (off-campus).":            m1.regular_credit_offcampus,
+                    "[8b] Enhanced research tax credit (line 7b x 35%) (on-campus).":            m1.enhanced_credit_oncampus,
+                    "[9] Total research tax credit (line 8a plus line 8b) .":                    m1.method1_total,
+                    "[10] Enter amount of all qualified expenses for R&D activities in Nebraska.":
+                        m2.ne_qre_total,
+                    "[11] Enter amount of expenses on line 10 which were not performed on the campus of a college or university .":
+                        m2.ne_qre_offcampus,
+                    "[12] Enter amount of expenses on line 10 which were performed on the campus of a college or university (line 10 minus line 11) Address of college or university campus or facility in Nebraska":
+                        m2.ne_qre_oncampus,
+                    "[13] Enter total amount of qualified expenses for R&D activities in all states (from Federal Form 6765, line 9 or line 28).":
+                        m2.us_qre_total_federal,
+                    "[14] Divide line 11 by line 13 (off-campus).":                              m2.ratio_offcampus,
+                    "[15] Divide line 12 by line 13 (on-campus).":                               m2.ratio_oncampus,
+                    "[16] Multiply line 2 x line 14 (off-campus).":                              m2.apportioned_offcampus,
+                    "[17] Multiply line 2 x line 15 (on-campus).":                               m2.apportioned_oncampus,
+                   [`[18] Regular research tax credit (line 16 × ${config.off_campus_research_tax_percentage}%) — off-campus`]:            m2.regular_credit_offcampus,
+                     [`[19] Enhanced research tax credit (line 17 × ${config.on_campus_research_tax_percentage}%) — on-campus`]:           m2.enhanced_credit_oncampus,
+                    "[20] Total research tax credit (line 18 plus line 19.":                     m2.method2_total,
+                    "[21] Enter the larger of line 9 or line 20.":                               final.ne_rd_credit,
+                    "[22] Amount of credit (refundable to the entity claiming the credit) from line 21 used on Nebraska income tax return (enter here and on line 18 of Form 3800N)":
+                        final.income_tax_credit,
+                    "[23] Amount of credit from line 21 used for refunds of state sales/use taxes paid on qualifying expenditures (see instructions)":
+                        final.sales_tax_refund,
+                    "[24] Amount of credit from line 21 (nonrefundable) distributed to partners, shareholders, members, or beneficiaries (see instructions)":
+                        final.distributed_credit,
+                    "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21":
+                        final.total_credit_usage,
                 },
                 "BOLD": [
-                    "[9] Method 1 total (line 8a + line 8b)",
-                    "[20] Method 2 total (line 18 + line 19)",
-                    "[21] Nebraska R&D credit — larger of line 9 or line 20",
+                    "[9] Total research tax credit (line 8a plus line 8b) .",
+                    "[20] Total research tax credit (line 18 plus line 19.",
+                    "[21] Enter the larger of line 9 or line 20.",
+                    "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21",
                 ],
             },
         };

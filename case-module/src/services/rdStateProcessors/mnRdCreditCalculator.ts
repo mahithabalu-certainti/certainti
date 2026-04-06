@@ -105,7 +105,7 @@ export class RdCreditCalculatorForMN {
             fiscalYearEnded : fiscalYear,
             currentYear : year
         },config);
-        const computedFields = this.buildComputedFields(creditResult, config);
+        const computedFields = this.buildComputedFields(creditResult, config, year);
 
         return {
             inputFields,
@@ -139,8 +139,8 @@ export class RdCreditCalculatorForMN {
         const line4 = new Decimal(contract).mul(config.sub_con_percent / 100);
 
         //---- Lines 5 & 6: Basic research / development contributions — not in scope
-        const line5 = new Decimal(0);
-        const line6 = new Decimal(0);
+        const line5 = new Decimal((caseData as any).basic_research_amount_mn ?? 0);
+        const line6 =  new Decimal((caseData as any).nonprofit_development_contributions_mn ?? 0);
 
         //---- Line 7: Total MN QRE
         const line7 = line1.plus(line2).plus(line3).plus(line4).plus(line5).plus(line6);
@@ -150,11 +150,11 @@ export class RdCreditCalculatorForMN {
         //---- Lines 15–18: Prior 4 years gross income (oldest → newest)
         //     annualGrossReceipts[0] = most recent prior year (e.g. 2024)
         //     annualGrossReceipts[1] = 2023, [2] = 2022, [3] = 2021
-        const grossReceipts = stateRdData.annualGrossReceipts ?? [];
-        const line15 = new Decimal(grossReceipts[0]?.grossReceipts ?? 0); // most recent prior
-        const line16 = new Decimal(grossReceipts[1]?.grossReceipts ?? 0);
-        const line17 = new Decimal(grossReceipts[2]?.grossReceipts ?? 0);
-        const line18 = new Decimal(grossReceipts[3]?.grossReceipts ?? 0); // oldest
+        const priorQRE = stateRdData.prior3YearsQREs ?? [];
+        const line15 = new Decimal(priorQRE[0]?.qre ?? 0); // most recent prior
+        const line16 = new Decimal(priorQRE[1]?.qre ?? 0);
+        const line17 = new Decimal(priorQRE[2]?.qre ?? 0);
+        const line18 = new Decimal(priorQRE[3]?.qre ?? 0); // oldest
 
         //---- Line 19: Sum of lines 15–18
         const line19 = line15.plus(line16).plus(line17).plus(line18);
@@ -176,7 +176,7 @@ export class RdCreditCalculatorForMN {
         const line22 = line7.mul(config.qre_credit_percentage_c1 / 100);
 
         //---- Line 23: Base amount = max(line21, line22)
-        const line23 = Decimal.max(line21, line22);
+        const line23 = Decimal.max(line20, line22);
 
         //---- Line 24: Excess QRE = max(line7 − line23, 0)
         const line24 = Decimal.max(line7.minus(line23), 0);
@@ -197,13 +197,13 @@ export class RdCreditCalculatorForMN {
         const line29 = line27.plus(line28);
 
         //---- Line 30: Credit carryover from prior year
-        const line30 = new Decimal((stateRdData as any).prior_year_credit_carryover ?? 0);
+        const line30 = new Decimal(0);
 
         //---- Line 31: Tentative credit = line29 + line30
         const line31 = line29.plus(line30);
 
         //---- Line 32: MN occupation tax limitation (Form M30-I line 28)
-        const line32 = new Decimal((caseData as any).mn_occupation_tax ?? 0);
+        const line32 = new Decimal((caseData as any).credit_tax_limit_mn?? 0);
 
         //---- Line 33: Final allowed credit
         //    When line32 = 0 (no occupation tax / not applicable), use line31 directly
@@ -288,15 +288,24 @@ export class RdCreditCalculatorForMN {
 
     // -------------------------------------------------------------------------
     // Computed fields builder — exact Excel label text (M30-I form)
+    // year = current fiscal year (e.g. 2025); prior-year labels are derived from it
     // -------------------------------------------------------------------------
     private buildComputedFields(
         r: ReturnType<RdCreditCalculatorForMN["computeCredit"]>,
-        config: ConfigJson
+        config: ConfigJson,
+        year: number
     ) {
+        const py1 = year - 1;   // most recent prior year  (line 15)
+        const py2 = year - 2;   // 2nd prior year          (line 16)
+        const py3 = year - 3;   // 3rd prior year          (line 17)
+        const py4 = year - 4;   // 4th prior year          (line 18)
+
+        const line34Key = `[34] Credit carryover to ${year} (see instructions)`;
+
         return {
             computed_fields: {
                 "Minnesota Credit for Increasing Research Activities (M30-I)": {
-                    "[1] Wages for qualified services (do not include wages used in figuring the work opportunity credit)":
+                    "[1] Wages for qualifed services (do not include wages used in figuring the work opportunity credit)":
                         r.wages,
                     "[2] Cost of supplies":
                         r.supplies,
@@ -310,19 +319,15 @@ export class RdCreditCalculatorForMN {
                         0,
                     "[7] Total qualified research expenses in Minnesota for the tax year (add lines 1 through 6)":
                         r.total_mn_qre,
-                    [`[14] Fixed base percentage (divide line 13B by line 13A; do not fill in more than 16% [.16]). Start-up companies, see instructions`]:
+                    "[14] Fixed base percentage (divide line 13B by line 13A; do not fill in more than 16% [.16]). Start-up companies, see instructions":
                         `${r.fixed_base_pct}%`,
-                    "[15] Tax year 2024":
-                        r.gross_income_yr1,
-                    "[16] Tax year 2023":
-                        r.gross_income_yr2,
-                    "[17] Tax year 2022":
-                        r.gross_income_yr3,
-                    "[18] Tax year 2021":
-                        r.gross_income_yr4,
+                    [`[15] Tax year ${py1}`]: r.gross_income_yr1,
+                    [`[16] Tax year ${py2}`]: r.gross_income_yr2,
+                    [`[17] Tax year ${py3}`]: r.gross_income_yr3,
+                    [`[18] Tax year ${py4}`]: r.gross_income_yr4,
                     "[19] Add lines 15 through 18":
                         r.sum_gross_income,
-                    [`"[20] Average annual gross income/mine value (multiply line 19 by ${config.gross_credit_percentage} [${config.gross_credit_percentage / 100}])"`]:
+                    "[20] Average annual gross income/mine value (multiply line 19 by 25% [.25])":
                         r.avg_gross_income,
                     "[21] Multiply line 20 by the percentage on line 14":
                         r.base_income_amount,
@@ -342,7 +347,7 @@ export class RdCreditCalculatorForMN {
                         r.tier2_credit,
                     "[29] Current credit (add lines 27 and 28)":
                         r.current_credit,
-                    "[30] Credit carryover from 2023":
+                    [`[30] Credit carryover from ${py2}`]:
                         r.prior_carryover,
                     "[31] Tentative credit (add lines 29 and 30)":
                         r.tentative_credit,
@@ -350,16 +355,9 @@ export class RdCreditCalculatorForMN {
                         r.occupation_tax,
                     "[33] Credit for increasing research activities (enter line 31 or line 32, whichever is less). Enter this amount on M30-I, line 29.":
                         r.final_allowed_credit,
-                    "[34] Credit carryover to 2025 (see instructions)":
-                        r.carryover_to_next_year,
+                    [line34Key]: r.carryover_to_next_year,
                 },
-                "BOLD": [
-                    "[7] Total qualified research expenses in Minnesota for the tax year (add lines 1 through 6)",
-                    "[23] Base amount (enter amount from line 21 or line 22, whichever is greater)",
-                    "[29] Current credit (add lines 27 and 28)",
-                    "[31] Tentative credit (add lines 29 and 30)",
-                    "[33] Credit for increasing research activities (enter line 31 or line 32, whichever is less). Enter this amount on M30-I, line 29.",
-                ],
+            
             },
         };
     }

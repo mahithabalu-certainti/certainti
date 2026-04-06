@@ -41,10 +41,8 @@ export interface ConfigJson {
     sub_con_percent: number;
 
     /** Basic credit rate (lines 4 & 5) — default 5 (i.e. 5%) */
-    basic_credit_rate_percentage: number;
+    qre_credit_percentage_c1: number;
 
-    /** Additional credit rate (lines 6 & 7) — default 5 (i.e. 5%) */
-    additional_credit_rate_percentage: number;
 }
 
 export class RdCreditCalculatorForNM {
@@ -68,31 +66,30 @@ export class RdCreditCalculatorForNM {
         //---- Total NM QRE: wages + supplies + contract × sub_con_percent%
         const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
         const totalQRE = new Decimal(wages)
-            .plus(new Decimal(supplies))
             .plus(new Decimal(contract).mul(config.sub_con_percent / 100));
 
         //---- Rural QRE: portion of QRE attributable to a rural area business
         //    Sourced from caseData.nm_rural_qre; defaults to 0
-        const ruralQRE = new Decimal(cd.nm_rural_qre ?? 0);
+        const ruralQRE = new Decimal(0);
 
         //---- Line 3: Qualified Expenditures (total QRE column — informational)
         const line3 = totalQRE;
 
         //---- Line 4: Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures.
         const line4_qre    = totalQRE;
-        const line4_credit = totalQRE.mul(config.basic_credit_rate_percentage / 100);
+        const line4_credit = totalQRE.mul(config.qre_credit_percentage_c1 / 100);
 
         //---- Line 5: Rural Area Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures
         const line5_qre    = ruralQRE;
-        const line5_credit = ruralQRE.mul(config.basic_credit_rate_percentage / 100);
+        const line5_credit = ruralQRE.mul(config.qre_credit_percentage_c1 / 100);
 
         //---- Line 6: Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures
         const line6_qre    = totalQRE;
-        const line6_credit = totalQRE.mul(config.additional_credit_rate_percentage / 100);
+        const line6_credit = totalQRE.mul(config.qre_credit_percentage_c1 / 100);
 
         //---- Line 7: Rural Area Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures
         const line7_qre    = ruralQRE;
-        const line7_credit = ruralQRE.mul(config.additional_credit_rate_percentage / 100);
+        const line7_credit = ruralQRE.mul(config.qre_credit_percentage_c1 / 100);
 
         //---- Line 9: Total Technology Jobs and Research and Development Tax Credit. Add lines 4, 5, 6, and 7, enter total here
         const line9 = line4_credit.plus(line5_credit).plus(line6_credit).plus(line7_credit);
@@ -178,35 +175,35 @@ export class RdCreditCalculatorForNM {
             line7_qre: number; line7_credit: number;
             line9: number;
         },
-        _config: ConfigJson
+        config: ConfigJson
     ) {
         return {
-            computed_fields: [
+            illinois: [
                 {
-                    "Column Name": "Qualified Expenditures",
+                    "Column Name": "2025-A",
                     "SubColumn Name": "",
                     "[3] Qualified Expenditures": "",
-                    "[4] Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures.":
+                    [`[4] Basic Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures.`]:
                         lines.line4_qre,
-                    "[5] Rural Area Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                    [`[5] Rural Area Basic Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures`]:
                         lines.line5_qre,
-                    "[6] Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                    [`[6] Additional Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures`]:
                         lines.line6_qre,
-                    "[7] Rural Area Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                    [`[7] Rural Area Additional Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures`]:
                         lines.line7_qre,
-                    "[9] Total Technology Jobs and Research and Development Tax Credit. Add lines 4,5, 6, and 7,enter total here": "",
+                    "[9] Total Technology Jobs and Research and Development Tax Credit. Add lines 4,5, 6, and 7,enter total here": ""
                 },
                 {
-                    "Column Name": "Credit",
+                    "Column Name": "2025-B",
                     "SubColumn Name": "",
                     "[3] Qualified Expenditures": "",
-                    "[4] Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures.":
+                    [`[4] Basic Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures.`]:
                         lines.line4_credit,
-                    "[5] Rural Area Basic Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                    [`[5] Rural Area Basic Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures`]:
                         lines.line5_credit,
-                    "[6] Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                    [`[6] Additional Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures`]:
                         lines.line6_credit,
-                    "[7] Rural Area Additional Technology Jobs and Research and Development Tax Credit. 5% of Qualified Expenditures":
+                    [`[7] Rural Area Additional Technology Jobs and Research and Development Tax Credit. ${config.qre_credit_percentage_c1}% of Qualified Expenditures`]:
                         lines.line7_credit,
                     "[9] Total Technology Jobs and Research and Development Tax Credit. Add lines 4,5, 6, and 7,enter total here":
                         lines.line9,

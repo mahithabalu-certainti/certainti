@@ -165,7 +165,7 @@ export class RdCreditCalculatorForWI {
 
         //---- Lines 1–5: WI expense components
         const line1 = new Decimal(wages);
-        const line2 = new Decimal(cd.research_supplies_expenses_wi);
+        const line2 = new Decimal(cd.research_supplies_expenses_wi ?? 0);
         const line3 = new Decimal(cd.qualified_computer_rental_time_expenses_wi ?? 0);
         const line4 = new Decimal(contract).mul(config.sub_con_percent / 100);
         const line5 = new Decimal(cd.orphan_drug_qualified_expenses_wi ?? 0);   // orphan drug credit wages — not in scope
@@ -391,12 +391,14 @@ export class RdCreditCalculatorForWI {
                         qre.line10,
                     "[11] Subtract line 10 from line 8. This is your eligible Wisconsin qualified research expenses":
                         qre.line11,
+                    "[12] Check one of the boxes below to indicate the credit being claimed and the credit rate that applies. If you are claiming more than one research credit, see instructions. If the box on line 9 is checked,do not check one of the boxes. Proceed to line 13.":"",
                     "[12a] Qualified research activities (5.75%)":
                         config.rate_standard_percentage,
                     "[12b] Qualified research activities related to internal combustion engines (11.5%)":
                         config.rate_combustion_percentage,
                     "[12c] Qualified research activities related to certain energy efficient products (11.5%)":
                         config.rate_energy_percentage,
+                    "[13] If line 10 is -0- because you did not have qualified research expenses in one or more of the three prior years, and checked the box on line 9, check one of the boxes below to indicate the credit being claimed and the rate that applies. If you are claiming more than one research credit, see instructions.":"",
                     "[13a] Qualified research activities (2.875%) .":
                         config.rate_standard_no_prior_percentage,
                     "[13b] Qualified research activities related to internal combustion engines (5.75%)":
@@ -407,7 +409,11 @@ export class RdCreditCalculatorForWI {
                         credit.line14,
                     "[15a] Entity Name":
                         0,
+                    "[15a] FEIN":
+                        0,
                     "[15b] Entity Name":
+                        0,
+                    "[15b] FEIN":
                         0,
                     "[15c] Total pass through credits from additional schedule":
                         0,

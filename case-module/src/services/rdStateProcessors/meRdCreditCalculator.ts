@@ -32,7 +32,10 @@ export interface ConfigJson {
     /** Credit rate applied to basic research payments — default 7.5 (i.e. 7.5%) */
     basic_research_credit_rate: number;
     /** Credit rate applied to excess QRE — default 5 (i.e. 5%) */
-    qre_credit_rate: number;
+    qre_credit_percentage: number;
+    tax_liablity_threshold_amount:number;
+    tax_liablity_threshold_percentage:number;
+
     /** Percentage of contract research expenses included — default 65 (i.e. 65%) */
     sub_con_percent: number;
 }
@@ -53,7 +56,7 @@ export class RdCreditCalculatorForME {
         logMessage(`Computing ME Credit — fiscal year: ${fiscalYear}`);
 
         const partAResult = this.partA(config, caseDetails);
-        const partBResult = this.partB(config, stateRdData, year);
+        const partBResult = this.partB(config, stateRdData, year,caseDetails);
         const totalCredit = this.round2(new Decimal(partAResult.basic_research_credit).plus(partBResult.qre_credit));
 
         const inputFields = this.buildInputParams(
@@ -100,7 +103,7 @@ export class RdCreditCalculatorForME {
     // -------------------------------------------------------------------------
     // Part B — Qualified Research Expenses Credit
     // -------------------------------------------------------------------------
-    private partB(config: ConfigJson, stateRdData: StateRDData, currentFiscalYear: number) {
+    private partB(config: ConfigJson, stateRdData: StateRDData, currentFiscalYear: number,caseDetails : Case) {
         const { wages = 0, contract = 0 } = stateRdData.currentYearQREs;
 
         // Line 3 — current year QRE (wages + contract × sub_con%)
@@ -129,7 +132,7 @@ export class RdCreditCalculatorForME {
         const excess_qre = Decimal.max(current_year_qre.minus(base_amount), 0);
 
         // Line 6 — QRE credit
-        const qre_credit = excess_qre.mul(config.qre_credit_rate / 100);
+        const qre_credit = excess_qre.mul(config.qre_credit_percentage / 100);
 
         return {
             current_year_wages:    this.round2(current_year_wages),
@@ -145,6 +148,7 @@ export class RdCreditCalculatorForME {
             base_amount:           this.round2(base_amount),
             excess_qre:            this.round2(excess_qre),
             qre_credit:            this.round2(qre_credit),
+            unused_credit: this.round2(caseDetails?.credit_carry_forward_py_me ?? 0)
         };
     }
 
@@ -202,14 +206,16 @@ export class RdCreditCalculatorForME {
         return {
             computed_fields: {
                 "Maine - Credit Calculations": {
-                    "[1] Enter the basic research payments in excess of the federal base that were spent for research conducted in Maine included on federal Form 6765, Section A, line 4 or federal Form 6765, Section B, line 17. Attach a copy of federal Form 6765. See instructions":
+                    "[1] Basic research payments in excess of the federal base that were spent for research conducted in Maine included on federal Form 6765, Section A, line 4 or federal Form 6765, Section B, line 17. Attach a copy of federal Form 6765. See instructions":
                         partA.basic_research_payments,
 
                     [`[2] Basic research payments credit (multiply line 1 by ${config.basic_research_credit_rate}% (${config.basic_research_credit_rate / 100}))`]:
                         partA.basic_research_credit,
 
-                    "[3] Enter total qualified research expenses applied to research conducted in Maine during the taxable year included on federal Form 6765, Section A, line 5 or federal Form 6765, Section B, line 20.":
+                    "[3] Total qualified research expenses spent for research conducted in Maine included on federal Form 6765, Section A, line 5 or federal Form 6765, Section B, line 20":
                         partB.current_year_qre,
+                    "[4] Total qualified research expenses applied to research conducted in Maine for the three previous tax years (for short tax years, see instructions). (divide by 3 = base amount)" :
+                        partB.base_amount,
 
                     [`[4a] ${partB.prior_year_1_label}`]:
                         partB.prior_year_1_qre,
@@ -220,16 +226,19 @@ export class RdCreditCalculatorForME {
                     [`[4c] ${partB.prior_year_3_label}`]:
                         partB.prior_year_3_qre,
 
-                    "[4] Enter the qualified research expenses applied to research conducted in Maine for the three prior tax years. This is the base amount for purpose of calculating the qualified research expense credit. (divide by 3 = base amount)":
-                        partB.base_amount,
+                 
 
                     "[5] Qualified research expenses in excess of base amount (line 3 minus line 4)":
                         partB.excess_qre,
 
-                    [`[6] Multiply line 5 by ${config.qre_credit_rate}% (.0${config.qre_credit_rate}). This is your credit for qualified research expenses`]:
+                    [`[6] Qualified research expense credit (multiply line 5 by  ${config.qre_credit_percentage}% (.0${config.qre_credit_percentage}).`]:
                         partB.qre_credit,
+                    "[7] Carryforward from previous years. See instructions":partB.unused_credit,
 
-                    "[7] Add lines 2 and 6. This is your total research expense credit":
+                    [`[8] Total available credit (line 2 plus lines 6 and 7). Corporations: if amount is greater 
+                    than ${config.tax_liablity_threshold_amount}, see instructions. Enter allowable credit amount on Form 1040ME,
+                    Schedule A, line 16; Form 1040C-ME, Schedule A, line 6; Form 1041ME,Schedule A, line 10; or Form 1120ME, Schedule C, line 1f
+                        `]:
                         totalCredit,
                 },
             },

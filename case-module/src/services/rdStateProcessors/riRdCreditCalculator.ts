@@ -108,9 +108,9 @@ export class RdCreditCalculatorForRI {
         const line3 = Decimal.max(line1.minus(line2), 0);             // federal excess
 
         //---- Line 4: RI-incurred portion of federal excess expenses
-        //    Primary source: caseData.ri_excess_expenses (explicitly set RI portion)
-        //    Fallback:       total RI QRE derived from currentYearQREs
-        const line4 = new Decimal(cd.ri_excess_expenses ?? totalRiQRE.toNumber());
+        
+        const line4 =new Decimal(wages)
+            .plus(new Decimal(contract).mul(config.sub_con_percent / 100));
 
         //---- Line 5: Credit — switched two-tier rate on line 4
         //    SWITCH (not a split):
@@ -127,13 +127,14 @@ export class RdCreditCalculatorForRI {
             `applied rate: ${appliedRate}% (${line4.lte(tierThreshold) ? "tier 1" : "tier 2"})`);
 
         //---- Line 6: Prior year unused credit carryover
-        const line6 = new Decimal(cd.ri_prior_year_carryover ?? 0);
+        const line6 = new Decimal(cd.credit_carry_forward_py_ri ?? 0);
 
         //---- Line 7: Total R&D expense credit available = Line 5 + Line 6
         const line7 = line5.plus(line6);
 
         //---- Line 8: Tax liability (Form RI-1120C line 11 or T-71 line 7)
-        const line8 = new Decimal(cd.ri_tax_liability ?? 0);
+       // const line8 = new Decimal(cd.tax_liability_ri ?? 0);
+          const line8 = new Decimal(0);
 
         //---- Line 9: Maximum credit = Line 8 × 50%
         //    When line 8 = 0, max credit = 0 and full credit carries over via line 10

@@ -208,6 +208,7 @@ export class RdCreditCalculatorForIA {
         caseData: Case,
         p2: ReturnType<RdCreditCalculatorForIA["partII"]>
     ) {
+        const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
         const cd = caseData as any;
         const creditRate = config.qre_credit_percentage_c2 / 100;
         const suppliesInclusion = config.qre_credit_percentage_c3 / 100;
@@ -219,17 +220,17 @@ export class RdCreditCalculatorForIA {
         const line20 = line19.mul(creditRate);
 
         //---- Lines 21–23: Iowa wages
-        const line21 = new Decimal(cd.ia_wages ?? 0);
-        const line22 = new Decimal(cd.ia_non_qualifying_wages ?? 0);
+        const line21 = new Decimal(wages ?? 0);
+        const line22 = new Decimal(cd.non_qualifying_wages_ia ?? 0);
         const line23 = line21.minus(line22);
 
         //---- Lines 24–25: Iowa supplies × 60% (Iowa-specific rule)
-        const line24 = new Decimal(cd.ia_supplies ?? 0);
+        const line24 = new Decimal(cd.cost_of_supplies_ia ?? 0);
         const line25 = line24.mul(suppliesInclusion);   // 60%, not 65%
 
         //---- Lines 26–28: Iowa contract expenses
-        const line26 = new Decimal(cd.ia_contract ?? 0);
-        const line27 = new Decimal(cd.ia_non_qualifying_contract ?? 0);
+        const line26 = new Decimal(contract ?? 0);
+        const line27 = new Decimal(0);
         const line28 = line26.minus(line27);
 
         //---- Line 29: Total Iowa QRE = line 23 + line 25 + line 28
@@ -255,10 +256,13 @@ export class RdCreditCalculatorForIA {
         const line34 = line20.plus(line33);
 
         //---- Line 35: Controlled group share (0 for single entity)
-        const line35 = new Decimal(0);
+        const line35 = new Decimal(cd.rac_share_ia ?? 0);
+
+         //---- Line 35: Controlled group share (0 for single entity)
+        const line36 = new Decimal(cd.supplement_rac_ia ?? 0);
 
         //---- Line 37: Pass-through Iowa RAC from partnerships/S-corps
-        const line37 = new Decimal(cd.ia_passthrough_rac ?? 0);
+        const line37 = new Decimal(cd.passthrough_supplement_rac_ia ?? 0);
 
         return {
             // Basic research (lines 17–20)
@@ -286,6 +290,7 @@ export class RdCreditCalculatorForIA {
             // Final (lines 34–37)
             iowa_rac:                    this.round2(line34),
             controlled_group_share:      this.round2(line35),
+            supplement_rac:this.round2(line36),
             passthrough_rac:             this.round2(line37),
             credit_rate_used:            config.qre_credit_percentage_c2,
             supplies_inclusion_used:     config.qre_credit_percentage_c3,
@@ -340,47 +345,44 @@ export class RdCreditCalculatorForIA {
             computed_fields: {
                 "PART II — U.S. Qualified Research Expenses (Lines 5–16)": {
                     "[2] Certain amounts paid or incurred to energy consortia":                           p2.energy_consortia,
+                    "[3] Basic research payments to qualified organizations":"",
+                    "[4] Qualified organization base period amount":"",
                     "[5] Wages for qualified research services":                                          p2.wages,
                     "[6] Cost of supplies used in conducting qualified research":                         p2.supplies,
-                    "[7] Rental or lease costs of computers":                                             p2.computer_rental,
-                    [`[8] Applicable portion of contract research expenses (${config.sub_con_percent}%)`]: p2.contract,
+                    "[7] Rental or lease costs of computers used in conducting qualified research":                                             p2.computer_rental,
+                    "[[8] Applicable portion of contract research expenses": p2.contract,
                     "[9] Total qualified research expenses. Add lines 5 through 8":                      p2.total_us_qre,
                     [`[10] Fixed-base percentage (not more than 16%): ${p2.fixed_base_pct}%`]:           `${p2.fixed_base_pct}%`,
-                    "[11] Average U.S. annual gross receipts":                                           p2.avg_gross_receipts,
+                    "[11] Average U.S. annual gross receipts for tax years ":                                           p2.avg_gross_receipts,
                     "[12] Multiply line 11 by the percentage on line 10":                                p2.base_amount,
                     "[13] Subtract line 12 from line 9. If zero or less, enter zero":                   p2.excess_qre,
                     [`[14] Multiply line 9 by ${config.qre_credit_percentage_c1} (${config.qre_credit_percentage_c1 / 100})`]:                                                p2.half_total_qre,
                     "[15] Enter the smaller of line 13 or line 14":                                     p2.allowable_excess,
                     "[16] Total allowable U.S. qualified research expenses. Add lines 2 and 15":        p2.total_allowable_us_qre,
                 },
-                "PART III — Iowa Apportionment of Research Activities Credit (Lines 17–34)": {
+                "PART III — Calculation of Tax Credit Based on Percentage of Research Occurring within Iowa": {
                     "[17] Basic research payments to qualified organizations in Iowa":                   p3.basic_research_iowa,
                     "[18] Iowa apportioned qualified organization base period amount":                   p3.iowa_base_period_amount,
                     "[19] Subtract line 18 from line 17. If zero or less, enter zero":                  p3.basic_research_excess,
                     [`[20] Multiply line 19 by ${p3.credit_rate_used}% (${p3.credit_rate_used / 100})`]: p3.basic_research_credit,
                     "[21] Wages for qualified research services performed in Iowa":                      p3.iowa_wages,
-                    "[22] Non-qualifying Iowa wages":                                                    p3.non_qualifying_iowa_wages,
+                    "[22] Non-qualifying Iowa wages. See instructions":                                                    p3.non_qualifying_iowa_wages,
                     "[23] Qualifying Iowa wages. Subtract line 22 from line 21":                        p3.qualifying_iowa_wages,
                     "[24] Cost of supplies used in conducting qualified research in Iowa":               p3.iowa_supplies,
                     [`[25] Eligible cost of Iowa supplies. Multiply line 24 by ${p3.supplies_inclusion_used}% (Iowa-specific rule)`]: p3.eligible_iowa_supplies,
                     "[26] Applicable portion of contract research expenses incurred in Iowa":            p3.iowa_contract,
-                    "[27] Non-qualifying Iowa contract research expenses":                               p3.non_qualifying_iowa_contract,
+                    "[27] Non-qualifying Iowa contract research expenses. See instructions":                               p3.non_qualifying_iowa_contract,
                     "[28] Qualifying Iowa contract research expenses. Subtract line 27 from line 26":   p3.qualifying_iowa_contract,
                     "[29] Total Iowa qualified research expenses. Add lines 23, 25, and 28":            p3.total_iowa_qre,
                     "[30] Total U.S. qualified research expenses. Add lines 2 and 9":                   p3.total_us_qre_denominator,
-                    "[31] Iowa share of research. Divide line 29 by line 30":                           p3.iowa_share_ratio,
+                    "[31] Iowa share of research. Divide line 29 by line 30,enter percentage to the nearest":                           p3.iowa_share_ratio,
                     "[32] Expenses allocable to Iowa. Multiply line 16 by the percentage on line 31":   p3.iowa_allocable_expenses,
                     [`[33] Multiply line 32 by ${p3.credit_rate_used}% (${p3.credit_rate_used / 100})`]: p3.iowa_allocable_credit,
-                    "[34] Iowa RAC. Add lines 20 and 33":                                               p3.iowa_rac,
-                    "[35] Share of Iowa RAC for controlled group members (Schedule A)":                 p3.controlled_group_share,
-                    "[37] Pass-through Iowa RAC received from partnerships, S corporations, trusts":    p3.passthrough_rac,
-                },
-                "BOLD": [
-                    "[9] Total qualified research expenses. Add lines 5 through 8",
-                    "[16] Total allowable U.S. qualified research expenses. Add lines 2 and 15",
-                    "[29] Total Iowa qualified research expenses. Add lines 23, 25, and 28",
-                    "[34] Iowa RAC. Add lines 20 and 33",
-                ],
+                    "[34] Iowa RAC. Add lines 20 and 33. If you are computing the credit as a controlled group or group of businesses under common control per Internal Revenue Code section 41(f)(1),complete Schedule A and proceed to line 35. Otherwise, this is your tax credit. See Where to Report this Tax Credit in instructions":                                               p3.iowa_rac,
+                    "[35] Share of Iowa RAC for members of a controlled group or group of businesses under common control. Enter your share of the Iowa RAC from Schedule A, Column E.See Where to Report this Tax Credit in instructions":                 p3.controlled_group_share,
+                    "[36] Iowa Supplemental RAC. See Where to Report this Tax Credit in instructions Pass-through Iowa RAC received from partnership, LLC, S corporation, estate, or trust. See Where to Report this Tax Credit in instructions":p3.supplement_rac,
+                    "[37] Pass-through Iowa Supplemental RAC received from partnership, LLC, S corporation, estate, or trust. See Where to Report this Tax Credit in instructions":    p3.passthrough_rac,
+                }
             },
         };
     }

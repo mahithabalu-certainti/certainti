@@ -37,21 +37,21 @@ export interface ConfigJson {
 
     // --- Bracket 1: 1–49 employees ---
     /** Base percentage for small bracket — default 50 */
-    small_base_percentage: number;
+    base_percentage_small_c1: number;
     /** Credit rate for small bracket — default 30 */
-    small_credit_rate_percentage: number;
+    qre_credit_percentage_small_c1: number;
 
     // --- Bracket 2: 50–99 employees ---
     /** Base percentage for mid bracket — default 80 */
-    mid_base_percentage: number;
+    base_percentage_mid_c1: number;
     /** Credit rate for mid bracket — default 10 */
-    mid_credit_rate_percentage: number;
+    qre_credit_percentage_mid_c1: number;
 
     // --- Bracket 3: 100+ employees ---
     /** Base percentage for large bracket — default 80 */
-    large_base_percentage: number;
+    base_percentage_large_c1: number;
     /** Credit rate for large bracket — default 5 */
-    large_credit_rate_percentage: number;
+    qre_credit_percentage_large_c1: number;
 }
 
 /** Employee bracket identifier — drives which section of LQRE-6765 is used */
@@ -73,8 +73,9 @@ export class RdCreditCalculatorForLA {
         logMessage(`Computing LA Credit — fiscal year: ${fiscalYear}`);
         logMessage(`LA config: ${JSON.stringify(config)}`);
 
-        const bracket = this.resolveBracket(caseData);
-        logMessage(`LA employee bracket resolved: ${bracket}`);
+        const employeeCount: number = (caseData as any).la_employee_count ?? 0;
+        const bracket: EmployeeBracket = employeeCount >= 100 ? "large" : employeeCount >= 50 ? "mid" : "small";
+        logMessage(`LA employee count from DB: ${employeeCount}, bracket resolved: ${bracket}`);
 
         const creditResult   = this.computeCredit(config, stateRdData, bracket);
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
@@ -99,16 +100,6 @@ export class RdCreditCalculatorForLA {
     }
 
     // -------------------------------------------------------------------------
-    // Resolve employee bracket from caseData
-    // -------------------------------------------------------------------------
-    private resolveBracket(caseData: Case): EmployeeBracket {
-        const count = (caseData as any).la_employee_count ?? 0;
-        if (count >= 100) return "large";
-        if (count >= 50)  return "mid";
-        return "small";
-    }
-
-    // -------------------------------------------------------------------------
     // Core credit computation — shared logic, bracket-specific rates
     // -------------------------------------------------------------------------
     private computeCredit(config: ConfigJson, stateRdData: StateRDData, bracket: EmployeeBracket) {
@@ -123,9 +114,9 @@ export class RdCreditCalculatorForLA {
         //     prior3YearsQREs[0] = most recent prior year (e.g. 2024)
         //     prior3YearsQREs[1] = 2 years ago (e.g. 2023)
         //     prior3YearsQREs[2] = 3 years ago (e.g. 2022)
-        const prior1 = new Decimal(stateRdData.prior3YearsQREs?.[2]?.qre ?? 0); // oldest
-        const prior2 = new Decimal(stateRdData.prior3YearsQREs?.[1]?.qre ?? 0);
-        const prior3 = new Decimal(stateRdData.prior3YearsQREs?.[0]?.qre ?? 0); // most recent prior
+        const prior1 = new Decimal(stateRdData.prior3YearsQREs?.[3]?.qre ?? 0); // oldest
+        const prior2 = new Decimal(stateRdData.prior3YearsQREs?.[2]?.qre ?? 0);
+        const prior3 = new Decimal(stateRdData.prior3YearsQREs?.[1]?.qre ?? 0); // most recent prior
 
         //---- Line 4: 3-year average
         const line4 = prior1.plus(prior2).plus(prior3).div(3);
@@ -161,15 +152,15 @@ export class RdCreditCalculatorForLA {
     // Bracket helpers
     // -------------------------------------------------------------------------
     private getBasePct(config: ConfigJson, bracket: EmployeeBracket): number {
-        if (bracket === "small") return config.small_base_percentage;
-        if (bracket === "mid")   return config.mid_base_percentage;
-        return config.large_base_percentage;
+        if (bracket === "small") return config.base_percentage_small_c1;
+        if (bracket === "mid")   return config.base_percentage_mid_c1;
+        return config.base_percentage_large_c1;
     }
 
     private getCreditRate(config: ConfigJson, bracket: EmployeeBracket): number {
-        if (bracket === "small") return config.small_credit_rate_percentage;
-        if (bracket === "mid")   return config.mid_credit_rate_percentage;
-        return config.large_credit_rate_percentage;
+        if (bracket === "small") return config.qre_credit_percentage_small_c1;
+        if (bracket === "mid")   return config.qre_credit_percentage_mid_c1;
+        return config.qre_credit_percentage_large_c1;
     }
 
     private bracketLabel(bracket: EmployeeBracket): string {
@@ -204,11 +195,11 @@ export class RdCreditCalculatorForLA {
                 return {
                     metadata: {
                         country: metadata.country || "US",
-                        credit_type: metadata.creditType || "STATE_RD_KS",
+                        credit_type: metadata.creditType || "STATE_RD_LA",
                         currency: metadata.currency || "USD",
                         "Fiscal Year Ended" : metadata.fiscalYearEnded,
                         "Description": "Research Tax Credit",
-                        stateDetails : "Kansas - Credit Calculations"
+                        stateDetails : "Lousiana - Credit Calculations"
                     },
                     "Current & Prior years information" : storeData
                 };

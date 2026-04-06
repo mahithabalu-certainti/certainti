@@ -58,7 +58,12 @@ interface StateLayout {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LAYOUT: Record<string, StateLayout> = {
-    KS: { valueCol: 7,  labelCol: 2, lineNumCol: 1,    labelMergeEndCol: 6,  colWidths: { 1:6, 2:53, 7:17.5 },                 fontSize: 10, headerStyle: "navy-white",  dataStartRow: 8,  sheetLabel: "Kansas - Credit Calculations"              },
+    KS: { valueCol: 7,  
+        labelCol: 2, lineNumCol: 1,    
+        labelMergeEndCol: 6,  colWidths: { 1:6, 2:53, 7:17.5 },  
+        fontSize: 10, headerStyle: "bold-text",  
+        dataStartRow: 8,  sheetLabel: "Kansas - Credit Calculations" ,
+     hasQRETable: true, qreTableStartCol: 10,             },
 
     // ME — Col A (8): line num | Col B-M (merged, 90): label | Col N (14): value
     //      QRE table side-by-side at col Q (17): Year | R (18): Wages | S (19): Contract | T (20): Total
@@ -86,16 +91,15 @@ const LAYOUT: Record<string, StateLayout> = {
         hasQRETable: true, qreTableStartCol: 8,
     },
 
-    // NM — dual-column (like IL): col M (13) = Qualified Expenditures, col N (14) = Credit
-    //      computed_fields is an ARRAY [{Qualified Expenditures col}, {Credit col}]
-    //      QRE table side-by-side at col Q (17)
+    // NM — dual-value: col M (13) = Qualified Expenditures, col N (14) = Credit
+    //      Year header M7:N7 merged; data rows 8–13
+    //      QRE side table at cols Q–T (17–20)
     NM: {
-        valueCol: 14, labelCol: 2, lineNumCol: 1, labelMergeEndCol: 12,
-        colWidths: { 1:8, 2:80, 13:14, 14:14, 16:4, 17:10, 18:18, 19:20, 20:16 },
+        valueCol: 14, labelCol: 2, lineNumCol: 1, labelMergeEndCol: 13,
+        colWidths: { 1:8, 2:80, 13:12.625, 14:11.375, 17:8, 18:14.125, 19:17.375, 20:11.25 },
         fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
         sheetLabel: "New Mexico - Credit Calculations",
-        dualColumn: { colAIndex: 13, colBIndex: 14, headerFill: "FFD9E1F2" },
-        dualColumnSectionHeader: "Technology Jobs and Research and Development Tax Credit (RPD-41326)",
+        dualValue: { qreCol: 3, creditCol: 4 },
         hasQRETable: true, qreTableStartCol: 17,
     },
 
@@ -175,6 +179,7 @@ const LAYOUT: Record<string, StateLayout> = {
         colWidths: { 1:8, 2:90, 3:30, 4:16 },
         fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
         sheetLabel: "Wisconsin - Credit Calculations",
+        hasQRETable: true, qreTableStartCol: 17,
     },
 
     // KY — 4-col standard; PART I (4 lines) + PART II (3 lines); QRE table side-by-side at col H (8)
@@ -201,6 +206,16 @@ const LAYOUT: Record<string, StateLayout> = {
         colWidths: { 1:8, 2:50, 3:25, 4:16, 7:4, 8:10, 9:18, 10:20, 11:16 },
         fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
         sheetLabel: "South Carolina - Credit Calculations",
+        hasQRETable: true, qreTableStartCol: 8,
+    },
+
+    // NE — 4-col standard; single "NoTitle" section (25 lines); wide label col for long descriptions
+    //      QRE table side-by-side at col H (8)
+    NE: {
+        valueCol: 4, labelCol: 2, lineNumCol: 1, labelMergeEndCol: 3,
+        colWidths: { 1:8, 2:80, 3:30, 4:16, 7:4, 8:10, 9:18, 10:20, 11:16 },
+        fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
+        sheetLabel: "Nebraska - Credit Calculations",
         hasQRETable: true, qreTableStartCol: 8,
     },
 
@@ -343,10 +358,12 @@ function writeSectionHeader(ws: ExcelJS.Worksheet, row: number, sectionKey: stri
             c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: DARK_NAVY } };
         }
     } else {
+        ws.mergeCells(row, 1, row, valueCol);
         const c = ws.getCell(row, labelCol);
         c.value = sectionKey;
         c.font  = { bold: true, size: fontSize };
         c.alignment = { wrapText: true };
+        c.border = ALL_THIN;
     }
 }
 
@@ -361,7 +378,8 @@ function writeDataRow(ws: ExcelJS.Worksheet, row: number, parsed: ParsedKey, raw
         const c = ws.getCell(row, lineNumCol);
         c.value = parsed.lineNum;
         c.font  = { size: fontSize, bold };
-        c.alignment = { horizontal: parsed.isSubLine ? "right" : "center" };
+        c.border = ALL_THIN;
+        c.alignment = { horizontal: parsed.isSubLine ? "center" : "center" };
     }
     if (labelMergeEndCol > labelCol) {
         try { ws.mergeCells(row, labelCol, row, labelMergeEndCol); } catch (_) {}
@@ -370,8 +388,9 @@ function writeDataRow(ws: ExcelJS.Worksheet, row: number, parsed: ParsedKey, raw
     d.value = parsed.description;
     d.font  = { size: fontSize, color: { argb: NEAR_BLACK }, bold };
     d.alignment = { horizontal: "left", wrapText: true };
+    d.border = ALL_THIN;
 
-    if (!parsed.isAnnotation || (rawValue !== "" && rawValue != null)) {
+    if (rawValue !== "" && rawValue != null) {
         setVal(ws.getCell(row, valueCol), rawValue, CURRENCY_FMT, bold);
     }
 }
@@ -394,7 +413,7 @@ function writeDataRow(ws: ExcelJS.Worksheet, row: number, parsed: ParsedKey, raw
 //   Lines 23–28 both columns filled; lines 29–32 only Column B (D).
 // ─────────────────────────────────────────────────────────────────────────────
 
-function renderIL(ws: ExcelJS.Worksheet, sections: unknown, layout: StateLayout, fyYear: number) {
+function renderIL(ws: ExcelJS.Worksheet, sections: unknown, layout: StateLayout, _fyYear: number) {
     const { dualColumn, fontSize } = layout;
     const dc = dualColumn!;
 
@@ -497,109 +516,164 @@ function renderIL(ws: ExcelJS.Worksheet, sections: unknown, layout: StateLayout,
 // ─────────────────────────────────────────────────────────────────────────────
 // NM — dual-value renderer
 // ─────────────────────────────────────────────────────────────────────────────
+// NM — RPD-41326  (Technology Jobs and R&D Tax Credit)
+// ─────────────────────────────────────────────────────────────────────────────
 //
 // NM Excel layout (cols A–N):
-//   A = line number (centered)
-//   B–M merged = description (left aligned)    ← labelCol=2, labelMergeEndCol=12
-//   M = QRE input value   ← qreCol=13
-//   N = credit formula    ← creditCol=14
+//   Row 7 : M7:N7 merged  = fiscal year label
+//   Row 8 : A=3, B8:M8 merged = "Qualified Expenditures"   (no value cols)
+//   Rows 9–12 (lines 4–7):
+//           A = line number, B:L merged = description, M = QRE, N = credit
+//   Row 13: A=9, B13:M13 merged = total description, N = total credit (bold)
 //
-// Special cases:
-//   Line 3 ("Qualified Expenditures") — B–M merged for description, N is the QRE total
-//   Lines 4–7 — M = QRE input, N = credit formula
-//   Line 9 (total) — B–M merged for description, N = sum formula
-//
-// Key naming convention in computed_fields:
-//   "[3] Qualified Expenditures"               → description only, value goes to N
-//   "[4] Basic ... Tax Credit. 5% ..."         → credit row → N
-//   "[4] Qualified Expenditures — Basic"       → QRE input  → M
-//   "[9] Total ..."                            → sum        → N
+// Input:  sections = { illinois: [colQREobj, colCreditObj] }
+//         colQREObj    keys "[N] description" → QRE amount
+//         colCreditObj keys "[N] description" → credit amount / total
 // ─────────────────────────────────────────────────────────────────────────────
 
-function renderNM(ws: ExcelJS.Worksheet, sections: Record<string, Record<string, unknown>>, layout: StateLayout, fyYear: number) {
+const NM_ACCT_FMT = '_(* #,##0.00_);_(* \\(#,##0.00\\);_(* "-"??_);_(@_)';
+const NM_QRE_FILL = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF92D050" } };
+
+function renderNM(ws: ExcelJS.Worksheet, sections: any, layout: StateLayout, fyYear: number) {
+    const { fontSize } = layout;
     const dv = layout.dualValue!;
 
-    // Year label (M7:N7 merged in original)
-    ws.mergeCells(7, dv.qreCol, 7, dv.creditCol);
-    const yr = ws.getCell(7, dv.qreCol);
-    yr.value = fyYear;
-    yr.font  = { bold: true, size: layout.fontSize };
-    yr.alignment = { horizontal: "center" };
+    // illinois array: [0] = QRE column values, [1] = Credit column values
+    const arr: Record<string, unknown>[] = Array.isArray(sections)
+        ? sections
+        : ((sections as any)?.illinois ?? []);
+    const colQRE    = (arr[0] ?? {}) as Record<string, unknown>;
+    const colCredit = (arr[1] ?? {}) as Record<string, unknown>;
 
-    let currentRow = layout.dataStartRow;
+    // Row 7: M7:N7 merged = fiscal year
+    try { ws.mergeCells(7, dv.qreCol, 7, dv.creditCol); } catch (_) {}
+    const yrCell = ws.getCell(7, dv.qreCol);
+    yrCell.value     = fyYear;
+    yrCell.font      = { bold: true, size: fontSize };
+    yrCell.alignment = { horizontal: "center" };
 
-    for (const [sectionKey, sectionData] of Object.entries(sections)) {
-        if (typeof sectionData !== "object" || sectionData === null) continue;
+    // Iterate credit column keys (authoritative order); skip metadata keys
+    let row = layout.dataStartRow;  // starts at 8
+    for (const [key, creditVal] of Object.entries(colCredit)) {
+        if (key === "Column Name" || key === "SubColumn Name") continue;
+        const m = key.match(/^\[([^\]]+)\]\s*([\s\S]*)$/);
+        if (!m) continue;
+        const lineNum = (m[1] ?? "").trim();
+        const desc    = (m[2] ?? "").trim();
+        const isTotal  = lineNum === "9";
+        const isHeader = lineNum === "3";   // Line 3: "Qualified Expenditures" info row
 
-        // Section header (bold text, no fill for NM)
-        const sh = ws.getCell(currentRow, 1);
-        sh.value = sectionKey;
-        sh.font  = { bold: true, size: layout.fontSize };
-        currentRow++;
+        // Col A: line number (centered)
+        const lnCell = ws.getCell(row, 1);
+        lnCell.value     = Number(lineNum) || lineNum;
+        lnCell.font      = { size: fontSize };
+        lnCell.alignment = { horizontal: "center" };
 
-        // Group line keys by their line number so QRE + credit land on the same row
-        // Keys with " — " suffix (e.g. "[4] Qualified Expenditures — Basic") are QRE sub-keys
-        const rowMap = new Map<string, { desc?: string; qre?: unknown; credit?: unknown }>();
-        const rowOrder: string[] = [];
+        // Description merge:
+        //   Line 3 header → B:M  (cols 2–13)  — full width, no value columns
+        //   Lines 4–7     → B:L  (cols 2–12)  — M=QRE, N=credit
+        //   Line 9 total  → B:M  (cols 2–13)  — only N=credit
+        const labelEnd = (isHeader || isTotal) ? dv.qreCol : dv.qreCol - 1;
+        try { ws.mergeCells(row, 2, row, labelEnd); } catch (_) {}
+        const descCell = ws.getCell(row, 2);
+        descCell.value     = desc;
+        descCell.font      = { size: fontSize, bold: isTotal };
+        descCell.alignment = { horizontal: "left", wrapText: true };
 
-        for (const [key, value] of Object.entries(sectionData)) {
-            if (key === "BOLD" || Array.isArray(value)) continue;
-            const m = key.match(/^\[([^\]]+)\]\s*(.*)$/);
-            if (!m) continue;
-            if (m[1] === undefined) continue;
-            const lineNum = m[1].trim();
-            const desc    = (m[2] || "").trim();
+        if (!isHeader) {
+            const qreVal = colQRE[key];
 
-            const isQreSub = desc.includes(" — ");   // "[4] Qualified Expenditures — Basic"
-
-            if (!rowMap.has(lineNum)) {
-                rowMap.set(lineNum, {});
-                rowOrder.push(lineNum);
+            // M (col 13): QRE value — lines 4–7 only
+            if (!isTotal && qreVal !== undefined && qreVal !== "") {
+                const qreCell  = ws.getCell(row, dv.qreCol);
+                qreCell.value  = qreVal as ExcelJS.CellValue;
+                qreCell.numFmt = NM_ACCT_FMT;
+                qreCell.font   = { size: fontSize };
             }
-            const entry = rowMap.get(lineNum)!;
 
-            if (isQreSub) {
-                entry.qre = value;
+            // N (col 14): credit value
+            if (creditVal !== undefined && creditVal !== "") {
+                const credCell  = ws.getCell(row, dv.creditCol);
+                credCell.value  = creditVal as ExcelJS.CellValue;
+                credCell.numFmt = NM_ACCT_FMT;
+                credCell.font   = { size: fontSize, bold: isTotal };
+            }
+        }
+
+        row++;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NM QRE side-table  (cols Q–T = 17–20, rows 1+)
+//
+// Template layout:
+//   Row 1: R1:T1 merged — "Current & Prior years information"  (green fill)
+//   Row 2: R2="QRE Wages"  S2="QRE Contractor"  T2="TOTAL"    (bold, centered, green fill)
+//   Row 3+: Q=year  R=wages  S=contract  T=total
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderNMQRETable(
+    ws: ExcelJS.Worksheet,
+    inputFields: Record<string, any>,
+    layout: StateLayout
+) {
+    const { fontSize, qreTableStartCol } = layout;
+    const startCol = qreTableStartCol!;   // col Q = 17
+    const wagesCol    = startCol + 1;     // col R = 18
+    const contractCol = startCol + 2;     // col S = 19
+    const totalCol    = startCol + 3;     // col T = 20
+
+    const qreData = inputFields["Current & Prior years information"] as Array<{
+        year: any; wages: any; contract: any; sum: any;
+    }>;
+    if (!Array.isArray(qreData) || qreData.length === 0) return;
+
+    // Row 1: title merged R1:T1
+    try { ws.mergeCells(1, wagesCol, 1, totalCol); } catch (_) {}
+    const title = ws.getCell(1, wagesCol);
+    title.value     = "Current & Prior years information";
+    title.font      = { bold: true, size: fontSize };
+    title.fill      = NM_QRE_FILL;
+    title.alignment = { horizontal: "left" };
+
+    // Row 2: column headers (no "Year" header in col Q — matches template)
+    const HEADERS: [number, string][] = [
+        [wagesCol,    "QRE Wages"],
+        [contractCol, "QRE Contractor"],
+        [totalCol,    "TOTAL"],
+    ];
+    for (const [col, label] of HEADERS) {
+        const c = ws.getCell(2, col);
+        c.value     = label;
+        c.font      = { bold: true, size: fontSize };
+        c.fill      = NM_QRE_FILL;
+        c.alignment = { horizontal: "center", wrapText: true };
+        c.border    = ALL_THIN;
+    }
+
+    // Data rows starting at row 3
+    let dataRow = 3;
+    for (const row of qreData) {
+        const cells: [any, number, boolean][] = [
+            [row.year,     startCol,    false],
+            [row.wages,    wagesCol,    true ],
+            [row.contract, contractCol, true ],
+            [row.sum,      totalCol,    true ],
+        ];
+        for (const [val, col, isCurrency] of cells) {
+            const cell = ws.getCell(dataRow, col);
+            if (isCurrency && typeof val === "number") {
+                cell.value  = val;
+                cell.numFmt = NM_ACCT_FMT;
             } else {
-                entry.desc   = desc || key;
-                entry.credit = value;
+                cell.value = (val ?? "") as ExcelJS.CellValue;
             }
+            cell.font   = { size: fontSize, bold: col === totalCol };
+            cell.border = ALL_THIN;
+            cell.alignment = { horizontal: col === startCol ? "center" : "right" };
         }
-
-        // Emit one row per line number
-        for (const lineNum of rowOrder) {
-            const entry   = rowMap.get(lineNum)!;
-            const isTotal = lineNum === "9";
-
-            // Line number in col A
-            const ln = ws.getCell(currentRow, 1);
-            ln.value = Number(lineNum) || lineNum;
-            ln.font  = { size: layout.fontSize };
-            ln.alignment = { horizontal: "center" };
-
-            // Description: B–M merged (cols 2–13), or B–L (cols 2–12) if there's a QRE col
-            const hasQre     = entry.qre !== undefined;
-            const mergeEnd   = hasQre ? dv.qreCol - 1 : dv.qreCol; // B–L if QRE exists, B–M if not
-            try { ws.mergeCells(currentRow, 2, currentRow, mergeEnd); } catch (_) {}
-            const d = ws.getCell(currentRow, 2);
-            d.value = entry.desc ?? "";
-            d.font  = { size: layout.fontSize, bold: isTotal };
-            d.alignment = { horizontal: "left", wrapText: true };
-
-            // QRE column (M) — only for lines 4–7
-            if (hasQre) {
-                setVal(ws.getCell(currentRow, dv.qreCol), entry.qre, CURRENCY_FMT);
-            }
-
-            // Credit column (N)
-            if (entry.credit !== undefined) {
-                setVal(ws.getCell(currentRow, dv.creditCol), entry.credit, CURRENCY_FMT, isTotal);
-            }
-
-            currentRow++;
-        }
-
-        currentRow++; // spacer
+        dataRow++;
     }
 }
 
@@ -627,7 +701,7 @@ function renderNM(ws: ExcelJS.Worksheet, sections: Record<string, Record<string,
 //   Col 5 (16) — table data col 3 / primary value for single-value rows
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TABLE_HEADER_FILL = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFD9E1F2" } };
+const TABLE_HEADER_FILL = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "C6EFCE" } };
 
 function renderGA(ws: ExcelJS.Worksheet, computedFields: Record<string, any>, layout: StateLayout, fyYear: number) {
     const { fontSize, valueCol, labelMergeEndCol } = layout;
@@ -871,7 +945,10 @@ export async function generateStateSheet(
 
     // ── NM: dual-value ─────────────────────────────────────────────────────
     if (layout.dualValue) {
-        renderNM(ws, sections as Record<string, Record<string, unknown>>, layout, fyYear);
+        renderNM(ws, sections, layout, fyYear);
+        if (layout.hasQRETable && layout.qreTableStartCol) {
+            renderNMQRETable(ws, computeResult.inputFields, layout);
+        }
         return workbook;
     }
 
@@ -1090,6 +1167,39 @@ export async function uploadCombinedWorkbook(
         return url;
     } catch (err) {
         console.error(`[ExcelGen] Failed to upload combined workbook:`, err);
+        return null;
+    }
+}
+
+/**
+ * Save combined workbook locally to the filesystem for testing purposes
+ * @param workbook The ExcelJS workbook to save
+ * @param caseRid The case ID
+ * @param fiscalYear The fiscal year
+ * @param outputDir Optional output directory (defaults to ./temp/excel_exports)
+ * @returns Path to the saved file or null if save failed
+ */
+export async function saveCombinedWorkbookLocal(
+    workbook: ExcelJS.Workbook,
+    caseRid: string,
+    fiscalYear: number | string,
+    outputDir: string = "./temp/excel_exports"
+): Promise<string | null> {
+    try {
+        // Ensure output directory exists
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        const fileName = `RD_Credits_${caseRid}_${fiscalYear}.xlsx`;
+        const filePath = path.join(outputDir, fileName);
+
+        // Save workbook to file
+        await workbook.xlsx.writeFile(filePath);
+        console.log(`[ExcelGen] Saved combined workbook locally → ${filePath}`);
+        return filePath;
+    } catch (err) {
+        console.error(`[ExcelGen] Failed to save combined workbook locally:`, err);
         return null;
     }
 }

@@ -673,6 +673,52 @@ CA: {
 
         BOLD: []
     },
+    IA: {
+        sectionOrder: [
+            "PART II — U.S. Qualified Research Expenses (Lines 5–16)",
+            "PART III — Iowa Apportionment of Research Activities Credit (Lines 17–34)"
+        ],
+        sectionFieldOrders: {
+            "PART II — U.S. Qualified Research Expenses (Lines 5–16)": [
+                { pattern: /^\[2\] Certain amounts paid or incurred to energy consortia$/, order: 1 },
+                { pattern: /^\[5\] Wages for qualified research services$/, order: 2 },
+                { pattern: /^\[6\] Cost of supplies used in conducting qualified research$/, order: 3 },
+                { pattern: /^\[7\] Rental or lease costs of computers$/, order: 4 },
+                { pattern: /^\[8\] Applicable portion of contract research expenses/, order: 5 },
+                { pattern: /^\[9\] Total qualified research expenses\. Add lines 5 through 8$/, order: 6 },
+                { pattern: /^\[10\] Fixed-base percentage/, order: 7 },
+                { pattern: /^\[11\] Average U\.S\. annual gross receipts$/, order: 8 },
+                { pattern: /^\[12\] Multiply line 11 by the percentage on line 10$/, order: 9 },
+                { pattern: /^\[13\] Subtract line 12 from line 9\. If zero or less, enter zero$/, order: 10 },
+                { pattern: /^\[14\] Multiply line 9 by/, order: 11 },
+                { pattern: /^\[15\] Enter the smaller of line 13 or line 14$/, order: 12 },
+                { pattern: /^\[16\] Total allowable U\.S\. qualified research expenses\. Add lines 2 and 15$/, order: 13 }
+            ],
+            "PART III — Iowa Apportionment of Research Activities Credit (Lines 17–34)": [
+                { pattern: /^\[17\] Basic research payments to qualified organizations in Iowa$/, order: 1 },
+                { pattern: /^\[18\] Iowa apportioned qualified organization base period amount$/, order: 2 },
+                { pattern: /^\[19\] Subtract line 18 from line 17\. If zero or less, enter zero$/, order: 3 },
+                { pattern: /^\[20\] Multiply line 19 by/, order: 4 },
+                { pattern: /^\[21\] Wages for qualified research services performed in Iowa$/, order: 5 },
+                { pattern: /^\[22\] Non-qualifying Iowa wages$/, order: 6 },
+                { pattern: /^\[23\] Qualifying Iowa wages\. Subtract line 22 from line 21$/, order: 7 },
+                { pattern: /^\[24\] Cost of supplies used in conducting qualified research in Iowa$/, order: 8 },
+                { pattern: /^\[25\] Eligible cost of Iowa supplies/, order: 9 },
+                { pattern: /^\[26\] Applicable portion of contract research expenses incurred in Iowa$/, order: 10 },
+                { pattern: /^\[27\] Non-qualifying Iowa contract research expenses$/, order: 11 },
+                { pattern: /^\[28\] Qualifying Iowa contract research expenses\. Subtract line 27 from line 26$/, order: 12 },
+                { pattern: /^\[29\] Total Iowa qualified research expenses\. Add lines 23, 25, and 28$/, order: 13 },
+                { pattern: /^\[30\] Total U\.S\. qualified research expenses\. Add lines 2 and 9$/, order: 14 },
+                { pattern: /^\[31\] Iowa share of research\. Divide line 29 by line 30$/, order: 15 },
+                { pattern: /^\[32\] Expenses allocable to Iowa\. Multiply line 16 by the percentage on line 31$/, order: 16 },
+                { pattern: /^\[33\] Multiply line 32 by/, order: 17 },
+                { pattern: /^\[34\] Iowa RAC\. Add lines 20 and 33$/, order: 18 },
+                { pattern: /^\[35\] Share of Iowa RAC for controlled group members/, order: 19 },
+                { pattern: /^\[37\] Pass-through Iowa RAC received from partnerships, S corporations, trusts$/, order: 20 }
+            ]
+        },
+        BOLD: []
+    },
     KS: {
         sectionOrder: [
             "PART A – COMPUTATION OF MAXIMUM ALLOWABLE CREDIT FOR THIS YEAR'S EXPENDITURES",
@@ -848,6 +894,116 @@ CA: {
         BOLD: [
             "[4] Amount of Federal Excess Expenses from line 3 incurred in Rhode Island",
             "[7] Total R&D Expense Credit Available (line 5 + line 6)"
+        ]
+    },
+    WI: {
+        sectionOrder: [
+            "Wisconsin Schedule R — Research Credits"
+        ],
+        sectionFieldOrders: {
+            "Wisconsin Schedule R — Research Credits": [
+                { pattern: /^\[1\]\s*Enter Wisconsin research wage expenses/, order: 1 },
+                { pattern: /^\[2\]\s*Enter Wisconsin research supplies expenses/, order: 2 },
+                { pattern: /^\[3\]\s*Enter Wisconsin research computer rental expenses/, order: 3 },
+                { pattern: /^\[4\]\s*Enter applicable percentage of Wisconsin contract research expenses/, order: 4 },
+                { pattern: /^\[5\]\s*Enter expenses used to compute the federal orphan drug credit/, order: 5 },
+                { pattern: /^\[6\]\s*Add lines 1 through 5/, order: 6 },
+                { pattern: /^\[7\]\s*Wages included on line 6 that qualify for the Wisconsin development zones credit/, order: 7 },
+                { pattern: /^\[8\]\s*Subtract line 7 from line 6/, order: 8 },
+                { pattern: /^\[9\]\s*Enter average Wisconsin qualified research expenses for the three prior years/, order: 9 },
+                { pattern: /^\[9a\]\s*1st prior year qualified research expenses/, order: 10 },
+                { pattern: /^\[9b\]\s*2nd prior year qualified research expenses/, order: 11 },
+                { pattern: /^\[9c\]\s*3rd prior year qualified research expenses/, order: 12 },
+                { pattern: /^\[9d\]\s*Total \(add lines 9a through 9c\)/, order: 13 },
+                { pattern: /^\[9e\]\s*Divide line 9d by 3/, order: 14 },
+                { pattern: /^\[10\]\s*Multiply line 9e by 50%/, order: 15 },
+                { pattern: /^\[11\]\s*Subtract line 10 from line 8/, order: 16 },
+                { pattern: /^\[12\]\s*Check one of the boxes below to indicate the credit being claimed/, order: 17 },
+                { pattern: /^\[12a\]\s*Qualified research activities \(5\.75%\)/, order: 18 },
+                { pattern: /^\[12b\]\s*Qualified research activities related to internal combustion engines \(11\.5%\)/, order: 19 },
+                { pattern: /^\[12c\]\s*Qualified research activities related to certain energy efficient products \(11\.5%\)/, order: 20 },
+                { pattern: /^\[13\]\s*If line 10 is -0- because you did not have qualified research expenses/, order: 21 },
+                { pattern: /^\[13a\]\s*Qualified research activities \(2\.875%\)/, order: 22 },
+                { pattern: /^\[13b\]\s*Qualified research activities related to internal combustion engines \(5\.75%\)/, order: 23 },
+                { pattern: /^\[13c\]\s*Qualified research activities related to certain energy efficient products \(5\.75%\)/, order: 24 },
+                { pattern: /^\[14\]\s*Multiply line 11 by the credit rate indicated on line/, order: 25 },
+                { pattern: /^\[15a\]\s*Entity Name/, order: 26 },
+                { pattern: /^\[15a\]\s*FEIN/, order: 27 },
+                { pattern: /^\[15b\]\s*Entity Name/, order: 28 },
+                { pattern: /^\[15b\]\s*FEIN/, order: 29 },
+                { pattern: /^\[15c\]\s*Total pass through credits from additional schedule/, order: 30 },
+                { pattern: /^\[15d\]\s*Total pass through credits \(add lines 15a through 15c\)/, order: 31 },
+                { pattern: /^\[16\]\s*Total research credits \(add lines 14 and 15d\)/, order: 32 },
+                { pattern: /^\[16a\]\s*Fiduciaries - Fill in the amount of credit allocated to beneficiaries/, order: 33 },
+                { pattern: /^\[16b\]\s*Fiduciaries - Subtract line 16a from line 16/, order: 34 },
+                { pattern: /^\[17\]\s*Multiply line 16 .*by \.25 \(25%\)/, order: 35 },
+                { pattern: /^\[18\]\s*Amount of credit from line 16 .*used to offset tax/, order: 36 },
+                { pattern: /^\[19\]\s*Subtract line 18 from line 16/, order: 37 },
+                { pattern: /^\[20\]\s*Enter the lesser of line 17 or line 19/, order: 38 },
+                { pattern: /^\[21\]\s*Subtract line 20 from line 19/, order: 39 },
+                { pattern: /^\[22\]\s*Carryover of prior year.*s unused research credit/, order: 40 },
+                { pattern: /^\[23\]\s*Add lines 18, 21, and 22/, order: 41 }
+            ]
+        },
+        BOLD: [
+            "[8] Subtract line 7 from line 6. This is total Wisconsin research expenses .",
+            "[11] Subtract line 10 from line 8. This is your eligible Wisconsin qualified research expenses",
+            "[16] Total research credits (add lines 14 and 15d). Form 3 and 5S filers stop here .",
+            "[23] Add lines 18, 21, and 22. This is the total nonrefundable portion of the credit. Include Schedule CF if the credit was not used in full"
+        ]
+    },
+    DC: {
+        sectionOrder: [
+            "Section A — Regular Credit / RRC (Lines 1–13)",
+            "Section B—Alternative Simplified Credit. Skip this section if you are completing Section A.",
+            "Section C — Current Year Credit"
+        ],
+        sectionFieldOrders: {
+            "Section A — Regular Credit / RRC (Lines 1–13)": [
+                { pattern: /^\[1\]\s*Certain amounts paid or incurred to energy consortia/, order: 1 },
+                { pattern: /^\[2\]\s*Basic research payments to qualified organizations/, order: 2 },
+                { pattern: /^\[3\]\s*Qualified organization base period amount/, order: 3 },
+                { pattern: /^Subtract line 3 from line 2/, order: 4 },
+                { pattern: /^\[4\]\s*Note: Complete Section F before going to line 5/, order: 5 },
+                { pattern: /^\[6\]\s*Enter fixed-base percentage/, order: 6 },
+                { pattern: /^\[7\]\s*Enter average annual gross receipts/, order: 7 },
+                { pattern: /^\[8\]\s*Multiply line 7 by the percentage on line 6/, order: 8 },
+                { pattern: /^\[9\]\s*Subtract line 8 from line 5/, order: 9 },
+                { pattern: /^\[10\]\s*Multiply line 5 by/, order: 10 },
+                { pattern: /^\[11\]\s*Enter the smaller of line 9 or line 10/, order: 11 },
+                { pattern: /^\[12\]\s*Add lines 1, 4, and 11/, order: 12 },
+                { pattern: /^\[13\]\s*If you elect to reduce the credit under section 280C/, order: 13 }
+            ],
+            "Section B—Alternative Simplified Credit. Skip this section if you are completing Section A.": [
+                { pattern: /^\[14\]\s*Certain amounts paid or incurred to energy consortia/, order: 1 },
+                { pattern: /^\[15\]\s*Basic research payments to qualified organizations/, order: 2 },
+                { pattern: /^\[16\]\s*Qualified organization base period amount/, order: 3 },
+                { pattern: /^\[17\]\s*Subtract line 16 from line 15/, order: 4 },
+                { pattern: /^\[18\]\s*Add lines 14 and 17/, order: 5 },
+                { pattern: /^\[19\]\s*Multiply line 18 by/, order: 6 },
+                { pattern: /^\[20\]\s*Total qualified research expenses \(QREs\)/, order: 7 },
+                { pattern: /^\[21\]\s*Enter your total QREs for the prior 3 tax years/, order: 8 },
+                { pattern: /^\[22\]\s*Divide line 21 by 6/, order: 9 },
+                { pattern: /^\[23\]\s*Subtract line 22 from line 20/, order: 10 },
+                { pattern: /^\[24\]\s*/, order: 11 },
+                { pattern: /^\[25\]\s*Add lines 19 and 24/, order: 12 },
+                { pattern: /^\[26\]\s*If you elect to reduce the credit under section 280C/, order: 13 }
+            ],
+            "Section C — Current Year Credit": [
+                { pattern: /^\[27\]\s*Enter the portion of the credit from Form 8932/, order: 1 },
+                { pattern: /^\[28\]\s*Subtract line 27 from line 13 or line 26/, order: 2 },
+                { pattern: /^\[29\]\s*Credit for increasing research activities from partnerships/, order: 3 },
+                { pattern: /^\[30\]\s*Add lines 28 and 29/, order: 4 },
+                { pattern: /^\[31\]\s*Amount allocated to beneficiaries/, order: 5 },
+                { pattern: /^\[32\]\s*Estates and trusts, subtract line 31 from line 30/, order: 6 }
+            ]
+        },
+        BOLD: [
+            "[12] Add lines 1, 4, and 11",
+            "[13]If you elect to reduce the credit under section 280C, then multiply line 12 by",
+            "[25] Add lines 19 and 24",
+            "[26] If you elect to reduce the credit under section 280C, then multiply line 25 by",
+            "[30] Add lines 28 and 29"
         ]
     }
  

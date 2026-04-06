@@ -29,6 +29,7 @@ import { RdFormHelperService } from "./rdFormHelperService";
 import { processMassachusettsForm } from "./maScheduleRcGenerator";
 import { processNewJerseyForm } from "./njForm306Generator";
 import { processSouthCarolinaForm } from "./scSchTC18Generator";
+import { processWisconsinForm } from "./wiScheduleRGenerator";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -513,7 +514,13 @@ export class RdFormMapperService {
             continue;
           }
 
-          
+          if (resolvedStateCode === "WI") {
+              filledFormUrl= await processWisconsinForm(
+                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb, state,
+              );
+
+  continue;
+}
           // filledFormUrl = await this.generatePDFNonFillable(
           //   enhancedMapperConfig,
           //   accountRid,
@@ -1397,6 +1404,7 @@ export class RdFormMapperService {
             : hasState
               ? ConfigType.STATE_ONLY
               : ConfigType.NONE;
+      configLevelKey = ConfigType.STATE_ONLY;
       const executionConfigMap: Record<string, () => Promise<any>> = {
         [ConfigType.BOTH]: async () => {
           const federalResult = await this.processFederalForms(
@@ -1544,16 +1552,16 @@ export class RdFormMapperService {
         rawQueries.checkFinancialSignOffDone(schemaName, caseRid),
         { type: "SELECT" },
       );
-      if (
-        !isFinancialSignOffDone ||
-        !isFinancialSignOffDone.financial_working_signoff
-      ) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
-        };
-      }
+      // if (
+      //   !isFinancialSignOffDone ||
+      //   !isFinancialSignOffDone.financial_working_signoff
+      // ) {
+      //   return {
+      //     statusCode: HttpStatus.FAILED,
+      //     message: HttpStatus.FAILED_MESSAGE,
+      //     errorMessage: STATUS_MESSAGE.rdCreditFinancialSignOffPending,
+      //   };
+      // }
      
       const fetchAccountFiscalStartEndDate: any = await orgDb.query(
         rawQueries.fetchAccountStartEndDate(accountRid, schemaName),
