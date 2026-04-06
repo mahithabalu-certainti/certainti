@@ -606,7 +606,7 @@ const Calendar = () => {
           </div>
         </div>
 
-        {isMetadataError || isEventsError ? (
+        {isMetadataError || (isEventsError && isNoEmailConfigError) ? (
           isNoEmailConfigError ? (
             <div className='flex h-full flex-col'>
               <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
