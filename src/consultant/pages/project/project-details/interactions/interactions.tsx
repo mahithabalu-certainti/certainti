@@ -134,6 +134,18 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [sortField, setSortField] = useState<string>('r_number');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
 
+  // Convert is_primary filter from string array ['true'/'false'] to boolean for the API
+  const processedFilters = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filters = { ...(appliedFilters as Record<string, any>) };
+    if (filters.is_primary?.equals !== undefined) {
+      const raw = Array.isArray(filters.is_primary.equals)
+        ? filters.is_primary.equals[0]
+        : filters.is_primary.equals;
+      filters.is_primary = { equals: raw === 'true' };
+    }
+    return filters;
+  }, [appliedFilters]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
@@ -209,7 +221,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
       sort: sortField,
       sort_by: sortBy,
-      filters: appliedFilters,
+      filters: processedFilters,
       project_rid: projectDetails?.project_rid || '',
       project_fiscal_rid:
         projectDetails?.project_fiscal_rid ||
