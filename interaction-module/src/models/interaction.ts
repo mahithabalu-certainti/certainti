@@ -43,7 +43,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   transaction_id? : string | null;
   four_part_assessment_rid? : string | null;
   interaction_status_rid? : string | null;
-  is_primary?: boolean | null;
+  is_primary?: boolean;
 }
 
 export interface InteractionCreationAttributes
@@ -94,7 +94,7 @@ export class Interaction
   public transaction_id? : string | null;
   public four_part_assessment_rid? : string | null;
   public interaction_status_rid? : string | null;
-  public is_primary?: boolean | null;
+  public is_primary?: boolean;
 
   static initialize(
     sequelize: Sequelize,
@@ -154,7 +154,7 @@ export class Interaction
         transaction_id: { type: DataTypes.STRING, allowNull: true },
         four_part_assessment_rid : { type : DataTypes.STRING, allowNull : true},
         interaction_status_rid : { type : DataTypes.STRING, allowNull : true},
-        is_primary: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: null }
+        is_primary: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false }
       },
       {
         sequelize,
