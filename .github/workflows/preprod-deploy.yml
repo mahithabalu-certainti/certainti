@@ -599,6 +599,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           SUBSCRIPTION_RENEW_TIMER = "subscription-renewal-timer"
+          TRIGGER_AI_REFINE_SUMMARY=https://platform-demo.certainti.ai/refine_summary
           EOF
           echo "$ENV_FILE file created successfully!"
           
