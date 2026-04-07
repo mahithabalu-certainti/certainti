@@ -157,9 +157,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [showAssessmentToggle, setShowAssessmentToggle] =
     useState<boolean>(false);
 
-  // Convert is_primary filter from string array to boolean/null for the API
   const processedFilters = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filters = { ...(appliedFilters as Record<string, any>) };
     if (filters.is_primary?.equals !== undefined) {
       const raw = Array.isArray(filters.is_primary.equals)
@@ -167,8 +165,6 @@ const Interactions: React.FC<InteractionsProps> = ({
         : filters.is_primary.equals;
       if (raw === 'null') {
         filters.is_primary = { equals: null };
-      } else {
-        filters.is_primary = { equals: raw === 'true' };
       }
     }
     return filters;
