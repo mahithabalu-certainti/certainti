@@ -747,24 +747,24 @@ CA: {
     },
     LA: {
         sectionOrder: [
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION"
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765"
         ],
         sectionFieldOrders: {
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION": [
-                { pattern: "[1] Prior year LA R&D expenditures (oldest)", order: 1 },
-                { pattern: "[2] Prior year LA R&D expenditures (middle)", order: 2 },
-                { pattern: "[3] Prior year LA R&D expenditures (most recent)", order: 3 },
-                { pattern: "[4] 3 previous years average", order: 4 },
-                { pattern: /^\[5\] Base calculation \(\d+(\.\d+)?% × Line 4\)$/, order: 5 },
-                { pattern: "[6] Current year LA R&D expenditures", order: 6 },
-                { pattern: "[7] Increase in LA R&D expenditures (Line 6 minus Line 5, not less than 0)", order: 7 },
-                { pattern: /^\[8\] Credit percentage \(\d+(\.\d+)?%\)$/, order: 8 },
-                { pattern: "[9] Louisiana Research Credit (Line 7 × Line 8)", order: 9 }
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765": [
+                { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
+                { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
+                { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
+                { pattern: "[4] 3 Previous Years Average", order: 4 },
+                { pattern: /^\[5\] Base Calculation \(\d+(\.\d+)?% x Line 4\)$/, order: 5 },
+                { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
+                { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
+                { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 }
             ]
         },
         BOLD: [
-            "[4] 3 previous years average",
-            "[9] Louisiana Research Credit (Line 7 × Line 8)"
+            "[4] 3 Previous Years Average",
+            "[9] Louisiana Research Credit (Line 7 times Line 8)"
         ]
     },
     NE: {

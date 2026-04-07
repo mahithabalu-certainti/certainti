@@ -683,13 +683,16 @@ class RdFormMapperSchemaService {
           ${whereClause}
           ORDER BY t.${orderByField} ASC`;
       } else {
+        const selectField = fieldName.includes(".") ? fieldName : `t.${fieldName}`;
+const orderByRef  = orderByField.includes(".") ? orderByField : `t.${orderByField}`;
+
         query = `
           SELECT
-            t.${fieldName} AS field_value,
+            ${selectField} AS field_value,
             ROW_NUMBER() OVER (ORDER BY t.${orderByField} ASC) AS row_index
           ${fromClause}
           ${whereClause}
-          ORDER BY t.${orderByField} ASC`;
+          ORDER BY ${orderByRef} ASC`;
       }
 
       logMessage(`Executing query: ${query}`);

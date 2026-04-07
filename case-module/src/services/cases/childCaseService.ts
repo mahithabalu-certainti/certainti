@@ -7,8 +7,8 @@ import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, D
 import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
 import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
-import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids } from "../../utils/dossierRawquery";
-import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook } from "../rdStateProcessors/stateRdCreditExcelGenerators";
+import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids, fetchCountryCalcDataForDossier } from "../../utils/dossierRawquery";
+import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook, addFederalSheetToWorkbook, addStateSummarySheetToWorkbook } from "../rdStateProcessors/stateRdCreditExcelGenerators";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
 import RDCreditSchemaService from "../rdComputation/schemaService";
@@ -411,9 +411,23 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
     const finalStructuredData = techSummary.technicalSummary.length < 1 ? [] : await generatePdfBuffer(techSummary.technicalSummary)
 
-    // Generate combined state financial calculations Excel from stored results
+    // Generate combined financial calculations Excel (federal + state sheets + summary)
     let stateFinancialCalcUrl: string | null = null;
     try {
+      const combinedWorkbook = createWorkbook();
+      let sheetsAdded = 0;
+
+      // Federal USA sheet
+      const federalCalcRows: any[] = (await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid)))[0];
+      if (federalCalcRows.length > 0) {
+        const fedRow = federalCalcRows[0];
+        const inputParams   = typeof fedRow.input_params   === "string" ? JSON.parse(fedRow.input_params)   : (fedRow.input_params   ?? {});
+        const computedFields = typeof fedRow.computed_fields === "string" ? JSON.parse(fedRow.computed_fields) : (fedRow.computed_fields ?? {});
+        addFederalSheetToWorkbook(combinedWorkbook, inputParams, computedFields);
+        sheetsAdded++;
+      }
+
+      // State sheets
       const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossier(schemaName, caseRid)))[0];
       if (stateCalcRows.length > 0) {
         const stateRids = stateCalcRows.map((r: any) => r.state_rid);
@@ -421,21 +435,27 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
         const stateCodeMap: Record<string, string> = {};
         stateCodeRows.forEach((r: any) => { stateCodeMap[r.rid] = r.state_code; });
 
-        const combinedWorkbook = createWorkbook();
-        const sheetsAdded: string[] = [];
         for (const row of stateCalcRows) {
           const stateCode = stateCodeMap[row.state_rid];
           if (!stateCode) continue;
           const computeResult = { inputFields: row.input_params, computedFields: row.computed_fields };
           const added = await addStateSheetToWorkbook(combinedWorkbook, stateCode, computeResult);
-          if (added) sheetsAdded.push(stateCode);
-        }
-        if (sheetsAdded.length > 0) {
-          stateFinancialCalcUrl = await uploadCombinedWorkbook(combinedWorkbook, caseRid, caseDetails!.fiscal_year, accountRid, accountNumber);
+          if (added) sheetsAdded++;
         }
       }
+
+      // State credit summary sheet
+      const stateSummary = await this.rdCreditSchemaService.getStateSummaryResults(accountNumber, caseRid, schemaName);
+      if (stateSummary && Object.keys(stateSummary.federal ?? stateSummary).length > 0) {
+        addStateSummarySheetToWorkbook(combinedWorkbook, stateSummary);
+        sheetsAdded++;
+      }
+
+      if (sheetsAdded > 0) {
+        stateFinancialCalcUrl = await uploadCombinedWorkbook(combinedWorkbook, caseRid, caseDetails!.fiscal_year, accountRid, accountNumber);
+      }
     } catch (err) {
-      logMessage(`Error generating state financial calculations Excel for dossier: ${err}`);
+      logMessage(`Error generating financial calculations Excel for dossier: ${err}`);
     }
 
     const files: any[] = [

@@ -116,6 +116,7 @@ interface CaseAttributes {
   credit_tax_limit_mn?:number;
   basic_research_amount_mn?:number;
   nonprofit_development_contributions_mn?:number;
+  credit_carry_over_mn?:number;
 
   property_factor_off_campus_ne?: number;
   property_factor_on_campus_ne?: number;
@@ -254,6 +255,7 @@ export class Case
   public basic_research_amount?:number;
   public nonprofit_development_contributions?:number;
   public credit_tax_limit_mn?:number;
+  public credit_carry_over_mn?:number;
 
   public property_factor_off_campus_ne?: number;
   public property_factor_on_campus_ne?: number;
@@ -391,7 +393,7 @@ export class Case
         credit_tax_limit_mn: { type: DataTypes.DECIMAL, allowNull: true },
         basic_research_amount_mn: { type: DataTypes.DECIMAL, allowNull: true },
         nonprofit_development_contributions_mn: { type: DataTypes.DECIMAL, allowNull: true },
-
+        credit_carry_over_mn: { type: DataTypes.DECIMAL, allowNull: true },
          property_factor_off_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
          property_factor_on_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
          payroll_factor_off_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
