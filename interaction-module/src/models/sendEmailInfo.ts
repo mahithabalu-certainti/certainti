@@ -10,12 +10,13 @@ export interface SendEmailInfoAttributes {
   name?: string;
   project_fiscal_rid?: string;
   user_rid?: string;
-  is_email_send?: boolean;
+  is_email_sent?: boolean;
   created_datetime?: Date;
   modified_datetime?: Date;
   is_interaction_followup?: boolean;
   interaction_level: string;
-  email_sent_at : string | null
+  email_sent_at : string | null;
+  is_interaction_reinitiated?: boolean;
 }
 
 export interface SendEmailInfoCreationAttributes
@@ -33,12 +34,13 @@ export class SendEmailInfo
   public name?: string;
   public project_fiscal_rid?: string;
   public user_rid?: string;
-  public is_email_send?: boolean;
+  public is_email_sent?: boolean;
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public is_interaction_followup?: boolean;
   public interaction_level!: string;
-  public email_sent_at! : string | null
+  public email_sent_at! : string | null;
+  public is_interaction_reinitiated?: boolean;
 
   static initialize(
     sequelize: Sequelize,
@@ -58,7 +60,8 @@ export class SendEmailInfo
         name: { type: DataTypes.STRING(50), allowNull: true },
         project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: true },
         user_rid: { type: DataTypes.STRING(50), allowNull: true },
-        is_email_send: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        is_email_sent: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        is_interaction_reinitiated: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         created_datetime: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
         is_interaction_followup:{ type: DataTypes.BOOLEAN, allowNull: true},

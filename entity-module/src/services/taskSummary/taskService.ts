@@ -163,9 +163,8 @@ export class TaskService {
 
       // Apply global filters (account-level access control)
       if (globalFilters && Object.keys(globalFilters).length > 0) {
-        const parentAccountRid = Object.keys(globalFilters)[0];
-        const childAccountRids = globalFilters[parentAccountRid];
-        const filterAccounts = [...childAccountRids, parentAccountRid];
+
+        const filterAccounts = await this.schemaService.computeGlobalAccountFilter(globalFilters);
 
         // Intersect frontend filters with backend-accessible accounts
         if (!isCustomGlobal) {
@@ -254,35 +253,22 @@ export class TaskService {
 
       const caseMap = new Map<string, string>();
       if (flag === 'milestone') {
-        // Fetch resources for each schema number
-        await Promise.all(
-          Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-            try {
-              const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
-                /\D/g,
-                ""
-              )}`;
-              // Get unique RIDs for this schema
-              const uniqueRids = [...new Set(attachments.map((t: any) => t.attach_to))];
+        const uniqueCaseRids = [...new Set(tasksRaw.map((t: any) => t.attach_to).filter(Boolean))];
 
-              if (uniqueRids.length > 0) {
-                // Fetch from org database using schema number
-                const orgDb = await this.fetchOrgDb();
-                const casesForSchema = await orgDb.query(
-                  `SELECT rid, case_name FROM ${schemaName}.cases WHERE rid IN (:caseRids)`,
-                  { replacements: { caseRids: uniqueRids }, type: 'SELECT' }
-                );
+        if (uniqueCaseRids.length > 0) {
+          try {
+            const caseSummary = await mainSequelize.query(
+              `SELECT case_rid, case_name FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE case_rid IN (:caseRids)`,
+              { replacements: { caseRids: uniqueCaseRids }, type: 'SELECT' }
+            ) as any[];
 
-                // Add to resource map
-                casesForSchema.forEach((r: any) => {
-                  caseMap.set(r.rid, r.case_name);
-                });
-              }
-            } catch (error) {
-              console.error(`Error fetching resources for schema ${schemaNumber}:`, error);
-            }
-          })
-        );
+            caseSummary.forEach((r: any) => {
+              caseMap.set(r.case_rid, r.case_name);
+            });
+          } catch (error) {
+            console.error(`Error fetching cases from case_summary:`, error);
+          }
+        }
       }
       else {
         await Promise.all(
@@ -406,6 +392,12 @@ export class TaskService {
           task_rid: taskData.task_rid
         };
       }));
+
+      if (flag === 'milestone') {
+        tasks = tasks.filter(task => {
+          return caseMap.get(task.attach_to);
+        });
+      }
 
       // Apply frontend filters
       if (assignedToFilter) {
@@ -716,9 +708,7 @@ export class TaskService {
       whereClause[Op.and] = whereClause[Op.and] || [];
 
       if (globalFilters && Object.keys(globalFilters).length > 0) {
-        const parentAccountRid = Object.keys(globalFilters)[0];
-        const childAccountRids = globalFilters[parentAccountRid];
-        const filterAccounts = [...childAccountRids, parentAccountRid];
+        const filterAccounts = await this.schemaService.computeGlobalAccountFilter(globalFilters);
 
         // Intersect frontend filters with backend-accessible accounts
         if (!isCustomGlobal) {
@@ -823,35 +813,22 @@ export class TaskService {
 
       const caseMap = new Map<string, string>();
       if (flag === 'milestone') {
-        // Fetch resources for each schema number
-        await Promise.all(
-          Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-            try {
-              const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
-                /\D/g,
-                ""
-              )}`;
-              // Get unique RIDs for this schema
-              const uniqueRids = [...new Set(attachments.map((t: any) => t.attach_to))];
+        const uniqueCaseRids = [...new Set(tasksRaw.map((t: any) => t.attach_to).filter(Boolean))];
 
-              if (uniqueRids.length > 0) {
-                // Fetch from org database using schema number
-                const orgDb = await this.fetchOrgDb();
-                const casesForSchema = await orgDb.query(
-                  `SELECT rid, case_name FROM ${schemaName}.cases WHERE rid IN (:caseRids)`,
-                  { replacements: { caseRids: uniqueRids }, type: 'SELECT' }
-                );
+        if (uniqueCaseRids.length > 0) {
+          try {
+            const caseSummary = await mainSequelize.query(
+              `SELECT rid, case_name FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE rid IN (:caseRids)`,
+              { replacements: { caseRids: uniqueCaseRids }, type: 'SELECT' }
+            ) as any[];
 
-                // Add to resource map
-                casesForSchema.forEach((r: any) => {
-                  caseMap.set(r.rid, r.case_name);
-                });
-              }
-            } catch (error) {
-              console.error(`Error fetching resources for schema ${schemaNumber}:`, error);
-            }
-          })
-        );
+            caseSummary.forEach((r: any) => {
+              caseMap.set(r.rid, r.case_name);
+            });
+          } catch (error) {
+            console.error(`Error fetching cases from case_summary:`, error);
+          }
+        }
       }
       else {
         await Promise.all(
@@ -1255,6 +1232,8 @@ export class TaskService {
         "Account Name": "Account Name",
         "Task Name": flag === 'milestone' ? "Task Name" : "Activity Name",
         "Description": "Description",
+        "Start Date": "Start Date",
+        "Due Date" : "Due Date",
         "Fiscal Year": "Fiscal Year",
         [flag === 'milestone' ? "Related To Name" : "Related To Name"]: "Related To Name",
         [flag === 'milestone' ? "Related Entity" : "Related Entity"]: "Related Entity",
@@ -1429,6 +1408,24 @@ export class TaskService {
       "Priority": task.priority_name || '-',
       "Status": task.status_name || '-',
       "Account Status": task.account_status_name || '-',
+      "Start Date": task.effective_start_datetime
+        ? timezone && isValidTimezone(timezone)
+          ? moment(task.effective_start_datetime)
+            .tz(timezone)
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+          : moment(task.effective_start_datetime).format(
+            "YYYY-MMM-DD, hh:mm:ss A"
+          )
+        : "-",
+      "Due Date": task.effective_end_datetime
+        ? timezone && isValidTimezone(timezone)
+          ? moment(task.effective_end_datetime)
+            .tz(timezone)
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+          : moment(task.effective_end_datetime).format(
+            "YYYY-MMM-DD, hh:mm:ss A"
+          )
+        : "-",
       "Created By": task.created_by_name || '-',
       "Created On": task.created_datetime
         ? timezone && isValidTimezone(timezone)

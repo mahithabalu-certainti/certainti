@@ -529,9 +529,11 @@ export class CaseManagementService {
             if(statusMap.get(data.status_rid) === 'In-Active') {
               const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequence(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!));
               await this.caseManangementSchemaService.updateSequenceForInactive(findTaskAfterDeleteData)
+              await mainDb.query(rawQueries.updateStatusForWorkFlowConnector(data.status_rid, data.rid));
             } else {
               const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequenceForActive(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!, isTaskExists.rid));
               await this.caseManangementSchemaService.updateSequenceForActive(findTaskAfterDeleteData)
+              await mainDb.query(rawQueries.updateStatusForWorkFlowConnector(data.status_rid, data.rid));
             }
           }
         }
@@ -593,7 +595,7 @@ export class CaseManagementService {
     const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(1,1, '', '', {},'', false, true, rid), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       let targetData : any[] = []
-      targetData = result.map((d : any) => d.workflow_connector.map((w : any) => {
+      targetData = result.map((d : any) => d.workflow_connector.filter((f : any) => f.target_name !== null).map((w : any) => {
         return {
           target_rid : w.target_rid,
           target_name : w.target_name
@@ -646,6 +648,7 @@ export class CaseManagementService {
         let statusType;
         let taskStatusType;
         let tagNames;
+        let filingTypeIds = [...new Set(result.array_agg.map((d : any) => d.case_filing_type_rid))]
 
         let priorityQuery = rawQueries.getAllPriorityTypes(uniquePriorityIds)
         if(priorityQuery) {
@@ -675,6 +678,11 @@ export class CaseManagementService {
         if(tagQuery) {
           tagNames = await mainDb.query(tagQuery) 
         }
+        let caseFilingTypeQuery = rawQueries.getCaseFilingTypeByIds(filingTypeIds);
+        let caseFilingType;
+        if(caseFilingTypeQuery) {
+          caseFilingType = await mainDb.query(caseFilingTypeQuery)
+        }
         const [fetchCaseStatus] = await mainDb.query<caseStatusType>(rawQueries.getCaseStatusById(caseDetails?.status_rid!), {type : QueryTypes.SELECT});
         
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
@@ -684,7 +692,7 @@ export class CaseManagementService {
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
         let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
         let tagMap : Map<string, string> = new Map(tagNames?.[0]?.map((d : any) => [d.rid, d.tag_name]))
-        
+        let caseFilingTypeMap : Map<string, string> = new Map(caseFilingType?.[0]?.map((d : any) => [d.rid, d.filing_type_name]))
         let dynamicResult;
         if(fetchCaseStatus?.status_name.toLowerCase() === "audit review") {
           dynamicResult = result.array_agg
@@ -696,6 +704,7 @@ export class CaseManagementService {
           return {
             rid : d.rid,
             milestone_name : d.milestone_name,
+            filing_type_name : caseFilingTypeMap.get(d.case_filing_type_rid) || null,
             task_count : d.task_count,
             tasks : d.tasks !== null ? await Promise.all(d.tasks.map(async (d : any) => {
               if(assignedToMap.get(d.assigned_to) !== undefined) {
@@ -1064,7 +1073,9 @@ async listEmailTemplates (
     }
   }
   async linkTask (data : any) {
-      const result = await this.caseManangementSchemaService.taskWorkflowConnector(data);
+      const mainDb = await this.getMainDb();
+      const getActiveStatus : any = await mainDb.query(rawQueries.fetchActiveStatus())
+      const result = await this.caseManangementSchemaService.taskWorkflowConnector(data, getActiveStatus[0][0].rid);
       return result;
     }
   async deleteLinkTask (data : any) {

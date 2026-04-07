@@ -53,6 +53,51 @@ routes.get(
   controller.interactionsController.getInteractionLevel
 );
 routes.get(
+  "/mailbox/folders",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listMailboxFolders
+);
+routes.get(
+  "/mailbox/messages",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listMailboxMessages
+);
+routes.get(
+  "/mailbox/inbox",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listInboxMessages
+);
+routes.get(
+  "/mailbox/messages/attachments",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getMailboxAttachmentById
+);
+routes.get(
+  "/mailbox/messages/:messageId",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getMailboxMessageById
+);
+routes.get(
+  "/calendar/metadata",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getCalendarMetadata
+);
+routes.get(
+  "/calendar/events",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listCalendarEvents
+);
+routes.get(
+  "/calendar/events/:eventId",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getCalendarEventById
+);
+routes.post(
+  "/calendar/events/:eventId/cancel",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.cancelCalendarEvent
+);
+routes.get(
   "/interactionSource",
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionSource
@@ -76,10 +121,20 @@ routes.put(
   controller.interactionsController.updateTechSummaryContext
 );
 routes.post(
+  "/refineSummary",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.interactionsController.refineSummary
+);
+routes.post(
+  "/refineSummary/save",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.interactionsController.saveRefineSummary
+);
+routes.post(
   "/accountInterctions/create",
   checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.createAccountInteraction
-);  
+);
 
 
 routes.get('/technicalSummary/export', checkUserStatusMiddleware("projects_tech_summary_export"), controller.interactionsController.exportTechnicalSummary)
@@ -114,4 +169,13 @@ routes.post("/sendInteraction",
   controller.interactionsController.sendInteraction
 );
 //routes.post("/new", checkUserStatusMiddleware("NA"), controller.interactionsController.createResource);
+routes.post('/fourPartAssessment/list', checkUserStatusMiddleware("four_part_assessment_view_edit"), controller.interactionsController.fetchFourPartAssessmentList)
+routes.post('/fourPartAssessment/details', checkUserStatusMiddleware('four_part_assessment_view_edit'), controller.interactionsController.getFpaDetails)
+routes.post('/fourPartAssessment/export', checkUserStatusMiddleware("four_part_assessment_export"), controller.interactionsController.exportFetchFourPartAssessmentList)
+routes.post('/fourPartAssessment/update', checkUserStatusMiddleware("NA"), controller.interactionsController.updateInteractionStatus)
+routes.get("/assessmentSource", checkUserStatusMiddleware("NA"), controller.interactionsController.getInteractionAssessmentSource)
+
+routes.post('/rdAssessmentAudit/list', checkUserStatusMiddleware("rd_assessment_status_view"), controller.interactionsController.listAiAssessmentAudit)
+routes.post('/rdAssessmentAudit/export', checkUserStatusMiddleware("rd_assessment_status_export"), controller.interactionsController.exportAiAssessmentAudit)
+
 export default routes;

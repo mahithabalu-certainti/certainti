@@ -8,13 +8,13 @@ import { Case } from "../../models/caseModel";
  */
 
 export interface ConfigJson {
-    tier1_rate: number;
-    tier2_rate: number;
-    credit_rate: number;
-    qre_cap_rate: number;
-    tier2_base_add: number;
-    threshold_amount: number;
+    qre_credit_percentage_c2: number;
+    qre_credit_percentage_c3: number;
+    qre_credit_percentage_c1: number;
+    rrc_qre_addition: number;
+    qre_threshold_amount: number;
     fixed_base_percentage: number;
+    sub_con_percent: number;
 }
 export class RdCreditCalculatorForAZ {
 
@@ -46,12 +46,17 @@ export class RdCreditCalculatorForAZ {
             fiscalYearEnded : fiscalYear
         });
         const computedFields = await this.buildComputedFields(ascResult, rrcResult, config);
-
+        const finalCredit = rrcResult.total_az_final_credit;
+        console.log("finalCredit for Az:", finalCredit);
         return {
             inputFields,
             computedFields,
-            finalCredit: ascResult.total_az_final_credit,
+            finalCredit: finalCredit,
             totalQRE: rrcResult.total_current_year_qre,
+            totalWages: this.round2(stateRdData.currentYearQREs.wages) || 0,
+            totalContract: this.round2(stateRdData.currentYearQREs.contract) || 0,
+            totalSupplies: this.round2(stateRdData.currentYearQREs.supplies) || 0,
+            averageAnnualGrossReceipts:this.round2(rrcResult.average_gross_receipts) || 0
         }
 
     }
@@ -70,18 +75,20 @@ export class RdCreditCalculatorForAZ {
         const line10 = 0;
 
         //---- Line 11: wages
-        const line11 = currentYearQREs.wages || 0;
+        const line11 = new Decimal(currentYearQREs.wages ?? 0.00)
 
         //---- Line 12: supplies
-        const line12 = currentYearQREs.supplies || 0;
+        const line12 = new Decimal(currentYearQREs.supplies ?? 0.00)
 
         //---- Line 13: cost to rent
-        const line13 = caseData.lease_costs_of_computers || 0;
+        const line13 = new Decimal(caseData.lease_costs_of_computers_az ?? 0.00);
 
         //---- Line 14: contract
-        const line14 = currentYearQREs.contract || 0;
+        let line14 = new Decimal(0);
+        line14 = this.round2(new Decimal(currentYearQREs.contract || 0).mul(new Decimal((config.sub_con_percent ?? 0) / 100)));
+        
 
-        const totalCurrentYearQRE = new Decimal(line11 || 0).plus(line12 || 0).plus(line14 || 0).plus(line13 || 0);
+        const totalCurrentYearQRE = line11.plus(line12).plus(line14).plus(line13);
         //---- Line 15: total QRE
         const line15 = totalCurrentYearQRE;
 
@@ -99,7 +106,7 @@ export class RdCreditCalculatorForAZ {
         const finalLine19 = line19.lt(0) ? new Decimal(0) : line19
 
         //---- Line 20: Multiply line 15 by 50%
-        const line20 = line15.mul(config.qre_cap_rate/100);
+        const line20 = line15.mul(config.qre_credit_percentage_c1/100);
 
         //---- Line 21: Enter smaller of line 19 or line 20
         const line21 = Decimal.min(finalLine19, line20);
@@ -115,15 +122,15 @@ export class RdCreditCalculatorForAZ {
 
         // If line 22 is $2,500,000 or less, complete line 23 and skip lines 24 through 26.
         // If line 22 is more than $2,500,000, skip line 23 and complete lines 24 through 26.
-        if (line22.lte(config.threshold_amount)) {
+        if (line22.lte(config.qre_threshold_amount)) {
             //-- Line 23: Multiple line 22 by 24%
-            line23 = line22.mul(config.credit_rate/100);
+            line23 = line22.mul(config.qre_credit_percentage_c2/100);
             line27a = line23;
         } else {
             line23 = new Decimal(0)
-            line24 = line22.minus(config.threshold_amount);
-            line25 = line24.mul(config.tier2_rate/100);
-            line26 = line25.plus(config.tier2_base_add);
+            line24 = line22.minus(config.qre_threshold_amount);
+            line25 = line24.mul(config.qre_credit_percentage_c3/100);
+            line26 = line25.plus(config.rrc_qre_addition);
             line27a = line26;
         }
 
@@ -132,7 +139,7 @@ export class RdCreditCalculatorForAZ {
             wages: line11,
             supplies: line12,
             cost_to_rent: this.round2(line13) || 0.00,
-            contract: line14,
+            contract: this.round2(line14) || 0.00,
             total_current_year_qre: this.round2(line15) || 0.00,
             average_gross_receipts: this.round2(line16) || 0.00,
             fixed_base_percentage: line17,
@@ -168,10 +175,10 @@ export class RdCreditCalculatorForAZ {
         const line79 = new Decimal(currentYearQREs.supplies || 0);
 
         //---- Line 80: cost to rent
-        const line80 = new Decimal(caseData.lease_costs_of_computers || 0);
+        const line80 = new Decimal(caseData.lease_costs_of_computers_az || 0);
 
         //---- Line 81: contract
-        const line81 = new Decimal(currentYearQREs.contract || 0);
+        const line81 = this.round2(new Decimal(currentYearQREs.contract || 0).mul(new Decimal((config.sub_con_percent ?? 0) / 100)));
 
         //---- Line 82: total QRE
         const line82 = new Decimal(line78.plus(line79).plus(line80).plus(line81))
@@ -187,7 +194,7 @@ export class RdCreditCalculatorForAZ {
             const line85 = Decimal.max(new Decimal(line82).minus(line84), 0);
 
             //---- Line 86: 50% of current year QRE
-            const line86 = line82.mul(config.qre_cap_rate/100);
+            const line86 = line82.mul(config.qre_credit_percentage_c1/100);
 
             //---- Line 87: Enter the lesser of line 85 or line 86
             const line87 = Decimal.min(line85, line86);
@@ -200,20 +207,20 @@ export class RdCreditCalculatorForAZ {
 
             // If line 88 is $2,500,000 or less, complete line 89 and skip lines 90 through 92.
             // If line 88 is more than $2,500,000, skip line 89 and complete lines 90 through 92.
-            if (line88.lte(config.threshold_amount)) {
-                line89 = line88.mul(config.tier1_rate/100);
+            if (line88.lte(config.qre_threshold_amount)) {
+                line89 = line88.mul(config.qre_credit_percentage_c2/100);
                 line93 = line89;
             } else {
-                line90 = line88.minus(config.threshold_amount);
-                line91 = line90.mul(config.tier2_rate/100);
-                line92 = line91.plus(config.tier2_base_add);
+                line90 = line88.minus(config.qre_threshold_amount);
+                line91 = line90.mul(config.qre_credit_percentage_c3/100);
+                line92 = line91.plus(config.rrc_qre_addition);
                 line93 = line92;
             }
             return {
                 wages: this.round2(line78),
                 supplies: this.round2(line79),
                 lease_computers : this.round2(line80),
-                contract: this.round2(line81),
+                contract: this.round2(line81) || 0.00,
                 total_current_year_qre: this.round2(line82) || 0.00,
                 total_prior_3years_qre: this.round2(line83)|| 0.00,
                 adjusted_base_amount: this.round2(line84) || 0.00,
@@ -297,9 +304,10 @@ export class RdCreditCalculatorForAZ {
      * @returns 
      */
     async buildComputedFields(creditASC: any, creditRRC: any, config : ConfigJson) {
+
         let rrc ={
-            "[11] Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)": creditRRC.wages,
-            "[12] Cost of supplies": creditRRC.supplies,
+            "[11] Wages for qualified services (do not include wages used in figuring the federal work opportunity credit)": this.round2(creditRRC.wages),
+            "[12] Cost of supplies": this.round2(creditRRC.supplies),
             "[13] Cost to rent or lease computers": creditRRC.cost_to_rent,
             "[14] Contract research expenses: See instructions": creditRRC.contract,
             "[15] Total qualified research expenses. Add line 11 through line 14": creditRRC.total_current_year_qre,
@@ -307,15 +315,15 @@ export class RdCreditCalculatorForAZ {
             [`[17] Fixed-base percentage [not more than ${creditRRC.fixed_base_percentage}%]: See instructions`]: `${creditRRC.fixed_base_percentage}%`,
             "[18] Base amount: Multiply line 16 by the percentage on line 17. Enter the result": creditRRC.base_amount,
             "[19] Subtract line 18 from line 15. If less than zero, enter 0": creditRRC.excess_qre_over_base,
-            [`[20] Multiply line 15 by ${creditRRC?.config?.qre_cap_rate}% (${creditRRC?.config?.qre_cap_rate / 100}). Enter the result`]: creditRRC.half_total_qre,
+            [`[20] Multiply line 15 by ${config?.qre_credit_percentage_c1}% (${config?.qre_credit_percentage_c1 / 100}). Enter the result`]: creditRRC.half_total_qre,
             "[21] Enter the lesser of line 19 or line 20": creditRRC.total_section_b_credit,
             "[22] Add lines 10 and 21. Enter the total": creditRRC.total_az_credit_before_limits,
-            [`* If line 22 is $ ${creditRRC?.config?.threshold_amount} or less, complete line 23 and skip lines 24 through 26.`]: "",
-            [`* If line 22 is more than $ ${creditRRC?.config?.threshold_amount}, skip line 23 and complete lines 24 through 26.`]: "",
-            [`[23] Multiply line 22 by ${creditRRC?.config?.credit_rate}% (${creditRRC?.config?.credit_rate / 100}). Enter the result`]: creditRRC.credit_if_under_threshold,
-            [`[24] Subtract $ ${creditRRC?.config?.threshold_amount} from line 22. Enter the difference`]: creditRRC.excess_amount || '',
-            [`[25] Multiply line 24 by ${creditRRC?.config?.tier2_rate}%. Enter the result`]: creditRRC.credit_on_excess || '',
-            [`[26] Add ${creditRRC?.config?.tier2_base_add} to line 25. Enter the total`]: creditRRC.credit_if_over_threshold || '',
+            [`* If line 22 is $ ${config?.qre_threshold_amount} or less, complete line 23 and skip lines 24 through 26.`]: "",
+            [`* If line 22 is more than $ ${config?.qre_threshold_amount}, skip line 23 and complete lines 24 through 26.`]: "",
+            [`[23] Multiply line 22 by ${config?.qre_credit_percentage_c2}% (${config?.qre_credit_percentage_c2 / 100}). Enter the result`]: creditRRC.credit_if_under_threshold,
+            [`[24] Subtract $ ${config?.qre_threshold_amount} from line 22. Enter the difference`]: creditRRC.excess_amount || '',
+            [`[25] Multiply line 24 by ${config?.qre_credit_percentage_c3}%. Enter the result`]: creditRRC.credit_on_excess || '',
+            [`[26] Add ${config?.rrc_qre_addition} to line 25. Enter the total`]: creditRRC.credit_if_over_threshold || '',
             "[27 a] If the taxpayer is electing the regular credit, enter the amount from line 23 or line 26.": creditRRC.total_az_final_credit || '',
             "[27 b] If the taxpayer is electing the Alternative Simplified Credit, enter the amount from page": ""
         }
@@ -332,15 +340,15 @@ export class RdCreditCalculatorForAZ {
             "[83] Enter your total qualified research expenses for the prior 3 years. If you have no QREs in any one of those three years, STOP! You do not qualify for the ASC": creditASC.total_prior_3years_qre || '',
             "[84] Average qualified research expenses for the prior three years. Divide line 83 by 6.0. Enter the result": creditASC.adjusted_base_amount || '',
             "[85] Subtract line 84 from line 82. Enter the difference. If less than zero, enter 0.": creditASC.excess_qre || '',
-            [`[86] Multiply line 82 by ${creditASC?.config?.qre_cap_rate}% (${creditASC?.config?.qre_cap_rate / 100}). Enter the result.`]: creditASC.half_total_qre || '',
+            [`[86] Multiply line 82 by ${config?.qre_credit_percentage_c1}% (${config?.qre_credit_percentage_c1 / 100}). Enter the result.`]: creditASC.half_total_qre || '',
             "[87] Enter the lesser of line 85 or line 86.": creditASC.total_section_b_credit || '',
             "[88] Add line 77 and line 87. Enter the total": creditASC.prior_year_credit_carryforward || '',
-            [`* If line 88 is $ ${creditASC?.config?.threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]: "",
-            [`* If line 88 is more than $ ${creditASC?.config?.threshold_amount}, skip line 89. Complete lines 90 through 93.`]: "",
-            [`[89] If line 88 is $ ${creditASC?.config?.threshold_amount} or less, multiply line 88 by ${creditASC?.config?.tier1_rate}% (${creditASC?.config?.tier1_rate / 100}). Enter the result.`]: creditASC.credit_if_under_threshold || '',
-            [`[90] If line 88 is more than $ ${creditASC?.config?.threshold_amount}, subtract ${creditASC?.config?.threshold_amount} from line 88. Enter the difference.`]: creditASC.excess_amount || '',
-            [`[91] Multiply line 90 by ${creditASC?.config?.tier2_rate}%. Enter the result.`]: creditASC.credit_on_excess || '',
-            [`[92] Add $ ${creditASC?.config?.tier2_base_add} to line 91. Enter the total.`]: creditASC.credit_if_over_threshold || '',
+            [`* If line 88 is $ ${config?.qre_threshold_amount} or less, complete lines 89 and 93. Skip lines 90 through 92.`]: "",
+            [`* If line 88 is more than $ ${config?.qre_threshold_amount}, skip line 89. Complete lines 90 through 93.`]: "",
+            [`[89] If line 88 is $ ${config?.qre_threshold_amount} or less, multiply line 88 by ${config?.qre_credit_percentage_c2}% (${config?.qre_credit_percentage_c2 / 100}). Enter the result.`]: creditASC.credit_if_under_threshold || '',
+            [`[90] If line 88 is more than $ ${config?.qre_threshold_amount}, subtract ${config?.qre_threshold_amount} from line 88. Enter the difference.`]: creditASC.excess_amount || '',
+            [`[91] Multiply line 90 by ${config?.qre_credit_percentage_c3}%. Enter the result.`]: creditASC.credit_on_excess || '',
+            [`[92] Add $ ${config?.rrc_qre_addition} to line 91. Enter the total.`]: creditASC.credit_if_over_threshold || '',
             "[93] Enter the amount from line 89 or 92. Also enter this amount on page 1, Part 2, line 27b of this form and complete the remainder of Form 308.": creditASC.total_az_final_credit || ''
         }
 
@@ -361,7 +369,7 @@ export class RdCreditCalculatorForAZ {
     round2(value: any) {
     if (value === null || value === undefined) return value;
 
-    // ✅ Handle Decimal.js instances
+    //  Handle Decimal.js instances
     if (Decimal.isDecimal(value)) {
         return value.toDecimalPlaces(2).toNumber();
     }

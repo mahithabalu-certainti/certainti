@@ -354,7 +354,25 @@ export const rawQuery = {
       WHERE rid = :userId 
       LIMIT 1
     `;
-  } ,
+  },
+  checkOpenTasksForUser()
+  {
+   
+    return `
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE attachment_level = 'case' AND
+        status_rid IN (SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name IN ('To Do','In Progress','Blocked'))
+        AND attach_to IN (
+          SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid IN (
+            SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name IN ('Submitted','In Progress','Audit Review','On Hold')
+          )
+        )
+        AND assigned_to = :userId
+      UNION
+      SELECT * FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE
+        status_rid IN (SELECT rid FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE status_name IN ('To Do','In Progress','Blocked'))
+        AND assigned_to = :userId
+    `
+  },
   getUserExtendedPermissionsQuery() {
     return  `
         select distinct  m.rid as menu_id, mm.rid as module_id, mp.rid as module_permission_id, mp.permission_name,mp.permission_desc,
@@ -379,6 +397,7 @@ export const statusMessage = {
     orgNotFoundError: "No organization found with the given ID",  
     orgUpdated: "Organization updated successfully",
     orgRetrieved: "Organization settings retrieved successfully",
-    invaidCredentialsMessage: "Provided Azure credentials are invalid or unusable"
+    invaidCredentialsMessage: "Provided Azure credentials are invalid or unusable",
+    cannotSetUserInactive: "Cannot set user to inactive. There are open tasks assigned to this user."
 }
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';

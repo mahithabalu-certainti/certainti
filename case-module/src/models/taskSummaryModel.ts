@@ -15,21 +15,22 @@ interface TaskSummaryAttributes {
   task_name: string;
   description?: string;
   fiscal_year: number;
-  assigned_to: string;
+  assigned_to?: string | null;
   status_rid: string;
   priority_rid: string;
   effective_start_datetime: Date;
   effective_end_datetime: Date;
   task_type_rid: string;
+  task_category_rid?: string | null;
+  case_team_member_role_rid? : string | null
 }
 
 export interface TaskSummaryCreationAttributes
-  extends Optional<TaskSummaryAttributes, "rid"> {}
+  extends Optional<TaskSummaryAttributes, "rid"> { }
 
 export class TaskSummary
   extends Model<TaskSummaryAttributes, TaskSummaryCreationAttributes>
-  implements TaskSummaryAttributes
-{
+  implements TaskSummaryAttributes {
   public rid!: string;
   public r_number!: string;
   public created_by!: string;
@@ -37,18 +38,20 @@ export class TaskSummary
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public account_rid!: string;
-    public task_rid!: string;
+  public task_rid!: string;
   public attach_to!: string;
   public attachment_level!: string;
   public task_name!: string;
   public description?: string;
   public fiscal_year!: number;
-  public assigned_to!: string;
+  public assigned_to?: string | null;
   public status_rid!: string;
   public priority_rid!: string;
   public effective_start_datetime!: Date;
   public effective_end_datetime!: Date;
   public task_type_rid!: string;
+  public task_category_rid?: string | null;
+  public case_team_member_role_rid? : string | null
 
 
   static initialize(
@@ -85,7 +88,9 @@ export class TaskSummary
         priority_rid: { type: DataTypes.STRING(50), allowNull: false },
         effective_start_datetime: { type: DataTypes.DATE, allowNull: false },
         effective_end_datetime: { type: DataTypes.DATE, allowNull: false },
-        task_type_rid: { type: DataTypes.STRING(50), allowNull: false }
+        task_type_rid: { type: DataTypes.STRING(50), allowNull: false },
+        task_category_rid: { type: DataTypes.STRING(50), allowNull: true },
+        case_team_member_role_rid : { type: DataTypes.STRING(50), allowNull: true }
       },
       {
         sequelize,

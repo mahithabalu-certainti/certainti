@@ -1,5 +1,8 @@
 import Decimal from "decimal.js";
 import {
+  entityTypes,
+  eventNames,
+  eventTypes,
   HttpStatus,
   MAIN_SCHEMA_NAME,
   rawQueries,
@@ -30,6 +33,7 @@ import { errorLog, logMessage } from "../../utils/helpers";
 import ProjectIngestionService from "../projectIngestionService";
 import { Case } from "../../models/caseModel";
 import { Logger } from "winston";
+import SchemaService from "../schemaService";
 
 
 
@@ -40,12 +44,14 @@ export class ProjectInjestionTaskService {
   private orgDbSequelize: Sequelize | null = null;
   private projectIngestion: ProjectIngestionService;
   private logger: Logger;
+  private schemaService: SchemaService;
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.projectTaskSchema = new ProjectTaskSchemaService();
     this.projectResourceSchema = new ProjectResourceSchemaService();
     this.projectIngestion = new ProjectIngestionService(this.logger);
+    this.schemaService = new SchemaService();
   }
 
   private formatDateForDb(dateString?: string): Date | null {
@@ -305,14 +311,30 @@ export class ProjectInjestionTaskService {
         transaction
       );
       if (newTask) {
-        await this.projectTaskSchema.addProjectTaskTimeline(
-          accountNumber,
-          "create",
-          projectTaskData,
-          newTask.rid,
-          userId,
-          transaction
-        );
+        
+        const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                        userId: userId!,
+                                        eventType: eventTypes.UI_HANDLER
+                                      });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: projectTaskData.account_rid,
+          entity_rid: newTask?.rid!,
+          entity_name: entityTypes.PROJECT_TASK,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.CREATE,
+          descriptions:projectTaskData.resource_code,
+          project_rid: projectTaskData.project_fiscal_rid
+        },["project"]);
+        // await this.projectTaskSchema.addProjectTaskTimeline(
+        //   accountNumber,
+        //   "create",
+        //   projectTaskData,
+        //   newTask.rid,
+        //   userId,
+        //   transaction
+        // );
       }
       const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(accountNumber);
       const { projectResourceFiscalCreated, newProjectFiscalRegion } = await this.projectTaskSchema.startAggregation(
@@ -641,14 +663,29 @@ export class ProjectInjestionTaskService {
         transaction
       );
       if (updatedTask) {
-        await this.projectTaskSchema.addProjectTaskTimeline(
-          accountNumber,
-          "update",
-          projectTaskData,
-          projectTaskData.project_task_rid,
-          userId,
-          transaction
-        );
+         const userEventInfo:any = await this.schemaService.fetchUserAndEventInfo({
+                                        userId: userId!,
+                                        eventType: eventTypes.UI_HANDLER
+                                      });
+        await this.schemaService.createAccountTimelineEntry(accountNumber!, {
+          created_by: userId!,
+          account_rid: projectTaskData.account_rid,
+          entity_rid: projectTaskData.project_task_rid!,
+          entity_name: entityTypes.PROJECT_TASK,
+          created_by_name: userEventInfo.full_name,
+          event_type_rid: userEventInfo.event_type_rid,
+          event_name: eventNames.UPDATE,
+          descriptions:projectTaskData.resource_code,
+          project_rid: projectTaskData.project_fiscal_rid
+        },["project"]);
+        // await this.projectTaskSchema.addProjectTaskTimeline(
+        //   accountNumber,
+        //   "update",
+        //   projectTaskData,
+        //   projectTaskData.project_task_rid,
+        //   userId,
+        //   transaction
+        // );
         await this.projectTaskSchema.addProjctTaskHistory(
           accountNumber,
           projectTaskData,

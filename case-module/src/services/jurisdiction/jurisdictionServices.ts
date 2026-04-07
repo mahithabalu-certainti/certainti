@@ -2,10 +2,14 @@ import { Logger } from "winston";
 import { Sequelize, Op } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import { JurisdictionSchemaService } from "./schemaService";
-import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { entityTypes, eventNames, eventTypes, HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
+import { HelperMethods } from "../cases/helperMethods";
+import {
+  fetchStateRidsWithResourcesForCase,
+} from "../../utils/rdFinancialWorkingQueries";
 
 export class JurisdictionService {
   private jurisdictionSchemaService: JurisdictionSchemaService;
@@ -13,12 +17,17 @@ export class JurisdictionService {
   private caseSchemaService: CaseSchemaService;
   private logger: Logger;
   private mainDbSequelize: Sequelize | null = null;
+   private helperMethod : HelperMethods
+  
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.jurisdictionSchemaService = new JurisdictionSchemaService();
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
+    this.helperMethod = new HelperMethods(
+            this.caseModelService
+        );
   }
 
   private async getMainDb() {
@@ -69,6 +78,23 @@ export class JurisdictionService {
         );
 
       await transaction.commit();
+      const userEventInfo: any = await this.helperMethod.fetchUserAndEventInfo({
+              userId: userId!,
+              eventType: eventTypes.UI_HANDLER
+            });
+      const timelineTypes = this.helperMethod.getTimelineTypesForAttachmentLevel(jurisdictionData.level);
+      
+      await this.helperMethod.createAccountTimelineEntry(accountNumber!, {
+              created_by: userId!,
+              account_rid: jurisdictionData.account_rid,
+              entity_rid: result.rid!,
+              entity_name: entityTypes.SETTINGS,
+              created_by_name: userEventInfo.full_name,
+              event_type_rid: userEventInfo.event_type_rid,
+              event_name: eventNames.UPDATE,
+              descriptions: '',
+              case_rid: jurisdictionData.level === 'case' ? jurisdictionData.case_rid : '',
+            }, timelineTypes);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -96,7 +122,9 @@ export class JurisdictionService {
    */
   async getJurisdictionConfiguration(
     accountRid: string,
-    entityRid: string
+    entityRid: string,
+    level: string,
+    type: string = 'All'
   ): Promise<{
     statusCode: number;
     message: string;
@@ -116,11 +144,38 @@ export class JurisdictionService {
       const { Jurisdiction } = await this.caseModelService.getModels(
         accountNumber
       );
-
+      const db = await this.caseModelService.getSequelize();
+      
       // Step 3: Fetch jurisdiction record
       const jurisdiction = await Jurisdiction.findOne({
         where: { entity_rid: entityRid },
       });
+
+      // Filter states if case-level dossier
+      if(level === 'case' &&  type === 'Dossier' && jurisdiction)
+      {
+        console.log("inside jurisdiction filter")
+        const schemaName = `${rawQueries.fetchSchemaName(accountNumber)}`;
+      
+        const statesWithResources: any[] = await db.query(fetchStateRidsWithResourcesForCase(schemaName), {
+          replacements: { case_rid: entityRid },
+          type: 'SELECT'
+        });
+
+        const stateRidsWithResources = statesWithResources.map((r: any) => r.state_rid).filter(Boolean);
+
+        // Parse states array from jurisdiction
+        let statesArray = jurisdiction.states ? (typeof jurisdiction.states === 'string' ? JSON.parse(jurisdiction.states) : jurisdiction.states) : [];
+        
+        // Filter to keep only states with resources
+        if (Array.isArray(statesArray)) {
+          statesArray = statesArray.filter((state: any) => {
+            const stateRid = typeof state === 'object' ? state.state_rid : state;
+            return stateRidsWithResources.includes(stateRid);
+          });
+          jurisdiction.states = statesArray;
+        }
+      }
 
       // Step 4: Return success response
       return {

@@ -5,7 +5,9 @@ export interface QRE {
     supplies?: number;
     contract?: number;
     qre?: number;                 // only for prior years
-    business_tax_liability?: number; // only for current year
+    business_tax_liability_sc?: number; // only for current year
+    business_tax_liability_ct?: number;
+    business_tax_liability_ga?: number;
 }
 
 // Annual Gross Receipts

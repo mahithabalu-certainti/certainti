@@ -19,15 +19,15 @@ interface CaseSummaryAttributes {
   planned_submission_date?: Date;
   statutory_submission_date?: Date;
   status_rid?: string;
+  case_completion_percentage?: number;
 }
 
 export interface CaseSummaryCreationAttributes
-  extends Optional<CaseSummaryAttributes, "rid"> {}
+  extends Optional<CaseSummaryAttributes, "rid"> { }
 
 export class CaseSummary
   extends Model<CaseSummaryAttributes, CaseSummaryCreationAttributes>
-  implements CaseSummaryAttributes
-{
+  implements CaseSummaryAttributes {
   public rid!: string;
   public r_number?: string;
   public created_by!: string;
@@ -45,6 +45,7 @@ export class CaseSummary
   public planned_submission_date!: Date;
   public statutory_submission_date!: Date;
   public status_rid!: string;
+  public case_completion_percentage?: number;
 
   static initialize(
     sequelize: Sequelize,
@@ -66,9 +67,9 @@ export class CaseSummary
         },
         created_by: { type: DataTypes.STRING(50), allowNull: false },
         modified_by: { type: DataTypes.STRING(50), allowNull: true },
-        created_datetime: { 
-          type: DataTypes.DATE, 
-          allowNull: false, 
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
           defaultValue: DataTypes.NOW
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
@@ -83,6 +84,7 @@ export class CaseSummary
         planned_submission_date: { type: DataTypes.DATE, allowNull: false },
         statutory_submission_date: { type: DataTypes.DATE, allowNull: false },
         status_rid: { type: DataTypes.STRING(50), allowNull: false },
+        case_completion_percentage: { type: DataTypes.DECIMAL(5, 2), allowNull: true, defaultValue: 0 },
       },
       {
         sequelize,

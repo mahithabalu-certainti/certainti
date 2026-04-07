@@ -213,6 +213,18 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Check for inactive status and open tasks BEFORE Azure update
+    const inactiveCheckResult = await services.userServices.checkInactiveStatusAndTasks(value.status_rid, userId);
+    if (inactiveCheckResult && inactiveCheckResult.error) {
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        inactiveCheckResult.error
+      );
+      return;
+    }
+
     const azureUser = await updateAzureUser(value);
     if (!azureUser) {
       errorLog(methodName, "Azure AD B2C user update failed");

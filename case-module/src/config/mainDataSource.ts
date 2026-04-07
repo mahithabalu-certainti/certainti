@@ -26,13 +26,13 @@ const env = process.env.NODE_ENV || NODE_ENV.DEV;
 const sslOptions =
   env === NODE_ENV.PROD
     ? {
-        dialectOptions: {
-          ssl: {
-            require: true,
-            rejectUnauthorized: false,
-          },
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
         },
-      }
+      },
+    }
     : {};
 
 async function getAzureSecrets() {
@@ -93,6 +93,12 @@ export async function initMainDbSequelize() {
             require: true,
             rejectUnauthorized: false,
           },
+        },
+        pool: {
+          max: 50,        // Maximum concurrent connections
+          min: 5,         // Minimum connections in pool
+          acquire: 60000, // Wait up to 60s for a free connection
+          idle: 30000,    // Release idle connections after 30s
         },
       }
     );

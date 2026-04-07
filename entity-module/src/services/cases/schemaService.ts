@@ -27,24 +27,39 @@ import {
     SCHEMANAME_PREFIX,
     STATUS_MESSAGE,
     relationshipTypes,
+    eventNames,
+    entityTypes,
+    eventTypes,
 } from "../../utils/constants";
 import { getColumnsNamesForTaskUpdate, logMessage } from "../../utils/helpers";
 import { CaseTaskWorkflowConnector } from "../../models/caseTaskWorkflowConnectorModel";
 import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
+import { CaseSummary } from "../../models/caseSummaryModel";
+import { Case } from "../../models/caseModel";
 import { TaskHistory } from "../../models/taskHistory";
+import SchemaService from "../schemaService";
 
 
 
 
+
+import { HelperMethods } from "./helperMethods";
+import Decimal from "decimal.js";
+import { findTaskWeightageDetails, getCompletedTaskStatusId } from "../../utils/rdFinancialWorkingQueries";
+import { WeightageType } from "../../utils/types";
 
 class CaseSchemaService {
     private orgDbSequelize: Sequelize | null = null;
     private mainDbSequelize: Sequelize | null = null;
     private caseModelService: CaseModelService;
+    private schemaService: SchemaService;
+    private helperMethod: HelperMethods;
 
 
     constructor() {
         this.caseModelService = new CaseModelService();
+        this.schemaService = new SchemaService();
+        this.helperMethod = new HelperMethods(this.caseModelService);
     }
 
     async findTaskById(rid: string, accountRid: string, caseRid: string, accountNumber: string, taskType?: string) {
@@ -104,7 +119,7 @@ class CaseSchemaService {
         if (!this.mainDbSequelize) {
             this.mainDbSequelize = await initMainDbSequelize()
         }
-        const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators } = await this.caseModelService.getModels(accountNumber);
+        const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, CheckList, CheckListItem, Case, TaskSummary } = await this.caseModelService.getModels(accountNumber);
         const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
         if (!checkCaseExists) {
             return {
@@ -141,24 +156,72 @@ class CaseSchemaService {
                         case_rid: data.case_rid
                     }, transaction
                 });
-                /* await TaskSummary.update(
-                 {
-                   task_name: data.task_name || "",
-                   description: data.task_description || "",
-                   assigned_to: data.assigned_to || "",
-                   status_rid: data.task_status_rid || "",
-                   priority_rid: data.priority_rid || "",
-                   effective_start_datetime: data.effective_start_datetime,
-                   effective_end_datetime: data.effective_end_datetime,
-                   modified_by: data.modified_by || "",
-                   modified_datetime: new Date(),
-                 },
-                 {
-                 where : {
-                     task_rid : data.rid
-                   }
-               }
-               ); */
+                if (data?.checklist_template_rid) {
+                    if (data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
+                        if (isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
+                            const checklistResult = await CheckList.findOne({
+                                where: {
+                                    attach_to: data.rid,
+                                    case_rid: data.case_rid,
+                                    attachment_level: 'task',
+                                    checklist_template_rid: isTaskExists.checklist_template_rid
+                                }, raw: true
+                            })
+                            if (checklistResult) {
+                                await CheckListItem.destroy({
+                                    where: {
+                                        checklist_rid: checklistResult.rid
+                                    }
+                                })
+                                await CheckList.destroy({
+                                    where: {
+                                        attach_to: data.rid,
+                                        case_rid: data.case_rid,
+                                        attachment_level: 'task',
+                                        checklist_template_rid: isTaskExists.checklist_template_rid
+                                    }
+                                })
+                            }
+                        }
+                        const response = await this.helperMethod.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+                        response.checklist_items.map((item: any) => item.action_type = 'add');
+                        let caseRequest: any = {
+                            account_rid: data.account_rid!,
+                            checklist_name: response.checklist_name,
+                            checklist_description: response.description,
+                            checklist_items: response.checklist_items,
+                            attach_to: data.rid,
+                            attachment_level: 'task',
+                            created_by: data.modified_by,
+                            created_datetime: new Date(),
+                            fiscal_year: checkCaseExists.fiscal_year,
+                            checklist_rid: data.checklist_template_rid,
+                            case_rid: data.case_rid
+                        };
+                        const checklistResponse = await this.helperMethod.createCheckListForTask(accountNumber, caseRequest, transaction);
+                        if (checklistResponse)
+                            await this.helperMethod.manageCheckListItems(accountNumber, caseRequest, checklistResponse.rid, transaction);
+                    }
+                }
+                await TaskSummary.update(
+                    {
+                        task_name: data.task_name || "",
+                        description: data.task_description || "",
+                        assigned_to: data.assigned_to || "",
+                        status_rid: data.task_status_rid || "",
+                        priority_rid: data.priority_rid || "",
+                        effective_start_datetime: data.effective_start_datetime,
+                        effective_end_datetime: data.effective_end_datetime,
+                        modified_by: data.modified_by || "",
+                        modified_datetime: new Date(),
+                    },
+                    {
+                        where: {
+                            task_rid: data.rid,
+                            attach_to: data.case_rid
+                        }
+                    }
+                );
                 const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task");
                 if (!checkIsDifferentCollaborator) {
                     const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber, "case_task");
@@ -272,17 +335,67 @@ class CaseSchemaService {
                         if (updatedColumnsStorage.length > 0) {
                             combinedColumns = updatedColumnsStorage.join(', ')
                         }
+                        const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+                            userId: data.modified_by!,
+                            eventType: eventTypes.UI_HANDLER
+                        });
+
                         await CaseTimeline.create({
                             created_by: data.modified_by,
+                            created_by_name: userEventInfo.full_name,
+                            event_type_rid: userEventInfo.event_type_rid,
                             created_datetime: new Date(),
                             account_rid: data.account_rid,
                             entity_rid: data.case_rid,
-                            event_name: "Task Updated",
-                            event_type: "ui handler",
-                            event_status: "success",
-                            event_datetime: new Date(),
-                            description: `Task Updated : ${combinedColumns}`
+                            event_name: eventNames.UPDATE,
+                            entity_name: entityTypes.TASK,
+                            descriptions: data.task_name,
+                            case_rid: data.case_rid
                         })
+                    }
+                    const findAllTaskByCaseIds = await CaseTask.findAll({
+                        attributes: ['weightage_rid', 'task_status_rid'],
+                        where: {
+                            case_rid: data.case_rid
+                        },
+                        raw: true
+                    });
+                    if (findAllTaskByCaseIds.length > 0) {
+                        const allTasksWeightageIds = [...new Set(findAllTaskByCaseIds.map((d: CaseTask) => d.weightage_rid!))];
+                        const findCompletedTaskStatus: any = await this.mainDbSequelize!.query(getCompletedTaskStatusId());
+                        const completedTaskStatusId = findCompletedTaskStatus[0][0].rid
+                        const allCompletedTaskWeightageIds = findAllTaskByCaseIds.filter((d: CaseTask) => d.task_status_rid === completedTaskStatusId).map((f: CaseTask) => f.weightage_rid!)
+                        const findWeightageValues = await this.mainDbSequelize!.query<WeightageType>(findTaskWeightageDetails(allTasksWeightageIds), { type: QueryTypes.SELECT });
+                        if (findWeightageValues.length > 0) {
+                            const mapAllWeightageWithValue = new Map(findWeightageValues.map((d: WeightageType) => [d.rid, d.weightage_value]));
+                            let totalAllWeightageValues: Decimal = new Decimal(0)
+                            let completedWeightValues: Decimal = new Decimal(0)
+                            findAllTaskByCaseIds.forEach((data: CaseTask) => {
+                                if (mapAllWeightageWithValue.get(data.weightage_rid!) !== undefined) {
+                                    totalAllWeightageValues = totalAllWeightageValues.add(mapAllWeightageWithValue.get(data.weightage_rid!)!)
+                                }
+                            });
+                            allCompletedTaskWeightageIds.forEach((data: any) => {
+                                if (mapAllWeightageWithValue.get(data!) !== undefined) {
+                                    completedWeightValues = completedWeightValues.add(mapAllWeightageWithValue.get(data!)!)
+                                }
+                            })
+                            const caseCompletionPercentage = (completedWeightValues.div(totalAllWeightageValues)).mul(100) || new Decimal(0)
+                            await Case.update({
+                                case_completion_percentage: parseFloat(caseCompletionPercentage.toFixed(2))
+                            }, {
+                                where: {
+                                    rid: data.case_rid
+                                }
+                            })
+                            await CaseSummary.update({
+                                case_completion_percentage: parseFloat(caseCompletionPercentage.toFixed(2))
+                            }, {
+                                where: {
+                                    case_rid: data.case_rid
+                                }
+                            })
+                        }
                     }
 
                     return {
@@ -546,7 +659,7 @@ class CaseSchemaService {
     }
 
     async createOrUpdateTags(taskRid: string, accountRid: string, caseRid: string, tagRid: string, isNewTag: boolean, accountNumber: string, userId: string, activeStatusRid: string, taskType?: string) {
-        const { Tags, TaskTag, CaseHistory, CaseTimeline } = await this.caseModelService.getModels(accountNumber)
+        const { Tags, TaskTag, CaseHistory, CaseTimeline, CaseTask } = await this.caseModelService.getModels(accountNumber)
 
         if (isNewTag) {
             const isTagExists = await Tags.findOne({
@@ -577,16 +690,29 @@ class CaseSchemaService {
                     const finalResult = await TaskTag.create(tagPayload);
                     if (finalResult) {
                         if (taskType !== "activity") {
+                            const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+                                userId: userId,
+                                eventType: eventTypes.UI_HANDLER
+                            });
+                            const existingTaskInfo: any = await CaseTask.findOne({
+                                where: {
+                                    rid: taskRid,
+                                    account_rid: accountRid,
+                                    case_rid: caseRid,
+                                },
+                                raw: true,
+                            });
+
                             await CaseTimeline.create({
                                 created_by: userId,
                                 created_datetime: new Date(),
                                 account_rid: accountRid,
                                 entity_rid: caseRid,
-                                event_name: `Tag added for Task`,
-                                event_type: "ui handler",
-                                event_status: "success",
-                                event_datetime: new Date(),
-                                description: `Tag added for task : ${result.tag_name}`
+                                entity_name: entityTypes.TAG,
+                                event_name: eventNames.CREATE,
+                                created_by_name: userEventInfo.full_name,
+                                event_type_rid: userEventInfo.event_type_rid,
+                                descriptions: `Task ${existingTaskInfo.task_name}`
 
                             })
                             await CaseHistory.create({
@@ -645,16 +771,28 @@ class CaseSchemaService {
                     created_datetime: new Date()
                 })
                 if (taskType !== "activity") {
+                    const userEventInfo: any = await this.schemaService.fetchUserAndEventInfo({
+                        userId: userId,
+                        eventType: eventTypes.UI_HANDLER
+                    });
+                    const existingTaskInfo: any = await CaseTask.findOne({
+                        where: {
+                            rid: taskRid,
+                            account_rid: accountRid,
+                            case_rid: caseRid
+                        },
+                        raw: true,
+                    });
                     await CaseTimeline.create({
                         created_by: userId,
                         created_datetime: new Date(),
                         account_rid: accountRid,
                         entity_rid: caseRid,
-                        event_name: `Tag added for Task`,
-                        event_type: "ui handler",
-                        event_status: "success",
-                        event_datetime: new Date(),
-                        description: `Tag added for task : ${tagDetails!.tag_name}`
+                        event_name: eventNames.CREATE,
+                        descriptions: `Task ${existingTaskInfo!.task_name}`,
+                        created_by_name: userEventInfo.full_name,
+                        event_type_rid: userEventInfo.event_type_rid,
+
                     })
                     await CaseHistory.create({
                         case_rid: caseRid,
@@ -773,18 +911,18 @@ class CaseSchemaService {
                                 }, { transaction });
                             }
                         }
-                        await CaseTimeline.create({
-                            created_by: data.created_by,
-                            created_datetime: new Date(),
-                            account_rid: data.account_rid,
-                            entity_rid: data.case_rid,
-                            event_name:
-                                `Case Task Workflow Connector created`,
-                            event_type: "ui handler",
-                            event_status: "success",
-                            event_datetime: new Date(),
-                            description: `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
-                        }, { transaction });
+                        // await CaseTimeline.create({
+                        //     created_by: data.created_by,
+                        //     created_datetime: new Date(),
+                        //     account_rid: data.account_rid,
+                        //     entity_rid: data.case_rid,
+                        //     event_name:
+                        //         `Case Task Workflow Connector created`,
+                        //     event_type: "ui handler",
+                        //     event_status: "success",
+                        //     event_datetime: new Date(),
+                        //     description: `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
+                        // }, { transaction });
                         await CaseHistory.create({
                             created_by: data.created_by,
                             created_datetime: new Date(),
@@ -874,18 +1012,18 @@ class CaseSchemaService {
                                     relationship_connector_rid: data.relationship_connector_rid
                                 }
                             })
-                            await CaseTimeline.create({
-                                created_by: data.created_by,
-                                created_datetime: new Date(),
-                                account_rid: data.account_rid,
-                                entity_rid: deletedId,
-                                event_name:
-                                    `Case Task Workflow Connector deleted`,
-                                event_type: "ui handler",
-                                event_status: "success",
-                                event_datetime: new Date(),
-                                description: ``
-                            });
+                            // await CaseTimeline.create({
+                            //     created_by: data.created_by,
+                            //     created_datetime: new Date(),
+                            //     account_rid: data.account_rid,
+                            //     entity_rid: deletedId,
+                            //     event_name:
+                            //         `Case Task Workflow Connector deleted`,
+                            //     event_type: "ui handler",
+                            //     event_status: "success",
+                            //     event_datetime: new Date(),
+                            //     description: ``
+                            // });
                             return {
                                 statusCode: HttpStatus.SUCCESS,
                                 statusMessage: STATUS_MESSAGE.workflowConnectorMappedDeleted
