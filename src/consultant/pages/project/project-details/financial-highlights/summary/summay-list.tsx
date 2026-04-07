@@ -10,7 +10,6 @@ import {
   SummaryClaimJurisdiction,
   SummaryDetailedMetric,
   SummaryQRE,
-  SummaryRdCredits,
   SummaryRdPercent,
   SummaryResourceMetric,
 } from '../../../../../types';
@@ -18,7 +17,6 @@ import {
   getClaimJurisdictionColumns,
   getDetailedMetricColumns,
   getQREColumns,
-  getRdCreditsColumns,
   getRdPercentColumns,
   getResourceMetricColumns,
 } from './columns';
@@ -31,11 +29,13 @@ import { ProjectQreAdjustmentResponse } from '../../../utils';
 interface FinancialSummaryProps {
   projectDetails: NewProjectData | null;
   onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
+  refetchProjectDetails: () => void;
 }
 
 const SummayListTable: React.FC<FinancialSummaryProps> = ({
   projectDetails,
   onQreAdjustmentUpdated,
+  refetchProjectDetails,
 }) => {
   const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
     client: resourceClient,
@@ -48,7 +48,6 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   );
   const [rdPercent, setRdPercent] = useState<SummaryRdPercent[]>([]);
   const [summaryQre, setSummaryQre] = useState<SummaryQRE[]>([]);
-  const [rdCredits, setRdCredits] = useState<SummaryRdCredits[]>([]);
   const [claimJurisdiction, setClaimJurisdiction] = useState<
     SummaryClaimJurisdiction[]
   >([]);
@@ -78,6 +77,28 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
     return map;
   }, [financialSummaryViewEditFields]);
 
+  const projectViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<
+      string,
+      {
+        read: boolean;
+        edit: boolean;
+      }
+    > = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const { data, isLoading, isError } = useProjectFinancialSummary({
     account_rid: accountId,
     project_fiscal_rid: projectId || projectID || '',
@@ -90,7 +111,6 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
       setRdPercent(data.rd_percent);
       setClaimJurisdiction(data.claim_jurisdiction);
       setSummaryQre(data.qre);
-      setRdCredits(data.rd_credits);
 
       const updatedDetailedMetrics = data.detailed_metrics.map((item) => {
         const permission = permissionMap?.[item.permission];
@@ -126,14 +146,19 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   const getRdPercentRowId = (row: SummaryRdPercent) => row.rid;
   const getClaimJurisdictionRowId = (row: SummaryClaimJurisdiction) => row.rid;
   const getQRERowId = (row: SummaryQRE) => row.rid;
-  const getRdCreditsRowId = (row: SummaryRdCredits) => row.rid;
-
+  const isProjectSignedOff = projectDetails?.is_rd_claim_qualified;
+  const aiEstimatedQre = projectDetails?.rd_percent_potential_ai;
   const resourceMetricColumns = getResourceMetricColumns(permissionMap);
   const claimJurisdictionColumns = getClaimJurisdictionColumns(
     permissionMap,
     currencySymbol
   );
-  const rdPercentColumns = getRdPercentColumns(permissionMap);
+  const rdPercentColumns = getRdPercentColumns(
+    permissionMap,
+    projectPermissionMap,
+    isProjectSignedOff,
+    aiEstimatedQre
+  );
 
   const handleRdPercentCellEdit = async (
     rowId: string,
@@ -179,13 +204,13 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           )
         );
         onQreAdjustmentUpdated?.(result as ProjectQreAdjustmentResponse);
+        refetchProjectDetails();
       }
     } catch (e) {
       console.error('Failed to update QRE adjustment from summary:', e);
     }
   };
   const qreColumns = getQREColumns(permissionMap, currencySymbol);
-  const rdCreditsColumns = getRdCreditsColumns(permissionMap, currencySymbol);
 
   const hideMetricTable = resourceMetricColumns.every((col) => col.hide);
   const hideDetailedMetric = detailedMetric.every((item) => item.hide);
@@ -194,9 +219,6 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   );
   const hideRdPercent = rdPercentColumns.every((col) => col.hide);
   const hideQreColumns = qreColumns.every((col) => col.hide);
-  const hideRdCreditsColumns = rdCreditsColumns.every((col) => col.hide);
-  const hideClaimStatus =
-    !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read;
 
   return (
     <div className='flex flex-col gap-4'>
@@ -327,39 +349,6 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           showEmptyRow={false}
           loadingRowCount={1}
         />
-      </div>
-      <div className={hideRdCreditsColumns ? 'hidden' : 'block'}>
-        <div className='h-[30px] max-h-[30px] flex items-center justify-center border border-[#CBD6E2] px-3 text-[14px] font-semibold bg-[#DCE8FF]'>
-          <span className='text-[#2A2A2A]'>RD Credits</span>
-        </div>
-        <ListTable
-          data={rdCredits}
-          columns={rdCreditsColumns}
-          getRowId={getRdCreditsRowId}
-          hoverHighlight={false}
-          tableStyle={{
-            borderLeft: '1px solid #CBD6E2',
-            height: '100%',
-            maxHeight: 'calc(100vh - 290px)',
-            overflow: 'auto',
-          }}
-          stickyHeader={true}
-          stickyColumnsCount={1}
-          selectable={false}
-          actionWidth={80}
-          loading={isLoading || !fiscalYear}
-          error={isError ? 'Failed to load data' : undefined}
-          showEmptyRow={false}
-          loadingRowCount={1}
-        />
-      </div>
-      <div className={`${hideClaimStatus ? 'hidden' : 'block'}`}>
-        <div className='h-[30px] max-h-[30px] flex items-center justify-center border border-[#CBD6E2] px-3 text-[14px] font-semibold bg-[#DCE8FF]'>
-          <span className='text-[#2A2A2A]'>Claim Status</span>
-        </div>
-        <div className='text-[13px] text-[#2A2A2A] font-semibold px-3 py-2 border-t-0 border border-[#CBD6E2]'>
-          {data?.claim_status.status || '-'}
-        </div>
       </div>
     </div>
   );

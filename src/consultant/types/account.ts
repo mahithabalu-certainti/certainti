@@ -533,9 +533,13 @@ export type ExportType =
   | 'case_task'
   | 'review_projects'
   | 'activities'
-  | 'dossier-project-summary'
+  | 'dossier-technical-summary'
   | 'dossier-resource-summary'
-  | 'dossier-project-documents';
+  | 'dossier-project-documents'
+  | 'dossier-qualified-projects'
+  | 'dossier-audit-timeline'
+  | 'four_part_assessment'
+  | 'rd_assessment_status';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

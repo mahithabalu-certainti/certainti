@@ -10,6 +10,11 @@ import {
   nonMadatoryOptions,
 } from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
+const IsAssessedOptions: { option: string; value: string }[] = [
+  { option: 'Yes', value: 'true' },
+  { option: 'No', value: 'false' },
+];
+
 export const getAllProjectFilterFields = (
   classificationOption: FilterSelectOption[],
   projectTypeOptions: { option: string; value: string }[],
@@ -65,6 +70,16 @@ export const getAllProjectFilterFields = (
     hide:
       !projectPermissionMap?.['fiscal_year']?.read &&
       !projectPermissionMap?.['fiscal_year']?.edit,
+  },
+  {
+    name: 'Is Assessed',
+    value: 'is_assesed',
+    type: 'enum',
+    options: IsAssessedOptions,
+    operatorOption: fiscalOptions,
+    hide:
+      !projectPermissionMap?.['is_assessed']?.read &&
+      !projectPermissionMap?.['is_assessed']?.edit,
   },
   {
     name: 'Project Classification',

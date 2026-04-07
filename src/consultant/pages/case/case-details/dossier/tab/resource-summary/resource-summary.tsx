@@ -1,31 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExportType,
-  ResourceSummaryItem,
-  ResourceSummaryListExportParams,
   ResourceSummaryListURLParams,
 } from '../../../../../../types';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useResourceSummaryList } from '../../../../../../services/case-dossier/case-dossier-service';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../../../components/table';
 import { ShowHideTableColumn } from '../../../../../../../components/table/types';
-import { getResourceSummaryColumns } from './columns';
+import { RootState } from '../../../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AllPermissions } from '../../../../../../../common-service';
+import { useCaseProjectResourceList } from '../../../../../../services/case-project-resource/case-project-resource-service';
+import {
+  CaseProjectResourceRowType,
+  getCaseProjectResourceColumns,
+} from '../../../case-project-resource/columns';
+import { ReviewProjectListURLParams } from '../../../../../../types/assign-projects';
+import { PROJECT_DETAILS } from '../../../../../../../routes';
 
 interface ResourceSummaryProps {
   refreshTrigger: number;
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setExportParams?: (params: ResourceSummaryListExportParams) => void;
+  setExportParams?: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
+  >;
   setExportType?: (type: ExportType) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue: string;
+  isActionItemsExpanded?: boolean;
 }
 
 const ResourceSummary: React.FC<ResourceSummaryProps> = ({
@@ -38,37 +52,45 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  isActionItemsExpanded,
 }) => {
   const { caseId } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
-  const [resourceSummary, setResourceSummary] = useState<ResourceSummaryItem[]>(
-    []
-  );
+  const [resourceSummary, setResourceSummary] = useState<
+    CaseProjectResourceRowType[]
+  >([]);
   const [tableParams, setTableParams] = useState<ResourceSummaryListURLParams>({
     page: currentPage + 1,
     limit: 100,
-    sortBy: 'r_number',
+    sortBy: 'resource_code',
     sortOrder: 'ASC',
   });
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const { data, isLoading, isError } = useResourceSummaryList(
+  const { data, isLoading, isError } = useCaseProjectResourceList(
     {
-      ...tableParams,
+      page: tableParams.page,
+      limit: tableParams.limit,
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
       search: searchValue,
       filters: appliedFilters,
       accountRid: accountId || '',
-      caseRid: caseId || '',
+      case_rid: caseId || '',
+      fiscalYear: 0,
+      type: 'qualifiedProjects',
     },
     refreshTrigger
   );
 
-  const totalItems = data?.count || 0;
+  const totalItems = data?.data.count || 0;
 
   useEffect(() => {
     if (data) {
-      setResourceSummary(data.resourceSummary || []);
-      setCount(data.count || 0);
+      setResourceSummary(data?.data?.projectResources || []);
+      setCount(data?.data?.count || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
@@ -87,13 +109,54 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
       setExportType('dossier-resource-summary');
     }
     setExportParams?.({
+      page: 1,
+      limit: tableParams.limit,
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       search: searchValue,
+      type: 'qualifiedProjects',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, searchValue, tableParams.sortBy, tableParams.sortOrder]);
+  }, [
+    appliedFilters,
+    searchValue,
+    tableParams.sortBy,
+    tableParams.sortOrder,
+    tableParams.limit,
+  ]);
+
+  // Permission Management
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -108,7 +171,7 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
     setTableParams((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
-  const getRowId = (row: ResourceSummaryItem) => row.rid;
+  const getRowId = (row: CaseProjectResourceRowType) => row.rid;
 
   // Column visibility states
   const isModalOpen = Boolean(columnAnchorEl);
@@ -119,10 +182,34 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
     : undefined;
 
   const RestrictedColumns = [
-    { id: 'r_number', canHide: false, canDrag: false },
+    { id: 'resource_code', canHide: false, canDrag: false },
   ];
 
-  const resourceSummaryColumns = getResourceSummaryColumns();
+  const handleViewResource = (row: CaseProjectResourceRowType) => {
+    if (row.rid) {
+      const path = generatePath(PROJECT_DETAILS, {
+        projectid: row.project_fiscal_rid ?? '',
+      });
+      const queryParams = new URLSearchParams({
+        list: 'projectResources',
+        accountID: row.account_rid || accountId || '',
+        currency_rid: row.currency_rid || '',
+        source: 'account',
+        navigateFrom: 'case',
+        page: 'details',
+        pro_res_id: row.project_resource_rid || '',
+        origin: 'case_dossier',
+      });
+
+      navigate(`${path}?${queryParams.toString()}`);
+    }
+  };
+
+  const resourceSummaryColumns = getCaseProjectResourceColumns(
+    handleViewResource,
+    permissionMap,
+    projectPermissionMap
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -165,7 +252,9 @@ const ResourceSummary: React.FC<ResourceSummaryProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 420px)',
+          maxHeight: isActionItemsExpanded
+            ? 'calc(100vh - 282px)'
+            : 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

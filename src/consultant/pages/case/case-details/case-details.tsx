@@ -14,6 +14,7 @@ import {
 } from 'react-router-dom';
 import {
   ExportAssignedList,
+  ExportAuditTimelineList,
   ExportCaseTaskList,
   useCaseDetails,
 } from '../../../services/cases/case-service';
@@ -33,6 +34,9 @@ import {
   TechnicalSummaryExportListParams,
   ColorCode,
   FinancialHighlightsResponse,
+  AuditTimelineListExportParams,
+  FourPartAssessmentListExportURLParams,
+  RdAssessmentStatusExportURLParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -54,23 +58,25 @@ import {
   CaseIcon,
   CaseTeamIcon,
   ChecklistIcon,
-  ComingSoon,
   ConfigRuleIcon,
   DetailsKeyContactErrorIcon,
   DossierIcon,
   DraftEmailIcon,
   FinancialIcon,
+  InProgressIcon,
+  FourPartIcon,
   InteractionsIcon,
   MeetingIcon,
   NotesSideIcon,
   ProjectsSideIcon,
   ProjectTaskIcon,
   ResourcesIcon,
-  ReviewProjectIcon,
   SettingIcon,
   TaskCreateIcon,
   TechSummaryIcon,
   WorkBreakdownIcon,
+  RdStatusIcon,
+  ConfigIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -89,6 +95,7 @@ import {
   setTemporaryFiscalYear,
   setDossierFinancialStatus as setDossierFinancialStatusAction,
   setFinancialData as setFinancialDataAction,
+  setRdformGenerateStatus as setRdformGenerateStatusAction,
 } from '../../../../store/slices/account-slice';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
@@ -120,6 +127,12 @@ import {
 import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
 import { CircularProgress } from '@mui/material';
 import { Dossier } from './dossier';
+import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
+import { FourPartAssessment } from '../../four-part-assessment';
+import CloseCaseModal from './dossier/close-case-modal';
+import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
+import { ExportRdAssessmentStatusList } from '../../../services/rd-assessment/rd-assessment-service';
+import { RdAssessmentStatus } from '../../rd-assessment-status';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -142,12 +155,7 @@ export const CaseDetails = () => {
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
   const tabParam = searchParams.get('tab');
-  const caseHeaderDetails = useMemo(() => {
-    if (caseData) {
-      return transformCaseData(caseData);
-    }
-    return [];
-  }, [caseData]);
+
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
@@ -156,7 +164,7 @@ export const CaseDetails = () => {
   const { dossierFinancialStatus, financialData } = useSelector(
     (state: RootState) => state.account
   );
-
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const setDossierFinancialStatus = (status: boolean) => {
     dispatch(setDossierFinancialStatusAction(status));
   };
@@ -180,21 +188,35 @@ export const CaseDetails = () => {
   const projectResourceDetails = searchParams.get('resourceId');
   const caseProjectTaskDetails = searchParams.get('caseProjectTask');
   const technicalSummaryDetails = searchParams.get('technical_summary_id');
+  const fourPartAssessmentView = !!searchParams.get('fpa_id');
+
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const isCaseTeamCreated = caseData?.is_case_team_created;
   const isFinancialWorkingSignoff = caseData?.financial_working_signoff;
+  const isCaseClosed = caseData?.status_name?.toLowerCase() === 'closed';
+  const isAmendmentView =
+    caseData?.filing_type_name === 'Amendment' &&
+    caseData?.parent_case_rid !== '';
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
       sort_by: 'ASC',
-      filter: {},
+      // filter: {},
       timezone: '',
       page: 1,
       limit: 10,
-      search: '',
+      // search: '',
       case_rid: caseId ?? '',
-      account_id: accountId ?? '',
+      account_rid: accountId ?? '',
+    });
+  const [auditTimelineParams, setAuditTimelineParams] =
+    useState<AuditTimelineListExportParams>({
+      sort: 'signoff_at',
+      sort_by: 'DESC' as 'ASC' | 'DESC',
+      timezone: '',
+      case_rid: caseId ?? '',
+      account_rid: accountId ?? '',
     });
   const [caseTaskParams, setCaseTaskParams] = useState({
     sort: 'task_name',
@@ -205,7 +227,7 @@ export const CaseDetails = () => {
     limit: 10,
     search: '',
     case_rid: caseId ?? '',
-    account_id: accountId ?? '',
+    account_rid: accountId ?? '',
   });
   const [reviewProjectParams, setReviewProjectParams] =
     useState<ReviewProjectListURLParams>({
@@ -276,6 +298,24 @@ export const CaseDetails = () => {
       activity_type: 'all',
     });
 
+  const [fourPartParams, setFourPartParams] =
+    useState<FourPartAssessmentListExportURLParams>({
+      account_rid: '',
+      search: '',
+      filter: {},
+      sort: 'r_number',
+      sort_by: 'ASC',
+      type: 'case',
+    });
+
+  const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
+    useState<RdAssessmentStatusExportURLParams>({
+      search: '',
+      sortBy: 'created_datetime',
+      sortOrder: 'DESC',
+      filters: {},
+    });
+
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
       sortBy: 'project_code',
@@ -291,11 +331,11 @@ export const CaseDetails = () => {
       fiscalYear: 0,
       caseRid: caseId,
     });
-
+  const [dossierCreditStatus, setDossierCreditStatus] = useState<string>('');
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
-
+  const closeCaseTabView = searchParams.get('tab') === 'close_case';
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -343,12 +383,19 @@ export const CaseDetails = () => {
   useEffect(() => {
     // Reset dossier states when case changes to avoid showing stale data from previous case
     setDossierFinancialStatus(false);
+    setRdformGenerateStatus(false);
     setFinancialData(null);
   }, [caseId]);
 
   useEffect(() => {
     setIsActionItemsExpanded(false);
-  }, [activeKey, tabParam]);
+  }, [activeKey]);
+
+  useEffect(() => {
+    if (activeKey !== 'dossier') {
+      setIsActionItemsExpanded(false);
+    }
+  }, [tabParam]);
 
   const list = searchParams.get('list');
 
@@ -381,6 +428,10 @@ export const CaseDetails = () => {
   const TriggerAIEnable = checkPermission(
     permission,
     AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+  const isCaseCloseEnable = checkPermission(
+    permission,
+    AllPermissions.DOSSIER_CLOSE_CASE
   );
 
   const isActivityTaskExportEnable = checkPermission(
@@ -464,6 +515,49 @@ export const CaseDetails = () => {
     call: !!isActivityCallExportEnable,
   };
 
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
+  );
+  const caseViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.CASES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    caseViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [caseViewEditFields]);
+
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
+
+  const caseHeaderDetails = useMemo(() => {
+    if (caseData) {
+      return transformCaseData(caseData, permissionMap, accountPermissionMap);
+    }
+    return [];
+  }, [caseData, permissionMap, accountPermissionMap]);
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -471,13 +565,16 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'activities' &&
       searchParams.get('list') !== 'caseProjects' &&
+      searchParams.get('list') !== 'dossier' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
       searchParams.get('list') !== 'interactions' &&
       searchParams.get('list') !== 'projectTask' &&
       searchParams.get('list') !== 'projectResource' &&
       searchParams.get('list') !== 'financialHighlights' &&
-      searchParams.get('list') !== 'technicalSummary'
+      searchParams.get('list') !== 'technicalSummary' &&
+      searchParams.get('list') !== 'four_part_assessment' &&
+      searchParams.get('list') !== 'rd_assessment_status'
     ) {
       return;
     }
@@ -504,11 +601,22 @@ export const CaseDetails = () => {
 
     if (exportType === 'notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
-    } else if (exportType === 'attachments') {
-      exportAttachmentsData('attachments', {
-        ...attachmentParams,
-        ...attachmentPayload,
-      });
+    } else if (
+      exportType === 'attachments' ||
+      exportType === 'dossier-project-documents'
+    ) {
+      exportAttachmentsData(
+        'attachments',
+        {
+          ...attachmentParams,
+          ...attachmentPayload,
+          ...{
+            attachmentLevel:
+              exportType === 'dossier-project-documents' ? 'project' : 'case',
+          },
+        },
+        exportType === 'dossier-project-documents' ? 'project-documents' : ''
+      );
     } else if (exportType === 'checklist') {
       const checklistPayload = {
         accountRid: accountId,
@@ -524,28 +632,71 @@ export const CaseDetails = () => {
         { ...activityParams, ...activityPayload },
         activityType as ActivityType
       );
-    } else if (list === 'caseProjects' && exportType === 'cases_projects') {
-      ExportAssignedList(caseProjectParams);
+    } else if (exportType === 'four_part_assessment') {
+      ExportFourPartAssessmentList(fourPartParams);
+    } else if (exportType === 'rd_assessment_status') {
+      ExportRdAssessmentStatusList(rdAssessmentStatusParams);
+    } else if (
+      (list === 'caseProjects' && exportType === 'cases_projects') ||
+      (list === 'dossier' && exportType === 'dossier-qualified-projects')
+    ) {
+      ExportAssignedList(
+        { ...caseProjectParams, account_rid: accountId, case_rid: caseId },
+        exportType === 'dossier-qualified-projects' ? 'qualified-projects' : ''
+      );
     } else if (exportType === 'case_task') {
-      ExportCaseTaskList(caseTaskParams);
+      ExportCaseTaskList({
+        ...caseTaskParams,
+        account_rid: accountId,
+        case_rid: caseId,
+      });
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
     } else if (list === 'projectTask' && exportType === 'projectTask') {
       ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
     } else if (
-      list === 'projectResource' &&
-      exportType === 'project_resource'
+      (list === 'projectResource' && exportType === 'project_resource') ||
+      (list === 'dossier' && exportType === 'dossier-resource-summary')
     ) {
-      ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
+      ExportCaseProjectResourceList(
+        projectResourceParams,
+        accountId,
+        caseId,
+        exportType === 'dossier-resource-summary' ? 'resource-summary' : ''
+      );
+    } else if (list === 'dossier' && exportType === 'dossier-audit-timeline') {
+      ExportAuditTimelineList(
+        {
+          ...auditTimelineParams,
+          account_rid: accountId,
+          case_rid: caseId,
+        },
+        'approval-status'
+      );
     } else if (list === 'financialHighlights') {
       if (exportType === 'financial_project_cost') {
-        exportFinancialProjectCost(financialProjectCostParams);
+        exportFinancialProjectCost({
+          ...financialProjectCostParams,
+          accountRid: accountId,
+          caseRid: caseId,
+        });
       } else if (exportType === 'financial_resource_cost') {
-        exportFinancialResourceCost(financialResCostParams);
+        exportFinancialResourceCost({
+          ...financialResCostParams,
+          accountRid: accountId,
+          caseRid: caseId,
+        });
       }
-    } else if (list === 'technicalSummary') {
-      if (exportType === 'technical_summary') {
-        exportCasesTechnicalSummary(technicalSummaryParams);
+    } else if (list === 'technicalSummary' || list === 'dossier') {
+      if (
+        exportType === 'technical_summary' ||
+        exportType === 'dossier-technical-summary'
+      ) {
+        exportCasesTechnicalSummary({
+          ...technicalSummaryParams,
+          account_rid: accountId,
+          case_rid: caseId,
+        });
       }
     }
     if (list === 'interactions') {
@@ -576,7 +727,8 @@ export const CaseDetails = () => {
           flag: 'case',
           reminder_specific_list: true,
           case_rid: caseId || '',
-          // search: interactionsParams?.search || '',
+          search: interactionsParams?.search || '',
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportInteractions(projectInteractionExportPayload);
         return;
@@ -600,6 +752,10 @@ export const CaseDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
+    } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
+      return !isFourPartExportEnable;
+    } else if (list === 'rd_assessment_status') {
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
       const tab = searchParams.get('tab') || 'all';
       if (tab === 'all') {
@@ -618,6 +774,20 @@ export const CaseDetails = () => {
       } else {
         return !isProjectExportEnable;
       }
+    } else if (list === 'dossier') {
+      const dossierTab = searchParams.get('tab');
+      if (dossierTab === 'qualified_projects') {
+        return !isProjectExportEnable;
+      } else if (dossierTab === 'project_documents') {
+        return !isAttachmentExportEnable;
+      } else if (dossierTab === 'resource_summary') {
+        return !isProjectResourceExportEnable;
+      } else if (dossierTab === 'technical_summary') {
+        return !technicalSummaryExportEnable;
+      } else if (dossierTab === 'approval_status') {
+        return false;
+      }
+      return true;
     } else if (searchParams.get('tab') === 'case_task') {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
@@ -654,6 +824,9 @@ export const CaseDetails = () => {
     },
   ];
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
   const handleActionsClick = () => {
     console.log('Actions clicked');
   };
@@ -698,6 +871,9 @@ export const CaseDetails = () => {
     },
     []
   );
+  const setRdformGenerateStatus = (status: boolean) => {
+    dispatch(setRdformGenerateStatusAction(status));
+  };
 
   const handleToggleActionItems = (
     value: boolean | ((prevState: boolean) => boolean)
@@ -722,7 +898,6 @@ export const CaseDetails = () => {
       return newState;
     });
   };
-
   const renderContent = () => {
     // Check if current activeKey has permission
     const currentMenuItem = sideMenuItems.find(
@@ -766,6 +941,8 @@ export const CaseDetails = () => {
               isActionItemsExpanded={isActionItemsExpanded}
               setIsActionItemsExpanded={handleToggleActionItems}
               isCaseTeamCreated={isCaseTeamCreated}
+              refetchCaseDetails={refetchCaseDetails}
+              isAmendmentView={isAmendmentView}
             />
           </div>
         );
@@ -850,7 +1027,7 @@ export const CaseDetails = () => {
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
-      case 'settings':
+      case 'configuration':
         return <Setting activityMenuItems={activityMenuItems} />;
       case 'activities':
         return (
@@ -887,6 +1064,24 @@ export const CaseDetails = () => {
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
+      case 'four_part_assessment':
+        return (
+          <FourPartAssessment
+            setExportType={setExportType}
+            setFourPartAssessmentParams={setFourPartParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='case'
+          />
+        );
+      case 'rd_assessment_status':
+        return (
+          <RdAssessmentStatus
+            setExportType={setExportType}
+            setRdAssessmentStatusParams={setRdAssessmentStatusParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='case'
+          />
+        );
       case 'projectResource':
         return (
           <CaseProjectResource
@@ -917,12 +1112,23 @@ export const CaseDetails = () => {
             setFinancialData={setFinancialData}
             refetchCaseDetails={refetchCaseDetails}
             isDetailLoading={isPending}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+            dossierCreditStatus={dossierCreditStatus}
+            setDossierCreditStatus={setDossierCreditStatus}
+            setExportType={setExportType}
+            setQualifiedProjectsParams={setCaseProjectParams}
+            setProjectDocumentsParams={setAttachmentParams}
+            setResourceSummaryParams={setProjectResourceParams}
+            setTechnicalSummaryParams={setTechnicalSummaryParams}
+            setAuditTimelineParams={setAuditTimelineParams}
+            isActionItemsExpanded={isActionItemsExpanded}
+            setIsActionItemsExpanded={handleToggleActionItems}
           />
         );
       default:
         return (
-          <div className='flex items-center justify-center h-full'>
-            <ComingSoon alt='comingSoon' />
+          <div className='w-full pr-4 pl-2 py-2'>
+            <DetailsSectionSkeleton />
           </div>
         );
     }
@@ -975,13 +1181,6 @@ export const CaseDetails = () => {
         icon: FinancialIcon,
       },
       {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: ReviewProjectIcon,
-      },
-      {
         name: 'Case Team',
         key: 'caseTeam',
         id: AllModules.CASES_TEAM,
@@ -1016,6 +1215,20 @@ export const CaseDetails = () => {
         id: AllModules.INTERACTIONS,
         disabled: false,
         icon: InteractionsIcon,
+      },
+      {
+        name: 'Four Part Assessment',
+        key: 'four_part_assessment',
+        id: AllModules.FOUR_PART_ASSESSMENT,
+        disabled: false,
+        icon: FourPartIcon,
+      },
+      {
+        name: 'RD Assessment Status',
+        key: 'rd_assessment_status',
+        id: AllModules.RD_ASSESSMENT_STATUS,
+        disabled: false,
+        icon: RdStatusIcon,
       },
       {
         name: 'Technical Summary',
@@ -1060,13 +1273,21 @@ export const CaseDetails = () => {
         icon: ChecklistIcon,
       },
       {
-        name: 'Settings',
-        key: 'settings',
+        name: 'Configuration',
+        key: 'configuration',
         id: AllMenus.CONFIGURATION,
         disabled: false,
         hide: false,
-        icon: SettingIcon,
+        icon: ConfigIcon,
         subMenu: [
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            hide: false,
+            icon: SettingIcon,
+          },
           {
             name: 'Jurisdiction Configuration',
             key: 'jurisdiction_configuration',
@@ -1123,6 +1344,15 @@ export const CaseDetails = () => {
           goBack={goBack}
           backBtnLabel='Back To Cases'
           headerButtons={[
+            {
+              label: 'Close Case',
+              disabled:
+                !caseData?.rd_form_signoff ||
+                caseData?.status_name?.toLowerCase() === 'closed',
+              onClick: () => setIsModalOpen(true),
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !isCaseCloseEnable || closeCaseTabView,
+            },
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
@@ -1196,7 +1426,7 @@ export const CaseDetails = () => {
               </div>
             </div>
           )}
-          {isFinancialWorkingSignoff && !isLoading && (
+          {isFinancialWorkingSignoff && !isLoading && !isCaseClosed && (
             <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
               <div>
                 <React.Suspense fallback={null}>
@@ -1206,12 +1436,31 @@ export const CaseDetails = () => {
               <div>
                 <span className='font-bold mr-1 capitalize'>Case</span>-
                 <span className='ml-1 font-medium'>
-                  Financial workings of this Case is signed off. Project changes
+                  Financial workings of this Case is approved. Project changes
                   are no longer allowed.
                 </span>
               </div>
             </div>
           )}
+          {!dossierCreditStatus ||
+            (dossierCreditStatus !== 'COMPLETED' && (
+              <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+                <div>
+                  <React.Suspense fallback={null}>
+                    <InProgressIcon alt='in-progress' className='w-4 h-4' />
+                  </React.Suspense>
+                </div>
+                <div>
+                  <span className='font-bold mr-1 capitalize'>
+                    Dossier Package Status
+                  </span>
+                  -
+                  <span className='ml-1 font-medium'>
+                    {dossierCreditStatus}
+                  </span>
+                </div>
+              </div>
+            ))}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
@@ -1219,6 +1468,19 @@ export const CaseDetails = () => {
         modalId={activityModalId}
         onCloseModal={() => setActivityModalId(null)}
         sourceDetails={sourceDetails}
+      />
+      <CloseCaseModal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        caseDetails={{
+          country_name: caseData?.country_name,
+          country_rid: caseData?.country_rid,
+          country_code: caseData?.country_code,
+          fiscal_year: caseData?.fiscal_year,
+          all_task_completed: caseData?.all_task_completed,
+          currency_symbol: caseData?.currency_symbol,
+        }}
+        refetchCaseDetails={refetchCaseDetails}
       />
     </div>
   );

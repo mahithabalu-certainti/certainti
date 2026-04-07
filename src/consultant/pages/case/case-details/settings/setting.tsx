@@ -1,24 +1,28 @@
 import React, { useRef, useState } from 'react';
-import { ConfigRuleIcon } from '../../../../../assets';
-import { AllPermissions } from '../../../../../common-service';
+import { ConfigRuleIcon, SettingsIcon } from '../../../../../assets';
+import { AllPermissions, OverviewTabs } from '../../../../../common-service';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import JurisdictionConfig from './Jurisdiction-Config/Jurisdiction-Config';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
+import Timeline from '../../../../../pages/timeline/timeline';
+import { useSearchParams } from 'react-router';
+import JurisdictionSetting from './jurisdiction-setting/Jurisdiction_setting';
 
-const SettingsTabs: ResourceTabs[] = [
+const SettingsTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW, // need to be changed
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 interface SettingProps {
@@ -32,6 +36,10 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
   const handleSubmit = () => {
     formRef.current?.requestSubmit();
   };
+  const [searchParams] = useSearchParams();
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
+  const isJurisdictionConfigView =
+    searchParams.get('subMenu') === 'jurisdiction_configuration';
   const headerButtons = [
     {
       label: 'Save',
@@ -68,23 +76,50 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
-      <SectionHeader
-        title={'Jurisdiction Configuration'}
-        titleIcon={
-          <ConfigRuleIcon
-            alt='settings-header-icon'
-            className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='case' />
+        </div>
+      ) : (
+        <>
+          <SectionHeader
+            title={
+              isJurisdictionConfigView
+                ? 'Jurisdiction Configuration'
+                : 'Settings'
+            }
+            titleIcon={
+              isJurisdictionConfigView ? (
+                <ConfigRuleIcon
+                  alt='settings-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              ) : (
+                <SettingsIcon
+                  alt='settings-header-icon'
+                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                />
+              )
+            }
+            buttons={headerButtons}
+            iconBg={ColorCode.caseBgColor}
+            bgType='circle'
           />
-        }
-        buttons={headerButtons}
-        iconBg={ColorCode.caseBgColor}
-        bgType='circle'
-      />
-      <JurisdictionConfig
-        formRef={formRef}
-        setIsFormSaving={setIsFormSaving}
-        // setIsSaveDisable={setIsSaveDisable}
-      />
+          {isJurisdictionConfigView ? (
+            <JurisdictionConfig
+              formRef={formRef}
+              setIsFormSaving={setIsFormSaving}
+              // setIsSaveDisable={setIsSaveDisable}
+            />
+          ) : (
+            <JurisdictionSetting
+              formRef={formRef}
+              setIsFormSaving={setIsFormSaving}
+              // setIsSaveDisable={setIsSaveDisable}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };

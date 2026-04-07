@@ -86,7 +86,7 @@ export const getSelectProjectColumns = (
     editId: 'project_classification_rid',
     label: 'Project Classification',
     sortable: true,
-    sortId: 'classification_name',
+    sortId: 'project_classification_name',
     hide:
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,

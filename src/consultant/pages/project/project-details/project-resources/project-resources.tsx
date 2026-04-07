@@ -20,11 +20,11 @@ import { ProjectResourcesListType } from '../../../../types/project-resources';
 import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
-import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllMenus,
   AllModules,
   AllPermissions,
+  OverviewTabs,
   useGetAllCountries,
 } from '../../../../../common-service';
 import {
@@ -55,6 +55,7 @@ import {
 import { useFetchState } from '../../../../services/account';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import Uploads from '../../../../../components/Attachments/upload';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 enum ActionEnum {
   ACCEPT = 'accept',
@@ -66,18 +67,20 @@ const BUTTON_STYLES = {
   fontSize: '13px',
 };
 
-const projectTabs: ResourceTabs[] = [
+const projectTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_PROJECTS_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 export const ProjectResources = ({
@@ -152,6 +155,7 @@ export const ProjectResources = ({
   const [updateProjectResourceMutation] = useMutation(UPDATE_PROJECT_RESOURCE, {
     client: resourceClient,
   });
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const [searchText, setSearchText] = useState('');
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -164,6 +168,7 @@ export const ProjectResources = ({
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
   const activeMenuPath = searchParams.get('activeMenu') || '';
+  const originPath = searchParams.get('origin') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -221,8 +226,8 @@ export const ProjectResources = ({
     isLoading: isDetailsLoading,
     error: detailsError,
   } = useProjectResourceDetail(
-    projectResData?.account_rid as string,
-    projectResData?.rid as string,
+    projectResData?.account_rid || accountID || '',
+    projectResData?.rid || resID || '',
     detailrefecth as number
     // searchText as string
   );
@@ -424,17 +429,22 @@ export const ProjectResources = ({
     });
   };
   const handleBackClick = () => {
-    setShowProjectResourceDetails(!showProjectResourceDetails);
-    setProjectResData(null);
-    setShowFilter(false);
-    // clear query params
-    searchParams.delete('pro_res_id');
-    searchParams.delete('page');
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    });
+    if (originPath === 'case_dossier') {
+      window.history.back();
+    } else {
+      setShowProjectResourceDetails(!showProjectResourceDetails);
+      setProjectResData(null);
+      setShowFilter(false);
+      // clear query params
+      searchParams.delete('pro_res_id');
+      searchParams.delete('page');
+      navigate({
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      });
+    }
   };
+
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
 
@@ -521,11 +531,14 @@ export const ProjectResources = ({
       hide: viewDetails ? true : false,
     },
     {
-      label: 'Back To Project Resources',
+      label:
+        originPath === 'case_dossier'
+          ? 'Back To Dossier'
+          : 'Back To Project Resources',
       variant: 'outlined' as const,
       disabled: false,
       onClick: handleBackClick,
-      sx: { ...BUTTON_STYLES, width: '175px', minWidth: '175px' },
+      sx: { ...BUTTON_STYLES, width: 'auto', padding: '0px 9px' },
       hide: viewDetails ? false : true,
     },
   ];
@@ -826,106 +839,115 @@ export const ProjectResources = ({
         onSearch={(text) => setSearchText(text)}
         showAddActivity={!viewDetails && !showUploads}
         activityMenuItems={activityMenuItems}
+        hideTabPanel={showUploads}
       />
-      <>
-        {showUploads ? (
-          <Uploads
-            accountId={accountID}
-            attachID={resID}
-            onUploadSuccess={handleDetailReFetch}
-            projectFiscalYear={projectFiscalYear}
-          />
-        ) : (
-          <>
-            <ProjectResourceTableHeader
-              value={
-                viewDetails ? 'project-resource-details' : 'projects-resources'
-              }
-              title={viewDetails ? 'Project Resource' : 'Project Resources'}
-              titleIcon={
-                <ResourcesIcon
-                  alt='project-header-icon'
-                  className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-                />
-              }
-              count={totalItems}
-              showBackArrow={viewDetails}
-              headerButtons={headerButtons}
-              projectResourceNumber={resourceData?.r_number}
-              onBackClick={handleBackClick}
-              iconBg={ColorCode.projectBgColor}
-              bgType='circle'
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='project' />
+        </div>
+      ) : (
+        <>
+          {showUploads ? (
+            <Uploads
+              accountId={accountID}
+              attachID={resID}
+              onUploadSuccess={handleDetailReFetch}
+              projectFiscalYear={projectFiscalYear}
             />
-            <div className='border border-[#CBD6E2]'>
-              {showProjectResourceDetails ? (
-                <ProjectResourceDetails
-                  resourceData={
-                    resourceDetails?.data?.projectResource || undefined
-                  }
-                  attachment={resourceDetails?.data?.attachment || []}
-                  isDetailsLoading={isDetailsLoading}
-                  detailsError={detailsError}
-                  permission={permission}
-                />
-              ) : (
-                <>
-                  <ManageColumnsPopover
-                    anchorEl={columnAnchorEl}
-                    open={isModalOpen}
-                    popoverId={modalId}
-                    onClose={handlePopoverClose}
-                    columns={projectResourcesColumns}
-                    onColumnsChange={handleColumnsChange}
-                    columnRestrictions={RestrictedColumns}
+          ) : (
+            <>
+              <ProjectResourceTableHeader
+                value={
+                  viewDetails
+                    ? 'project-resource-details'
+                    : 'projects-resources'
+                }
+                title={viewDetails ? 'Project Resource' : 'Project Resources'}
+                titleIcon={
+                  <ResourcesIcon
+                    alt='project-header-icon'
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
                   />
-                  <ListTable
-                    data={projectResourceList}
-                    columns={visibleColumns}
-                    actionMenuItems={actionMenuItems}
-                    getRowId={(row: ProjectResourcesListType): string =>
-                      row.rid || ''
+                }
+                count={totalItems}
+                showBackArrow={viewDetails}
+                headerButtons={headerButtons}
+                projectResourceNumber={resourceData?.r_number}
+                onBackClick={handleBackClick}
+                iconBg={ColorCode.projectBgColor}
+                bgType='circle'
+              />
+              <div className='border border-[#CBD6E2]'>
+                {showProjectResourceDetails ? (
+                  <ProjectResourceDetails
+                    resourceData={
+                      resourceDetails?.data?.projectResource || undefined
                     }
-                    hoverHighlight={false}
-                    tableStyle={{
-                      height: '100%',
-                      maxHeight: 'calc(100vh - 380px)',
-                      overflow: 'auto',
-                    }}
-                    stickyHeader={true}
-                    stickyColumnsCount={1}
-                    actionWidth={60}
-                    actionDisplayMode='dropdown'
-                    conditionMenuItems={
-                      !hideStatusAction
-                        ? (row: ProjectResourcesListType) =>
-                            getConditionMenuItems(row)
-                        : undefined
-                    }
-                    loading={isLoading}
-                    error={error ? 'Failed to load projects' : undefined}
-                    rowsPerPageOptions={[25, 50, 100]}
-                    rowsPerPage={rowsPerPage}
-                    currentPage={currentPage ?? 1}
-                    totalItems={data?.count || 0}
-                    onPageChange={setCurrentPage}
-                    onRowsPerPageChange={setRowsPerPage}
-                    sortBy={sortField}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                    selectable={false}
-                    onSelectionChange={(selectedIds: unknown) =>
-                      console.log('Selected:', selectedIds)
-                    }
-                    component='project resources'
-                    onCellEdit={handleCellEdit}
-                    onFieldChange={handleFieldChange}
+                    attachment={resourceDetails?.data?.attachment || []}
+                    isDetailsLoading={isDetailsLoading}
+                    detailsError={detailsError}
+                    permission={permission}
                   />
-                </>
-              )}
-            </div>
-          </>
-        )}
-      </>
+                ) : (
+                  <>
+                    <ManageColumnsPopover
+                      anchorEl={columnAnchorEl}
+                      open={isModalOpen}
+                      popoverId={modalId}
+                      onClose={handlePopoverClose}
+                      columns={projectResourcesColumns}
+                      onColumnsChange={handleColumnsChange}
+                      columnRestrictions={RestrictedColumns}
+                    />
+                    <ListTable
+                      data={projectResourceList}
+                      columns={visibleColumns}
+                      actionMenuItems={actionMenuItems}
+                      getRowId={(row: ProjectResourcesListType): string =>
+                        row.rid || ''
+                      }
+                      hoverHighlight={false}
+                      tableStyle={{
+                        height: '100%',
+                        maxHeight: 'calc(100vh - 380px)',
+                        overflow: 'auto',
+                      }}
+                      stickyHeader={true}
+                      stickyColumnsCount={1}
+                      actionWidth={60}
+                      actionDisplayMode='dropdown'
+                      conditionMenuItems={
+                        !hideStatusAction
+                          ? (row: ProjectResourcesListType) =>
+                              getConditionMenuItems(row)
+                          : undefined
+                      }
+                      loading={isLoading}
+                      error={error ? 'Failed to load projects' : undefined}
+                      rowsPerPageOptions={[25, 50, 100]}
+                      rowsPerPage={rowsPerPage}
+                      currentPage={currentPage ?? 1}
+                      totalItems={data?.count || 0}
+                      onPageChange={setCurrentPage}
+                      onRowsPerPageChange={setRowsPerPage}
+                      sortBy={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                      selectable={false}
+                      onSelectionChange={(selectedIds: unknown) =>
+                        console.log('Selected:', selectedIds)
+                      }
+                      component='project resources'
+                      onCellEdit={handleCellEdit}
+                      onFieldChange={handleFieldChange}
+                    />
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -20,6 +20,7 @@ const initialState: AccountState = {
   fiscalYear: 'FY-All',
   refetchGlobalAccounts: false,
   dossierFinancialStatus: false,
+  rdformGenerateStatus: false,
   financialData: null,
 };
 
@@ -67,6 +68,9 @@ export const accountSlice = createSlice({
     setDossierFinancialStatus(state, action: PayloadAction<boolean>) {
       state.dossierFinancialStatus = action.payload;
     },
+    setRdformGenerateStatus(state, action: PayloadAction<boolean>) {
+      state.rdformGenerateStatus = action.payload;
+    },
     setFinancialData(
       state,
       action: PayloadAction<FinancialHighlightsResponse | null>
@@ -100,5 +104,6 @@ export const {
   setRefetchGlobalAccounts,
   setTemporaryFiscalYear,
   setDossierFinancialStatus,
+  setRdformGenerateStatus,
   setFinancialData,
 } = accountSlice.actions;

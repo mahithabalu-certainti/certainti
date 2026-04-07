@@ -154,79 +154,92 @@ export const getDetailedMetricColumns = (
 ];
 
 export const getRdPercentColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
-): ListTableColumn<SummaryRdPercent>[] => [
-  {
-    id: 'rd_percent_potential',
-    label: 'QRE Percent Potential',
-    sortable: false,
-    sortId: 'rd_percent_potential',
-    width: '30%',
-    sticky: true,
-    sx: {
-      position: 'sticky',
-      left: 0,
-      background: '#fff',
-      zIndex: 10,
-      borderRight: '1px solid #CBD6E2 !important',
-      borderBottom: '1px solid #CBD6E2 !important',
-      textAlign: 'right',
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  isProjectSignedOff?: boolean,
+  aiEstimatedQre?: string | number | null
+): ListTableColumn<SummaryRdPercent>[] => {
+  const isQreEditPermission =
+    projectPermissionMap?.['qre_percent_adjustment']?.read &&
+    projectPermissionMap?.['qre_percent_adjustment']?.edit;
+  const isEditQrePrecent = Boolean(
+    isQreEditPermission && !isProjectSignedOff && aiEstimatedQre
+  );
+
+  return [
+    {
+      id: 'rd_percent_potential',
+      label: 'QRE Percent Potential',
+      sortable: false,
+      sortId: 'rd_percent_potential',
+      width: '30%',
+      sticky: true,
+      sx: {
+        position: 'sticky',
+        left: 0,
+        background: '#fff',
+        zIndex: 10,
+        borderRight: '1px solid #CBD6E2 !important',
+        borderBottom: '1px solid #CBD6E2 !important',
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['rd_percent_potential']?.edit &&
+        !permissionMap?.['rd_percent_potential']?.read,
+      render: (row: SummaryRdPercent) =>
+        percentDisplay(row.rd_percent_potential),
     },
-    hide:
-      !permissionMap?.['rd_percent_potential']?.edit &&
-      !permissionMap?.['rd_percent_potential']?.read,
-    render: (row: SummaryRdPercent) => percentDisplay(row.rd_percent_potential),
-  },
-  {
-    id: 'rd_percent_adjustment',
-    label: 'QRE Percent Adjustment',
-    sortable: false,
-    sortId: 'rd_percent_adjustment',
-    width: '30%',
-    sx: {
-      textAlign: 'right',
+    {
+      id: 'rd_percent_adjustment',
+      label: 'QRE Percent Adjustment',
+      sortable: false,
+      sortId: 'rd_percent_adjustment',
+      width: '30%',
+      sx: {
+        textAlign: 'right',
+      },
+      editable: isEditQrePrecent ? true : false,
+      field: {
+        type: 'number',
+        placeholder: '',
+        dependencies: [
+          {
+            dependsOn: 'rd_percent_potential',
+            condition: (value) => !value || value === '-' || value === '',
+            action: 'disabled',
+            message: 'Enter QRE Percent Potential',
+          },
+        ],
+        validation: [
+          {
+            regex: /^(?:-?\d{1,2}(?:\.\d{1,2})?|100(?:\.0{1,2})?)$/,
+            errorMessage: 'Enter a valid percentage between -99.99 and 100',
+          },
+        ],
+        required: false,
+      },
+      hide:
+        !projectPermissionMap?.['qre_percent_adjustment']?.read &&
+        !projectPermissionMap?.['qre_percent_adjustment']?.edit,
+      render: (row: SummaryRdPercent) =>
+        percentDisplay(row.rd_percent_adjustment),
     },
-    editable: true,
-    field: {
-      type: 'number',
-      placeholder: '',
-      dependencies: [
-        {
-          dependsOn: 'rd_percent_potential',
-          condition: (value) => !value || value === '-' || value === '',
-          action: 'disabled',
-          message: 'Enter QRE Percent Potential',
-        },
-      ],
-      validation: [
-        {
-          regex: /^(?:-?\d{1,2}(?:\.\d{1,2})?|100(?:\.0{1,2})?)$/,
-          errorMessage: 'Enter a valid percentage between -99.99 and 100',
-        },
-      ],
-      required: false,
+    {
+      id: 'rd_percent_final',
+      label: 'QRE Percent Final',
+      sortable: false,
+      sortId: 'rd_percent_final',
+      width: '30%',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['rd_percent_final']?.edit &&
+        !permissionMap?.['rd_percent_final']?.read,
+      render: (row: SummaryRdPercent) => percentDisplay(row.rd_percent_final),
     },
-    hide:
-      !permissionMap?.['rd_percent_adjustment']?.edit &&
-      !permissionMap?.['rd_percent_adjustment']?.read,
-    render: (row: SummaryRdPercent) =>
-      percentDisplay(row.rd_percent_adjustment),
-  },
-  {
-    id: 'rd_percent_final',
-    label: 'QRE Percent Final',
-    sortable: false,
-    sortId: 'rd_percent_final',
-    width: '30%',
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['rd_percent_final']?.edit &&
-      !permissionMap?.['rd_percent_final']?.read,
-    render: (row: SummaryRdPercent) => percentDisplay(row.rd_percent_final),
-  },
-];
+  ];
+};
 
 export const getQREColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
@@ -387,7 +400,7 @@ export const getClaimJurisdictionColumns = (
 ): ListTableColumn<SummaryClaimJurisdiction>[] => [
   {
     id: 'name',
-    label: 'Claim Jurisdiction',
+    label: 'Jurisdiction',
     sortable: false,
     sortId: 'name',
     width: '25%',
@@ -404,7 +417,7 @@ export const getClaimJurisdictionColumns = (
   },
   {
     id: 'claim_rd_credits_fte',
-    label: 'RD Credits - FTE',
+    label: 'QRE FTE',
     sortable: false,
     sortId: 'claim_rd_credits_fte',
     width: '25%',
@@ -421,7 +434,7 @@ export const getClaimJurisdictionColumns = (
   },
   {
     id: 'claim_rd_credits_subcon',
-    label: 'RD Credits - SubCon',
+    label: 'QRE Sub Con',
     sortable: false,
     sortId: 'claim_rd_credits_subcon',
     width: '25%',
@@ -438,7 +451,7 @@ export const getClaimJurisdictionColumns = (
   },
   {
     id: 'claim_rd_credits_nonlabor',
-    label: 'RD Credits - NonLabor',
+    label: 'QRE Non Labor',
     sortable: false,
     sortId: 'claim_rd_credits_nonlabor',
     width: '25%',

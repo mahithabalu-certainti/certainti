@@ -21,6 +21,7 @@ import {
   AllMenus,
   AllModules,
   AllPermissions,
+  OverviewTabs,
 } from '../../../../../common-service';
 import {
   ListTable,
@@ -40,7 +41,6 @@ import {
   FilterType,
   FormFiscalDateType,
   ProjectResourcesListType,
-  SelectOption,
   SelectResourceOption,
 } from '../../../../types';
 import {
@@ -53,13 +53,14 @@ import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT_TASK } from '../../../../../api/graphql/queries/project-query';
 import { taskClient } from '../../../../../api/graphql/clients/client';
 import {
-  useGetProjectResourceCode,
+  useGetProjectResourceTaskCode,
   useGetProjectResourceTaskType,
 } from '../../../../services/project-resources/project-resources-form-service';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
 import SectionHeader from '../../../../../components/details-section/section-header';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -72,18 +73,20 @@ export interface ProjectsTabs {
   hide: boolean;
   disable?: boolean;
 }
-const projectTabs: ProjectsTabs[] = [
+const projectTabs: OverviewTabs[] = [
   {
     id: AllPermissions.PROJECTS_TASK_VIEW_EDIT,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllMenus.TIMESHEETS,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllMenus.TIMESHEETS,
+    name: 'Timeline',
+    hide: false,
+    disable: false,
+    key: 'timeline',
+  },
 ];
 
 export const ProjectTask = ({
@@ -137,7 +140,7 @@ export const ProjectTask = ({
   const currency_rid = searchParams.get('currency_rid') || '';
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -302,17 +305,21 @@ export const ProjectTask = ({
   }, [searchParams, taskId]);
 
   const resourceData = resourceDetails?.data;
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string,
-    projectID as string
-  );
-  const memoizedProjectResourceCode: SelectOption[] = useMemo(
+  const payload = {
+    account_rid: accountID || undefined,
+    search: '',
+    project_fiscal_rid: projectID || undefined,
+  };
+
+  const { data: projectResourceCodeOptions } =
+    useGetProjectResourceTaskCode(payload);
+  const memoizedProjectResourceCode = useMemo(
     () =>
-      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: item.resource_code,
-        value: item.resource_code,
+      projectResourceCodeOptions?.data?.map((item) => ({
+        label: `${item.resource_code}  ${item.project_resource_role ? `(${item.project_resource_role})` : ''}`,
+        value: item.rid,
       })) || [],
-    [projectResourceCodeOptions?.data?.resourceCodes]
+    [projectResourceCodeOptions?.data]
   );
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
@@ -779,93 +786,101 @@ export const ProjectTask = ({
         showAddActivity={viewDetails ? false : !showUploads}
         activityMenuItems={activityMenuItems}
       />
-      {showUploads ? (
-        <Uploads
-          accountId={accountID}
-          attachID={taskId || selectedRowId}
-          onUploadSuccess={taskDetailPageRefresh}
-          projectFiscalYear={projectFiscalYear}
-        />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='project' />
+        </div>
       ) : (
         <>
-          <SectionHeader
-            title={viewDetails ? 'Project Task' : 'Project Tasks'}
-            titleIcon={
-              <ProjectTaskIcon
-                alt='resource header icon'
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-              />
-            }
-            count={totalItems}
-            showItemCount={!viewDetails}
-            buttons={headerButtons}
-            subValue={resourceData?.r_number}
-            iconBg={ColorCode.projectBgColor}
-            bgType='circle'
-          />
-          <div className='border border-[#CBD6E2]'>
-            {showProjectTaskDetails ? (
-              <ProjectTaskDetails
-                projectTaskData={
-                  (resourceData as unknown as ProjectTaskDetailsType) ||
-                  undefined
+          {showUploads ? (
+            <Uploads
+              accountId={accountID}
+              attachID={taskId || selectedRowId}
+              onUploadSuccess={taskDetailPageRefresh}
+              projectFiscalYear={projectFiscalYear}
+            />
+          ) : (
+            <>
+              <SectionHeader
+                title={viewDetails ? 'Project Task' : 'Project Tasks'}
+                titleIcon={
+                  <ProjectTaskIcon
+                    alt='resource header icon'
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                  />
                 }
-                isDetailsLoading={isDetailsLoading}
-                detailsError={detailsError}
+                count={totalItems}
+                showItemCount={!viewDetails}
+                buttons={headerButtons}
+                subValue={resourceData?.r_number}
+                iconBg={ColorCode.projectBgColor}
+                bgType='circle'
               />
-            ) : (
-              <>
-                <ManageColumnsPopover
-                  anchorEl={columnAnchorEl}
-                  open={isModalOpen}
-                  popoverId={modalId}
-                  onClose={handlePopoverClose}
-                  columns={projectTaskColumns}
-                  onColumnsChange={handleColumnsChange}
-                  columnRestrictions={RestrictedColumns}
-                />
-                <ListTable
-                  data={projectTaskList}
-                  columns={visibleColumns}
-                  actionMenuItems={actionMenuItems}
-                  getRowId={getRowId}
-                  hoverHighlight={false}
-                  tableStyle={{
-                    height: '100%',
-                    maxHeight: 'calc(100vh - 380px)',
-                    overflow: 'auto',
-                  }}
-                  stickyHeader={true}
-                  stickyColumnsCount={1}
-                  actionWidth={60}
-                  actionDisplayMode='dropdown'
-                  conditionMenuItems={
-                    !hideStatusAction
-                      ? (row: ProjectResourcesListType) =>
-                          getConditionMenuItems(row)
-                      : undefined
-                  }
-                  loading={isLoading}
-                  error={error ? 'Failed to load projects' : undefined}
-                  rowsPerPageOptions={[25, 50, 100]}
-                  rowsPerPage={rowsPerPage}
-                  currentPage={currentPage ?? 1}
-                  totalItems={data?.count || 0}
-                  onPageChange={setCurrentPage}
-                  onRowsPerPageChange={setRowsPerPage}
-                  sortBy={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                  selectable={false}
-                  onSelectionChange={(selectedIds: unknown) =>
-                    console.log('Selected:', selectedIds)
-                  }
-                  component='project task'
-                  onCellEdit={handleCellEdit}
-                />
-              </>
-            )}
-          </div>
+              <div className='border border-[#CBD6E2]'>
+                {showProjectTaskDetails ? (
+                  <ProjectTaskDetails
+                    projectTaskData={
+                      (resourceData as unknown as ProjectTaskDetailsType) ||
+                      undefined
+                    }
+                    isDetailsLoading={isDetailsLoading}
+                    detailsError={detailsError}
+                  />
+                ) : (
+                  <>
+                    <ManageColumnsPopover
+                      anchorEl={columnAnchorEl}
+                      open={isModalOpen}
+                      popoverId={modalId}
+                      onClose={handlePopoverClose}
+                      columns={projectTaskColumns}
+                      onColumnsChange={handleColumnsChange}
+                      columnRestrictions={RestrictedColumns}
+                    />
+                    <ListTable
+                      data={projectTaskList}
+                      columns={visibleColumns}
+                      actionMenuItems={actionMenuItems}
+                      getRowId={getRowId}
+                      hoverHighlight={false}
+                      tableStyle={{
+                        height: '100%',
+                        maxHeight: 'calc(100vh - 380px)',
+                        overflow: 'auto',
+                      }}
+                      stickyHeader={true}
+                      stickyColumnsCount={1}
+                      actionWidth={60}
+                      actionDisplayMode='dropdown'
+                      conditionMenuItems={
+                        !hideStatusAction
+                          ? (row: ProjectResourcesListType) =>
+                              getConditionMenuItems(row)
+                          : undefined
+                      }
+                      loading={isLoading}
+                      error={error ? 'Failed to load projects' : undefined}
+                      rowsPerPageOptions={[25, 50, 100]}
+                      rowsPerPage={rowsPerPage}
+                      currentPage={currentPage ?? 1}
+                      totalItems={data?.count || 0}
+                      onPageChange={setCurrentPage}
+                      onRowsPerPageChange={setRowsPerPage}
+                      sortBy={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                      selectable={false}
+                      onSelectionChange={(selectedIds: unknown) =>
+                        console.log('Selected:', selectedIds)
+                      }
+                      component='project task'
+                      onCellEdit={handleCellEdit}
+                    />
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

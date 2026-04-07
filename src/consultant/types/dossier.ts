@@ -26,11 +26,28 @@ export interface ProjectDocumentsListExportParams {
 export type ProjectDocumentItem = {
   rid: string;
   r_number: string;
-  project_ref_id: string;
   project_name: string;
-  document_number: string;
-  document_type: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string | null;
+  modified_by: string | null;
+  account_rid: string;
+  browse_file: string;
   document_name: string;
+  attach_to: string;
+  attachment_level: string;
+  fiscal_year: number;
+  format: string;
+  size_in_mb: string;
+  document_category_rid: string;
+  document_category: string;
+  document_type_rid: string;
+  document_category_others: string | null;
+  document_type_others: string | null;
+  comments: string | null;
+  document_type: string;
+  uploaded_by: string;
+  attached_to: string;
 };
 
 export interface ProjectDocumentListResponse {
@@ -45,6 +62,95 @@ export interface ProjectDocumentListResponse {
   };
 }
 
+//-------- Qualified Projects ----------
+export interface QualifiedProjectsListURLParams {
+  page: number;
+  limit: number;
+  sortBy: string;
+  sortOrder: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  caseRid?: string;
+  accountRid?: string;
+  search?: string;
+  type?: string;
+}
+
+export interface QualifiedProjectsListExportParams {
+  sortBy: string;
+  sortOrder: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  caseRid?: string;
+  accountRid?: string;
+  search?: string;
+  timezone?: string;
+}
+
+export type QualifiedProjectItem = {
+  rid: string;
+  r_number: string;
+  account_rid: string;
+  project_rid: string;
+  project_code: string;
+  project_name: string | null;
+  project_type_name: string;
+  classification_name: string;
+  fiscal_year: number;
+  project_classification_rid: string | null;
+  project_classification_name: string | null;
+  project_client_group: string | null;
+  project_group: string | null;
+  total_effort_prj: number | null;
+  total_cost_prj: number | null;
+  total_cost_fte_prj: number | null;
+  total_cost_subcon_prj: number | null;
+  total_cost_nonlabor_prj: number | null;
+  assessment_status: string | null;
+  rd_percent_final: string | null;
+  qre_final: string | null;
+  comments: string | null;
+  modified_datetime: string;
+  project_point_of_contact: string | null;
+  project_technical_point_of_contact: string | null;
+  currency_symbol: string | undefined;
+};
+
+export interface QualifiedProjectListResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    page?: number;
+    limit?: number;
+    count: number;
+    qualifiedProjects: QualifiedProjectItem[];
+  };
+}
+
+//-------- Dossier Summary ----------
+export type DossierSummarySectionItem = {
+  title: string;
+  summary: string;
+};
+
+export type DossierSummary = {
+  title: string;
+  account_name: string;
+  country_name: string;
+  fiscal_year: number;
+  company_overview: string;
+  overall_projects_summary: string;
+  assessment_methodology: string;
+};
+
+export interface DossierSummaryResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: DossierSummary;
+}
+
 //-------- Resource Summary ----------
 export interface ResourceSummaryListURLParams {
   page: number;
@@ -56,6 +162,7 @@ export interface ResourceSummaryListURLParams {
   caseRid?: string;
   accountRid?: string;
   search?: string;
+  type?: string;
 }
 
 export interface ResourceSummaryListExportParams {
@@ -68,20 +175,79 @@ export interface ResourceSummaryListExportParams {
   search?: string;
   timezone?: string;
 }
+export interface AuditTimelineListExportParams {
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  timezone?: string;
+  case_rid?: string;
+  account_rid?: string;
+}
 
 export type ResourceSummaryItem = {
   rid: string;
   r_number: string;
-  project_ref_id: string;
-  project_name: string;
-  resource_ref_id: string;
-  resource_name: string;
-  resource_type: string;
-  country_region: string;
-  cost: string;
-  rd_percentage: string;
-  qre: string;
-  rd_credit: string;
+  resource_code: string;
+  project_resource_code: string | null;
+  project_resource_id?: string;
+  resource_name: string | null;
+  resource_firstname: string | null;
+  resource_lastname: string | null;
+  resource_type_name: string | null;
+  resource_type_rid?: string;
+  designation: string | null;
+  resource_role: string | null;
+  resource_orgname: string | null;
+  project_rid: string | null;
+  project_code: string | null;
+  project_name: string | null;
+  project_resource_role: string | null;
+  country_rid: string | null;
+  country_name: string | null;
+  country_code: string | null;
+  region_rid: string | null;
+  region_name: string | null;
+  resource_region?: string;
+  resource_country?: string;
+  city_rid: string | null;
+  city_name: string | null;
+  currency_rid: string | null;
+  currency_name: string | null;
+  currency_symbol: string;
+  resource_startdate: string | null;
+  resource_enddate: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  resource_total_experience: string | number | null;
+  resource_total_experience_organization: string | number | null;
+  total_hours_pro_res: number | string | null;
+  effort_hours?: number | string | null;
+  total_cost_pro_res: string | number | null;
+  net_resource_cost?: string | number | null;
+  net_total_cost_pro_res: string | number | null;
+  effort_project_resource_level: number | null;
+  cost_project_resource_level: number | null;
+  qre_final: number | null;
+  qre_percent: number | null;
+  salary: number | string | null;
+  bonus: number | string | null;
+  insurance: number | string | null;
+  deductions: number | string | null;
+  status_rid: string | null;
+  status_name: string | null;
+  comments: string | null;
+  description: string | null;
+  account_rid?: string;
+  created_by: string;
+  modified_by: string;
+  created_datetime: string;
+  modified_datetime: string;
+  assigned_skill_role_type_rid?: string | null;
+  skill_role_rid?: string | null;
+  skill_role_others?: string | null;
+  fiscal_year?: number;
+  project_fiscal_rid?: string;
+  resource_rid?: string;
+  account_number?: string;
 };
 
 export interface ResourceSummaryListResponse {
@@ -93,6 +259,67 @@ export interface ResourceSummaryListResponse {
     limit?: number;
     count: number;
     resourceSummary: ResourceSummaryItem[];
+  };
+}
+
+export type ClosingRemarksItems = {
+  created_by: string;
+  created_by_name: string;
+  signoff_type_rid: string;
+  signoff_type_name: string;
+  signoff_at: string;
+  rid: string;
+};
+
+export interface ClosingRemarksParams {
+  case_rid: string;
+  account_rid: string;
+  sort: string;
+  sort_by: string;
+}
+
+export interface ClosingRemarksResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    case_name: string;
+    case_rid: string;
+    closing_remarks: ClosingRemarksItems[];
+  };
+}
+
+//-------- Version Control ----------
+export type VersionControlItem = {
+  rid: string;
+  r_number: string;
+  document_name: string;
+  dossier_version: string;
+  created_by_name: string;
+  created_by: string;
+  browse_file: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+};
+
+export interface VersionControlParams {
+  case_rid: string;
+  account_rid: string;
+  sort: string;
+  sort_by: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  filter?: Record<string, string | number | boolean | string[]>;
+}
+
+export interface VersionControlResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    data: VersionControlItem[];
+    total_result: number;
   };
 }
 
@@ -123,15 +350,30 @@ export interface ProjectSummaryListExportParams {
 export type ProjectSummaryItem = {
   rid: string;
   r_number: string;
-  project_ref_id: string;
-  project_name: string;
-  fte_cost: string;
-  sub_con_cost: string;
-  non_labour_cost: string;
-  project_cost: string;
-  rd_percentage: string;
-  project_qre: string;
-  rd_credit: string;
+  account_rid: string;
+  project_rid: string;
+  project_code: string;
+  project_name: string | null;
+  project_type_name: string;
+  classification_name: string;
+  fiscal_year: number;
+  project_classification_rid: string | null;
+  project_classification_name: string | null;
+  project_client_group: string | null;
+  project_group: string | null;
+  total_effort_prj: number | null;
+  total_cost_prj: number | null;
+  total_cost_fte_prj: number | null;
+  total_cost_subcon_prj: number | null;
+  total_cost_nonlabor_prj: number | null;
+  assessment_status: string | null;
+  rd_percent_final: string | null;
+  qre_final: string | null;
+  comments: string | null;
+  modified_datetime: string;
+  project_point_of_contact: string | null;
+  project_technical_point_of_contact: string | null;
+  currency_symbol: string | undefined;
 };
 
 export interface ProjectSummaryListResponse {
@@ -144,13 +386,6 @@ export interface ProjectSummaryListResponse {
     count: number;
     projectSummary: ProjectSummaryItem[];
   };
-}
-
-// RD form
-export interface RDFormResponse {
-  status: number;
-  message: string;
-  data: string; // Base64 encoded PDF data
 }
 
 export interface RDFormPayload {
@@ -195,6 +430,17 @@ export interface RDCreditPreviewResponse {
   };
 }
 
+export interface RDFormResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    rdformUrl: string;
+    base64?: string;
+    rdErrorMessage: string | null;
+  };
+}
+
 export interface RDCreditStatusResponse {
   statusCode: number;
   statusCodeValue: string;
@@ -220,6 +466,7 @@ export interface SignOffFinancialHighlightsPayload {
   sign_off: boolean;
   file: File | null;
   comments: string;
+  isRdform: boolean;
 }
 export interface InputParams {
   country: string;
@@ -369,4 +616,91 @@ export interface RDCreditInitiateResponse {
   statusMessage: string;
   status: string;
   data: CaseSummaryData | string; // Adjusted to allow string (from previous usage or just flexible)
+}
+
+export interface DossierPackageResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    document_name: string;
+    base64?: string;
+  };
+}
+export interface DownloadDossierSheetPayload {
+  accountRid: string;
+  caseRid: string;
+  downloaded_list: string[];
+  dossier_version?: string;
+}
+
+// ComputedData
+
+export interface ComputedDataPayload {
+  case_rid: string;
+  account_rid: string;
+  country_rid: string;
+  state_rid?: string[];
+  country_code: string;
+}
+
+export interface CountryComputedData {
+  final_credit: string;
+  country_rid: string;
+  country_name: string;
+}
+
+export interface StateComputedData {
+  final_credit: string;
+  state_rid: string;
+  state_name: string;
+}
+
+export interface ComputedDataResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    countryComputedData: CountryComputedData;
+    stateComputedData: StateComputedData[];
+  };
+}
+
+export interface CaseCloseCountryCredits {
+  country_rid: string;
+  rd_credits_computed: string;
+  rd_credits_submitted: string;
+  rd_credits_approved: string;
+  comments: string;
+}
+
+export interface CaseCloseStateCredit {
+  state_rid: string;
+  rd_credits_computed: string;
+  rd_credits_submitted: string;
+  rd_credits_approved: string;
+  comments: string;
+}
+
+export interface CaseClosePayload {
+  case_rid: string;
+  account_rid: string;
+  country_credits: Partial<CaseCloseCountryCredits>;
+  state_credits: CaseCloseStateCredit[];
+  files?: Record<string, File>; // key: file_country_{rid} or file_state_{rid}
+  fiscal_year?: string | number;
+  user_preference?: string; // 'true' or ''
+}
+
+export interface RDFormRevokePayload {
+  case_rid: string;
+  account_rid: string;
+  type: string;
+}
+
+export interface RDFormRevokeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: string;
 }

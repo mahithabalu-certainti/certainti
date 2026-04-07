@@ -7,8 +7,11 @@ import {
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import React, { useRef, useState } from 'react';
-import { ResourceTabs } from '../resources/resources';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import Users from './users/users';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { clearFilters } from '../../components/filter/utils';
@@ -21,22 +24,24 @@ import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../../common-utils';
 import JurisdictionSetting from './jurisdiction/setting';
 import { ActivityDropdownItem, ColorCode } from '../../../../types';
+import Timeline from '../../../../../pages/timeline/timeline';
 interface ConfigurationProps {
   countryId: string | null;
   activityMenuItems: ActivityDropdownItem[];
 }
-const ConfigTabs: ResourceTabs[] = [
+const ConfigTabs: OverviewTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    key: 'timeline',
+  },
 ];
 
 const Configuration: React.FC<ConfigurationProps> = ({
@@ -61,7 +66,7 @@ const Configuration: React.FC<ConfigurationProps> = ({
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
@@ -198,46 +203,54 @@ const Configuration: React.FC<ConfigurationProps> = ({
 
   return (
     <div className='flex flex-col w-full pt-2 pl-2 pr-4'>
-      {list !== 'jurisdiction_configuration' && (
-        <div>
-          <SectionTabPanel
-            tabs={ConfigTabs}
-            filterMenu={filterFields}
-            filterVisibility={list !== 'settings'}
-            showFilter={showFilter}
-            contextKey={`account-settings-${tabParam}`}
-            appliedFilters={appliedFilters}
-            setAppliedFilters={setAppliedFilters}
-            setCurrentPage={setCurrentPage}
-            handleFilter={handleFilter}
-            handleSorting={() => {}}
-            sortFilterCount={0}
-            setSortFilterCount={() => {}}
-            showRefresh={list !== 'settings'}
-            onRefreshClick={onRefreshClick}
-            hideTabPanel={hideSection}
-            showSearch={list === 'users' ? true : false}
-            searchDisabled={false}
-            searchPlaceholder='Search'
-            onSearch={(text) => setSearchText(text)}
-            searchReset={resetSearch}
-            onSearchReset={handleSearchReset}
-            showAddActivity={true}
-            activityMenuItems={activityMenuItems}
-          />
-          <SectionHeader
-            title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
-            titleIcon={getTitleIcon()}
-            buttons={headerButtons}
-            count={count}
-            showItemCount={list !== 'settings'}
-            hideSection={hideSection}
-            iconBg={ColorCode.accountBgColor}
-            bgType='circle'
-          />
+      <div>
+        <SectionTabPanel
+          tabs={ConfigTabs}
+          filterMenu={filterFields}
+          filterVisibility={list === 'users'}
+          showFilter={showFilter}
+          contextKey={`account-settings-${tabParam}`}
+          appliedFilters={appliedFilters}
+          setAppliedFilters={setAppliedFilters}
+          setCurrentPage={setCurrentPage}
+          handleFilter={handleFilter}
+          handleSorting={() => {}}
+          sortFilterCount={0}
+          setSortFilterCount={() => {}}
+          showRefresh={list === 'users'}
+          onRefreshClick={onRefreshClick}
+          hideTabPanel={hideSection}
+          showSearch={list === 'users' ? true : false}
+          searchDisabled={false}
+          searchPlaceholder='Search'
+          onSearch={(text) => setSearchText(text)}
+          searchReset={resetSearch}
+          onSearchReset={handleSearchReset}
+          showAddActivity={true}
+          activityMenuItems={activityMenuItems}
+        />
+        {!isTimeLineView && list !== 'jurisdiction_configuration' && (
+          <div>
+            <SectionHeader
+              title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
+              titleIcon={getTitleIcon()}
+              buttons={headerButtons}
+              count={count}
+              showItemCount={list !== 'settings'}
+              hideSection={hideSection}
+              iconBg={ColorCode.accountBgColor}
+              bgType='circle'
+            />
+          </div>
+        )}
+      </div>
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='account' />
         </div>
+      ) : (
+        <>{renderContent()}</>
       )}
-      {renderContent()}
     </div>
   );
 };

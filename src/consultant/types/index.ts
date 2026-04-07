@@ -20,3 +20,6 @@ export * from './notes';
 export * from './checklist';
 export * from './activities';
 export * from './dossier';
+export * from './dashboard';
+export * from './four-part-assessment';
+export * from './rd-assessment';

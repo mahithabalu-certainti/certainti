@@ -8,6 +8,7 @@ interface DetailItem {
   hide?: boolean;
   colSpan?: number;
   hideTooltip?: boolean;
+  ignorePermission?: boolean;
 }
 
 const DetailsSection: React.FC<{
@@ -98,7 +99,12 @@ const DetailsSection: React.FC<{
                 </div>
                 <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
                   <TruncateWithTooltip
-                    text={String(item.value)}
+                    text={
+                      typeof item.value === 'string' ||
+                      typeof item.value === 'number'
+                        ? String(item.value)
+                        : undefined
+                    }
                     maxWidth={'100%'}
                     className='truncate inline-block max-w-full'
                     alwaysShowTooltip={true}

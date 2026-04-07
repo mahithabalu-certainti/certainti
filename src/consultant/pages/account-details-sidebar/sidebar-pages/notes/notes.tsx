@@ -47,19 +47,22 @@ import { accountDetailsProps } from '../../../account-details/utils';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { useGetUserOptions } from '../../../../services/case-team';
+import Timeline from '../../../../../pages/timeline/timeline';
 
 const NotesTabs: OverviewTabs[] = [
   {
     id: AllPermissions.NOTES_OVERVIEW,
     name: 'Overview',
     hide: false,
+    key: 'overview',
   },
-  // {
-  //   id: AllPermissions.NOTES_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.NOTES_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+    // disable: true,
+    key: 'timeline',
+  },
 ];
 
 interface NotesProps {
@@ -118,7 +121,7 @@ const Notes: React.FC<NotesProps> = ({
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
   const activeMenuPath = searchParams.get('activeMenu') || '';
-
+  const isTimeLineView = searchParams.get('timelineview') === 'true';
   // User List Api
   const userListData = useGetUserOptions(accountid);
 
@@ -454,69 +457,77 @@ const Notes: React.FC<NotesProps> = ({
         showAddActivity={viewDetails ? false : true}
         activityMenuItems={activityMenuItems}
       />
-      {viewDetails ? (
-        <NotesDetails
-          accountInActive={accountInActive}
-          accountName={accountDetails?.accountById?.account_name || ''}
-        />
+      {isTimeLineView ? (
+        <div className='border border-[#CBD6E2] rounded-[2px] overflow-auto'>
+          <Timeline entitytype='account' />
+        </div>
       ) : (
-        <>
-          <SectionHeader
-            title='Notes'
-            count={totalItems}
-            showItemCount={true}
-            titleIcon={
-              <NotesSideIcon
-                className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
-                alt='Notes-header-icon'
+        <div>
+          {viewDetails ? (
+            <NotesDetails
+              accountInActive={accountInActive}
+              accountName={accountDetails?.accountById?.account_name || ''}
+            />
+          ) : (
+            <>
+              <SectionHeader
+                title='Notes'
+                count={totalItems}
+                showItemCount={true}
+                titleIcon={
+                  <NotesSideIcon
+                    className={`[&>path]:stroke-[${ColorCode.accountTextColor}] w-[14px] h-[14px]`}
+                    alt='Notes-header-icon'
+                  />
+                }
+                buttons={headerButtons}
+                iconBg={ColorCode.accountBgColor}
+                bgType='circle'
               />
-            }
-            buttons={headerButtons}
-            iconBg={ColorCode.accountBgColor}
-            bgType='circle'
-          />
-          <div className='border border-[#CBD6E2]'>
-            <ManageColumnsPopover
-              anchorEl={columnAnchorEl}
-              open={isModalOpen}
-              popoverId={modalId}
-              onClose={handlePopoverClose}
-              columns={notesColumns}
-              onColumnsChange={handleColumnsChange}
-              columnRestrictions={RestrictedColumns}
-            />
-            <ListTable
-              data={notesList}
-              columns={visibleColumns}
-              getRowId={getRowId}
-              hoverHighlight={false}
-              tableStyle={{
-                borderBottom: '1px solid #CBD6E2',
-                height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
-                overflow: 'auto',
-              }}
-              stickyHeader={true}
-              stickyColumnsCount={1}
-              selectable={false}
-              actionWidth={80}
-              actionDisplayMode='dropdown'
-              actionMenuItems={actionMenuItems}
-              loading={isLoading}
-              error={isError ? 'Failed to load notes records' : undefined}
-              rowsPerPageOptions={[25, 50, 100]}
-              rowsPerPage={rowsPerPage}
-              currentPage={currentPage}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              sortBy={sortField}
-              sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
-              onSort={handleSortRequest}
-              onCellEdit={handleCellEdit}
-            />
-          </div>
-        </>
+              <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={notesColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={notesList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 320px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={false}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionMenuItems}
+                  loading={isLoading}
+                  error={isError ? 'Failed to load notes records' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
+                  onSort={handleSortRequest}
+                  onCellEdit={handleCellEdit}
+                />
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

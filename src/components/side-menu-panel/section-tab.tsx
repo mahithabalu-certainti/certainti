@@ -1,5 +1,5 @@
-import React, { Suspense, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { Box, Switch, Tab, Tabs } from '@mui/material';
 import { RefreshIcon, ResourceFilterIcon } from '../../assets';
 import Filter from '../../consultant/pages/account-details-sidebar/components/filter/filter';
@@ -12,10 +12,13 @@ import { ActivityDropdownItem, SelectOption } from '../../consultant/types';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import SearchBar from '../search/search-bar';
 import { ActivityDropdown } from '../actions-dropdown';
-import { OverviewTabs } from '../../common-service';
+import { AllPermissions, OverviewTabs } from '../../common-service';
+import { RootState } from '../../store/store';
+import { useSelector } from 'react-redux';
+import { checkPermission } from '../../common-utils';
 
 interface TabPanelProps {
-  tabs?: OverviewTabs[];
+  tabs: OverviewTabs[];
   onTabChange?: (tabId: string) => void;
   filterVisibility: boolean;
   showFilter: boolean;
@@ -36,6 +39,8 @@ interface TabPanelProps {
   showRefresh?: boolean;
   onRefreshClick?: () => void;
   showToggle?: boolean;
+  toggleLabel?: string;
+  disableToggle?: boolean;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
@@ -77,6 +82,8 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   showRefresh,
   onRefreshClick,
   showToggle,
+  toggleLabel,
+  disableToggle,
   toggleEnabled,
   setToggleEnabled,
   onFilterChange,
@@ -99,6 +106,8 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   activityMenuItems = [],
 }) => {
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isTimelineView = searchParams.get('timelineview') === 'true';
   const [tabValue, setTabValue] = useState('');
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -107,15 +116,65 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   const isFilterOpen = Boolean(filterAnchorEl);
   const filterId = isFilterOpen ? `${contextKey}-filter-popover` : undefined;
 
+  // Keep a stable ref to the latest onTabChange so the initialization effect
+  // only re-runs when `tabs` changes, not every time the parent re-renders
+  // with a new inline function reference (which would reset the active tab).
+  const onTabChangeRef = useRef(onTabChange);
   useEffect(() => {
-    const activeTab = tabs?.find((tab) => !tab.hide)?.id || '';
-    setTabValue(activeTab);
+    onTabChangeRef.current = onTabChange;
+  });
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-    // inform parent about initial tab
-    if (activeTab && onTabChange) {
-      onTabChange(activeTab);
+  const isProjectsTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TIMELINE_VIEW
+  );
+  const isAccountsTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNTS_TIMELINE_VIEW
+  );
+  const isCasesTimelineViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TIMELINE_VIEW
+  );
+
+  const isAccount = location.pathname.includes('account');
+  const isProject = location.pathname.includes('project');
+  const isCase = location.pathname.includes('case');
+
+  const isTimelineVisible = isAccount
+    ? isAccountsTimelineViewEnable
+    : isProject
+      ? isProjectsTimelineViewEnable
+      : isCase
+        ? isCasesTimelineViewEnable
+        : true;
+
+  const updatedTabs = tabs?.map((tab) =>
+    tab.key === 'timeline'
+      ? { ...tab, hide: tab.hide || !isTimelineVisible }
+      : tab
+  );
+
+  useEffect(() => {
+    // prioritize timeline view from URL
+    const isTimeline = searchParams.get('timelineview') === 'true';
+    const activeTab =
+      updatedTabs?.find(
+        (tab) =>
+          !tab.hide &&
+          (isTimeline ? tab.key === 'timeline' : tab.key === 'overview')
+      ) || updatedTabs?.find((tab) => !tab.hide);
+
+    if (activeTab) {
+      setTabValue(activeTab.key);
+      // inform parent about initial tab
+      if (onTabChangeRef.current) {
+        onTabChangeRef.current(activeTab.id);
+      }
     }
-  }, [tabs, onTabChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs, searchParams, isTimelineVisible]);
 
   useEffect(() => {
     setAppliedFilters({});
@@ -130,7 +189,18 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     setAppliedFilters({});
     clearFilters(contextKey || 'resource');
     setSortFilterCount(0);
-    onTabChange?.(newValue);
+
+    const selectedTab = updatedTabs?.find((tab) => tab.key === newValue);
+    if (selectedTab?.key === 'timeline') {
+      searchParams.set('timelineview', 'true');
+    } else {
+      searchParams.delete('timelineview');
+    }
+    setSearchParams(searchParams);
+
+    if (selectedTab) {
+      onTabChange?.(selectedTab.id);
+    }
   };
 
   const handleToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,21 +239,21 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               '& .MuiTabs-indicator': { display: 'none' },
             }}
           >
-            {tabs?.map((tab, i) =>
+            {updatedTabs?.map((tab, i) =>
               tab.hide ? null : (
                 <Tab
                   key={i}
-                  value={tab.id}
+                  value={tab.key}
                   label={tab.name}
                   disabled={tab.disable}
                   sx={{
                     textTransform: 'none',
                     fontSize: '14px',
-                    fontWeight: tabValue === tab.id ? '500' : '400',
+                    fontWeight: tabValue === tab.key ? '500' : '400',
                     color: '#2D3E4F',
-                    backgroundColor: tabValue === tab.id ? '#0BBFB70D' : '',
+                    backgroundColor: tabValue === tab.key ? '#0BBFB70D' : '',
                     border:
-                      tabValue === tab.id
+                      tabValue === tab.key
                         ? '1px solid #0BBFB7'
                         : '1px solid transparent',
                     width: '120px',
@@ -192,7 +262,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                     minHeight: '24px',
                     padding: '8px 16px',
                     '&:hover': {
-                      color: tabValue === tab.id ? '#0BBFB7' : undefined,
+                      color: tabValue === tab.key ? '#0BBFB7' : undefined,
                     },
                   }}
                 />
@@ -202,21 +272,21 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
         )}
 
         <Box className='flex items-center gap-2'>
-          {tabValue === 'account_projects_view_overview' ||
-            (showToggle && (
-              <div className='flex items-center gap-2'>
-                <span className='font-semibold text-[13px] text-[#425A76]'>
-                  Include Parent
-                </span>
-                <Switch
-                  checked={toggleEnabled}
-                  onChange={handleToggleChange}
-                  size='small'
-                  color='success'
-                />
-              </div>
-            ))}
-          {showSearch && (
+          {!isTimelineView && showToggle && toggleLabel && (
+            <div className='flex items-center gap-2'>
+              <span className='font-semibold text-[13px] text-[#425A76]'>
+                {toggleLabel}
+              </span>
+              <Switch
+                checked={toggleEnabled}
+                onChange={handleToggleChange}
+                size='small'
+                color='success'
+                disabled={disableToggle}
+              />
+            </div>
+          )}
+          {showSearch && !isTimelineView && (
             <Box>
               <SearchBar
                 initialSearchText={searchText}
@@ -227,14 +297,14 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 }}
                 placeholder={searchPlaceholder || ''}
                 disabled={searchDisabled}
-                hide={searchHidden}
+                hide={searchHidden || isTimelineView}
                 reset={searchReset}
                 onReset={onSearchReset}
                 setCurrentPage={setCurrentPage}
               />
             </Box>
           )}
-          {filterVisibility && contextKey !== 'details' && (
+          {filterVisibility && !isTimelineView && contextKey !== 'details' && (
             <>
               <Box className='relative'>
                 <Box
@@ -273,7 +343,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               </Box>
             </>
           )}
-          {showRefresh && (
+          {showRefresh && !isTimelineView && (
             <button
               className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
               onClick={onRefreshClick}

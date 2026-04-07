@@ -28,14 +28,6 @@ const enumOperator: { option: string; value: string }[] = [
   { option: 'In', value: 'in' },
 ];
 
-const dateOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Before', value: 'before' },
-  { option: 'After', value: 'after' },
-  { option: 'Between', value: 'between' },
-  { option: 'Is Empty', value: 'is_empty' },
-];
-
 const requiredDateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },
@@ -170,24 +162,6 @@ export const getCaseFilterFields = (
       hide:
         !permissionMap?.['created_datetime']?.edit &&
         !permissionMap?.['created_datetime']?.read,
-    },
-    {
-      name: 'Submitted On',
-      value: 'submitted_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-      hide:
-        !permissionMap?.['submitted_datetime']?.edit &&
-        !permissionMap?.['submitted_datetime']?.read,
-    },
-    {
-      name: 'Approved On',
-      value: 'approved_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-      hide:
-        !permissionMap?.['approved_datetime']?.edit &&
-        !permissionMap?.['approved_datetime']?.read,
     },
     {
       name: 'Status',

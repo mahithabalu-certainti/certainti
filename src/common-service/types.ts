@@ -188,6 +188,7 @@ export enum AllMenus {
 }
 
 export enum AllModules {
+  DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
   PROJECTS = 'projects',
   PROJECT_RESOURCES = 'project_resources',
@@ -223,6 +224,9 @@ export enum AllModules {
   ACTIVITIES_CALL = 'activity_call',
   WORKFLOW_BUILDER = 'workflow_builder',
   MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule',
+  RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
+  FOUR_PART_ASSESSMENT = 'four_part_assessment',
+  RD_ASSESSMENT_STATUS = 'rd_assessment_status',
 }
 
 export enum AllPermissions {
@@ -382,8 +386,45 @@ export enum AllPermissions {
   DOSSIER_OVERVIEW = 'dossier_overview',
   DOSSIER_TIMELINE = 'dossier_timeline',
   DOSSIER_FINANCIAL_VIEW_EDIT = 'financial_working_view',
+  DOSSIER_QUALIFIED_PROJECTS_VIEW = 'dossier_qualified_projects_view',
+  DOSSIER_PROJECT_DOCUMENTS_VIEW = 'dossier_project_documents_view',
+  DOSSIER_TECHNICAL_SUMMARY_VIEW = 'dossier_technical_summary_view',
+  DOSSIER_SUMMARY_VIEW = 'dossier_summary_view',
+  DOSSIER_RESOURCE_SUMMARY_VIEW = 'dossier_resource_summary_view',
+  DOSSIER_RD_FORMS_VIEW = 'dossier_rd_forms_view',
+  DOSSIER_AUDIT_TIMELINE_VIEW = 'dossier_audit_timeline_view',
+  DOSSIER_CLOSE_CASE = 'close_case',
+  DOSSIER_PACKAGES = 'dossier_package',
   DOSSIER_FINANCIAL_SIGNOFF = 'sign_off',
+  DOSSIER_RD_FORMS_SIGNOFF = 'rd_forms_sign_off',
   DOSSIER_FINANCIAL_INITIATE = 'initiate_financial_working',
+  ACCOUNTS_TIMELINE_VIEW = 'accounts_timeline_view',
+  PROJECTS_TIMELINE_VIEW = 'projects_timeline_view',
+  CASES_TIMELINE_VIEW = 'cases_timeline_view',
+  PENDING_FOLLOWUPS_VIEW = 'pending_followups_view',
+  WEEKLY_PRODUCTIVITY_VIEW = 'weekly_productivity_view',
+  OVERDUE_APPROVALS_VIEW = 'overdue_approvals_view',
+  OPEN_TASKS_VIEW = 'open_tasks_view',
+  MY_MEETINGS_VIEW = 'my_meetings_view',
+  DUE_TODAY_OVERDUE_TASKS_VIEW = 'due_today_overdue_tasks_view',
+  COMPLETED_TASKS_WEEK_VIEW = 'completed_tasks_week_view',
+  CASES_BY_HEALTH_STATUS_VIEW = 'cases_by_health_status_view',
+  UPCOMING_TASKS_VIEW = 'upcoming_tasks_view',
+  DASHBOARD_COUNT_VIEW = 'dashboard_count_view',
+  GLOBAL_LEVEL_VIEW = 'global_level_view',
+  OVERALL_PROJECT_VALUE_BY_JURISDICTION_VIEW = 'overall_project_value_by_jurisdiction_view',
+  RD_FORM_DATA_MAPPER_EXPORT = 'rd_form_data_mapper_export',
+  RD_FORM_DATA_MAPPER_CREATE = 'rd_form_data_mapper_create',
+  RD_FORM_DATA_MAPPER_DELETE = 'rd_form_data_mapper_delete',
+  RD_FORM_DATA_MAPPER_VIEW_EDIT = 'rd_form_data_mapper_view_edit',
+  FOUR_PART_ASSESSMENT_OVERVIEW = 'four_part_assessment_overview',
+  FOUR_PART_ASSESSMENT_TIMELINE = 'four_part_assessment_timeline',
+  FOUR_PART_ASSESSMENT_VIEW_EDIT = 'four_part_assessment_view_edit',
+  FOUR_PART_ASSESSMENT_EXPORT = 'four_part_assessment_export',
+  RD_ASSESSMENT_STATUS_OVERVIEW = 'rd_assessment_status_overview',
+  RD_ASSESSMENT_STATUS_TIMELINE = 'rd_assessment_status_timeline',
+  RD_ASSESSMENT_STATUS_EXPORT = 'rd_assessment_status_export',
+  RD_ASSESSMENT_STATUS_VIEW_EDIT = 'rd_assessment_status_view',
 }
 
 export interface Country {
@@ -440,6 +481,7 @@ export enum MenuOption {
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
   WORKFLOW_BUILDER = 'workflow_builder',
+  RD_FORM_DATA_MAPPER = 'rd_form_data_mapper',
 }
 
 export interface OverviewTabs {
@@ -447,6 +489,7 @@ export interface OverviewTabs {
   name: string;
   hide: boolean;
   disable?: boolean;
+  key: 'overview' | 'timeline';
 }
 
 export type FailedQueueItem = {

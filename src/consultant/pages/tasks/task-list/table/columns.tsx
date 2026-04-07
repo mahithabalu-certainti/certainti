@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
   formatDateToYYYYMMDDWithTime,
   getCapitalizeWords,
@@ -143,6 +144,35 @@ export const getTaskTableColumns = (
     sortable: true,
     hide: permissionMap ? !permissionMap['assigned_to']?.read : false,
     render: (row: TaskList) => row.assigned_to_name || '-',
+  },
+  {
+    id: 'effective_start_datetime',
+    sortId: 'effective_start_datetime',
+    label: 'Start Date',
+    sortable: true,
+    width: 120,
+    render: (row) =>
+      row.effective_start_datetime
+        ? dayjs(row.effective_start_datetime).format('YYYY-MMM-DD')
+        : '',
+
+    hide: permissionMap
+      ? !permissionMap['effective_start_datetime']?.read
+      : false,
+  },
+  {
+    id: 'effective_end_datetime',
+    sortId: 'effective_end_datetime',
+    label: 'Due Date',
+    sortable: true,
+    width: 120,
+    render: (row) =>
+      row.effective_end_datetime
+        ? dayjs(row.effective_end_datetime).format('YYYY-MMM-DD')
+        : '',
+    hide: permissionMap
+      ? !permissionMap['effective_end_datetime']?.read
+      : false,
   },
   {
     id: 'priority_name',

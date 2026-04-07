@@ -33,6 +33,8 @@ import {
   ProjectTaskIcon,
   ManageGroupAccount,
   DetailsKeyContactErrorIcon,
+  FourPartIcon,
+  RdStatusIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -54,9 +56,11 @@ import {
   ExportType,
   FiscalDates,
   FormFiscalDateType,
+  FourPartAssessmentListExportURLParams,
   MenuItem,
   NotesListURLParams,
   ProjectFinancialResourceExportParams,
+  RdAssessmentStatusExportURLParams,
   TechnicalSummaryExportListParams,
 } from '../../../types';
 import {
@@ -102,6 +106,10 @@ import { ExportChecklistList } from '../../../services/checklist/checklist-servi
 import { Checklist } from './checklist';
 import ProjectActivities from './project-activities/project-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
+import { ExportFourPartAssessmentList } from '../../../services/four-part-assessment/four-part-assessment-service';
+import { FourPartAssessment } from '../../four-part-assessment';
+import { ExportRdAssessmentStatusList } from '../../../services/rd-assessment/rd-assessment-service';
+import { RdAssessmentStatus } from '../../rd-assessment-status';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -180,6 +188,24 @@ export const ProjectDetails = () => {
       activity_type: 'all',
     });
 
+  const [fourPartParams, setFourPartParams] =
+    useState<FourPartAssessmentListExportURLParams>({
+      account_rid: '',
+      search: '',
+      filter: {},
+      sort: 'r_number',
+      sort_by: 'ASC',
+      type: 'project',
+    });
+
+  const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
+    useState<RdAssessmentStatusExportURLParams>({
+      search: '',
+      sortBy: 'created_datetime',
+      sortOrder: 'DESC',
+      filters: {},
+    });
+
   const [activityModalId, setActivityModalId] = useState<string | null>(null);
 
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
@@ -233,10 +259,13 @@ export const ProjectDetails = () => {
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+  const fourPartAssessmentView = !!searchParams.get('fpa_id');
 
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
+
+  const isNavigateFrom = searchParams.get('navigateFrom');
 
   const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
@@ -245,6 +274,33 @@ export const ProjectDetails = () => {
   const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
     client: resourceClient,
   });
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
@@ -255,7 +311,14 @@ export const ProjectDetails = () => {
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
-      setProjectDetails(transformProjectData(project));
+      setProjectDetails(
+        transformProjectData(
+          project,
+          permissionMap,
+          accountPermissionMap,
+          isProjectSignedOff
+        )
+      );
       setProjectData(project);
       handleGetFiscalYear(project?.fiscal_year, {
         startDate: project?.fiscal_start_date || '',
@@ -291,7 +354,14 @@ export const ProjectDetails = () => {
       result
     );
     setProjectData(updatedProject as unknown as NewProjectData);
-    setProjectDetails(transformProjectData(updatedProject as projectDetails));
+    setProjectDetails(
+      transformProjectData(
+        updatedProject as projectDetails,
+        permissionMap,
+        accountPermissionMap,
+        isProjectSignedOff
+      )
+    );
   };
 
   const handleAdjustmentFactor = async (newValue: string) => {
@@ -311,7 +381,14 @@ export const ProjectDetails = () => {
       );
 
       setProjectData(updatedProject as unknown as NewProjectData);
-      setProjectDetails(transformProjectData(updatedProject as projectDetails));
+      setProjectDetails(
+        transformProjectData(
+          updatedProject as projectDetails,
+          permissionMap,
+          accountPermissionMap,
+          isProjectSignedOff
+        )
+      );
       refetch();
     } catch (err) {
       console.log(err);
@@ -412,6 +489,16 @@ export const ProjectDetails = () => {
     call: !!isActivityCallExportEnable,
   };
 
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -423,6 +510,10 @@ export const ProjectDetails = () => {
 
     if (list === 'attachments') {
       return !isAttachmentExportEnable;
+    } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
+      return !isFourPartExportEnable;
+    } else if (list === 'rd_assessment_status') {
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
@@ -477,7 +568,9 @@ export const ProjectDetails = () => {
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
       list !== 'interactions' &&
-      list !== 'technicalSummary'
+      list !== 'technicalSummary' &&
+      list !== 'four_part_assessment' &&
+      list !== 'rd_assessment_status'
     ) {
       return;
     }
@@ -492,6 +585,16 @@ export const ProjectDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+      return;
+    }
+
+    if (exportType === 'four_part_assessment') {
+      ExportFourPartAssessmentList(fourPartParams);
+      return;
+    }
+
+    if (exportType === 'rd_assessment_status') {
+      ExportRdAssessmentStatusList(rdAssessmentStatusParams);
       return;
     }
 
@@ -602,6 +705,7 @@ export const ProjectDetails = () => {
           timezone: systemTimezone,
           flag: 'project',
           search: interactionsParams?.search || '',
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportInteractions(projectInteractionExportPayload);
         return;
@@ -735,6 +839,7 @@ export const ProjectDetails = () => {
             setResCostExportParams={setFinancialResCostParams}
             onQreAdjustmentUpdated={handleQreAdjustmentUpdated}
             activityMenuItems={activityMenuItems}
+            refetchProjectDetails={refetch}
           />
         );
       case 'projectDetails':
@@ -813,10 +918,29 @@ export const ProjectDetails = () => {
             isProjectSignedOff={isProjectSignedOff}
           />
         );
+      case 'four_part_assessment':
+        return (
+          <FourPartAssessment
+            setExportType={setExportType}
+            setFourPartAssessmentParams={setFourPartParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='project'
+          />
+        );
+      case 'rd_assessment_status':
+        return (
+          <RdAssessmentStatus
+            setExportType={setExportType}
+            setRdAssessmentStatusParams={setRdAssessmentStatusParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='project'
+          />
+        );
       case 'technicalSummary':
         return (
           <TechnicalSummary
             accountInActive={accountInActive || projectInActive}
+            isProjectSignedOff={isProjectSignedOff}
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
             activityMenuItems={activityMenuItems}
@@ -883,7 +1007,9 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    if (parent === 'account') {
+    if (isNavigateFrom === 'case') {
+      navigate(-1);
+    } else if (parent === 'account') {
       navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
     } else if (parent === 'project') {
       navigate(PROJECT);
@@ -928,6 +1054,20 @@ export const ProjectDetails = () => {
         id: AllModules.INTERACTIONS,
         disabled: false,
         icon: InteractionsIcon,
+      },
+      {
+        name: 'Four Part Assessment',
+        key: 'four_part_assessment',
+        id: AllModules.FOUR_PART_ASSESSMENT,
+        disabled: false,
+        icon: FourPartIcon,
+      },
+      {
+        name: 'RD Assessment Status',
+        key: 'rd_assessment_status',
+        id: AllModules.RD_ASSESSMENT_STATUS,
+        disabled: false,
+        icon: RdStatusIcon,
       },
       {
         name: 'Technical Summary',
@@ -1057,7 +1197,9 @@ export const ProjectDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
-          backBtnLabel='Back To Projects'
+          backBtnLabel={
+            isNavigateFrom === 'case' ? 'Back To Case' : 'Back To Projects'
+          }
           isLoading={isLoading}
         />
       </div>
@@ -1118,7 +1260,7 @@ export const ProjectDetails = () => {
                 </span>
                 -
                 <span className='ml-1 font-medium'>
-                  Financial workings of this Case is signed off. Project changes
+                  Financial workings of this Case is approved. Project changes
                   are no longer allowed.
                 </span>
               </div>

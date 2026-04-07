@@ -1,6 +1,7 @@
+import { Switch, Tooltip } from '@mui/material';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
-import { InteractionList } from '../../../../types';
+import { InteractionList, StatusTypeEnum } from '../../../../types';
 
 export const getCaseInteractionListColumns = (
   handleViewInteraction: (
@@ -14,7 +15,11 @@ export const getCaseInteractionListColumns = (
     rid: string,
     rNumber: string
   ) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  fourPartPermissionMap: Record<string, { read: boolean; edit: boolean }>,
+  handleToggleRecordStatus: (row: InteractionList, checked: boolean) => void,
+  handleFourPartNavigation?: (row: InteractionList) => void
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
@@ -44,6 +49,49 @@ export const getCaseInteractionListColumns = (
       </span>
     ),
   },
+  {
+    id: 'interaction_assessment_source_name',
+    sortId: 'interaction_assessment_source_name',
+    label: 'Assessment Type',
+    width: 150,
+    sortable: true,
+    hide:
+      !permissionMap?.['interaction_assessment_source_name']?.edit &&
+      !permissionMap?.['interaction_assessment_source_name']?.read,
+  },
+  {
+    id: 'four_part_r_number',
+    sortId: 'four_part_r_number',
+    label: 'Four Part Assessment ID',
+    width: 200,
+    sortable: true,
+    hide:
+      !fourPartPermissionMap?.['r_number']?.edit &&
+      !fourPartPermissionMap?.['r_number']?.read,
+    render: (row: InteractionList) =>
+      row.four_part_assessment_rid &&
+      row.four_part_r_number &&
+      handleFourPartNavigation ? (
+        <span
+          onClick={() => handleFourPartNavigation(row)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.four_part_r_number}
+        </span>
+      ) : (
+        <span>{row.four_part_r_number || '-'}</span>
+      ),
+  },
+  {
+    id: 'interaction_batch_id',
+    sortId: 'interaction_batch_id',
+    label: 'Batch ID',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['interaction_batch_id']?.edit &&
+      !permissionMap?.['interaction_batch_id']?.read,
+  },
   // {
   //   id: 'interaction_iteration',
   //   sortId: 'interaction_iteration',
@@ -61,7 +109,9 @@ export const getCaseInteractionListColumns = (
     label: 'Project Code',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['project_code']?.edit && !permissionMap?.['project_code']?.read,
+    hide:
+      !projectPermissionMap?.['project_code']?.edit &&
+      !projectPermissionMap?.['project_code']?.read,
     render: (row: InteractionList) => row.project_code || '-',
   },
   {
@@ -70,8 +120,10 @@ export const getCaseInteractionListColumns = (
     label: 'Project Name',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['project_code']?.edit && !permissionMap?.['project_code']?.read,
     render: (row: InteractionList) => row.project_name || '-',
+    hide:
+      !projectPermissionMap?.['project_name']?.edit &&
+      !projectPermissionMap?.['project_name']?.read,
   },
   {
     id: 'interaction_age',
@@ -310,5 +362,41 @@ export const getCaseInteractionListColumns = (
       !permissionMap?.['modified_datetime']?.read,
     render: (row: InteractionList) =>
       formatDateToYYYYMMDDWithTime(row.modified_datetime),
+  },
+  {
+    id: 'status_action',
+    sortId: 'status_action',
+    label: 'Status Action',
+    width: 100,
+    sortable: false,
+    hide:
+      !permissionMap?.['status_action']?.edit &&
+      !permissionMap?.['status_action']?.read,
+    render: (row) => {
+      const isDraftStatus =
+        row.status_name?.toLowerCase() === StatusTypeEnum.draft;
+      const canEditStatus = !!permissionMap?.['status_action']?.edit;
+      const recordStatus =
+        row.interaction_status_name?.toLowerCase() || 'in-active';
+      return (
+        <div className='text-center'>
+          <Tooltip
+            title={
+              recordStatus === 'in-active' ? 'Make Active' : 'Make In-Active'
+            }
+            arrow
+            placement='top'
+          >
+            <Switch
+              size='small'
+              color={recordStatus === 'in-active' ? 'warning' : 'success'}
+              onChange={(_e, checked) => handleToggleRecordStatus(row, checked)}
+              checked={recordStatus === 'active'}
+              disabled={!isDraftStatus || !canEditStatus}
+            />
+          </Tooltip>
+        </div>
+      );
+    },
   },
 ];

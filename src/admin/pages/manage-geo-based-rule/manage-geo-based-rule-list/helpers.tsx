@@ -45,7 +45,7 @@ export const getGeoBasedRuleFilterFields = (
 ): FieldConfig[] => {
   return [
     {
-      label: 'Geo Based ID',
+      label: 'Jurisdiction Rule ID',
       name: 'r_number',
       type: 'text',
       operatorOption: textfieldOptions,
@@ -95,7 +95,7 @@ export const getGeoBasedRuleFilterFields = (
         !permissionMap?.['state_rid']?.edit,
     },
     {
-      label: 'Effective Start Date',
+      label: 'Start Date',
       name: 'effective_start_date',
       type: 'date',
       operatorOption: requiredDateOptions,
@@ -105,7 +105,7 @@ export const getGeoBasedRuleFilterFields = (
         !permissionMap?.['effective_start_date']?.edit,
     },
     {
-      label: 'Effective End Date',
+      label: 'End Date',
       name: 'effective_end_date',
       type: 'date',
       operatorOption: dateOptions,

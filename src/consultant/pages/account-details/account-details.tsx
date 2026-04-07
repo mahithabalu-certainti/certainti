@@ -22,12 +22,16 @@ import {
   TaskCreateIcon,
   DraftEmailIcon,
   MeetingIcon,
+  CalendarIcon,
   CallLogIcon,
   ConfigRuleIcon,
   AccountDeatilsIcon,
   AccountsIcon,
   ManageGroupAccount,
   HistorySubmissionIcon,
+  DashboardIcon,
+  FourPartIcon,
+  RdStatusIcon,
 } from '../../../assets';
 import {
   ActivityModal,
@@ -43,6 +47,7 @@ import {
   Checklist,
   Details,
   FinancialSummary,
+  Inbox,
   Import,
   Notes,
   Projects,
@@ -50,6 +55,7 @@ import {
   Timesheet,
   Configuration,
   Cases,
+  Calendar,
   Interactions,
 } from '../account-details-sidebar';
 import {
@@ -79,6 +85,8 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
   ColorCode,
+  FourPartAssessmentListExportURLParams,
+  RdAssessmentStatusExportURLParams,
 } from '../../types';
 import { exportProjectData, ProjectTriggerAI } from '../../services/project';
 import {
@@ -113,6 +121,11 @@ import { ExportCaseList } from '../../services/cases/case-service';
 import { ExportChecklistList } from '../../services/checklist/checklist-service';
 import { ExportActivityList } from '../../services/activities/activities-service';
 import HistorySubmission from '../case/case-details/history-submission/history-submission';
+import Dashboard from '../account-details-sidebar/sidebar-pages/dashboard/dashboard';
+import { ExportFourPartAssessmentList } from '../../services/four-part-assessment/four-part-assessment-service';
+import { FourPartAssessment } from '../four-part-assessment';
+import { ExportRdAssessmentStatusList } from '../../services/rd-assessment/rd-assessment-service';
+import { RdAssessmentStatus } from '../rd-assessment-status';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -145,6 +158,7 @@ export const AccountDetails = () => {
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
+  const fourPartAssessmentView = !!searchParams.get('fpa_id');
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -209,6 +223,16 @@ export const AccountDetails = () => {
   const isInteractionsExportEnable = checkPermission(
     permission,
     AllPermissions.INTERACTIONS_EXPORT
+  );
+
+  const isFourPartExportEnable = checkPermission(
+    permission,
+    AllPermissions.FOUR_PART_ASSESSMENT_EXPORT
+  );
+
+  const isRdAssessmentStatusExportEnable = checkPermission(
+    permission,
+    AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
   );
 
   const isFinancialResourceCostExportEnable = checkPermission(
@@ -406,6 +430,24 @@ export const AccountDetails = () => {
       activity_type: 'all',
     });
 
+  const [fourPartParams, setFourPartParams] =
+    useState<FourPartAssessmentListExportURLParams>({
+      account_rid: '',
+      search: '',
+      filter: {},
+      sort: 'r_number',
+      sort_by: 'ASC',
+      type: 'account',
+    });
+
+  const [rdAssessmentStatusParams, setRdAssessmentStatusParams] =
+    useState<RdAssessmentStatusExportURLParams>({
+      search: '',
+      sortBy: 'created_datetime',
+      sortOrder: 'DESC',
+      filters: {},
+    });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -439,7 +481,9 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'interactions' &&
       searchParams.get('tab') !== 'timesheet_project' &&
       searchParams.get('tab') !== 'timesheet_project_resource' &&
-      searchParams.get('tab') !== 'timesheet_project_task'
+      searchParams.get('tab') !== 'timesheet_project_task' &&
+      searchParams.get('list') !== 'four_part_assessment' &&
+      searchParams.get('list') !== 'rd_assessment_status'
     ) {
       return;
     }
@@ -555,7 +599,14 @@ export const AccountDetails = () => {
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
     } else if (exportType === 'cases') {
-      ExportCaseList(casesParams, accountid);
+      ExportCaseList(
+        {
+          ...casesParams,
+          currency_symbol:
+            accountDetailsForEdit?.accountById?.currency?.currency_symbol || '',
+        },
+        accountid
+      );
     } else if (exportType === 'timesheet' && !tab) {
       exportTimesheetData({
         ...importsParams,
@@ -580,6 +631,10 @@ export const AccountDetails = () => {
         ...financialProjectCostParams,
         ...financialProjectPayload,
       });
+    } else if (exportType === 'four_part_assessment') {
+      ExportFourPartAssessmentList(fourPartParams);
+    } else if (exportType === 'rd_assessment_status') {
+      ExportRdAssessmentStatusList(rdAssessmentStatusParams);
     } else if (exportType === 'interactions') {
       if (interactionHistoryId) {
         const projectInteractionHistoryExportPayload = {
@@ -605,6 +660,7 @@ export const AccountDetails = () => {
           flag: 'account',
           sort: 'r_number',
           page: 1,
+          assessment_type: interactionsParams?.assessment_type,
         };
         exportAccountInteractions(projectInteractionExportPayload);
         return;
@@ -729,6 +785,10 @@ export const AccountDetails = () => {
       return !isTimesheetExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'four_part_assessment' && !fourPartAssessmentView) {
+      return !isFourPartExportEnable;
+    } else if (list === 'rd_assessment_status') {
+      return !isRdAssessmentStatusExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
@@ -893,6 +953,28 @@ export const AccountDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'inbox':
+        return <Inbox />;
+      case 'calendar':
+        return <Calendar />;
+      case 'four_part_assessment':
+        return (
+          <FourPartAssessment
+            setExportType={setExportType}
+            setFourPartAssessmentParams={setFourPartParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='account'
+          />
+        );
+      case 'rd_assessment_status':
+        return (
+          <RdAssessmentStatus
+            setExportType={setExportType}
+            setRdAssessmentStatusParams={setRdAssessmentStatusParams}
+            activityMenuItems={activityMenuItems}
+            moduleLevel='account'
+          />
+        );
       case 'cases':
         return (
           <Cases
@@ -942,6 +1024,12 @@ export const AccountDetails = () => {
             accountInActive={accountInActive}
             accountDetails={{ ...data?.data } as accountDetailsProps}
             activityMenuItems={activityMenuItems}
+          />
+        );
+      case 'dashboard':
+        return (
+          <Dashboard
+            accountDetails={{ ...data?.data } as accountDetailsProps}
           />
         );
       case 'timesheet':
@@ -998,6 +1086,14 @@ export const AccountDetails = () => {
         icon: FinancialIcon,
       },
       {
+        name: 'Dashboard',
+        key: 'dashboard',
+        id: AllModules.DASHBOARD,
+        disabled: disable,
+        hide: disable,
+        icon: DashboardIcon,
+      },
+      {
         name: 'Details',
         key: 'details',
         id: AllModules.ACCOUNTS,
@@ -1021,12 +1117,44 @@ export const AccountDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
+        name: 'Mailbox',
+        key: 'inbox',
+        id: AllModules.ACCOUNTS,
+        disabled: false,
+        hide: false,
+        icon: DraftEmailIcon,
+      },
+      {
+        name: 'Calendar',
+        key: 'calendar',
+        id: AllModules.ACCOUNTS,
+        disabled: false,
+        hide: false,
+        icon: CalendarIcon,
+      },
+      {
         name: 'Interactions',
         key: 'interactions',
         id: AllModules.INTERACTIONS,
         disabled: disable,
         hide: disable,
         icon: InteractionsIcon,
+      },
+      {
+        name: 'Four Part Assessment',
+        key: 'four_part_assessment',
+        id: AllModules.FOUR_PART_ASSESSMENT,
+        disabled: disable,
+        hide: disable,
+        icon: FourPartIcon,
+      },
+      {
+        name: 'RD Assessment Status',
+        key: 'rd_assessment_status',
+        id: AllModules.RD_ASSESSMENT_STATUS,
+        disabled: disable,
+        hide: disable,
+        icon: RdStatusIcon,
       },
       {
         name: 'Cases',

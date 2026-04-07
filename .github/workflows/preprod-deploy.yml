@@ -70,6 +70,7 @@ jobs:
           echo "VITE_RULE_BUILDER_URL=/rulebuilderService" >> $ENV_FILE
           echo "VITE_WEBSOCKET_URL=wss://preprod-thinkrd365-websockets.webpubsub.azure.com/client/hubs/notificationsHub" >> $ENV_FILE
           echo "VITE_ENVIRONMENT=Pre-Prod" >> $ENV_FILE
+          echo "VITE_DASHBOARD_REPORT_URL=/reportService" >> $ENV_FILE
           echo "$ENV_FILE file created successfully!"
           
           echo "STATIC_WEB_APP_API_KEY=$STATIC_WEB_APP_API_KEY" >> $GITHUB_ENV

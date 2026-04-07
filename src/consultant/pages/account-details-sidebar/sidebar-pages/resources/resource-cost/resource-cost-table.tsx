@@ -325,7 +325,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         loading: rowAction === ActionEnum.ACCEPT,
         disabled: isRowLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px]  w-auto cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F1A] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px]  w-auto cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3da72ff4] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',

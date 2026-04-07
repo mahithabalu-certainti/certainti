@@ -12,10 +12,14 @@ interface SignOffModalProps {
   caseId: string;
   accountId: string;
   refetchCaseDetails: () => void;
+  title?: string;
+  isRdform?: boolean;
 }
 
 // File validation constants
 const MAX_FILE_SIZE_MB = 100;
+const MAX_COMMENT_LENGTH = 2000;
+const MAX_FILE_NAME_LENGTH = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
 
 // Accepted file types: images (all types), email (.eml), PDF, and text files
@@ -43,10 +47,13 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
   caseId,
   accountId,
   refetchCaseDetails,
+  title = 'Financial Workings',
+  isRdform = false,
 }) => {
   const [signOffFile, setSignOffFile] = useState<File | null>(null);
   const [signOffComments, setSignOffComments] = useState<string>('');
-  const [commentError, setCommentError] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [fileNameError, setFileNameError] = useState<string | null>(null);
   const [message, setMessage] = useState<{
     type: 'error' | 'success';
     text: string;
@@ -58,6 +65,14 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
 
   // File validation function
   const validateFile = (file: File): boolean => {
+    // Check file name length
+    if (file.name.length > MAX_FILE_NAME_LENGTH) {
+      setFileNameError(
+        `File name must not exceed ${MAX_FILE_NAME_LENGTH} characters. "${file.name}" has ${file.name.length} characters.`
+      );
+      return false;
+    }
+
     // Check file type
     const isAcceptedType =
       ACCEPTED_FILE_TYPES.includes(file.type) ||
@@ -84,6 +99,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
       return false;
     }
 
+    setFileNameError(null);
     return true;
   };
 
@@ -98,6 +114,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
     }
 
     setMessage(null);
+    setFileNameError(null);
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0]; // Only take the first file
@@ -120,6 +137,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
     }
 
     setMessage(null);
+    setFileNameError(null);
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0]; // Only take the first file
@@ -144,6 +162,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
   const handleRemoveFile = () => {
     setSignOffFile(null);
     setMessage(null);
+    setFileNameError(null);
     // Reset input value
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -151,15 +170,29 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
   };
 
   const handleSignOffSubmit = async () => {
-    if (!signOffComments.trim()) {
-      setCommentError(true);
-    }
+    let hasError = false;
 
     if (!signOffComments.trim()) {
-      return;
+      setCommentError('Field is required');
+      hasError = true;
+    } else if (signOffComments.length > MAX_COMMENT_LENGTH) {
+      setCommentError(
+        `Comments must not exceed ${MAX_COMMENT_LENGTH} characters.`
+      );
+      hasError = true;
     }
 
-    // File validation only if file is selected
+    // File name length check on submit
+    if (signOffFile && signOffFile.name.length > MAX_FILE_NAME_LENGTH) {
+      setFileNameError(
+        `File name must not exceed ${MAX_FILE_NAME_LENGTH} characters.`
+      );
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    // File size validation only if file is selected
     if (signOffFile) {
       if (signOffFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(
@@ -169,7 +202,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
       }
     }
 
-    setCommentError(false);
+    setCommentError(null);
     try {
       signOff(
         {
@@ -178,10 +211,11 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
           sign_off: true,
           file: signOffFile,
           comments: signOffComments,
+          isRdform,
         },
         {
           onSuccess: (response: { statusMessage?: string }) => {
-            successToast(response?.statusMessage || 'Signed off successfully');
+            successToast(response?.statusMessage || 'Approved successfully');
             setSignOffFile(null);
             setSignOffComments('');
             setMessage(null);
@@ -204,7 +238,8 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
   const handleClose = () => {
     setSignOffFile(null);
     setSignOffComments('');
-    setCommentError(false);
+    setCommentError(null);
+    setFileNameError(null);
     setMessage(null);
     onClose();
   };
@@ -223,7 +258,7 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
         {/* Header Section */}
         <div className='flex justify-between items-center border-b border-[#CBD6E2] px-[12px] py-[2px]'>
           <h2 className='text-[#2D3E4F] text-[16px] p-1 font-semibold'>
-            Financial Workings
+            {title}
           </h2>
         </div>
 
@@ -241,17 +276,15 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
                   ? 'border-red-500 focus:ring-red-500 bg-[#FEF2F2]'
                   : 'border-[#CBD6E2] focus:ring-[#0176D3]'
               }`}
-              placeholder='Enter your comments here...'
+              placeholder='Enter comments'
               value={signOffComments}
               onChange={(e) => {
                 setSignOffComments(e.target.value);
-                if (e.target.value.trim()) setCommentError(false);
+                if (commentError) setCommentError(null);
               }}
             />
             {commentError && (
-              <span className='text-red-500 text-[11px]'>
-                Field is required
-              </span>
+              <span className='text-red-500 text-[11px]'>{commentError}</span>
             )}
           </div>
 
@@ -312,9 +345,14 @@ const SignOffModal: React.FC<SignOffModalProps> = ({
               </div>
 
               <div className='w-full mt-1'>
-                {message && (
+                {fileNameError && (
+                  <div className='text-sm break-words max-h-[60px] overflow-y-auto text-red-600'>
+                    {fileNameError}
+                  </div>
+                )}
+                {!fileNameError && message && (
                   <div
-                    className={`text-sm ${
+                    className={`text-sm break-words max-h-[60px] overflow-y-auto ${
                       message.type === 'error'
                         ? 'text-red-600'
                         : 'text-green-600'

@@ -140,8 +140,6 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
         <div
           className={`
   text-[14px] text-[#425A76] font-normal 
-
-  [&_p]:mb-2
   [&_strong]:font-bold [&_em]:italic
   [&_u]:underline [&_s]:line-through
 

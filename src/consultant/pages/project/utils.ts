@@ -166,13 +166,22 @@ interface DisplayColumn {
 }
 
 export const transformProjectData = (
-  project: projectDetails
+  project: projectDetails,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  isProjectSignedOff?: boolean
 ): DisplayColumn[] => {
   const status = project?.status_name?.toLowerCase() || 'active';
   const currencySymbol = project?.currency_symbol;
   const aiEstimatedQre = project?.rd_percent_potential_ai;
   const adjustmentFactor = project?.rd_percent_adjustment;
+  const isQreEditPermission =
+    permissionMap?.['qre_percent_adjustment']?.read &&
+    permissionMap?.['qre_percent_adjustment']?.edit;
 
+  const isEditQrePrecent = Boolean(
+    isQreEditPermission && !isProjectSignedOff && aiEstimatedQre
+  );
   return [
     {
       items: [
@@ -180,21 +189,33 @@ export const transformProjectData = (
           label: 'Project ID',
           value: project?.r_number || '-',
           className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          hide:
+            !permissionMap?.['r_number']?.read &&
+            !permissionMap?.['r_number']?.edit,
         },
         {
           label: 'Industry',
           value: project?.industry_name || project?.industry_rid_name || '-',
+          hide:
+            !permissionMap?.['industry_rid']?.read &&
+            !permissionMap?.['industry_rid']?.edit,
         },
         {
           label: 'FTE Cost',
           value: project?.total_cost_fte
             ? costDisplay(project.total_cost_fte, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['total_cost_fte']?.read &&
+            !permissionMap?.['total_cost_fte']?.edit,
         },
         {
           label: 'QRE Percent Potential',
           value: aiEstimatedQre ? `${aiEstimatedQre}%` : '-',
           key: 'ai_estimated_qre',
+          hide:
+            !permissionMap?.['qre_percent_potential']?.read &&
+            !permissionMap?.['qre_percent_potential']?.edit,
         },
       ],
     },
@@ -203,45 +224,72 @@ export const transformProjectData = (
         {
           label: 'Project Name',
           value: project?.project_name || '-',
+          hide:
+            !permissionMap?.['project_name']?.read &&
+            !permissionMap?.['project_name']?.edit,
         },
         {
           label: 'Business Name',
           value: project?.organistaion_name || '-',
+          hide:
+            !accountPermissionMap?.['organisation_name']?.read &&
+            !accountPermissionMap?.['organisation_name']?.edit,
         },
         {
           label: 'SubCon Cost',
           value: project?.total_cost_subcon
             ? costDisplay(project.total_cost_subcon, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['total_cost_subcon']?.read &&
+            !permissionMap?.['total_cost_subcon']?.edit,
         },
         {
           label: 'QRE Percent Adjustment',
           key: 'adjustment_factor',
           value: adjustmentFactor ? `${adjustmentFactor}%` : '',
-          editable: aiEstimatedQre ? true : false,
+          hide:
+            !permissionMap?.['qre_percent_adjustment']?.read &&
+            !permissionMap?.['qre_percent_adjustment']?.edit,
+          editable: isEditQrePrecent ? true : false,
         },
       ],
     },
     {
       items: [
-        { label: 'Account Name', value: project?.account_name || '-' },
+        {
+          label: 'Account Name',
+          value: project?.account_name || '-',
+          hide:
+            !accountPermissionMap?.['account_name']?.read &&
+            !accountPermissionMap?.['account_name']?.edit,
+        },
         {
           label: 'Fiscal Start',
           value: project?.fiscal_start_date
             ? formatMonthDay(project?.fiscal_start_date)
             : '-',
+          hide:
+            !accountPermissionMap?.['fiscal_start_date']?.read &&
+            !accountPermissionMap?.['fiscal_start_date']?.edit,
         },
         {
           label: 'Non-Labor Cost',
           value: project?.total_cost_nonlabor
             ? costDisplay(project.total_cost_nonlabor, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['total_cost_nonlabor']?.read &&
+            !permissionMap?.['total_cost_nonlabor']?.edit,
         },
         {
           label: 'QRE Percent Final',
           value: project?.rd_percent_final
             ? `${project.rd_percent_final}%`
             : '-',
+          hide:
+            !permissionMap?.['qre_final']?.read &&
+            !permissionMap?.['qre_final']?.edit,
         },
       ],
     },
@@ -250,22 +298,32 @@ export const transformProjectData = (
         {
           label: 'Country',
           value: `${project?.country_code || '-'}`,
+          hide:
+            !permissionMap?.['country']?.read &&
+            !permissionMap?.['country']?.edit,
         },
         {
           label: 'Fiscal End',
           value: project?.fiscal_end_date
             ? formatMonthDay(project?.fiscal_end_date)
             : '-',
+          hide:
+            !accountPermissionMap?.['fiscal_end_date']?.read &&
+            !accountPermissionMap?.['fiscal_end_date']?.edit,
         },
         {
           label: 'Project Cost',
           value: project?.total_cost
             ? costDisplay(project.total_cost, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['total_cost']?.read &&
+            !permissionMap?.['total_cost']?.edit,
         },
         {
           label: 'QRE Final',
           value: costDisplay(project?.qre_final, currencySymbol),
+          hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
         },
       ],
     },
@@ -274,6 +332,9 @@ export const transformProjectData = (
         {
           label: 'Currency',
           value: project?.currency_name || '-',
+          hide:
+            !permissionMap?.['currency']?.read &&
+            !permissionMap?.['currency']?.edit,
         },
         {
           label: '',
@@ -283,6 +344,9 @@ export const transformProjectData = (
         {
           label: 'Project Effort (Hours)',
           value: valueDisplay(project?.total_effort?.toString()) || '-',
+          hide:
+            !permissionMap?.['total_effort']?.read &&
+            !permissionMap?.['total_effort']?.edit,
         },
       ],
     },

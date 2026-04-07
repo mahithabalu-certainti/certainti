@@ -430,6 +430,8 @@ const StyledDateTimePicker: React.FC<StyledDateTimePickerProps> = ({
         tabIndex: -1,
         disabled: disabled || readOnly,
       },
+      dialog: { disableScrollLock: true },
+      popper: { sx: { zIndex: 99999 }, disablePortal: true },
       textField: {
         fullWidth: true,
         size: 'small' as const,

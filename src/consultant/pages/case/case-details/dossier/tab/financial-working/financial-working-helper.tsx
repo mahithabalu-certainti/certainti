@@ -26,13 +26,30 @@ export const renderValue = (
 ) => {
   const isEmpty = value === null || value === undefined || value === '';
 
+  const rawStr = typeof value === 'string' ? value.trim() : '';
+  const isParenWrapped = rawStr.startsWith('(') && rawStr.endsWith(')');
+  const displayValue = isParenWrapped ? rawStr.slice(1, -1) : value;
+
+  const isNumeric =
+    isParenWrapped ||
+    typeof value === 'number' ||
+    (typeof value === 'string' &&
+      value.trim() !== '' &&
+      (!isNaN(Number(value)) || value.endsWith('%')));
+
   return (
-    <div className='w-[180px] h-[24px] px-2 py-0 align-middle my-[2px] rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] inline-flex items-center justify-end'>
+    <div
+      className={`w-[180px] h-[24px] px-2 py-0 align-middle my-[2px] rounded-xs border border-[#CBD6E2] bg-[#F9FAFB] inline-flex items-center ${isNumeric ? 'justify-end' : 'justify-start'}`}
+    >
       {!isEmpty && (
         <span
           className={`text-[12px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
         >
-          {formatCurrency ? formatCurrency(value) : value}
+          {isParenWrapped
+            ? displayValue
+            : formatCurrency
+              ? formatCurrency(value)
+              : value}
         </span>
       )}
       {isEmpty && <span>&nbsp;</span>}
@@ -150,12 +167,25 @@ export const renderTableSection = (
             (rowLabel && boldRows.includes(rowLabel)) || rowLabel === 'Total';
           const isBold = isFirstColumn || isRowBold;
 
+          // Check if this column is exactly "Fiscal Year" (case-insensitive)
+          // If so, display the raw value without number formatting
+          const isYearColumn =
+            headerId.toLowerCase() === '3 previous years' ||
+            headerLabel.toLowerCase() === '3 previous years';
+
           const formattedValue =
             value === 0 || value === '0'
               ? '-'
-              : formatCurrency(value as string | number | null | undefined);
+              : isYearColumn
+                ? (value ?? '')
+                : formatCurrency(value as string | number | null | undefined);
 
-          const shouldLeftAlign = leftAlignColumnIndices.includes(index);
+          const shouldLeftAlign =
+            leftAlignColumnIndices.includes(index) ||
+            (typeof value === 'string' &&
+              value.trim() !== '' &&
+              isNaN(Number(value)) &&
+              !value.endsWith('%'));
 
           return (
             <div
