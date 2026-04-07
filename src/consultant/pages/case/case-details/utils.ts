@@ -14,7 +14,11 @@ interface DisplayColumn {
   }>;
 }
 
-export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
+export const transformCaseData = (
+  cases: CaseDetails,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap: Record<string, { read: boolean; edit: boolean }>
+): DisplayColumn[] => {
   const currencySymbol = cases?.currency_symbol || '$';
 
   return [
@@ -23,16 +27,25 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Account ID',
           value: cases?.account_rnumber || '-',
+          hide:
+            !accountPermissionMap?.['r_number']?.read &&
+            !accountPermissionMap?.['r_number']?.edit,
         },
 
         {
           label: 'Case Owner',
           value: cases?.case_owner_name || '-',
+          hide:
+            !permissionMap?.['case_owner_rid']?.edit &&
+            !permissionMap?.['case_owner_rid']?.read,
         },
 
         {
           label: 'No. of Projects',
           value: cases?.case_total_projects?.toString() || '-',
+          hide:
+            !permissionMap?.['case_total_projects']?.edit &&
+            !permissionMap?.['case_total_projects']?.read,
         },
 
         {
@@ -40,6 +53,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
           value: cases?.case_total_project_cost
             ? costDisplay(cases.case_total_project_cost, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['case_total_project_cost']?.edit &&
+            !permissionMap?.['case_total_project_cost']?.read,
         },
       ],
     },
@@ -48,16 +64,25 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Account Name',
           value: cases?.account_name || '-',
+          hide:
+            !accountPermissionMap?.['account_name']?.read &&
+            !accountPermissionMap?.['account_name']?.edit,
         },
 
         {
           label: 'Fiscal Year',
           value: 'FY-' + cases?.fiscal_year?.toString() || '-',
+          hide:
+            !permissionMap?.['fiscal_year']?.edit &&
+            !permissionMap?.['fiscal_year']?.read,
         },
 
         {
           label: 'No. of Qualified Projects',
           value: cases?.case_total_qualified_projects || '-',
+          hide:
+            !permissionMap?.['case_total_projects']?.edit &&
+            !permissionMap?.['case_total_projects']?.read,
         },
 
         {
@@ -68,6 +93,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
                 currencySymbol
               )
             : '-',
+          hide:
+            !permissionMap?.['case_total_qualified_project_cost']?.edit &&
+            !permissionMap?.['case_total_qualified_project_cost']?.read,
         },
       ],
     },
@@ -76,11 +104,17 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Case ID',
           value: cases?.r_number || '-',
+          hide:
+            !permissionMap?.['r_number']?.edit &&
+            !permissionMap?.['r_number']?.read,
         },
 
         {
           label: 'Country',
           value: cases?.country_name || '-',
+          hide:
+            !accountPermissionMap?.['country_rid']?.read &&
+            !accountPermissionMap?.['country_rid']?.edit,
         },
 
         {
@@ -88,6 +122,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
           value: cases?.case_total_qre_cost
             ? costDisplay(cases.case_total_qre_cost, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['case_total_qre_cost']?.edit &&
+            !permissionMap?.['case_total_qre_cost']?.read,
         },
 
         {
@@ -95,6 +132,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
           value: cases?.final_credit
             ? costDisplay(cases.final_credit, currencySymbol)
             : '-',
+          hide:
+            !permissionMap?.['total_rd_credits']?.edit &&
+            !permissionMap?.['total_rd_credits']?.read,
         },
       ],
     },
@@ -103,11 +143,17 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Case Name',
           value: cases?.case_name || '-',
+          hide:
+            !permissionMap?.['case_name']?.edit &&
+            !permissionMap?.['case_name']?.read,
         },
 
         {
           label: 'Currency',
           value: cases?.currency_code || '-',
+          hide:
+            !accountPermissionMap?.['currency_rid']?.read &&
+            !accountPermissionMap?.['currency_rid']?.edit,
         },
 
         {
@@ -119,6 +165,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
             if (status === 'Closed') return 'text-[#3EA72F] font-semibold';
             return '';
           })(),
+          hide:
+            !permissionMap?.['status_rid']?.edit &&
+            !permissionMap?.['status_rid']?.read,
         },
 
         {
@@ -126,6 +175,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
           value: cases.case_completion_percentage
             ? `${cases.case_completion_percentage}%`
             : '-',
+          hide:
+            !permissionMap?.['case_progress_percentage']?.edit &&
+            !permissionMap?.['case_progress_percentage']?.read,
         },
       ],
     },
@@ -134,6 +186,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Filing Type',
           value: cases?.filing_type_name || '-',
+          hide:
+            !permissionMap?.['filing_type_rid']?.edit &&
+            !permissionMap?.['filing_type_rid']?.read,
         },
         {
           label: '',
@@ -142,6 +197,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Submission Date',
           value: cases?.planned_submission_date || '-',
+          hide:
+            !permissionMap?.['planned_submission_date']?.edit &&
+            !permissionMap?.['planned_submission_date']?.read,
         },
         {
           label: 'Case Progress',
@@ -154,6 +212,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
             if (progress === 'Critical') return 'text-[#FF3C03] font-semibold';
             return '';
           })(),
+          hide:
+            !permissionMap?.['case_progress']?.edit &&
+            !permissionMap?.['case_progress']?.read,
         },
       ],
     },

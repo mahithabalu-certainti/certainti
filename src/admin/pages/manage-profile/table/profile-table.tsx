@@ -75,6 +75,24 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     });
     return map;
   }, [profileViewEditFields]);
+  const profilePermissionViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROFILE_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const profilePermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    profilePermissionViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [profilePermissionViewEditFields]);
+
+  const isProfilePermissionsHidden =
+    !profilePermissionMap?.['profile_permissions']?.read &&
+    !profilePermissionMap?.['profile_permissions']?.edit;
 
   const {
     data: ProfileList,
@@ -159,6 +177,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
+      hide: isProfilePermissionsHidden,
     },
     {
       label: 'Delete',

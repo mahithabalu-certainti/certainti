@@ -76,6 +76,7 @@ import {
   TechSummaryIcon,
   WorkBreakdownIcon,
   RdStatusIcon,
+  ConfigIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
@@ -154,12 +155,7 @@ export const CaseDetails = () => {
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
   const tabParam = searchParams.get('tab');
-  const caseHeaderDetails = useMemo(() => {
-    if (caseData) {
-      return transformCaseData(caseData);
-    }
-    return [];
-  }, [caseData]);
+
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
@@ -528,7 +524,40 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.RD_ASSESSMENT_STATUS_EXPORT
   );
+  const caseViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.CASES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    caseViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [caseViewEditFields]);
 
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
+
+  const caseHeaderDetails = useMemo(() => {
+    if (caseData) {
+      return transformCaseData(caseData, permissionMap, accountPermissionMap);
+    }
+    return [];
+  }, [caseData, permissionMap, accountPermissionMap]);
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -998,7 +1027,7 @@ export const CaseDetails = () => {
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
           />
         );
-      case 'settings':
+      case 'configuration':
         return <Setting activityMenuItems={activityMenuItems} />;
       case 'activities':
         return (
@@ -1244,13 +1273,21 @@ export const CaseDetails = () => {
         icon: ChecklistIcon,
       },
       {
-        name: 'Settings',
-        key: 'settings',
+        name: 'Configuration',
+        key: 'configuration',
         id: AllMenus.CONFIGURATION,
         disabled: false,
         hide: false,
-        icon: SettingIcon,
+        icon: ConfigIcon,
         subMenu: [
+          {
+            name: 'Settings',
+            key: 'settings',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            hide: false,
+            icon: SettingIcon,
+          },
           {
             name: 'Jurisdiction Configuration',
             key: 'jurisdiction_configuration',

@@ -139,8 +139,8 @@ export type DossierSummary = {
   account_name: string;
   country_name: string;
   fiscal_year: number;
-  company_overview: DossierSummarySectionItem[];
-  overall_projects_summary: DossierSummarySectionItem[];
+  company_overview: string;
+  overall_projects_summary: string;
   assessment_methodology: string;
 };
 
@@ -148,9 +148,7 @@ export interface DossierSummaryResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: {
-    dossierSummary: DossierSummary;
-  };
+  data: DossierSummary;
 }
 
 //-------- Resource Summary ----------
