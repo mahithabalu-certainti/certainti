@@ -80,7 +80,7 @@ interface CaseAttributes {
   credit_carry_forward_py_ri?: number;
 
   basic_research_payments_ia?: number;
-  basic_period_amount_ia?: number;
+  base_period_amount_ia?: number;
   non_qualifying_wages_ia?: number;
   cost_of_supplies_ia?: number;
   rac_share_ia?: number;
@@ -225,7 +225,7 @@ export class Case
   public credit_carry_forward_py_ri?:number;
 
   public basic_research_payments_ia?:number;
-  public basic_period_amount_ia?:number;
+  public base_period_amount_ia?:number;
   public non_qualifying_wages_ia?:number;
   public cost_of_supplies_ia?:number;
   public rac_share_ia?:number;
@@ -364,7 +364,7 @@ export class Case
         credit_carry_forward_py_ri:{ type : DataTypes.DECIMAL, allowNull : true},
 
         basic_research_payments_ia: { type : DataTypes.DECIMAL, allowNull : true},
-        basic_period_amount_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        base_period_amount_ia: { type : DataTypes.DECIMAL, allowNull : true},
         non_qualifying_wages_ia: { type : DataTypes.DECIMAL, allowNull : true},
         cost_of_supplies_ia: { type : DataTypes.DECIMAL, allowNull : true},
         rac_share_ia: { type : DataTypes.DECIMAL, allowNull : true},

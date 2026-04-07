@@ -236,23 +236,23 @@ export class RdCreditCalculatorForRI {
         return {
             computed_fields: {
                 "RI Schedule RC — R&D Expense Credit": {
-                    "[1] Federal Qualified Research Expenses (Form 6765, line 9 or line 28)":
+                    "[1] Federal Qualified Research Expenses from Federal Form 6765, line 9 or line 20":
                         lines.line1,
-                    "[2] Federal Base Amount (Form 6765, line 12 or 14, or line 30)":
+                    "[2] Federal Base Amount from Federal Form 6765, line 9 or 23":
                         lines.line2,
-                    "[3] Federal Excess Expenses (line 1 minus line 2)":
+                    "[3] Federal Excess Expenses. Subtract line 2 from line 1":
                         lines.line3,
                     "[4] Amount of Federal Excess Expenses from line 3 incurred in Rhode Island":
                         lines.line4,
-                    [`[5] Credit — ${tierLabel}`]:
+                    [`[5] CREDIT - (${config.qre_credit_percentage_c1}% on expenditures up to $${config.qre_threshold_amount.toLocaleString()} and ${config.qre_credit_percentage_c2}% on expenditures over $${config.qre_threshold_amount.toLocaleString()}.`]:
                         lines.line5,
-                    "[6] Unused R&D Expense Credit from preceding year(s)":
+                    "[6] Unused R&D Expense Credit from preceding year(s). Attach a schedule with amounts and year of origination":
                         lines.line6,
-                    "[7] Total R&D Expense Credit Available (line 5 + line 6)":
+                    "[7] Total R&D Expense Credit Available. Add lines 5 and 6":
                         lines.line7,
-                    "[8] Tax amount (Form RI-1120C, line 11 or Form T-71, line 7)":
+                    "[8] Tax amount from Form RI-1120C, line 11 or Form T-71, line 7":
                         lines.line8,
-                    [`[9] MAXIMUM R&D Expense Credit. Multiply line 8 by ${config.qre_credit_percentage_c3}%. Enter here and on the applicable line on Schedule B-CR`]:
+                    "[9] MAXIMUM R&D Expense Credit. Multiply line 8 by 50%. Enter here and on the applicable line on Schedule B-CR":
                         lines.line9,
                     "[10] Credit carryover. Subtract line 9 from line 7":
                         lines.line10,
