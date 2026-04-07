@@ -120,6 +120,8 @@ export const fetchMailboxMessages = async (params: {
   limit?: number;
   pageToken?: string | null;
   search?: string;
+  receivedFrom?: string;
+  receivedTo?: string;
 }): Promise<MailboxMessagesResponse> => {
   const { data } = await interactionServiceApi.get<{
     data: MailboxMessagesResponse;
@@ -131,6 +133,8 @@ export const fetchMailboxMessages = async (params: {
       limit: params.limit ?? 50,
       pageToken: params.pageToken || undefined,
       search: params.search || undefined,
+      received_from: params.receivedFrom || undefined,
+      received_to: params.receivedTo || undefined,
     },
   });
 
@@ -224,6 +228,8 @@ export const useMailboxMessages = (params: {
   limit?: number;
   pageToken?: string | null;
   search?: string;
+  receivedFrom?: string;
+  receivedTo?: string;
 }) =>
   useQuery<MailboxMessagesResponse, AxiosError>({
     queryKey: [
@@ -234,6 +240,8 @@ export const useMailboxMessages = (params: {
       params.limit,
       params.pageToken,
       params.search,
+      params.receivedFrom,
+      params.receivedTo,
     ],
     queryFn: () => fetchMailboxMessages(params),
     enabled: Boolean(params.accountRid),

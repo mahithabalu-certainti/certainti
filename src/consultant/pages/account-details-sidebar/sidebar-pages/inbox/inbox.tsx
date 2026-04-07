@@ -533,6 +533,12 @@ const Inbox = () => {
     setSelectedMessageId('');
   }, [deferredSearchText]);
 
+  useEffect(() => {
+    setPageToken(null);
+    setMessageItems([]);
+    setSelectedMessageId('');
+  }, [filters.receivedFrom, filters.receivedTo]);
+
   const {
     data: mailboxMessages,
     isLoading: isMessagesLoading,
@@ -545,6 +551,8 @@ const Inbox = () => {
     limit: 50,
     pageToken,
     search: deferredSearchText,
+    receivedFrom: filters.receivedFrom || undefined,
+    receivedTo: filters.receivedTo || undefined,
   });
 
   useEffect(() => {
