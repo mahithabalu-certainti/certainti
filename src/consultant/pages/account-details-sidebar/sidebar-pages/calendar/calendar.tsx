@@ -328,12 +328,19 @@ const rangeLabel = (mode: RangeMode, anchorDate: Date) => {
   return `${MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
 };
 
+const sanitizeSearchText = (value: string) =>
+  value
+    .replace(/[\r\n\t\0]+/g, ' ')
+    .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const Calendar = () => {
   const { accountid } = useParams();
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [anchorDate, setAnchorDate] = useState(() => startOfDay(new Date()));
   const [searchText, setSearchText] = useState('');
-  const deferredSearch = useDeferredValue(searchText.trim());
+  const deferredSearch = useDeferredValue(sanitizeSearchText(searchText).slice(0, 200));
   const [selectedEventId, setSelectedEventId] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [splitPercent, setSplitPercent] = useState(50);
@@ -680,27 +687,12 @@ const Calendar = () => {
                                         ? 'All day'
                                         : `${formatTime(event.start)} - ${formatTime(event.end)}`}
                                     </span>
-                                    <span className='line-clamp-1'>
-                                      {event.organizer_name || event.organizer_email || 'Organizer unavailable'}
-                                    </span>
                                     {event.location_display_name ? (
                                       <span className='line-clamp-1'>{event.location_display_name}</span>
                                     ) : null}
                                   </div>
                                 </div>
 
-                                <div className='flex flex-wrap items-center gap-1'>
-                                  {event.has_join_link ? (
-                                    <span className='rounded-full bg-[#EEF3F8] px-1.5 py-[2px] text-[9px] font-semibold text-[#35526B]'>
-                                      Online
-                                    </span>
-                                  ) : null}
-                                  {event.can_cancel ? (
-                                    <span className='rounded-full bg-[#F3F2F1] px-1.5 py-[2px] text-[9px] font-semibold text-[#605E5C]'>
-                                      Cancel
-                                    </span>
-                                  ) : null}
-                                </div>
                               </div>
                             </button>
                           );
@@ -770,11 +762,6 @@ const Calendar = () => {
                       >
                         {responseLabel(eventDetail.response_status)}
                       </span>
-                      {eventDetail.is_online_meeting ? (
-                        <span className='rounded-full bg-[#EEF3F8] px-2 py-[3px] text-[10px] font-semibold text-[#35526B]'>
-                          {eventDetail.online_meeting_provider || 'Online meeting'}
-                        </span>
-                      ) : null}
                     </div>
                   </div>
 
@@ -806,14 +793,6 @@ const Calendar = () => {
                       </p>
                     </div>
 
-                    <div className='rounded-lg bg-white px-3 py-2'>
-                      <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                        Organizer
-                      </p>
-                      <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
-                        {eventDetail.organizer_name || eventDetail.organizer_email || '-'}
-                      </p>
-                    </div>
 
                     {eventDetail.location_display_name ? (
                       <div className='col-span-2 rounded-lg bg-white px-3 py-2'>

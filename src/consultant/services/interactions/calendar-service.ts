@@ -254,6 +254,8 @@ export const useCalendarMetadata = (accountRid: string) =>
     queryFn: () => fetchCalendarMetadata(accountRid),
     enabled: Boolean(accountRid),
     retry: 0,
+    staleTime: 0,
+    gcTime: 0,
   });
 
 /**
@@ -277,6 +279,8 @@ export const useCalendarEvents = (params: {
     queryFn: () => fetchAllCalendarEvents(params),
     enabled: Boolean(params.accountRid),
     retry: 0,
+    staleTime: 0,
+    gcTime: 0,
   });
 
 /**
@@ -295,6 +299,8 @@ export const useCalendarEventById = (accountRid: string, eventId?: string) =>
     queryFn: () => fetchCalendarEventById(accountRid, eventId || ''),
     enabled: Boolean(accountRid && eventId),
     retry: 0,
+    staleTime: 0,
+    gcTime: 0,
   });
 
 /**
