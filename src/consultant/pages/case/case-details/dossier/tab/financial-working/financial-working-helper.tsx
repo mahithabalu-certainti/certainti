@@ -26,7 +26,12 @@ export const renderValue = (
 ) => {
   const isEmpty = value === null || value === undefined || value === '';
 
+  const rawStr = typeof value === 'string' ? value.trim() : '';
+  const isParenWrapped = rawStr.startsWith('(') && rawStr.endsWith(')');
+  const displayValue = isParenWrapped ? rawStr.slice(1, -1) : value;
+
   const isNumeric =
+    isParenWrapped ||
     typeof value === 'number' ||
     (typeof value === 'string' &&
       value.trim() !== '' &&
@@ -40,7 +45,11 @@ export const renderValue = (
         <span
           className={`text-[12px] ${isBold ? 'font-bold text-[#1A2733]' : 'font-semibold text-[#2D3E4F]'}`}
         >
-          {formatCurrency ? formatCurrency(value) : value}
+          {isParenWrapped
+            ? displayValue
+            : formatCurrency
+              ? formatCurrency(value)
+              : value}
         </span>
       )}
       {isEmpty && <span>&nbsp;</span>}
