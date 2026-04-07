@@ -224,6 +224,7 @@ export type InteractionList = {
   interaction_assessment_source_name: string | null;
   interaction_status_rid: string | null;
   interaction_status_name: 'Active' | 'In-Active';
+  is_primary: boolean;
 };
 
 export type InteractionTemplateList = {

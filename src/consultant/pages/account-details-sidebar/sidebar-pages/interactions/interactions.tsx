@@ -157,6 +157,32 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [showAssessmentToggle, setShowAssessmentToggle] =
     useState<boolean>(false);
 
+  const processedFilters = useMemo(() => {
+    const filters = { ...(appliedFilters as Record<string, any>) };
+    if (filters.is_primary !== undefined) {
+      const isPrimary = filters.is_primary;
+      if (isPrimary?.equals !== undefined) {
+        const raw = Array.isArray(isPrimary.equals)
+          ? isPrimary.equals[0]
+          : isPrimary.equals;
+        filters.is_primary = { equals: raw === 'null' ? null : raw };
+      } else if (isPrimary?.not_equals !== undefined) {
+        const raw = Array.isArray(isPrimary.not_equals)
+          ? isPrimary.not_equals[0]
+          : isPrimary.not_equals;
+        filters.is_primary = { not_equals: raw === 'null' ? null : raw };
+      } else if (isPrimary?.in !== undefined) {
+        const rawArr: string[] = Array.isArray(isPrimary.in)
+          ? isPrimary.in
+          : [isPrimary.in];
+        filters.is_primary = {
+          in: rawArr.map((v: string) => (v === 'null' ? null : v)),
+        };
+      }
+    }
+    return filters;
+  }, [appliedFilters]);
+
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -193,7 +219,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
       sort: sortField,
       sort_by: sortBy,
-      filters: appliedFilters,
+      filters: processedFilters,
       account_rid: accountid || '',
       fiscal_year: newFiscalYear,
       search: searchText,

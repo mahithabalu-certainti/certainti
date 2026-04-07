@@ -65,6 +65,19 @@ export const getInteractionFilterFields = (
         !fourPartPermissionMap?.['r_number']?.read,
     },
     {
+      name: 'Primary',
+      value: 'is_primary',
+      type: 'enum',
+      options: [
+        { option: 'Yes', value: 'true' },
+        { option: 'No', value: 'false' },
+      ],
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['is_primary']?.edit &&
+        !permissionMap?.['is_primary']?.read,
+    },
+    {
       name: 'Batch ID',
       value: 'interaction_batch_id',
       type: 'text',
@@ -245,6 +258,19 @@ export const getProjectInteractionFilterFields = (
       hide:
         !fourPartPermissionMap?.['r_number']?.edit &&
         !fourPartPermissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Primary',
+      value: 'is_primary',
+      type: 'enum',
+      options: [
+        { option: 'Yes', value: 'true' },
+        { option: 'No', value: 'false' },
+      ],
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['is_primary']?.edit &&
+        !permissionMap?.['is_primary']?.read,
     },
     {
       name: 'Batch ID',
