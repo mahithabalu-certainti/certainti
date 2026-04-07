@@ -8,7 +8,7 @@ import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, C
 import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids, fetchCountryCalcDataForDossier } from "../../utils/dossierRawquery";
-import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook, addFederalSheetToWorkbook, addStateSummarySheetToWorkbook } from "../rdStateProcessors/stateRdCreditExcelGenerators";
+import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook, addFederalSheetToWorkbook, addStateSummarySheetToWorkbook, STATE_SHEET_ORDER } from "../rdStateProcessors/stateRdCreditExcelGenerators";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
 import RDCreditSchemaService from "../rdComputation/schemaService";
@@ -411,23 +411,31 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const techSummary = await this.listTechnicalSummary(accountNumber,'',0,0,{},'r_number','ASC',"download",caseRid,accountRid,"qualifedProjects");
     const finalStructuredData = techSummary.technicalSummary.length < 1 ? [] : await generatePdfBuffer(techSummary.technicalSummary)
 
-    // Generate combined financial calculations Excel (federal + state sheets + summary)
+    // Generate combined financial calculations Excel
+    // Sheet order matches reference: Fed R&D-2025 → State-Credit Summary → state sheets
     let stateFinancialCalcUrl: string | null = null;
     try {
       const combinedWorkbook = createWorkbook();
       let sheetsAdded = 0;
 
-      // Federal USA sheet
+      // 1. Federal sheet (first)
       const federalCalcRows: any[] = (await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid)))[0];
       if (federalCalcRows.length > 0) {
         const fedRow = federalCalcRows[0];
-        const inputParams   = typeof fedRow.input_params   === "string" ? JSON.parse(fedRow.input_params)   : (fedRow.input_params   ?? {});
+        const inputParams    = typeof fedRow.input_params    === "string" ? JSON.parse(fedRow.input_params)    : (fedRow.input_params    ?? {});
         const computedFields = typeof fedRow.computed_fields === "string" ? JSON.parse(fedRow.computed_fields) : (fedRow.computed_fields ?? {});
         addFederalSheetToWorkbook(combinedWorkbook, inputParams, computedFields);
         sheetsAdded++;
       }
 
-      // State sheets
+      // 2. State Credit Summary sheet (second)
+      const stateSummary = await this.rdCreditSchemaService.getStateSummaryResults(accountNumber, caseRid, schemaName);
+      if (stateSummary && Object.keys(stateSummary.federal ?? stateSummary).length > 0) {
+        addStateSummarySheetToWorkbook(combinedWorkbook, stateSummary);
+        sheetsAdded++;
+      }
+
+      // 3. State sheets in reference order
       const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossier(schemaName, caseRid)))[0];
       if (stateCalcRows.length > 0) {
         const stateRids = stateCalcRows.map((r: any) => r.state_rid);
@@ -435,20 +443,48 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
         const stateCodeMap: Record<string, string> = {};
         stateCodeRows.forEach((r: any) => { stateCodeMap[r.rid] = r.state_code; });
 
-        for (const row of stateCalcRows) {
-          const stateCode = stateCodeMap[row.state_rid];
-          if (!stateCode) continue;
+        // Fetch jurisdiction config — only states listed there are eligible
+        const [jurisdictionConfig]: any = await orgDb.query(
+          rawQueries.fetchConfiguration(schemaName, caseRid),
+          { raw: true }
+        );
+        const jurisdictionStateRids: string[] =
+          Array.isArray(jurisdictionConfig) && jurisdictionConfig.length > 0
+            ? (jurisdictionConfig[0].states ?? [])
+            : [];
+
+        // Fetch project resource counts — only states with resources > 0 are eligible
+        const projectData: any[] = await orgDb.query(
+          rawQueries.fetchProjectCountsAndQreByState(schemaName),
+          { replacements: { case_rid: caseRid, stateRids }, type: QueryTypes.SELECT }
+        );
+        const resourcesByStateRid = new Map<string, number>(
+          projectData.map((d: any) => [d.state_rid, Number(d.total_resources || 0)])
+        );
+
+        // Build a lookup by state code — skip states not in jurisdiction or with no resources
+        const rowByStateCode: Record<string, any> = {};
+        stateCalcRows.forEach((row: any) => {
+          const code = stateCodeMap[row.state_rid];
+          const inJurisdiction = jurisdictionStateRids.includes(row.state_rid);
+          const hasResources = (resourcesByStateRid.get(row.state_rid) ?? 0) > 0;
+          if (code && inJurisdiction && hasResources) {
+            rowByStateCode[code.toUpperCase()] = row;
+          }
+        });
+
+        // Add in reference order first, then any remaining states not in the reference list
+        const orderedCodes = [
+          ...STATE_SHEET_ORDER.filter(c => rowByStateCode[c]),
+          ...Object.keys(rowByStateCode).filter(c => !STATE_SHEET_ORDER.includes(c)),
+        ];
+
+        for (const stateCode of orderedCodes) {
+          const row = rowByStateCode[stateCode];
           const computeResult = { inputFields: row.input_params, computedFields: row.computed_fields };
           const added = await addStateSheetToWorkbook(combinedWorkbook, stateCode, computeResult);
           if (added) sheetsAdded++;
         }
-      }
-
-      // State credit summary sheet
-      const stateSummary = await this.rdCreditSchemaService.getStateSummaryResults(accountNumber, caseRid, schemaName);
-      if (stateSummary && Object.keys(stateSummary.federal ?? stateSummary).length > 0) {
-        addStateSummarySheetToWorkbook(combinedWorkbook, stateSummary);
-        sheetsAdded++;
       }
 
       if (sheetsAdded > 0) {

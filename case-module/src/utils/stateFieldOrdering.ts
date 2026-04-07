@@ -1104,8 +1104,46 @@ CA: {
             "[26] If you elect to reduce the credit under section 280C, then multiply line 25 by",
             "[30] Add lines 28 and 29"
         ]
+    },
+
+    // USA Federal Form 6765 — RRC (Section A) and ASC (Section B)
+    // Fields are matched against the FLATTENED section data
+    // (rrc280C / asc280C sub-objects are merged into the parent section before ordering)
+    USA: {
+        sectionOrder: [
+            "(Regular Credit)",
+            "(ASC Credit)"
+        ],
+        sectionFieldOrders: {
+            "(Regular Credit)": [
+                { pattern: /^\[5\]\s*Total Qualified Research Expenses$/, order: 1 },
+                { pattern: /^\[6\]\s*Fixed-base percentage$/, order: 2 },
+                { pattern: /^\[7\]\s*Average Annual Gross Receipts$/, order: 3 },
+                { pattern: /^\[8\]\s*Multiply line 7 by percentage on line 6$/, order: 4 },
+                { pattern: /^\[9\]\s*Subtract line 8 from line 5$/, order: 5 },
+                { pattern: /^\[10\]\s*Multiply line 5 by/, order: 6 },
+                { pattern: /^\[11\]\s*Enter smaller of line 9 or line 10$/, order: 7 },
+                { pattern: /^\[13\]\s*Electing reduced credit under 280C$/, order: 8 },
+                { pattern: /^Multiply line 11 by/, order: 9 }
+            ],
+            "(ASC Credit)": [
+                { pattern: /^\[20\]\s*Total Qualified Research Expenses$/, order: 1 },
+                { pattern: /^\[21\]\s*Total QREs for prior 3 tax years$/, order: 2 },
+                { pattern: /^\[22\]\s*Divide line 21 by 6\.0$/, order: 3 },
+                { pattern: /^\[23\]\s*Subtract line 22 from line 20$/, order: 4 },
+                { pattern: /^Enter \d+%/, order: 5 },
+                { pattern: /^\[24\]\s*Multiply line 23 by the percentage above$/, order: 6 },
+                { pattern: /^\[25\]\s*Add lines 19 and 24$/, order: 7 },
+                { pattern: /^\[26\]\s*Electing reduced credit under 280C$/, order: 8 },
+                { pattern: /^Multiply line 20 by/, order: 9 }
+            ]
+        },
+        BOLD: [
+            "[11] Enter smaller of line 9 or line 10",
+            "[25] Add lines 19 and 24"
+        ]
     }
- 
+
     // TODO: Add configurations for other states (GA, etc.)
 };
 
