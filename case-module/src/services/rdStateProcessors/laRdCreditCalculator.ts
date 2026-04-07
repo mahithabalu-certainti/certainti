@@ -85,7 +85,7 @@ export class RdCreditCalculatorForLA {
             fiscalYearEnded : fiscalYear,
             currentYear : year
         },config);
-        const computedFields = this.buildComputedFields(creditResult, bracket, config);
+        const computedFields = this.buildComputedFields(creditResult, bracket, config, year);
 
         return {
             inputFields,
@@ -109,17 +109,31 @@ export class RdCreditCalculatorForLA {
         const currentYearQRE = new Decimal(wages)
             .plus(new Decimal(supplies))
             .plus(new Decimal(contract).mul(config.sub_con_percent / 100));
+         const qreSum = stateRdData?.prior3YearsQREs.map(item => ({
+                    fiscalYear: item.fiscalYear,
+                    wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+                }));
+                logMessage(`${JSON.stringify(qreSum)}`)
+                //----Line2a: Enter prior year QRE for la State
+                const prev1_qre = new Decimal(qreSum[0]?.wagesContractSum || 0);
+        
+                //----Line3a: Enter 2 years prior QRE for la State
+                const prev2_qre = new Decimal(qreSum[1]?.wagesContractSum || 0);
+        
+                //----Line4a: Enter 3 years prior QRE for la State
+                const prev3_qre = new Decimal(qreSum[2]?.wagesContractSum || 0);
+                const prev4_qre = new Decimal(qreSum[3]?.wagesContractSum || 0);
 
         //---- Prior 3 years QRE (Lines 1, 2, 3) — oldest to newest
         //     prior3YearsQREs[0] = most recent prior year (e.g. 2024)
         //     prior3YearsQREs[1] = 2 years ago (e.g. 2023)
         //     prior3YearsQREs[2] = 3 years ago (e.g. 2022)
-        const prior1 = new Decimal(stateRdData.prior3YearsQREs?.[3]?.qre ?? 0); // oldest
-        const prior2 = new Decimal(stateRdData.prior3YearsQREs?.[2]?.qre ?? 0);
-        const prior3 = new Decimal(stateRdData.prior3YearsQREs?.[1]?.qre ?? 0); // most recent prior
-
+        //const prior1 = new Decimal(stateRdData.prior3YearsQREs?.[0]?.qre ?? 0); // oldest
+       // const prior2 = new Decimal(stateRdData.prior3YearsQREs?.[1]?.qre ?? 0);
+      //  const prior3 = new Decimal(stateRdData.prior3YearsQREs?.[2]?.qre ?? 0); // most recent prior
+      //  const prior4 = new Decimal(stateRdData.prior3YearsQREs?.[3]?.qre ?? 0); 
         //---- Line 4: 3-year average
-        const line4 = prior1.plus(prior2).plus(prior3).div(3);
+        const line4 = prev2_qre.plus(prev3_qre).plus(prev1_qre).div(3);
 
         //---- Line 5: Base calculation (base% × Line 4)
         const basePct = this.getBasePct(config, bracket);
@@ -135,12 +149,12 @@ export class RdCreditCalculatorForLA {
         const line9 = line7.mul(creditRate / 100);
 
         return {
-            prior_year_oldest:   this.round2(prior1),   // Line 1
-            prior_year_middle:   this.round2(prior2),   // Line 2
-            prior_year_newest:   this.round2(prior3),   // Line 3
+            prior_year_oldest:   this.round2(prev4_qre),   // Line 1
+            prior_year_middle:   this.round2(prev3_qre),   // Line 2
+            prior_year_newest:   this.round2(prev2_qre),   // Line 3
             three_year_average:  this.round2(line4),    // Line 4
             base_calculation:    this.round2(line5),    // Line 5
-            current_year_qre:    this.round2(currentYearQRE), // Line 6
+            current_year_qre:    this.round2(prev1_qre), // Line 6
             increase_in_rd:      this.round2(line7),    // Line 7
             credit_rate:         creditRate,             // Line 8
             la_research_credit:  this.round2(line9),    // Line 9
@@ -211,15 +225,15 @@ export class RdCreditCalculatorForLA {
     private buildComputedFields(
         result: ReturnType<RdCreditCalculatorForLA["computeCredit"]>,
         bracket: EmployeeBracket,
-        config: ConfigJson
+        config: ConfigJson,
+        currentYear: number
     ) {
         const sectionTitle = `RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765`;
 
-        // Line 1/2/3 year labels differ per bracket in the Excel:
-        //   small  (1-49):   1=2022, 2=2023, 3=2024
-        //   mid   (50-99):   1=2021, 2=2022, 3=2023
-        //   large (100+):    1=2021, 2=2022, 3=2023
-        const [yr1Label, yr2Label, yr3Label, yr6Label] = this.getYearLabels(bracket);
+        const yr1Label = String(currentYear - 3);
+        const yr2Label = String(currentYear - 2);
+        const yr3Label = String(currentYear - 1);
+        const yr6Label = String(currentYear - 0);
 
         // Line 5 base % label
         const basePctLabel = bracket === "small"
@@ -246,7 +260,7 @@ export class RdCreditCalculatorForLA {
                         result.three_year_average,
                     [`[5] ${basePctLabel}`]:
                         result.base_calculation,
-                    [`[6] ${yr6Label} LA Research & Development Expenditures`]:
+                    [`[6] ${currentYear} LA Research & Development Expenditures`]:
                         result.current_year_qre,
                     "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)":
                         result.increase_in_rd,
@@ -257,14 +271,6 @@ export class RdCreditCalculatorForLA {
                 }
             },
         };
-    }
-
-    // Returns [line1Year, line2Year, line3Year, line6Year] labels per bracket
-    private getYearLabels(bracket: EmployeeBracket): [string, string, string, string] {
-        // small (1-49): prior years are 2022, 2023, 2024; current = 2024
-        if (bracket === "small") return ["2022", "2023", "2024", "2024"];
-        // mid (50-99) and large (100+): prior years are 2021, 2022, 2023; current = 2024
-        return ["2021", "2022", "2023", "2024"];
     }
 
     // -------------------------------------------------------------------------

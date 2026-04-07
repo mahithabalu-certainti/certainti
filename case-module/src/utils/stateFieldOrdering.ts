@@ -846,24 +846,24 @@ CA: {
     },
     LA: {
         sectionOrder: [
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION"
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765"
         ],
         sectionFieldOrders: {
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION": [
-                { pattern: "[1] Prior year LA R&D expenditures (oldest)", order: 1 },
-                { pattern: "[2] Prior year LA R&D expenditures (middle)", order: 2 },
-                { pattern: "[3] Prior year LA R&D expenditures (most recent)", order: 3 },
-                { pattern: "[4] 3 previous years average", order: 4 },
-                { pattern: /^\[5\] Base calculation \(\d+(\.\d+)?% × Line 4\)$/, order: 5 },
-                { pattern: "[6] Current year LA R&D expenditures", order: 6 },
-                { pattern: "[7] Increase in LA R&D expenditures (Line 6 minus Line 5, not less than 0)", order: 7 },
-                { pattern: /^\[8\] Credit percentage \(\d+(\.\d+)?%\)$/, order: 8 },
-                { pattern: "[9] Louisiana Research Credit (Line 7 × Line 8)", order: 9 }
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765": [
+                { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
+                { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
+                { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
+                { pattern: "[4] 3 Previous Years Average", order: 4 },
+                { pattern: /^\[5\] Base Calculation \(\d+(\.\d+)?% x Line 4\)$/, order: 5 },
+                { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
+                { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
+                { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 }
             ]
         },
         BOLD: [
-            "[4] 3 previous years average",
-            "[9] Louisiana Research Credit (Line 7 × Line 8)"
+            "[4] 3 Previous Years Average",
+            "[9] Louisiana Research Credit (Line 7 times Line 8)"
         ]
     },
     NE: {
@@ -1104,8 +1104,46 @@ CA: {
             "[26] If you elect to reduce the credit under section 280C, then multiply line 25 by",
             "[30] Add lines 28 and 29"
         ]
+    },
+
+    // USA Federal Form 6765 — RRC (Section A) and ASC (Section B)
+    // Fields are matched against the FLATTENED section data
+    // (rrc280C / asc280C sub-objects are merged into the parent section before ordering)
+    USA: {
+        sectionOrder: [
+            "(Regular Credit)",
+            "(ASC Credit)"
+        ],
+        sectionFieldOrders: {
+            "(Regular Credit)": [
+                { pattern: /^\[5\]\s*Total Qualified Research Expenses$/, order: 1 },
+                { pattern: /^\[6\]\s*Fixed-base percentage$/, order: 2 },
+                { pattern: /^\[7\]\s*Average Annual Gross Receipts$/, order: 3 },
+                { pattern: /^\[8\]\s*Multiply line 7 by percentage on line 6$/, order: 4 },
+                { pattern: /^\[9\]\s*Subtract line 8 from line 5$/, order: 5 },
+                { pattern: /^\[10\]\s*Multiply line 5 by/, order: 6 },
+                { pattern: /^\[11\]\s*Enter smaller of line 9 or line 10$/, order: 7 },
+                { pattern: /^\[13\]\s*Electing reduced credit under 280C$/, order: 8 },
+                { pattern: /^Multiply line 11 by/, order: 9 }
+            ],
+            "(ASC Credit)": [
+                { pattern: /^\[20\]\s*Total Qualified Research Expenses$/, order: 1 },
+                { pattern: /^\[21\]\s*Total QREs for prior 3 tax years$/, order: 2 },
+                { pattern: /^\[22\]\s*Divide line 21 by 6\.0$/, order: 3 },
+                { pattern: /^\[23\]\s*Subtract line 22 from line 20$/, order: 4 },
+                { pattern: /^Enter \d+%/, order: 5 },
+                { pattern: /^\[24\]\s*Multiply line 23 by the percentage above$/, order: 6 },
+                { pattern: /^\[25\]\s*Add lines 19 and 24$/, order: 7 },
+                { pattern: /^\[26\]\s*Electing reduced credit under 280C$/, order: 8 },
+                { pattern: /^Multiply line 20 by/, order: 9 }
+            ]
+        },
+        BOLD: [
+            "[11] Enter smaller of line 9 or line 10",
+            "[25] Add lines 19 and 24"
+        ]
     }
- 
+
     // TODO: Add configurations for other states (GA, etc.)
 };
 

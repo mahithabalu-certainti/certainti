@@ -212,7 +212,8 @@ export class RdCreditCalculatorForMN {
             : line31;
 
         //---- Line 34: Carryover to next year = line31 − line33
-        const line34 = line31.minus(line33);
+      //  const line34 = line31.minus(line33);
+      const line34 = new Decimal((caseData as any).credit_carry_over_mn?? 0);
 
         return {
             // QRE lines

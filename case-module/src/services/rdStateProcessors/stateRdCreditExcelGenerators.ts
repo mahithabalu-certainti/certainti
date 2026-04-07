@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
 import { uploadToAzureBlob } from "../../utils/helpers";
+import { reorderComputedFieldsForState } from "../../utils/stateFieldOrdering";
 
 /**
  * Universal State R&D Credit — Excel Generator
@@ -87,7 +88,7 @@ const LAYOUT: Record<string, StateLayout> = {
         colWidths: { 1:12, 2:80, 3:16.5, 4:14.6, 5:18.6, 7:4, 8:10, 9:18, 10:20, 11:16 },
         fontSize: 10, headerStyle: "bold-text", dataStartRow: 9,
         sheetLabel: "IL Research and Development Tax Credit",
-        dualColumn: { colAIndex: 3, colBIndex: 4, headerFill: "FFD9E1F2" },
+        dualColumn: { colAIndex: 3, colBIndex: 4, headerFill: "FFBFBFBF" },
         hasQRETable: true, qreTableStartCol: 8,
     },
 
@@ -256,8 +257,7 @@ const LAYOUT: Record<string, StateLayout> = {
 // Style constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DARK_NAVY    = "FF1F3864";
-const WHITE        = "FFFFFFFF";
+const WHITE        = "FFBFBFBF";
 const NEAR_BLACK   = "FF221E1F";
 const CURRENCY_FMT = '$#,##0.00;($#,##0.00);"-"';
 const THIN         = { style: "thin" } as Partial<ExcelJS.Border>;
@@ -333,36 +333,36 @@ function setVal(cell: ExcelJS.Cell, raw: unknown, fmt = CURRENCY_FMT, bold = fal
 // Section header
 // ─────────────────────────────────────────────────────────────────────────────
 
+const SECTION_HEADER_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: WHITE } };
+
 function writeSectionHeader(ws: ExcelJS.Worksheet, row: number, sectionKey: string, layout: StateLayout, fyLabel?: string) {
     const { headerStyle, valueCol, labelCol, fontSize } = layout;
 
-    if (headerStyle === "navy-white") {
-        ws.mergeCells(row, 1, row, valueCol);
-        const c = ws.getCell(row, 1);
-        c.value = sectionKey;
-        c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: DARK_NAVY } };
-        c.font  = { bold: true, size: fontSize, color: { argb: WHITE } };
-        c.alignment = { horizontal: "left" };
-        c.border = ALL_THIN;
-    } else if (headerStyle === "dark-inline") {
+    if (headerStyle === "dark-inline") {
         ws.getCell(row, 1).value = "Line";
         ws.getCell(row, 1).font  = { size: fontSize };
         const b = ws.getCell(row, labelCol);
         b.value = sectionKey;
-        b.font  = { bold: true, size: fontSize, color: { argb: WHITE } };
-        b.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: DARK_NAVY } };
+        b.font  = { bold: true, size: fontSize, color: { argb: NEAR_BLACK } };
+        b.fill  = SECTION_HEADER_FILL;
+        b.border = ALL_THIN;
+        b.alignment = { horizontal: "left", wrapText: true };
         if (fyLabel) {
             const c = ws.getCell(row, valueCol);
             c.value = fyLabel;
-            c.font  = { bold: true, size: fontSize, color: { argb: WHITE } };
-            c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: DARK_NAVY } };
+            c.font  = { bold: true, size: fontSize, color: { argb: NEAR_BLACK } };
+            c.fill  = SECTION_HEADER_FILL;
+            c.border = ALL_THIN;
+            c.alignment = { horizontal: "center" };
         }
     } else {
-        ws.mergeCells(row, 1, row, valueCol);
-        const c = ws.getCell(row, labelCol);
+        // navy-white and bold-text both use the same unified style
+        try { ws.mergeCells(row, 1, row, valueCol); } catch (_) {}
+        const c = ws.getCell(row, 1);
         c.value = sectionKey;
-        c.font  = { bold: true, size: fontSize };
-        c.alignment = { wrapText: true };
+        c.fill  = SECTION_HEADER_FILL;
+        c.font  = { bold: true, size: fontSize, color: { argb: NEAR_BLACK } };
+        c.alignment = { horizontal: "left", wrapText: true };
         c.border = ALL_THIN;
     }
 }
@@ -390,8 +390,10 @@ function writeDataRow(ws: ExcelJS.Worksheet, row: number, parsed: ParsedKey, raw
     d.alignment = { horizontal: "left", wrapText: true };
     d.border = ALL_THIN;
 
+    const vc = ws.getCell(row, valueCol);
+    vc.border = ALL_THIN;
     if (rawValue !== "" && rawValue != null) {
-        setVal(ws.getCell(row, valueCol), rawValue, CURRENCY_FMT, bold);
+        setVal(vc, rawValue, CURRENCY_FMT, bold);
     }
 }
 
@@ -532,7 +534,7 @@ function renderIL(ws: ExcelJS.Worksheet, sections: unknown, layout: StateLayout,
 // ─────────────────────────────────────────────────────────────────────────────
 
 const NM_ACCT_FMT = '_(* #,##0.00_);_(* \\(#,##0.00\\);_(* "-"??_);_(@_)';
-const NM_QRE_FILL = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF92D050" } };
+const NM_QRE_FILL = SECTION_HEADER_FILL;
 
 function renderNM(ws: ExcelJS.Worksheet, sections: any, layout: StateLayout, fyYear: number) {
     const { fontSize } = layout;
@@ -633,8 +635,9 @@ function renderNMQRETable(
     try { ws.mergeCells(1, wagesCol, 1, totalCol); } catch (_) {}
     const title = ws.getCell(1, wagesCol);
     title.value     = "Current & Prior years information";
-    title.font      = { bold: true, size: fontSize };
+    title.font      = { bold: true, size: fontSize, color: { argb: NEAR_BLACK } };
     title.fill      = NM_QRE_FILL;
+    title.border    = ALL_THIN;
     title.alignment = { horizontal: "left" };
 
     // Row 2: column headers (no "Year" header in col Q — matches template)
@@ -701,7 +704,7 @@ function renderNMQRETable(
 //   Col 5 (16) — table data col 3 / primary value for single-value rows
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TABLE_HEADER_FILL = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "C6EFCE" } };
+const TABLE_HEADER_FILL = SECTION_HEADER_FILL;
 
 function renderGA(ws: ExcelJS.Worksheet, computedFields: Record<string, any>, layout: StateLayout, fyYear: number) {
     const { fontSize, valueCol, labelMergeEndCol } = layout;
@@ -749,8 +752,9 @@ function renderGA(ws: ExcelJS.Worksheet, computedFields: Record<string, any>, la
             try { ws.mergeCells(currentRow, 1, currentRow, numCols); } catch (_) {}
             const shdr = ws.getCell(currentRow, 1);
             shdr.value = tableName;
-            shdr.font  = { bold: true, size: fontSize };
+            shdr.font  = { bold: true, size: fontSize, color: { argb: NEAR_BLACK } };
             shdr.fill  = TABLE_HEADER_FILL;
+            shdr.border = ALL_THIN;
             shdr.alignment = { horizontal: "left" };
             currentRow++;
 
@@ -924,8 +928,12 @@ export async function generateStateSheet(
     const meta    = computeResult.inputFields.metadata;
 
     // GA does not wrap its output in a computed_fields key — fall back to computedFields itself
-    const rawCF   = computeResult.computedFields as any;
-    const sections = rawCF.computed_fields ?? rawCF;
+    const rawCF      = computeResult.computedFields as any;
+    const rawSections = rawCF.computed_fields ?? rawCF;
+    // Apply state-specific field/section ordering (skip IL whose sections is an array)
+    const sections = Array.isArray(rawSections)
+        ? rawSections
+        : reorderComputedFieldsForState(stateCode, rawSections);
 
     const fy      = (meta["Fiscal Year Ended"] as string) ?? "";
     const fyYear  = extractYear(fy);
@@ -1104,6 +1112,13 @@ export function registerStateLayout(stateCode: string, layout: StateLayout): voi
 // Combined workbook helpers — generate ONE Excel with one sheet per state
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Sheet 1: Fed R&D-2025, Sheet 2: State-Credit Summary, then states in this order
+export const STATE_SHEET_ORDER: string[] = [
+    "AZ", "CA", "CO", "CT", "GA", "IL", "MA", "NJ", "OH", "SC", "TX",
+    "ID", "IA", "KS", "KY", "LA", "ME", "MD", "MN", "NE", "NH", "NM",
+    "NY", "ND", "RI", "VT", "VA", "DC", "WI",
+];
+
 /**
  * Create an empty workbook to share across all state generators.
  */
@@ -1169,6 +1184,327 @@ export async function uploadCombinedWorkbook(
         console.error(`[ExcelGen] Failed to upload combined workbook:`, err);
         return null;
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Federal USA sheet — Form 6765 (RRC + ASC)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Add a "Federal USA" sheet to an existing workbook from country calculation data.
+ * computedFields shape (from usaRdCreditCalculator.buildComputedFields):
+ *   { "(Regular Credit)": { ..., rrc280C: { reduction280c: { no_elect280c: {...} } } },
+ *     "(ASC Credit)":     { ..., asc280C: { reduction280c: { no_elect280c: {...} } } },
+ *     "Research and Development Tax Credit": <number> }
+ */
+export function addFederalSheetToWorkbook(
+    workbook: ExcelJS.Workbook,
+    inputParams: Record<string, any>,
+    computedFields: Record<string, any>,
+): void {
+    const LABEL_COL  = 2;
+    const LINE_COL   = 1;
+    const VALUE_COL  = 4;
+    const MERGE_END  = 3;
+    const FONT_SIZE  = 10;
+
+    const tabName = "Fed R&D-2025";
+    const existing = workbook.getWorksheet(tabName);
+    if (existing) workbook.removeWorksheet(existing.id);
+    const ws = workbook.addWorksheet(tabName);
+
+    ws.getColumn(1).width = 10;
+    ws.getColumn(2).width = 70;
+    ws.getColumn(3).width = 20;
+    ws.getColumn(4).width = 18;
+
+    // Meta block (rows 1–4)
+    const meta = inputParams?.metadata ?? {};
+    const taxYearEnded = meta["Tax Year Ended:"] ?? meta["Fiscal Year Ended"] ?? "";
+    [
+        "Federal USA",
+        "Research and Development Tax Credit",
+        `Tax Year Ended: ${taxYearEnded}`,
+        meta.credit_type ?? "Federal R&D Credit - USA",
+    ].forEach((text, i) => {
+        const c = ws.getCell(i + 1, 1);
+        c.value = text;
+        c.font  = { bold: true, size: FONT_SIZE };
+    });
+
+    // QRE summary table (rows 1–6, cols 6–9)
+    const qreSummary: Record<string, number> = inputParams?.qreSummary ?? {};
+    const priorQREs: any[]  = inputParams?.["Total Qualified Research Expenses"] ?? [];
+    const grossReceipts: any[] = inputParams?.["Average Annual Gross Receipts"] ?? [];
+
+    const drawQREHeader = (row: number, col: number, label: string) => {
+        const c = ws.getCell(row, col);
+        c.value = label;
+        c.font  = { bold: true, size: FONT_SIZE, color: { argb: NEAR_BLACK } };
+        c.fill  = SECTION_HEADER_FILL;
+        c.border = ALL_THIN;
+        c.alignment = { horizontal: "center", wrapText: true };
+    };
+
+    // QRE Summary block at cols 6–9
+    drawQREHeader(1, 6, "QRE Summary");
+    ws.mergeCells(1, 6, 1, 9);
+    ["Category", "Amount"].forEach((h, i) => drawQREHeader(2, 6 + i * 3, h));
+    let qRow = 3;
+    for (const [label, val] of Object.entries(qreSummary)) {
+        ws.getCell(qRow, 6).value = label;
+        ws.getCell(qRow, 6).border = ALL_THIN;
+        ws.getCell(qRow, 6).font  = { size: FONT_SIZE };
+        const vc = ws.getCell(qRow, 9);
+        vc.value  = typeof val === "number" ? val : 0;
+        vc.numFmt = CURRENCY_FMT;
+        vc.border = ALL_THIN;
+        vc.font   = { size: FONT_SIZE };
+        qRow++;
+    }
+
+    // Prior QREs table (cols 6–9, after QRE summary)
+    if (priorQREs.length > 0) {
+        qRow++;
+        drawQREHeader(qRow, 6, "Prior Year QREs");
+        ws.mergeCells(qRow, 6, qRow, 9);
+        qRow++;
+        ["Year", "Total QRE"].forEach((h, i) => drawQREHeader(qRow, 6 + i, h));
+        qRow++;
+        for (const row of priorQREs) {
+            ws.getCell(qRow, 6).value  = row["Fiscal Year"] ?? "";
+            ws.getCell(qRow, 6).border = ALL_THIN;
+            ws.getCell(qRow, 6).font   = { size: FONT_SIZE };
+            const vc = ws.getCell(qRow, 7);
+            vc.value  = typeof row["Total"] === "number" ? row["Total"] : 0;
+            vc.numFmt = CURRENCY_FMT;
+            vc.border = ALL_THIN;
+            vc.font   = { size: FONT_SIZE };
+            qRow++;
+        }
+    }
+
+    // Gross receipts table
+    if (grossReceipts.length > 0) {
+        qRow++;
+        drawQREHeader(qRow, 6, "Annual Gross Receipts");
+        ws.mergeCells(qRow, 6, qRow, 9);
+        qRow++;
+        ["Year", "Gross Receipts"].forEach((h, i) => drawQREHeader(qRow, 6 + i, h));
+        qRow++;
+        for (const row of grossReceipts) {
+            ws.getCell(qRow, 6).value  = row["Fiscal Year"] ?? "";
+            ws.getCell(qRow, 6).border = ALL_THIN;
+            ws.getCell(qRow, 6).font   = { size: FONT_SIZE };
+            const vc = ws.getCell(qRow, 7);
+            vc.value  = typeof row["Total"] === "number" ? row["Total"] : Number(row["Total"] ?? 0);
+            vc.numFmt = CURRENCY_FMT;
+            vc.border = ALL_THIN;
+            vc.font   = { size: FONT_SIZE };
+            qRow++;
+        }
+    }
+
+    // Year label at row 6
+    ws.getCell(6, VALUE_COL).value = taxYearEnded ? extractYear(String(taxYearEnded)) : "";
+    ws.getCell(6, VALUE_COL).font  = { bold: true, size: FONT_SIZE };
+
+    let currentRow = 8;
+
+    const writeFederalSectionHeader = (label: string) => {
+        try { ws.mergeCells(currentRow, 1, currentRow, VALUE_COL); } catch (_) {}
+        const c = ws.getCell(currentRow, 1);
+        c.value = label;
+        c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: WHITE } };
+        c.font  = { bold: true, size: FONT_SIZE, color: { argb: NEAR_BLACK } };
+        c.alignment = { horizontal: "left", wrapText: true };
+        c.border = ALL_THIN;
+        c.alignment = { wrapText: true };
+        currentRow++;
+    };
+
+    const writeFederalDataRow = (lineKey: string, rawValue: unknown, bold = false) => {
+        const parsed = parseLineKey(lineKey);
+        if (!parsed.isAnnotation) {
+            const lc = ws.getCell(currentRow, LINE_COL);
+            lc.value = parsed.lineNum;
+            lc.font  = { size: FONT_SIZE, bold };
+            lc.border = ALL_THIN;
+            lc.alignment = { horizontal: "center" };
+        }
+        try { ws.mergeCells(currentRow, LABEL_COL, currentRow, MERGE_END); } catch (_) {}
+        const dc = ws.getCell(currentRow, LABEL_COL);
+        dc.value = parsed.description;
+        dc.font  = { size: FONT_SIZE, color: { argb: NEAR_BLACK }, bold };
+        dc.alignment = { horizontal: "left", wrapText: true };
+        dc.border = ALL_THIN;
+
+        const vc = ws.getCell(currentRow, VALUE_COL);
+        vc.border = ALL_THIN;
+        if (rawValue !== "" && rawValue != null) {
+            const isStr = typeof rawValue === "string";
+            vc.value  = rawValue as ExcelJS.CellValue;
+            vc.numFmt = isStr ? "@" : CURRENCY_FMT;
+            vc.font   = { size: FONT_SIZE, bold };
+            if (isStr) vc.alignment = { horizontal: "center" };
+        }
+        currentRow++;
+    };
+
+    // Flatten rrc280C / asc280C sub-objects into their parent section, drop final_credit
+    const flattenSection = (sectionData: Record<string, any>): Record<string, any> => {
+        const flat: Record<string, any> = {};
+        for (const [k, v] of Object.entries(sectionData)) {
+            if (k === "final_credit") continue;
+            if ((k === "rrc280C" || k === "asc280C") && v?.reduction280c?.no_elect280c) {
+                Object.assign(flat, v.reduction280c.no_elect280c);
+            } else {
+                flat[k] = v;
+            }
+        }
+        return flat;
+    };
+
+    // Render an already-flattened and ordered section
+    const renderFederalSection = (sectionLabel: string, sectionData: Record<string, any>, boldSet: Set<string>) => {
+        writeFederalSectionHeader(sectionLabel);
+        for (const [lineKey, rawValue] of Object.entries(sectionData)) {
+            writeFederalDataRow(lineKey, rawValue, boldSet.has(lineKey));
+        }
+        currentRow++;
+    };
+
+    const rawCf = typeof computedFields === "string" ? JSON.parse(computedFields) : (computedFields ?? {});
+
+    // Pre-flatten 280C nesting, then apply field ordering for USA federal
+    const flatCf: Record<string, any> = {};
+    for (const [k, v] of Object.entries(rawCf)) {
+        if ((k === "(Regular Credit)" || k === "(ASC Credit)") && typeof v === "object" && v !== null) {
+            flatCf[k] = flattenSection(v as Record<string, any>);
+        } else {
+            flatCf[k] = v;
+        }
+    }
+    const cf = reorderComputedFieldsForState("USA", flatCf);
+    const boldKeys = new Set<string>(Array.isArray(cf["BOLD"]) ? (cf["BOLD"] as string[]) : []);
+
+    const rrcSection = cf["(Regular Credit)"];
+    const ascSection = cf["(ASC Credit)"];
+    const finalCredit = rawCf["Research and Development Tax Credit"];
+
+    if (rrcSection && typeof rrcSection === "object") {
+        renderFederalSection("Regular Research Credit (RRC) — Form 6765, Section A", rrcSection, boldKeys);
+    }
+    if (ascSection && typeof ascSection === "object") {
+        renderFederalSection("Alternative Simplified Credit (ASC) — Form 6765, Section B", ascSection, boldKeys);
+    }
+
+    // Final credit row
+    if (finalCredit != null) {
+        writeFederalSectionHeader("Research and Development Tax Credit");
+        const vc = ws.getCell(currentRow, VALUE_COL);
+        vc.value  = typeof finalCredit === "number" ? finalCredit : 0;
+        vc.numFmt = CURRENCY_FMT;
+        vc.border = ALL_THIN;
+        vc.font   = { bold: true, size: FONT_SIZE };
+        try { ws.mergeCells(currentRow, LABEL_COL, currentRow, MERGE_END); } catch (_) {}
+        const dc = ws.getCell(currentRow, LABEL_COL);
+        dc.value = "Tax Credit";
+        dc.font  = { bold: true, size: FONT_SIZE };
+        dc.border = ALL_THIN;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// State Credit Summary sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Add a "State Credit Summary" sheet to an existing workbook.
+ * summaryData shape (from RDCreditSchemaService.getStateSummaryResults):
+ *   { federal: { stateName: { state_code, total_projects, total_resources, total_QRE, RD_credits }, Total: { RD_credits } } }
+ */
+export function addStateSummarySheetToWorkbook(
+    workbook: ExcelJS.Workbook,
+    summaryData: Record<string, any>,
+): void {
+    const tabName = "State-Credit Summary";
+    const existing = workbook.getWorksheet(tabName);
+    if (existing) workbook.removeWorksheet(existing.id);
+    const ws = workbook.addWorksheet(tabName);
+
+    ws.getColumn(1).width = 14;
+    ws.getColumn(2).width = 30;
+    ws.getColumn(3).width = 18;
+    ws.getColumn(4).width = 18;
+    ws.getColumn(5).width = 18;
+    ws.getColumn(6).width = 18;
+
+    const TITLE_ROW = 1;
+    ws.mergeCells(TITLE_ROW, 1, TITLE_ROW, 6);
+    const title = ws.getCell(TITLE_ROW, 1);
+    title.value = "State R&D Credit Summary";
+    title.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: WHITE } };
+    title.font  = { bold: true, size: 12, color: { argb: NEAR_BLACK } };
+    title.border = ALL_THIN;
+    title.alignment = { horizontal: "center", vertical: "middle" };
+    ws.getRow(TITLE_ROW).height = 20;
+
+    const HEADERS = ["State Code", "State Name", "Total Projects", "Total Resources", "Total QRE", "R&D Credits"];
+    const HEADER_ROW = 2;
+    HEADERS.forEach((h, i) => {
+        const c = ws.getCell(HEADER_ROW, i + 1);
+        c.value = h;
+        c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: WHITE } };
+        c.font  = { bold: true, size: 10, color: { argb: NEAR_BLACK } };
+        c.border = ALL_THIN;
+        c.alignment = { horizontal: "center", wrapText: true };
+    });
+
+    const stateRows = Object.entries((summaryData?.federal ?? summaryData) as Record<string, any>)
+        .filter(([name]) => name !== "Total");
+
+    let dataRow = HEADER_ROW + 1;
+    for (const [stateName, info] of stateRows) {
+        const cols = [
+            info.state_code ?? "",
+            stateName,
+            info.total_projects ?? "",
+            info.total_resources ?? "",
+            info.total_QRE ?? 0,
+            info.RD_credits ?? 0,
+        ];
+        cols.forEach((val, i) => {
+            const c = ws.getCell(dataRow, i + 1);
+            const isCurrency = i >= 4;
+            c.value  = val as ExcelJS.CellValue;
+            c.border = ALL_THIN;
+            c.font   = { size: 10 };
+            if (isCurrency) {
+                c.numFmt = CURRENCY_FMT;
+                c.alignment = { horizontal: "right" };
+            } else {
+                c.alignment = { horizontal: "center" };
+            }
+        });
+        dataRow++;
+    }
+
+    // Total row
+    const totalInfo = (summaryData?.federal ?? summaryData)?.["Total"] ?? {};
+    ["Total", "", "", "", "", totalInfo.RD_credits ?? 0].forEach((val, i) => {
+        const c = ws.getCell(dataRow, i + 1);
+        c.value  = val as ExcelJS.CellValue;
+        c.border = ALL_THIN;
+        c.font   = { bold: true, size: 10, color: { argb: NEAR_BLACK } };
+        c.fill   = SECTION_HEADER_FILL;
+        if (i >= 4) {
+            c.numFmt = CURRENCY_FMT;
+            c.alignment = { horizontal: "right" };
+        } else {
+            c.alignment = { horizontal: "center" };
+        }
+    });
 }
 
 /**
