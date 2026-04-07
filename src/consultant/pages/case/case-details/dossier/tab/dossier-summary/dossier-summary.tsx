@@ -61,10 +61,18 @@ const DossierSummary: React.FC = () => {
               Assessment Methodology
             </div>
             <div className='py-4 px-6'>
-              <div className='text-[14px] text-[#2D3E4F]'>
-                {data?.assessment_methodology ||
-                  'No assessment methodology available'}
-              </div>
+              {data?.assessment_methodology ? (
+                <div
+                  className='text-[14px] text-[#2D3E4F]'
+                  dangerouslySetInnerHTML={{
+                    __html: data.assessment_methodology,
+                  }}
+                />
+              ) : (
+                <div className='text-[14px] text-[#2D3E4F]'>
+                  No assessment methodology available
+                </div>
+              )}
             </div>
           </div>
         </>
