@@ -134,8 +134,6 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [sortField, setSortField] = useState<string>('r_number');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const processedFilters = useMemo(() => ({ ...(appliedFilters as Record<string, any>) }), [appliedFilters]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
@@ -211,7 +209,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       limit: rowsPerPage,
       sort: sortField,
       sort_by: sortBy,
-      filters: processedFilters,
+      filters: appliedFilters,
       project_rid: projectDetails?.project_rid || '',
       project_fiscal_rid:
         projectDetails?.project_fiscal_rid ||
