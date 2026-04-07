@@ -53,6 +53,51 @@ routes.get(
   controller.interactionsController.getInteractionLevel
 );
 routes.get(
+  "/mailbox/folders",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listMailboxFolders
+);
+routes.get(
+  "/mailbox/messages",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listMailboxMessages
+);
+routes.get(
+  "/mailbox/inbox",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listInboxMessages
+);
+routes.get(
+  "/mailbox/messages/attachments",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getMailboxAttachmentById
+);
+routes.get(
+  "/mailbox/messages/:messageId",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getMailboxMessageById
+);
+routes.get(
+  "/calendar/metadata",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getCalendarMetadata
+);
+routes.get(
+  "/calendar/events",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.listCalendarEvents
+);
+routes.get(
+  "/calendar/events/:eventId",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.getCalendarEventById
+);
+routes.post(
+  "/calendar/events/:eventId/cancel",
+  checkUserStatusMiddleware("accounts_view_edit"),
+  controller.interactionsController.cancelCalendarEvent
+);
+routes.get(
   "/interactionSource",
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionSource

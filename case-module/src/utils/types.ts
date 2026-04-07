@@ -50,6 +50,7 @@ export interface ICreateCases {
   other_credits_total_sc?: number
   other_credits_total_ga? : number
   parent_case_rid?: string;
+  assessment_methodology? : string
   amendment_case_info?: Array<{
     fiscal_year: number;
     total_project: number;

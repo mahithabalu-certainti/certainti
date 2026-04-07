@@ -40,6 +40,15 @@ import {
   updateInteractionSchema,
   updateTechSummaryContextSchema,
   refineSummarySchema,
+  inboxMessageDetailsSchema,
+  inboxAttachmentDetailsSchema,
+  listInboxMessagesSchema,
+  listMailboxFoldersSchema,
+  listMailboxMessagesSchema,
+  calendarMetadataSchema,
+  listCalendarEventsSchema,
+  calendarEventDetailsSchema,
+  cancelCalendarEventSchema,
   listAiAssessmentAuditSchema,
 } from "../lib/joi/schemas/schema";
 
@@ -3016,6 +3025,72 @@ async function getInteractionAssessmentSource(req: Request, res: Response) {
   }
 }
 /**
+ * Handles the mailbox inbox listing endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve mailbox configuration.
+ * - `req.query.limit`: optional number of inbox messages to return.
+ *
+ * Output:
+ * - Sends a normalized inbox message list response or an error response.
+ */
+async function listInboxMessages(req: Request, res: Response): Promise<void> {
+  const methodName = "List inbox messages";
+  try {
+    const value = await validateRequest(req, listInboxMessagesSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      errorLog(methodName, "Request is empty");
+      return;
+    }
+
+    const result = await interactionService.listInboxMessages({
+      account_rid: value.account_rid,
+      limit: Number(value.limit || 50),
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
  * Handles listing of AI assessment audits based on provided filters and sorting options.
  *
  * @param {Request} req - Express request object containing account_rid, filters, sorting, and other parameters.
@@ -3084,6 +3159,182 @@ async function listAiAssessmentAudit(req: Request, res: Response): Promise<void>
   }
 }
 
+async function listMailboxFolders(req: Request, res: Response): Promise<void> {
+  const methodName = "List mailbox folders";
+  try {
+    const value = await validateRequest(req, listMailboxFoldersSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.listMailboxFolders({
+      account_rid: value.account_rid,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function listMailboxMessages(req: Request, res: Response): Promise<void> {
+  const methodName = "List mailbox messages";
+  try {
+    const value = await validateRequest(req, listMailboxMessagesSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.listMailboxMessages({
+      account_rid: value.account_rid,
+      folderId: value.folderId || undefined,
+      folderPath: value.folderPath || undefined,
+      limit: Number(value.limit || 50),
+      pageToken: value.pageToken || undefined,
+      search: value.search || undefined,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function getMailboxMessageById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get mailbox message by id";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        query: {
+          ...req.query,
+          messageId: req.params.messageId,
+        },
+      } as unknown) as Request,
+      inboxMessageDetailsSchema,
+      res,
+      "GET"
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      errorLog(methodName, "Request is empty");
+      return;
+    }
+
+    const result = await interactionService.getMailboxMessageById({
+      account_rid: value.account_rid,
+      messageId: value.messageId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
 async function exportAiAssessmentAudit(req: Request, res: Response): Promise<void> {
   const methodName = "Export AI assessment audit";
   try {
@@ -3103,7 +3354,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
     }
 
     const page: number = 1;
-    const limit: number = Number.MAX_SAFE_INTEGER; // Fetch all for export
+    const limit: number = Number.MAX_SAFE_INTEGER;
 
     const result = await interactionChildService.listAiAssessmentAudit(
       value,
@@ -3147,7 +3398,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
       const finalStructuredData = (!result?.data?.auditInfo || result.data.auditInfo.length < 1)
         ? []
         : result.data.auditInfo.map((d: any) => {
-          let resultMap: { [key: string]: any } = {
+          const resultMap: { [key: string]: any } = {
             rid: d.rid || "",
             transaction_id: d.transaction_id || "",
             account_name: d.account_name || "",
@@ -3169,7 +3420,7 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
         });
 
       if (finalStructuredData.length === 0) {
-        finalStructuredData.push({ "Message": "No data available" });
+        finalStructuredData.push({ Message: "No data available" });
       }
 
       if (value.project_fiscal_rid) {
@@ -3191,6 +3442,352 @@ async function exportAiAssessmentAudit(req: Request, res: Response): Promise<voi
     errorLog(methodName, error.message);
     handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, error.message);
     return;
+  }
+}
+
+async function getMailboxAttachmentById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get mailbox attachment by id";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        body: {
+          account_rid: req.query.account_rid,
+          messageId: req.query.messageId,
+          attachmentId: req.query.attachmentId,
+        },
+      } as unknown) as Request,
+      inboxAttachmentDetailsSchema,
+      res
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.getMailboxAttachmentById({
+      account_rid: value.account_rid,
+      messageId: value.messageId,
+      attachmentId: value.attachmentId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Handles the calendar metadata endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve the calendar owner.
+ *
+ * Output:
+ * - Sends the calendar metadata payload or an error response.
+ */
+async function getCalendarMetadata(req: Request, res: Response): Promise<void> {
+  const methodName = "Get calendar metadata";
+  try {
+    const value = await validateRequest(req, calendarMetadataSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.getCalendarMetadata({
+      account_rid: value.account_rid,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Handles the calendar event list endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve the calendar owner.
+ * - `req.query.start_date` / `req.query.end_date`: optional range boundaries.
+ * - `req.query.search`: optional event search text.
+ * - `req.query.limit`: optional page size.
+ * - `req.query.pageToken`: optional next-page token.
+ *
+ * Output:
+ * - Sends the calendar event page response or an error response.
+ */
+async function listCalendarEvents(req: Request, res: Response): Promise<void> {
+  const methodName = "List calendar events";
+  try {
+    const value = await validateRequest(req, listCalendarEventsSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.listCalendarEvents({
+      account_rid: value.account_rid,
+      start_date: value.start_date,
+      end_date: value.end_date,
+      search: value.search || undefined,
+      limit: Number(value.limit || 50),
+      pageToken: value.pageToken || undefined,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Handles the calendar event details endpoint.
+ *
+ * Input:
+ * - `req.query.account_rid`: account RID used to resolve the calendar owner.
+ * - `req.params.eventId`: selected calendar event identifier.
+ *
+ * Output:
+ * - Sends the detailed calendar event payload or an error response.
+ */
+async function getCalendarEventById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get calendar event by id";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        query: {
+          ...req.query,
+          eventId: req.params.eventId,
+        },
+      } as unknown) as Request,
+      calendarEventDetailsSchema,
+      res,
+      "GET"
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.getCalendarEventById({
+      account_rid: value.account_rid,
+      eventId: value.eventId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Handles the cancel-calendar-event endpoint.
+ *
+ * Input:
+ * - `req.body.account_rid`: account RID used to resolve the calendar owner.
+ * - `req.params.eventId`: selected calendar event identifier.
+ * - `req.body.comment`: optional cancellation message.
+ *
+ * Output:
+ * - Sends the cancellation result payload or an error response.
+ */
+async function cancelCalendarEvent(req: Request, res: Response): Promise<void> {
+  const methodName = "Cancel calendar event";
+  try {
+    const value = await validateRequest(
+      ({
+        ...req,
+        body: {
+          ...req.body,
+          eventId: req.params.eventId,
+        },
+      } as unknown) as Request,
+      cancelCalendarEventSchema,
+      res
+    );
+    const userId = req.headers["x-user-id"] as string;
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`
+    );
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) return;
+
+    const result = await interactionService.cancelCalendarEvent({
+      account_rid: value.account_rid,
+      eventId: value.eventId,
+      comment: value.comment || undefined,
+      userId,
+    });
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.statusMessage);
+      return;
+    }
+
+    errorLog(methodName, result.statusMessage);
+    handleErrorResponse(
+      res,
+      result.statusCode,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      result.statusMessage
+    );
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
   }
 }
 
@@ -3236,6 +3833,15 @@ export default {
   exportFetchFourPartAssessmentList,
   updateInteractionStatus,
   getInteractionAssessmentSource,
+  listInboxMessages,
+  listMailboxFolders,
+  listMailboxMessages,
+  getMailboxMessageById,
+  getMailboxAttachmentById,
+  getCalendarMetadata,
+  listCalendarEvents,
+  getCalendarEventById,
+  cancelCalendarEvent,
   saveRefineSummary,
   refineSummary
 };
