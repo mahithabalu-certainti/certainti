@@ -716,6 +716,26 @@ const filterForInteractions = (
               } else {
                 filteredQueryArray.push(`i.${filteredColumns} = ${values}`);
               }
+            } else if (condition === ALPHANUMERIC_CONDITIONS.notEquals) {
+              if (values === null || values === undefined) {
+                filteredQueryArray.push(`i.${filteredColumns} IS NOT NULL`);
+              } else {
+                filteredQueryArray.push(`(i.${filteredColumns} != ${values} OR i.${filteredColumns} IS NULL)`);
+              }
+            } else if (condition === ALPHANUMERIC_CONDITIONS.in) {
+              const valArr: (boolean | null)[] = Array.isArray(values) ? values : [values];
+              const nonNullVals = valArr.filter((v) => v !== null && v !== undefined);
+              const hasNull = valArr.some((v) => v === null || v === undefined);
+              const parts: string[] = [];
+              if (nonNullVals.length > 0) {
+                parts.push(`i.${filteredColumns} IN (${nonNullVals.join(", ")})`);
+              }
+              if (hasNull) {
+                parts.push(`i.${filteredColumns} IS NULL`);
+              }
+              if (parts.length > 0) {
+                filteredQueryArray.push(`(${parts.join(" OR ")})`);
+              }
             }
             break;
           }
