@@ -4933,8 +4933,10 @@ export class InteractionService {
     return (value || "")
       .replace(/[\r\n\t\0]+/g, " ")
       .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, " ")
+      .replace(/[^\w\s@.\-]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
+      .slice(0, 200)
       .toLowerCase();
   }
 
@@ -5655,22 +5657,29 @@ export class InteractionService {
               "isCancelled",
             ].join(",")
           )
-          .top(limit)
+          .top(data.search ? Math.max(limit, 250) : limit)
           .orderby("start/dateTime");
-
-        if (data.search) {
-          const searchQuery = this.buildGraphSearchQuery(data.search);
-          request = request
-            .header("ConsistencyLevel", "eventual")
-            .search(searchQuery);
-        }
       }
 
       const result: any = await request.get();
       const nextLink = result?.["@odata.nextLink"] || null;
-      const events = (result?.value || []).map((event: any) =>
+
+      const normalizedSearch = data.search
+        ? this.normalizeMailboxSearchText(data.search)
+        : "";
+
+      const allEvents = (result?.value || []).map((event: any) =>
         this.normalizeCalendarEventSummary(event)
       );
+
+      const events = normalizedSearch
+        ? allEvents.filter((event: any) => {
+            const haystack = this.normalizeMailboxSearchText(
+              [event.subject || "", event.organizer_name || "", event.organizer_email || ""].join(" ")
+            );
+            return haystack.includes(normalizedSearch);
+          })
+        : allEvents;
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -5681,7 +5690,7 @@ export class InteractionService {
             start_date: start,
             end_date: end,
           },
-          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          next_page_token: data.search ? null : nextLink ? encodeURIComponent(nextLink) : null,
           events,
         },
       };
@@ -5777,11 +5786,19 @@ export class InteractionService {
         data: this.normalizeCalendarEventDetails(event),
       };
     } catch (err) {
-      const error = err as Error;
-      errorLog("getCalendarEventById", error.message);
+      const error = err as any;
+      const httpStatus = error?.statusCode || error?.code;
+      if (httpStatus === 404 || httpStatus === "404") {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: "Calendar event not found",
+          data: null,
+        };
+      }
+      errorLog("getCalendarEventById", error.message || String(error));
       return {
         statusCode: HttpStatus.BAD_REQUEST,
-        statusMessage: error.message,
+        statusMessage: error.message || "Failed to fetch calendar event",
         data: null,
       };
     }
