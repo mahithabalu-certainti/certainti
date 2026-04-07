@@ -84,11 +84,6 @@ const IsAssessedOptions: { option: string; value: string }[] = [
   { option: 'No', value: 'false' },
 ];
 
-const IsQualifiedOptions: { option: string; value: string }[] = [
-  { option: 'Yes', value: 'true' },
-  { option: 'No', value: 'false' },
-];
-
 export const projectFilterFields = (
   classificationOption: FilterSelectOption[],
   projectTypeOptions: { option: string; value: string }[],
@@ -147,7 +142,7 @@ export const projectFilterFields = (
     name: 'Is Qualified',
     value: 'is_qualified',
     type: 'enum',
-    options: IsQualifiedOptions,
+    options: qualifiedOptions,
     operatorOption: fiscalOptions,
     hide:
       !projectPermissionMap?.['is_qualified']?.read &&
