@@ -16,6 +16,7 @@ export interface RdCreditStateCalcAttributes {
     prev_year1_qre?: number | null;
     prev_year2_qre?: number | null;
     prev_year3_qre?: number | null;
+    prev_year4_qre?: number | null;
     total_wages?: number | null;
     total_supplies?: number | null;
     total_subcontract?: number | null;
@@ -26,6 +27,8 @@ export interface RdCreditStateCalcAttributes {
     rd_form_url? : string | null
     form_error_message? : string | null;
     config_json?:JSON
+    total_resources?: number | null;
+    //financial_working_url?: string | null;
 }
 
 export interface RdCreditStateCalcCreationAttributes
@@ -37,29 +40,30 @@ export class RdCreditStateCalculations
         RdCreditStateCalcCreationAttributes
     >
     implements RdCreditStateCalcAttributes {
-    public rid?: string;
-    public r_number?: string | undefined;
-    public case_rid?: string;
-    public country_rid?: string;
-    public state_rid?: string;
-    public input_params?: object | null;
-    public computed_fields?: object | null;
-    public final_credit?: number | null;
-    public total_qre?: number | null;
-    public average_annual_gross_receipts?: number | null
-    public prev_year1_qre?: number | null;
-    public prev_year2_qre?: number | null
-    public prev_year3_qre?: number | null;
-    public total_wages?: number | null;
-    public total_supplies?: number | null;
-    public total_subcontract?: number | null;
-    public created_datetime?: Date;
-    public modified_datetime?: Date;
-    public final_credit_submitted?: number | null;
-    public final_credit_approved?: number | null;
-    public rd_form_url? : string | null
-    public form_error_message? : string | null;
-     public config_json?: JSON;
+    declare rid?: string;
+    declare r_number?: string | undefined;
+    declare case_rid?: string;
+    declare country_rid?: string;
+    declare state_rid?: string;
+    declare input_params?: object | null;
+    declare computed_fields?: object | null;
+    declare final_credit?: number | null;
+    declare total_qre?: number | null;
+    declare average_annual_gross_receipts?: number | null
+    declare prev_year1_qre?: number | null;
+    declare prev_year2_qre?: number | null
+    declare prev_year3_qre?: number | null;
+    declare total_wages?: number | null;
+    declare total_supplies?: number | null;
+    declare total_subcontract?: number | null;
+    declare created_datetime?: Date;
+    declare modified_datetime?: Date;
+    declare final_credit_submitted?: number | null;
+    declare final_credit_approved?: number | null;
+    declare rd_form_url? : string | null
+    declare form_error_message? : string | null;
+    declare config_json?: JSON;
+    declare total_resources?: number | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditStateCalculations.init(
@@ -117,6 +121,10 @@ export class RdCreditStateCalculations
                     type: DataTypes.DECIMAL(18, 2),
                     allowNull: true,
                 },
+                prev_year4_qre: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
                 total_wages: {type: DataTypes.DECIMAL(18, 2), allowNull: true, }, 
                 total_supplies: { type: DataTypes.DECIMAL(18, 2), allowNull: true, },
                 total_subcontract: { type: DataTypes.DECIMAL(18, 2), allowNull: true, },
@@ -146,10 +154,18 @@ export class RdCreditStateCalculations
                     type : DataTypes.STRING(500),
                     allowNull : true
                 },
-                 config_json: { 
-                    type: DataTypes.JSONB, 
-                    allowNull: true 
+                config_json: {
+                    type: DataTypes.JSONB,
+                    allowNull: true
                 },
+                 total_resources: {
+                    type: DataTypes.DECIMAL(18, 2),
+                    allowNull: true,
+                },
+                // financial_working_url: {
+                //     type: DataTypes.STRING(1000),
+                //     allowNull: true,
+                // },
             },
             {
                 sequelize,

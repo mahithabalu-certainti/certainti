@@ -1608,6 +1608,277 @@ export class RdFormHelperService {
       doc.end();
     });
   }
+  /**
+   * Fetches all rows for the mapper object identified by RID
+   * and returns the numeric sum of all field_value rows.
+   *
+   * @param rid - data_mapper_objects RID
+   * @param caseRid - Case RID for context
+   * @param schemaName - Schema name
+   * @param accountRid - Account RID for context
+   * @param stateRid - State RID for context
+   * @param fiscalYear - Fiscal year filter
+   */
+  private async sumTableRowsByRid(
+    rid: string,
+    caseRid: string,
+    schemaName: string,
+    accountRid: string,
+    stateRid: string,
+    fiscalYear: string | undefined,
+  ): Promise<number> {
+    const mapperObject =
+      await this.rdFormMapperSchemaService.getDataMapperObjectByRid(rid);
+
+    if (!mapperObject?.ref_table || !mapperObject?.field_name) {
+      logMessage(`sum(): No mapper object found for RID ${rid}`);
+      return 0;
+    }
+
+    logMessage(
+      `sum(#${rid}) → fetching all rows from ${mapperObject.ref_table}.${mapperObject.field_name}`,
+    );
+
+    const rows = await this.rdFormMapperSchemaService.fetchTableValues(
+      mapperObject.ref_table,
+      mapperObject.field_name,
+      mapperObject.is_json        ?? false,
+      mapperObject.data_order_by  ?? "created_datetime",
+      accountRid,
+      caseRid,
+      schemaName,
+      stateRid,
+      fiscalYear,
+      mapperObject.where_filters  ?? null,
+      mapperObject.joins          ?? null,
+      mapperObject.extra_filters  ?? null,
+      mapperObject.fiscal_year_column ?? null,
+      mapperObject.db_source      ?? null,
+    );
+
+    let total = 0;
+    for (const row of rows) {
+      const num = this.tryParseNumber(row.field_value ?? row.value);
+      if (num !== null) total += num;
+    }
+
+    logMessage(`sum(#${rid}) → ${rows.length} rows → total = ${total}`);
+    return this.roundToTwoDecimals(total);
+  }
+
+  /**
+   * Core sum resolver — handles a single sum(...) inner content.
+   * Supports:
+   *   #RID                    — fetch all rows from the mapper object's table and sum
+   *   #pdfFieldPath[0]...     — PDF field path ref: sum all matching value_field_id rows in enhancedConfigs
+   *   plain field name/label  — sum all matching field_name/field_label rows in enhancedConfigs
+   *
+   * PDF field path detection:
+   *   e.g. sum(#topmostSubform[0].Page4[0].Table_PartIII[0].Row1[0].f4_01[0])
+   *   These contain bracket notation [N] and dots — clearly not RIDs or plain names.
+   *   They are matched against value_field_id / value_field_id_cleaned in enhancedConfigs,
+   *   which stores the PDF field path assigned to each row of a Table-Item.
+   *   The strip-indexes version (e.g. f4_01) is also tried so a single ref like
+   *   sum(#f4_01[0]) sums ALL rows whose value_field_id ends with f4_01[N].
+   */
+  private async computeSumForInner(
+    inner: string,
+    caseRid: string,
+    schemaName: string,
+    accountRid: string,
+    stateRid: string,
+    fiscalYear: string | undefined,
+    valueMap: Map<string, any>,
+    enhancedConfigs: any[],
+  ): Promise<number> {
+    const refs = inner.split(",").map((s) => s.trim());
+    let grandTotal = 0;
+
+    for (const ref of refs) {
+      const cleanRef = ref.replace(/^#/, "").trim();
+
+      // ── Case 1: data_mapper_objects RID → fetch all rows from DB and sum ──
+      const isRidRef = /^[A-Za-z]\d{3}-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanRef);
+      if (isRidRef) {
+        grandTotal += await this.sumTableRowsByRid(
+          cleanRef,
+          caseRid,
+          schemaName,
+          accountRid,
+          stateRid,
+          fiscalYear,
+        );
+        continue;
+      }
+
+      // ── Case 2: PDF field path ref (contains brackets or dots) ───────────
+      // e.g. topmostSubform[0].Page4[0].Table_PartIII[0].Row1[0].f4_01[0]
+      // Match against value_field_id (exact) and value_field_id_cleaned (index-stripped)
+      // in enhancedConfigs. Also try the last segment stripped of indexes so that
+      // sum(#f4_01[0]) sums ALL rows whose PDF field path ends with f4_01[N].
+      const isPdfFieldPath = /[\[\].]/.test(cleanRef);
+      if (isPdfFieldPath) {
+        const strippedRef     = this.stripIndexes(cleanRef);          // e.g. f4_01
+        const lastSegment     = cleanRef.split(".").pop() || cleanRef; // e.g. f4_01[0]
+        const lastSegStripped = this.stripIndexes(lastSegment);        // e.g. f4_01
+        let foundInPdfRefs    = false;
+
+        for (const item of enhancedConfigs) {
+          const vfid        = item.value_field_id         ?? "";
+          const vfidCleaned = item.value_field_id_cleaned ?? "";
+
+          const matches =
+            vfid        === cleanRef       ||   // exact PDF path match
+            vfidCleaned === cleanRef       ||   // cleaned version matches
+            vfid        === strippedRef    ||   // index-stripped match
+            vfidCleaned === strippedRef    ||   // cleaned index-stripped
+            // last-segment match: sums all rows of e.g. f4_01[0], f4_01[1], ...
+            this.stripIndexes(vfid.split(".").pop() || "")        === lastSegStripped ||
+            this.stripIndexes(vfidCleaned.split(".").pop() || "") === lastSegStripped;
+
+          if (matches) {
+            const num = this.tryParseNumber(item.value);
+            if (num !== null) grandTotal += num;
+            foundInPdfRefs = true;
+            logMessage(
+              `sum(#${cleanRef}): matched value_field_id="${vfid}" value=${item.value}`,
+            );
+          }
+        }
+
+        if (foundInPdfRefs) {
+          logMessage(`sum(#${cleanRef}) PDF-field-path total = ${grandTotal}`);
+          continue;
+        }
+
+        // If no match found in enhancedConfigs, also try valueMap with stripped key
+        const lookupKeys = [cleanRef, strippedRef, lastSegment, lastSegStripped];
+        for (const lk of lookupKeys) {
+          if (valueMap.has(lk)) {
+            const num = this.tryParseNumber(valueMap.get(lk));
+            if (num !== null) { grandTotal += num; break; }
+          }
+        }
+        continue;
+      }
+
+      // ── Case 3: plain field name/label → sum all matching enhancedConfigs rows
+      const colNameLower = cleanRef.toLowerCase();
+      let foundInConfigs = false;
+
+      for (const item of enhancedConfigs) {
+        const matches =
+          (item.field_name  && item.field_name.toLowerCase()  === colNameLower) ||
+          (item.field_label && item.field_label.toLowerCase() === colNameLower);
+
+        if (matches) {
+          const num = this.tryParseNumber(item.value);
+          if (num !== null) grandTotal += num;
+          foundInConfigs = true;
+        }
+      }
+
+      // ── Case 4: fallback — try valueMap (single resolved value) ──────────
+      if (!foundInConfigs) {
+        const lookupKeys = [
+          cleanRef,
+          this.stripIndexes(cleanRef),
+          this.normalizeFieldRef(cleanRef),
+        ];
+        for (const lk of lookupKeys) {
+          if (valueMap.has(lk)) {
+            const num = this.tryParseNumber(valueMap.get(lk));
+            if (num !== null) { grandTotal += num; break; }
+          }
+        }
+      }
+    }
+
+    return grandTotal;
+  }
+
+  /**
+   * Resolves all sum(...) expressions in a string asynchronously.
+   *
+   * Supported syntax:
+   *   sum(#P001-xxxx)              — single RID: fetch all rows of that Table-Item column, sum them
+   *   sum(#P001-xxxx, #P001-yyyy)  — multiple RIDs: sum all rows of each, add together
+   *   sum(project_resources)       — plain field name: sum all matching rows in enhancedConfigs
+   *   sum(#P001-xxx) * 0.065       — works with arithmetic, evaluated after sum resolves
+   *   IF(sum(#P001-xxx) > 0, ...)  — works inside IF/ternary expressions
+   *
+   * @param expr - Expression string possibly containing sum(...)
+   * @param caseRid - Case RID
+   * @param schemaName - Schema name
+   * @param accountRid - Account RID
+   * @param stateRid - State RID
+   * @param fiscalYear - Fiscal year
+   * @param valueMap - Current value map for fallback lookups
+   * @param enhancedConfigs - Current enhanced configs for plain-name lookups
+   * @returns Expression string with all sum(...) replaced by their numeric totals
+   */
+  async resolveSumExpression(
+    expr: string,
+    caseRid: string,
+    schemaName: string,
+    accountRid: string,
+    stateRid: string,
+    fiscalYear: string | undefined,
+    valueMap: Map<string, any>,
+    enhancedConfigs: any[],
+  ): Promise<string> {
+    if (!/\bsum\s*\(/i.test(expr)) return expr;
+
+    // Collect all sum(...) occurrences (depth-aware to handle nested parens)
+    const matches: Array<{ fullMatch: string; inner: string; index: number }> = [];
+    const sumStartRegex = /\bsum\s*\(/gi;
+    let sm: RegExpExecArray | null;
+
+    while ((sm = sumStartRegex.exec(expr)) !== null) {
+      const openIndex = expr.indexOf("(", sm.index);
+      if (openIndex < 0) continue;
+
+      let depth      = 0;
+      let closeIndex = -1;
+
+      for (let i = openIndex; i < expr.length; i++) {
+        if (expr[i] === "(") depth++;
+        if (expr[i] === ")") {
+          depth--;
+          if (depth === 0) { closeIndex = i; break; }
+        }
+      }
+
+      if (closeIndex < 0) continue;
+
+      matches.push({
+        fullMatch: expr.slice(sm.index, closeIndex + 1),
+        inner:     expr.slice(openIndex + 1, closeIndex).trim(),
+        index:     sm.index,
+      });
+    }
+
+    let result = expr;
+
+    // Replace in reverse order so indexes don't shift
+    for (const match of [...matches].reverse()) {
+      const total = await this.computeSumForInner(
+        match.inner,
+        caseRid,
+        schemaName,
+        accountRid,
+        stateRid,
+        fiscalYear,
+        valueMap,
+        enhancedConfigs,
+      );
+      logMessage(`Resolved sum(${match.inner}) → ${total}`);
+      result = result.slice(0, match.index) + String(total) + result.slice(match.index + match.fullMatch.length);
+    }
+
+    return result;
+  }
+
   async enhanceMapperConfigWithDynamicValues(
     mapperConfig: any[],
     accountRid: string,
@@ -1640,44 +1911,44 @@ export class RdFormHelperService {
       logMessage(
         `[EnhanceConfig] Processing config item: ${fieldLabel} (field_id=${fieldId})`,
       );
-      if (
-        fieldLabel ===
-          "Total from attachments -> 50 Direct research wages for qualified services" ||
-        fieldLabel ===
-          "Total from attachments -> 51 Direct supervision wages for qualified services" ||
-        fieldLabel ===
-          "Total from attachments -> 52 Direct support wages for qualified services"
-      ) {
-        const columnName =
-          fieldLabel ===
-          "Total from attachments -> 50 Direct research wages for qualified services"
-            ? "total_cost_fte_prj"
-            : fieldLabel ===
-                "Total from attachments -> 51 Direct supervision wages for qualified services"
-              ? "total_cost_subcon_prj"
-              : "total_cost_nonlabor_prj";
-        const top15Sum = await getTop15SumByColumn(columnName);
-        value = top15Sum;
-        logMessage(
-          `Custom top-15 sum applied for field ${fieldLabel}: ${value}`,
-        );
-        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
-        continue;
-      }
-      if (
-        fieldLabel ===
-        "Total from attachments -> 53 Total qualified wages (add line 50, line 51, and line 52)"
-      ) {
-        const line50 = await getTop15SumByColumn("total_cost_fte_prj");
-        const line51 = await getTop15SumByColumn("total_cost_subcon_prj");
-        const line52 = await getTop15SumByColumn("total_cost_nonlabor_prj");
-        value = line50 + line51 + line52;
-        logMessage(
-          `Custom total qualified wages applied for field ${fieldLabel}: ${value}`,
-        );
-        this.pushEnhancedConfig(enhancedConfigs, configItem, value);
-        continue;
-      }
+      // if (
+      //   fieldLabel ===
+      //     "Total from attachments -> 50 Direct research wages for qualified services" ||
+      //   fieldLabel ===
+      //     "Total from attachments -> 51 Direct supervision wages for qualified services" ||
+      //   fieldLabel ===
+      //     "Total from attachments -> 52 Direct support wages for qualified services"
+      // ) {
+      //   const columnName =
+      //     fieldLabel ===
+      //     "Total from attachments -> 50 Direct research wages for qualified services"
+      //       ? "total_cost_fte_prj"
+      //       : fieldLabel ===
+      //           "Total from attachments -> 51 Direct supervision wages for qualified services"
+      //         ? "total_cost_subcon_prj"
+      //         : "total_cost_nonlabor_prj";
+      //   const top15Sum = await getTop15SumByColumn(columnName);
+      //   value = top15Sum;
+      //   logMessage(
+      //     `Custom top-15 sum applied for field ${fieldLabel}: ${value}`,
+      //   );
+      //   this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+      //   continue;
+      // }
+      // if (
+      //   fieldLabel ===
+      //   "Total from attachments -> 53 Total qualified wages (add line 50, line 51, and line 52)"
+      // ) {
+      //   const line50 = await getTop15SumByColumn("total_cost_fte_prj");
+      //   const line51 = await getTop15SumByColumn("total_cost_subcon_prj");
+      //   const line52 = await getTop15SumByColumn("total_cost_nonlabor_prj");
+      //   value = line50 + line51 + line52;
+      //   logMessage(
+      //     `Custom total qualified wages applied for field ${fieldLabel}: ${value}`,
+      //   );
+      //   this.pushEnhancedConfig(enhancedConfigs, configItem, value);
+      //   continue;
+      // }
       if (
         fieldLabel === "Total -> Equals Ratio (D) [Col.B/Col.C]" ||
         fieldId === "Equals Ratio D ColBColCE Total from Column D"
@@ -1951,6 +2222,37 @@ export class RdFormHelperService {
       // Per-pass cache for resolved #labels and data_mapper_objects (Optimization 1)
       const evalCache = new Map();
 
+      // ── Pre-resolve all sum() expressions (async, must run before forEach) ──
+      // sum(#RID) fetches all rows of that Table-Item column and sums them.
+      // sum(fieldName) sums all matching rows already in enhancedConfigs.
+      for (const item of enhancedConfigs) {
+        if (typeof item.value !== "string") continue;
+        if (!/\bsum\s*\(/i.test(item.value)) continue;
+
+        const resolvedExpr = await this.resolveSumExpression(
+          item.value,
+          caseRid,
+          schemaName,
+          accountRid,
+          stateRid || "",
+          fiscalYear,
+          valueMap,
+          enhancedConfigs,
+        );
+
+        if (resolvedExpr !== item.value) {
+          logMessage(
+            `sum() pre-resolved for field ${item.field_label || item.field_id}: "${item.value}" → "${resolvedExpr}"`,
+          );
+          item.value = resolvedExpr;
+          passUpdated = true;
+          if (item.value_field_id_cleaned) addToValueMap(item.value_field_id_cleaned, item.value);
+          if (item.field_id)               addToValueMap(String(item.field_id),               item.value);
+          if (item.field_label)            addToValueMap(String(item.field_label),            item.value);
+          if (item.field_name)             addToValueMap(String(item.field_name),             item.value);
+        }
+      }
+
       enhancedConfigs.forEach((item) => {
         if (typeof item.value !== "string") return;
         const expression = item.value.trim();
@@ -1961,7 +2263,7 @@ export class RdFormHelperService {
         // Project codes like "P202-001" are NOT expressions — hyphens with no spaces aren't arithmetic.
         const isExpression = ((): boolean => {
           if (
-            /#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(/i.test(
+            /#|\bIF\s*\(|\bTHEN\b|\bELSE\b|\bMIN\s*\(|\bMAX\s*\(|\bsum\s*\(/i.test(
               expression,
             )
           )
