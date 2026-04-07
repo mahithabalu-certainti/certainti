@@ -71,12 +71,16 @@ class InteractionSchemaService {
       interactionData.recipient_name = interactionData.email_info?.name || null
       interactionData.recipient_email = interactionData.email_info?.email || null
 
-      // Determine is_primary: first interaction for the project_fiscal_rid is primary
-      const existingCount = await Interaction.count({
-        where: { project_fiscal_rid: interactionData.project_fiscal_rid },
-        transaction,
-      });
-      interactionData.is_primary = existingCount === 0;
+      // Account-level interactions store is_primary as null; project-level is true/false
+      if (intLevel === 'Account') {
+        interactionData.is_primary = null;
+      } else {
+        const existingCount = await Interaction.count({
+          where: { project_fiscal_rid: interactionData.project_fiscal_rid },
+          transaction,
+        });
+        interactionData.is_primary = existingCount === 0;
+      }
 
       const interaction = await Interaction.create(interactionData, {
         transaction,

@@ -137,7 +137,8 @@ export const filtersColumns: Record<string, string> =
   template_name: "template_name",
   interaction_assessment_source_rid: "interaction_assessment_source_rid",
   interaction_batch_id: "interaction_batch_id",
-  four_part_r_number: "four_part_r_number"
+  four_part_r_number: "four_part_r_number",
+  is_primary: "is_primary"
 }
 
 export const templatefiltersColumns: Record<string, string> =
@@ -185,7 +186,8 @@ export const filterTypes: Record<string, any> =
   modified_user_name: "string",
   interaction_assessment_source_rid: "string",
   interaction_batch_id: "string",
-  four_part_r_number: "string"
+  four_part_r_number: "string",
+  is_primary: "boolean"
 }
 
 export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {

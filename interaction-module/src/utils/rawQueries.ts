@@ -161,6 +161,8 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY fpr.r_number ${sortBy}`
   else if (sort === filtersColumns.interaction_batch_id)
     sortValue = `ORDER BY i.interaction_batch_id ${sortBy}`
+  else if (sort === filtersColumns.is_primary)
+    sortValue = `ORDER BY i.is_primary ${sortBy} NULLS LAST`
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -704,6 +706,16 @@ const filterForInteractions = (
             const datetimeCondition = buildDatetimeFilterCondition(condition, values, filteredColumns!);
             if (datetimeCondition) {
               filteredQueryArray.push(datetimeCondition);
+            }
+            break;
+          }
+          case "boolean": {
+            if (condition === ALPHANUMERIC_CONDITIONS.equals) {
+              if (values === null || values === undefined) {
+                filteredQueryArray.push(`i.${filteredColumns} IS NULL`);
+              } else {
+                filteredQueryArray.push(`i.${filteredColumns} = ${values}`);
+              }
             }
             break;
           }

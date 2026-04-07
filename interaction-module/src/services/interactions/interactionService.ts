@@ -2564,7 +2564,7 @@ export class InteractionService {
               interaction_assessment_source_name: interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null,
               interaction_status_rid: d.interaction_status_rid,
               interaction_status_name: intStatusMap.get(d.interaction_status_rid) ?? null,
-              is_primary: d.is_primary ?? false
+              is_primary: d.is_primary ?? null
             };
           });
       const applyFilters = (
