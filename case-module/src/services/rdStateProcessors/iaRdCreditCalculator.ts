@@ -231,7 +231,8 @@ export class RdCreditCalculatorForIA {
         const line25 = line24.mul(suppliesInclusion);   // 60%, not 65%
 
         //---- Lines 26–28: Iowa contract expenses
-        const line26 = new Decimal(contract ?? 0);
+        const line26 = new Decimal(contract).mul(config.sub_con_percent / 100);
+
         const line27 = new Decimal(cd.non_qualifying_contract_expenses_ia ?? 0);
         const line28 = line26.minus(line27);
 

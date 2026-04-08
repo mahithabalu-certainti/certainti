@@ -819,12 +819,7 @@ CA: {
                 { pattern: /^\[37\] Pass-through Iowa Supplemental RAC/, order: 21 }
             ]
         },
-        BOLD: [
-            "[9] Total qualified research expenses. Add lines 5 through 8",
-            "[16] Total allowable U.S. qualified research expenses. Add lines 2 and 15",
-            "[29] Total Iowa qualified research expenses. Add lines 23, 25, and 28",
-            "[34] Iowa RAC. Add lines 20 and 33"
-        ]
+        BOLD: []
     },
     KS: {
         sectionOrder: [
@@ -870,10 +865,7 @@ CA: {
                 { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 }
             ]
         },
-        BOLD: [
-            "[4] 3 Previous Years Average",
-            "[9] Louisiana Research Credit (Line 7 times Line 8)"
-        ]
+        BOLD: []
     },
     ME: {
         sectionOrder: [
@@ -894,9 +886,7 @@ CA: {
                 { pattern: /^\[8\] Total available credit/, order: 11 }
             ]
         },
-        BOLD: [
-            "[7] Carryforward from previous years. See instructions"
-        ]
+        BOLD: []
     },
     MN: {
         sectionOrder: [
@@ -980,11 +970,7 @@ CA: {
                 { pattern: "[25] Total credit usage (lines 22 + 23 + 24, must not exceed line 21)", order: 6 }
             ]
         },
-        BOLD: [
-            "[9] Method 1 total (line 8a + line 8b)",
-            "[20] Method 2 total (line 18 + line 19)",
-            "[21] Nebraska R&D credit — larger of line 9 or line 20"
-        ]
+        BOLD: []
     },
     NH: {
         sectionOrder: [
@@ -1144,12 +1130,7 @@ CA: {
                 { pattern: /^\[23\]\s*Add lines 18, 21, and 22/, order: 41 }
             ]
         },
-        BOLD: [
-            "[8] Subtract line 7 from line 6. This is total Wisconsin research expenses .",
-            "[11] Subtract line 10 from line 8. This is your eligible Wisconsin qualified research expenses",
-            "[16] Total research credits (add lines 14 and 15d). Form 3 and 5S filers stop here .",
-            "[23] Add lines 18, 21, and 22. This is the total nonrefundable portion of the credit. Include Schedule CF if the credit was not used in full"
-        ]
+        BOLD: []
     },
     DC: {
         sectionOrder: [
@@ -1234,10 +1215,7 @@ CA: {
                 { pattern: /^Multiply line 20 by/, order: 9 }
             ]
         },
-        BOLD: [
-            "[11] Enter smaller of line 9 or line 10",
-            "[25] Add lines 19 and 24"
-        ]
+        BOLD: []
     }
 
     // TODO: Add configurations for other states (GA, etc.)
