@@ -133,6 +133,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('r_number');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
+
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);

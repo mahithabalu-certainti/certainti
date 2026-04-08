@@ -120,19 +120,18 @@ export const fetchCalendarEvents = async (params: {
   limit?: number;
   pageToken?: string | null;
 }): Promise<CalendarEventsResponse> => {
-  const { data } = await interactionServiceApi.get<{ data: CalendarEventsResponse }>(
-    '/api/interactions/calendar/events',
-    {
-      params: {
-        account_rid: params.accountRid,
-        start_date: params.startDate,
-        end_date: params.endDate,
-        search: params.search || undefined,
-        limit: params.limit ?? 50,
-        pageToken: params.pageToken || undefined,
-      },
-    }
-  );
+  const { data } = await interactionServiceApi.get<{
+    data: CalendarEventsResponse;
+  }>('/api/interactions/calendar/events', {
+    params: {
+      account_rid: params.accountRid,
+      start_date: params.startDate,
+      end_date: params.endDate,
+      search: params.search || undefined,
+      limit: params.limit ?? 50,
+      pageToken: params.pageToken || undefined,
+    },
+  });
 
   return data.data;
 };
@@ -157,8 +156,10 @@ export const fetchAllCalendarEvents = async (params: {
   let pageToken: string | null | undefined;
   let lastNextPageToken: string | null = null;
   let pageCount = 0;
-  let firstPageMetadata: Omit<CalendarEventsResponse, 'events' | 'next_page_token'> | null =
-    null;
+  let firstPageMetadata: Omit<
+    CalendarEventsResponse,
+    'events' | 'next_page_token'
+  > | null = null;
 
   do {
     const page = await fetchCalendarEvents({
@@ -201,14 +202,13 @@ export const fetchCalendarEventById = async (
   accountRid: string,
   eventId: string
 ): Promise<CalendarEventDetail> => {
-  const { data } = await interactionServiceApi.get<{ data: CalendarEventDetail }>(
-    `/api/interactions/calendar/events/${encodeURIComponent(eventId)}`,
-    {
-      params: {
-        account_rid: accountRid,
-      },
-    }
-  );
+  const { data } = await interactionServiceApi.get<{
+    data: CalendarEventDetail;
+  }>(`/api/interactions/calendar/events/${encodeURIComponent(eventId)}`, {
+    params: {
+      account_rid: accountRid,
+    },
+  });
 
   return data.data;
 };
@@ -231,10 +231,13 @@ export const postCancelCalendarEvent = async (params: {
 }): Promise<CancelCalendarEventResponse> => {
   const { data } = await interactionServiceApi.post<{
     data: CancelCalendarEventResponse;
-  }>(`/api/interactions/calendar/events/${encodeURIComponent(params.eventId)}/cancel`, {
-    account_rid: params.accountRid,
-    comment: params.comment,
-  });
+  }>(
+    `/api/interactions/calendar/events/${encodeURIComponent(params.eventId)}/cancel`,
+    {
+      account_rid: params.accountRid,
+      comment: params.comment,
+    }
+  );
 
   return data.data;
 };
@@ -326,7 +329,11 @@ export const useCancelCalendarEvent = () => {
         queryKey: ['calendar-events'],
       });
       queryClient.invalidateQueries({
-        queryKey: ['calendar-event-detail', variables.accountRid, variables.eventId],
+        queryKey: [
+          'calendar-event-detail',
+          variables.accountRid,
+          variables.eventId,
+        ],
       });
     },
   });

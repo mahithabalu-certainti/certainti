@@ -81,6 +81,7 @@ export const getInteractionListColumns = (
         <span>{row.four_part_r_number || '-'}</span>
       ),
   },
+
   {
     id: 'interaction_batch_id',
     sortId: 'interaction_batch_id',

@@ -325,6 +325,7 @@ export const ProjectDetails = () => {
         endDate: project?.fiscal_end_date || '',
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const dispatch = useDispatch();

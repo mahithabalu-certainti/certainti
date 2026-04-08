@@ -219,6 +219,67 @@ export interface CaseFormFields {
   credit_carry_forward_py_sc: string | null;
   credit_carry_forward_py_tx: string | null;
   current_year_gross_receipts: string | null;
+
+  // ============ US - Iowa (IA) ============
+  basic_research_payments_ia?: number | null;
+  qualified_org_baseamount_ia?: number | null;
+  cost_of_supplies_ia?: number | null;
+  rac_share_ia?: number | null;
+  supplemental_rac_ia?: number | null;
+  pass_through_supplemental_rac_ia?: number | null;
+  non_qualifying_ia_wages?: number | null;
+
+  // ============ US - Maine (ME) ============
+  credit_carry_forward_py_me?: number | null;
+
+  // US - Kansas (KS)
+  tax_liability_ks?: number | null;
+  machinery_equipments_ks?: number | null;
+  // ============ US - District of Columbia (DC) ============
+  basic_research_payments_dc?: number | null;
+  energy_consortia_amount_dc?: number | null;
+  qualified_org_baseamount_dc?: number | null;
+  lease_costs_of_computers_dc?: number | null;
+
+  // ============ US - Kentucky (KY) ============
+  llet_credit_ky?: number | null;
+  corporation_tax_credit_ky?: number | null;
+  individual_tax_credit_ky?: number | null;
+
+  // US - Minnesota (MN)
+  nonprofit_development_contributions_mn?: number | null;
+  basic_research_amount_mn?: number | null;
+  credit_carry_over_mn?: number | null;
+  credit_tax_limit_mn?: number | null;
+  lease_costs_of_computers_mn?: number | null;
+  // US - Nebraska (NE)
+  off_campus_research_expenses_ne?: number | null;
+  payroll_factor_on_campus_ne?: number | null;
+  payroll_factor_off_campus_ne?: number | null;
+  property_factor_on_campus_ne?: number | null;
+  property_factor_off_campus_ne?: number | null;
+  credit_distributed_ne?: number | null;
+  credit_tax_refunds_ne?: number | null;
+  // US - Vermont (VT)
+  credit_attributable_to_shared_wages_vt?: number | null;
+  basic_research_payments_vt?: number | null;
+  energy_consortia_amount_vt?: number | null;
+  qualified_org_baseamount_vt?: number | null;
+  lease_costs_of_computers_vt?: number | null;
+
+  // US - Virginia (VA)
+  credit_requested_not_exceed_va?: number | null;
+  college_credit_requested_not_exceed_va?: number | null;
+  total_eligible_research_expenses_va?: number | null;
+
+  // US - Wisconsin (WI)
+  research_supplies_expenses_wi?: number | null;
+  total_pass_through_credits_wi?: number | null;
+  computer_rental_expenses_wi?: number | null;
+  fiduciary_beneficiary_credit_wi?: number | null;
+  orphan_drug_research_expenses_wi?: number | null;
+  credit_offset_tax_wi?: number | null;
+  credit_carry_forward_py_wi?: number | null;
 }
 
 export interface CaseFormPayload {
@@ -274,6 +335,54 @@ export interface CaseFormPayload {
   credit_carry_forward_py_sc: string | null;
   credit_carry_forward_py_tx: string | null;
   current_year_gross_receipts: string | null;
+  // ============ US - District of Columbia (DC) ============
+  basic_research_payments_dc?: number | null;
+  energy_consortia_amount_dc?: number | null;
+  qualified_org_baseamount_dc?: number | null;
+  lease_costs_of_computers_dc?: number | null;
+
+  // ============ US - Kentucky (KY) ============
+  llet_credit_ky?: number | null;
+  corporation_tax_credit_ky?: number | null;
+  individual_tax_credit_ky?: number | null;
+
+  // ============ US - Iowa (IA) ============
+  basic_research_payments_ia?: number | null;
+  qualified_org_baseamount_ia?: number | null;
+  cost_of_supplies_ia?: number | null;
+  rac_share_ia?: number | null;
+  supplemental_rac_ia?: number | null;
+  pass_through_supplemental_rac_ia?: number | null;
+  non_qualifying_ia_wages?: number | null;
+
+  // ============ US - Maine (ME) ============
+  credit_carry_forward_py_me?: number | null;
+  // US - Kansas (KS)
+  tax_liability_ks?: number | null;
+  machinery_equipments_ks?: number | null;
+
+  // US - Minnesota (MN)
+  nonprofit_development_contributions_mn?: number | null;
+  basic_research_amount_mn?: number | null;
+  credit_carry_over_mn?: number | null;
+  credit_tax_limit_mn?: number | null;
+  lease_costs_of_computers_mn?: number | null;
+
+  // US - Nebraska (NE)
+  off_campus_research_expenses_ne?: number | null;
+  payroll_factor_on_campus_ne?: number | null;
+  payroll_factor_off_campus_ne?: number | null;
+  property_factor_on_campus_ne?: number | null;
+  property_factor_off_campus_ne?: number | null;
+  credit_distributed_ne?: number | null;
+  credit_tax_refunds_ne?: number | null;
+
+  // US - Vermont (VT)
+  credit_attributable_to_shared_wages_vt?: number | null;
+  basic_research_payments_vt?: number | null;
+  energy_consortia_amount_vt?: number | null;
+  qualified_org_baseamount_vt?: number | null;
+  lease_costs_of_computers_vt?: number | null;
   // Nested amendment info (only sent on amendment create)
   amendment_case_info?: {
     fiscal_year: number;

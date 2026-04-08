@@ -2,12 +2,13 @@ export interface FormType {
   gridMode?: string;
   sectionName: string;
   subSection?: boolean; // Means this is a secondary level block → no header + half width
-  fillType: 'half' | 'full' | 'quarter';
+  fillType: 'half' | 'full' | 'quarter' | 'accordion';
   fields: FormTypeFields[];
   from?: string;
   hide?: boolean;
   renderAsTable?: boolean;
   renderAsDetailTable?: boolean;
+  accordionGroup?: string; // Sections with the same group act as an accordion — only one open at a time
 }
 
 export interface FormTypeFields {

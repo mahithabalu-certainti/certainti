@@ -107,7 +107,8 @@ const endOfWeek = (date: Date) => {
  * Output:
  * - Returns the first day of the current month.
  */
-const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
+const startOfMonth = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), 1);
 
 /**
  * Calculates the final day of the visible month for a date anchor.
@@ -401,7 +402,10 @@ const Calendar = () => {
   }, [calendarEvents]);
 
   useEffect(() => {
-    if (selectedEventId && events.some((event) => event.event_id === selectedEventId)) {
+    if (
+      selectedEventId &&
+      events.some((event) => event.event_id === selectedEventId)
+    ) {
       return;
     }
     setSelectedEventId(events[0]?.event_id || '');
@@ -415,7 +419,9 @@ const Calendar = () => {
     events.forEach((event) => {
       const key =
         getRawDateKey(event.start) ||
-        (parseDate(event.start) ? toIsoDate(parseDate(event.start) as Date) : null);
+        (parseDate(event.start)
+          ? toIsoDate(parseDate(event.start) as Date)
+          : null);
 
       if (!key) return;
       if (rangeMode === 'day' && key !== anchorDateKey) return;
@@ -431,17 +437,18 @@ const Calendar = () => {
     }));
   }, [events, rangeMode, anchorDateKey]);
 
-  const {
-    data: eventDetail,
-    isLoading: isDetailLoading,
-  } = useCalendarEventById(accountid || '', selectedEventId || undefined);
+  const { data: eventDetail, isLoading: isDetailLoading } =
+    useCalendarEventById(accountid || '', selectedEventId || undefined);
 
   const errorMessage =
-    ((metadataError || eventsError) as AxiosError<{ message?: string }>)?.response?.data?.message ||
+    ((metadataError || eventsError) as AxiosError<{ message?: string }>)
+      ?.response?.data?.message ||
     'Unable to load the calendar for this account.';
 
   // Check if error is due to missing calendar configuration
-  const isNoEmailConfigError = errorMessage?.toLowerCase().includes('calendar is not configured');
+  const isNoEmailConfigError = errorMessage
+    ?.toLowerCase()
+    .includes('calendar is not configured');
 
   const handleShift = (direction: -1 | 1) => {
     const next = new Date(anchorDate);
@@ -522,11 +529,14 @@ const Calendar = () => {
         <div className='border-b border-[#E1DFDD] px-6 py-4'>
           <div className='flex flex-wrap items-center justify-between gap-4'>
             <div>
-              <h1 className='text-[22px] font-semibold text-[#323130]'>Calendar</h1>
+              <h1 className='text-[22px] font-semibold text-[#323130]'>
+                Calendar
+              </h1>
               <p className='mt-1 text-sm text-[#605E5C]'>
                 {isMetadataLoading
                   ? 'Loading calendar owner...'
-                  : metadata?.calendar_owner_email || 'Connected Microsoft 365 calendar'}
+                  : metadata?.calendar_owner_email ||
+                  'Connected Microsoft 365 calendar'}
               </p>
             </div>
 
@@ -537,11 +547,10 @@ const Calendar = () => {
                     key={mode}
                     type='button'
                     onClick={() => setRangeMode(mode)}
-                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
-                      rangeMode === mode
+                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${rangeMode === mode
                         ? 'bg-[#0F6CBD] text-white'
                         : 'text-[#323130] hover:bg-[#F3F2F1]'
-                    }`}
+                      }`}
                   >
                     {mode}
                   </button>
@@ -621,7 +630,8 @@ const Calendar = () => {
                   <span className='text-white text-xs font-bold'>!</span>
                 </div>
                 <p className='text-[14px] font-medium text-[#B71C1C]'>
-                  Calendar isn't configured for this account. Configure it in account settings.
+                  Calendar isn't configured for this account. Configure it in
+                  account settings.
                 </p>
               </div>
               <div className='flex-1 bg-[#FAFAFA]' />
@@ -633,244 +643,252 @@ const Calendar = () => {
           )
         ) : (
           <div className='flex min-h-0 flex-1' ref={containerRef}>
-          <div
-            className='flex min-w-0 flex-col bg-[#FAF9F8]'
-            style={{ flexBasis: `${splitPercent}%`, flexGrow: 0, flexShrink: 0 }}
-          >
-            {(isMetadataLoading || isEventsLoading) && !events.length ? (
-              <div className='flex flex-1 items-center justify-center'>
-                <CircularProgress size={26} />
-              </div>
-            ) : groupedEvents.length ? (
-              <div className='min-h-0 flex-1 overflow-y-auto px-2 py-2'>
-                <div className='space-y-3'>
-                  {groupedEvents.map((group) => (
-                    <section key={group.date}>
-                      <div className='sticky top-0 z-10 mb-1 rounded-md bg-[#FAF9F8] py-1'>
-                        <h2 className='text-[11px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                          {formatDateHeading(group.date)}
-                        </h2>
-                      </div>
-
-                      <div className='space-y-1.5'>
-                        {group.items.map((event) => {
-                          const isSelected = event.event_id === selectedEventId;
-                          return (
-                            <button
-                              key={event.event_id}
-                              type='button'
-                              onClick={() => setSelectedEventId(event.event_id)}
-                              className={`flex w-full flex-col rounded-lg border px-2.5 py-2 text-left transition-all ${
-                                isSelected
-                                  ? 'border-[#B7D7F0] bg-[#F6FAFD] shadow-[0_4px_12px_rgba(15,108,189,0.08)]'
-                                  : 'border-[#E1DFDD] bg-white hover:border-[#D6E6F5] hover:bg-[#FCFCFC]'
-                              }`}
-                            >
-                              <div className='flex flex-wrap items-start justify-between gap-1.5'>
-                                <div className='min-w-0 flex-1'>
-                                  <div className='flex flex-wrap items-center gap-1'>
-                                    <p className='line-clamp-1 text-[13px] font-semibold leading-5 text-[#323130]'>
-                                      {event.subject}
-                                    </p>
-                                    <span
-                                      className={`rounded-full px-1.5 py-[2px] text-[9px] font-semibold ${responseColor(
-                                        event.response_status
-                                      )}`}
-                                    >
-                                      {responseLabel(event.response_status)}
-                                    </span>
-                                  </div>
-
-                                  <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-4 text-[#605E5C]'>
-                                    <span>
-                                      {event.is_all_day
-                                        ? 'All day'
-                                        : `${formatTime(event.start)} - ${formatTime(event.end)}`}
-                                    </span>
-                                    {event.location_display_name ? (
-                                      <span className='line-clamp-1'>{event.location_display_name}</span>
-                                    ) : null}
-                                  </div>
-                                </div>
-
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ))}
+            <div
+              className='flex min-w-0 flex-col bg-[#FAF9F8]'
+              style={{
+                flexBasis: `${splitPercent}%`,
+                flexGrow: 0,
+                flexShrink: 0,
+              }}
+            >
+              {(isMetadataLoading || isEventsLoading) && !events.length ? (
+                <div className='flex flex-1 items-center justify-center'>
+                  <CircularProgress size={26} />
                 </div>
-              </div>
-            ) : (
-              <div className='flex flex-1 items-center justify-center px-8 text-center text-sm text-[#605E5C]'>
-                No meetings were found for this calendar range.
-              </div>
-            )}
-          </div>
+              ) : groupedEvents.length ? (
+                <div className='min-h-0 flex-1 overflow-y-auto px-2 py-2'>
+                  <div className='space-y-3'>
+                    {groupedEvents.map((group) => (
+                      <section key={group.date}>
+                        <div className='sticky top-0 z-10 mb-1 rounded-md bg-[#FAF9F8] py-1'>
+                          <h2 className='text-[11px] font-semibold uppercase tracking-wide text-[#605E5C]'>
+                            {formatDateHeading(group.date)}
+                          </h2>
+                        </div>
 
-          <div
-            role='separator'
-            aria-orientation='vertical'
-            aria-label='Resize calendar panels'
-            tabIndex={0}
-            onPointerDown={(event) => {
-              dragStateRef.current = {
-                startX: event.clientX,
-                startPercent: splitPercent,
-              };
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'ArrowLeft') {
-                setSplitPercent((current) => Math.max(current - 2, 28));
-              }
-              if (event.key === 'ArrowRight') {
-                setSplitPercent((current) => Math.min(current + 2, 72));
-              }
-            }}
-            className='group relative w-2 cursor-col-resize bg-[#F3F2F1] transition-colors hover:bg-[#D2D0CE] focus:bg-[#D2D0CE] focus:outline-none'
-          >
-            <div className='absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-[#C8C6C4] group-hover:bg-[#8A8886] group-focus:bg-[#8A8886]' />
-          </div>
+                        <div className='space-y-1.5'>
+                          {group.items.map((event) => {
+                            const isSelected =
+                              event.event_id === selectedEventId;
+                            return (
+                              <button
+                                key={event.event_id}
+                                type='button'
+                                onClick={() =>
+                                  setSelectedEventId(event.event_id)
+                                }
+                                className={`flex w-full flex-col rounded-lg border px-2.5 py-2 text-left transition-all ${isSelected
+                                    ? 'border-[#B7D7F0] bg-[#F6FAFD] shadow-[0_4px_12px_rgba(15,108,189,0.08)]'
+                                    : 'border-[#E1DFDD] bg-white hover:border-[#D6E6F5] hover:bg-[#FCFCFC]'
+                                  }`}
+                              >
+                                <div className='flex flex-wrap items-start justify-between gap-1.5'>
+                                  <div className='min-w-0 flex-1'>
+                                    <div className='flex flex-wrap items-center gap-1'>
+                                      <p className='line-clamp-1 text-[13px] font-semibold leading-5 text-[#323130]'>
+                                        {event.subject}
+                                      </p>
+                                      <span
+                                        className={`rounded-full px-1.5 py-[2px] text-[9px] font-semibold ${responseColor(
+                                          event.response_status
+                                        )}`}
+                                      >
+                                        {responseLabel(event.response_status)}
+                                      </span>
+                                    </div>
 
-          <aside
-            className='flex min-w-0 flex-1 flex-col bg-white'
-            style={{ flexBasis: `${100 - splitPercent}%` }}
-          >
-            <div className='border-b border-[#E1DFDD] px-4 py-3'>
-              <p className='text-[11px] font-semibold uppercase tracking-wider text-[#605E5C]'>
-                Event details
-              </p>
+                                    <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-4 text-[#605E5C]'>
+                                      <span>
+                                        {event.is_all_day
+                                          ? 'All day'
+                                          : `${formatTime(event.start)} - ${formatTime(event.end)}`}
+                                      </span>
+                                      {event.location_display_name ? (
+                                        <span className='line-clamp-1'>{event.location_display_name}</span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className='flex flex-1 items-center justify-center px-8 text-center text-sm text-[#605E5C]'>
+                  No meetings were found for this calendar range.
+                </div>
+              )}
             </div>
 
-            {isDetailLoading ? (
-              <div className='flex flex-1 items-center justify-center'>
-                <CircularProgress size={24} />
+            <div
+              role='separator'
+              aria-orientation='vertical'
+              aria-label='Resize calendar panels'
+              tabIndex={0}
+              onPointerDown={(event) => {
+                dragStateRef.current = {
+                  startX: event.clientX,
+                  startPercent: splitPercent,
+                };
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowLeft') {
+                  setSplitPercent((current) => Math.max(current - 2, 28));
+                }
+                if (event.key === 'ArrowRight') {
+                  setSplitPercent((current) => Math.min(current + 2, 72));
+                }
+              }}
+              className='group relative w-2 cursor-col-resize bg-[#F3F2F1] transition-colors hover:bg-[#D2D0CE] focus:bg-[#D2D0CE] focus:outline-none'
+            >
+              <div className='absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-[#C8C6C4] group-hover:bg-[#8A8886] group-focus:bg-[#8A8886]' />
+            </div>
+
+            <aside
+              className='flex min-w-0 flex-1 flex-col bg-white'
+              style={{ flexBasis: `${100 - splitPercent}%` }}
+            >
+              <div className='border-b border-[#E1DFDD] px-4 py-3'>
+                <p className='text-[11px] font-semibold uppercase tracking-wider text-[#605E5C]'>
+                  Event details
+                </p>
               </div>
-            ) : eventDetail ? (
-              <div className='min-h-0 flex-1 overflow-y-auto px-4 py-4'>
-                <div className='space-y-4'>
-                  <div>
-                    <h3 className='text-lg font-semibold leading-6 text-[#323130]'>
-                      {eventDetail.subject}
-                    </h3>
-                    <div className='mt-1.5 flex flex-wrap items-center gap-1.5'>
-                      <span
-                        className={`rounded-full px-2 py-[3px] text-[10px] font-semibold ${responseColor(
-                          eventDetail.response_status
-                        )}`}
-                      >
-                        {responseLabel(eventDetail.response_status)}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className='grid grid-cols-2 gap-2 rounded-xl border border-[#E1DFDD] bg-[#FAF9F8] p-3'>
-                    <div className='rounded-lg bg-white px-3 py-2'>
-                      <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                        Date
-                      </p>
-                      <p className='mt-1 text-[13px] font-medium leading-5 text-[#323130]'>
-                        {selectedEventDateLabel}
-                      </p>
+              {isDetailLoading ? (
+                <div className='flex flex-1 items-center justify-center'>
+                  <CircularProgress size={24} />
+                </div>
+              ) : eventDetail ? (
+                <div className='min-h-0 flex-1 overflow-y-auto px-4 py-4'>
+                  <div className='space-y-4'>
+                    <div>
+                      <h3 className='text-lg font-semibold leading-6 text-[#323130]'>
+                        {eventDetail.subject}
+                      </h3>
+                      <div className='mt-1.5 flex flex-wrap items-center gap-1.5'>
+                        <span
+                          className={`rounded-full px-2 py-[3px] text-[10px] font-semibold ${responseColor(
+                            eventDetail.response_status
+                          )}`}
+                        >
+                          {responseLabel(eventDetail.response_status)}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className='rounded-lg bg-white px-3 py-2'>
-                      <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                        Starts
-                      </p>
-                      <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
-                        {formatDateTime(eventDetail.start)}
-                      </p>
-                    </div>
-
-                    <div className='rounded-lg bg-white px-3 py-2'>
-                      <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                        Ends
-                      </p>
-                      <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
-                        {formatDateTime(eventDetail.end)}
-                      </p>
-                    </div>
-
-
-                    {eventDetail.location_display_name ? (
-                      <div className='col-span-2 rounded-lg bg-white px-3 py-2'>
+                    <div className='grid grid-cols-2 gap-2 rounded-xl border border-[#E1DFDD] bg-[#FAF9F8] p-3'>
+                      <div className='rounded-lg bg-white px-3 py-2'>
                         <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                          Location
+                          Date
+                        </p>
+                        <p className='mt-1 text-[13px] font-medium leading-5 text-[#323130]'>
+                          {selectedEventDateLabel}
+                        </p>
+                      </div>
+
+                      <div className='rounded-lg bg-white px-3 py-2'>
+                        <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
+                          Starts
                         </p>
                         <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
-                          {eventDetail.location_display_name}
+                          {formatDateTime(eventDetail.start)}
                         </p>
                       </div>
-                    ) : null}
-                  </div>
 
-                  <div>
-                    <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                      Description
-                    </p>
-                    <p className='mt-1.5 text-[13px] leading-5 text-[#323130]'>
-                      {descriptionText}
-                    </p>
-                  </div>
+                      <div className='rounded-lg bg-white px-3 py-2'>
+                        <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
+                          Ends
+                        </p>
+                        <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
+                          {formatDateTime(eventDetail.end)}
+                        </p>
+                      </div>
 
-                  {eventDetail.attendees?.length ? (
+
+                      {eventDetail.location_display_name ? (
+                        <div className='col-span-2 rounded-lg bg-white px-3 py-2'>
+                          <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
+                            Location
+                          </p>
+                          <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
+                            {eventDetail.location_display_name}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+
                     <div>
                       <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                        Attendees
+                        Description
                       </p>
-                      <div className='mt-1.5 space-y-1.5'>
-                        {eventDetail.attendees.map((attendee) => (
-                          <div
-                            key={`${attendee.email}-${attendee.type}`}
-                            className='rounded-lg border border-[#E1DFDD] px-2.5 py-2'
-                          >
-                            <p className='text-[13px] font-medium text-[#323130]'>
-                              {attendee.name || attendee.email}
-                            </p>
-                            <p className='text-[11px] text-[#605E5C]'>{attendee.email}</p>
-                          </div>
-                        ))}
-                      </div>
+                      <p className='mt-1.5 text-[13px] leading-5 text-[#323130]'>
+                        {descriptionText}
+                      </p>
                     </div>
-                  ) : null}
 
-                  {eventDetail.join_link ? (
-                    <div className='rounded-xl border border-[#D6E6F5] bg-[#F6FAFD] p-3'>
-                      <p className='text-[10px] font-semibold uppercase tracking-wide text-[#0F548C]'>
-                        Meeting link
-                      </p>
-                      <a
-                        href={eventDetail.join_link}
-                        target='_blank'
-                        rel='noreferrer'
-                        className='mt-1.5 block break-all text-[13px] font-medium text-[#0F6CBD] underline'
-                      >
-                        {eventDetail.join_link}
-                      </a>
+                    {eventDetail.attendees?.length ? (
+                      <div>
+                        <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
+                          Attendees
+                        </p>
+                        <div className='mt-1.5 space-y-1.5'>
+                          {eventDetail.attendees.map((attendee) => (
+                            <div
+                              key={`${attendee.email}-${attendee.type}`}
+                              className='rounded-lg border border-[#E1DFDD] px-2.5 py-2'
+                            >
+                              <p className='text-[13px] font-medium text-[#323130]'>
+                                {attendee.name || attendee.email}
+                              </p>
+                              <p className='text-[11px] text-[#605E5C]'>
+                                {attendee.email}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
-                      <div className='mt-2.5 flex gap-2'>
-                        <button
-                          type='button'
-                          onClick={handleCopyLink}
-                          className='rounded-lg border border-[#0F6CBD] px-3 py-1.5 text-[12px] font-medium text-[#0F6CBD] hover:bg-[#EEF4FB]'
-                        >
-                          {copiedLink ? 'Copied' : 'Copy link'}
-                        </button>
+                    {eventDetail.join_link ? (
+                      <div className='rounded-xl border border-[#D6E6F5] bg-[#F6FAFD] p-3'>
+                        <p className='text-[10px] font-semibold uppercase tracking-wide text-[#0F548C]'>
+                          Meeting link
+                        </p>
                         <a
                           href={eventDetail.join_link}
                           target='_blank'
                           rel='noreferrer'
-                          className='rounded-lg bg-[#0F6CBD] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#0C5DA5]'
+                          className='mt-1.5 block break-all text-[13px] font-medium text-[#0F6CBD] underline'
                         >
-                          Open meeting
+                          {eventDetail.join_link}
                         </a>
-                      </div>
-                    </div>
-                  ) : null}
 
-                  {/* COMMENTED OUT - Cancel invite functionality disabled
+                        <div className='mt-2.5 flex gap-2'>
+                          <button
+                            type='button'
+                            onClick={handleCopyLink}
+                            className='rounded-lg border border-[#0F6CBD] px-3 py-1.5 text-[12px] font-medium text-[#0F6CBD] hover:bg-[#EEF4FB]'
+                          >
+                            {copiedLink ? 'Copied' : 'Copy link'}
+                          </button>
+                          <a
+                            href={eventDetail.join_link}
+                            target='_blank'
+                            rel='noreferrer'
+                            className='rounded-lg bg-[#0F6CBD] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#0C5DA5]'
+                          >
+                            Open meeting
+                          </a>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* COMMENTED OUT - Cancel invite functionality disabled
                   {metadata?.allowed_actions.cancel_invite && eventDetail.can_cancel ? (
                     <div>
                       <button
@@ -883,15 +901,15 @@ const Calendar = () => {
                     </div>
                   ) : null}
                   */}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className='flex flex-1 items-center justify-center px-8 text-center text-sm text-[#605E5C]'>
-                Select a meeting to see its details.
-              </div>
-            )}
-          </aside>
-        </div>
+              ) : (
+                <div className='flex flex-1 items-center justify-center px-8 text-center text-sm text-[#605E5C]'>
+                  Select a meeting to see its details.
+                </div>
+              )}
+            </aside>
+          </div>
         )}
       </div>
 

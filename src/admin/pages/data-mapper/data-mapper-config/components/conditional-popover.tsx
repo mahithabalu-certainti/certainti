@@ -8,6 +8,7 @@ import {
   ConditionalExpression,
   ConditionalPopoverState,
   FieldExpression,
+  FunctionPopoverState,
   MappingItem,
 } from '../mapping-table.types';
 import { CloseIcon } from '../../../../../assets';
@@ -18,6 +19,7 @@ function clauseChipSx(type: string, value?: string) {
     manual: { bg: '#f0fdf4', border: '#22c55e', color: '#15803d' },
     number: { bg: '#fff7ed', border: '#f97316', color: '#c2410c' },
     bracket: { bg: '#fdf4e9', border: '#c2803b', color: '#7c4a15' },
+    function: { bg: '#f3e8ff', border: '#9333ea', color: '#7e22ce' },
   };
   const isLogical = value === '&&' || value === '||';
   const s =
@@ -37,6 +39,9 @@ function clauseChipSx(type: string, value?: string) {
     borderRadius: '4px',
     ...(type === 'bracket'
       ? { cursor: 'pointer', '&:hover': { backgroundColor: '#fae5c8' } }
+      : {}),
+    ...(type === 'function'
+      ? { cursor: 'pointer', '&:hover': { backgroundColor: '#e9d5ff' } }
       : {}),
     '& .MuiChip-deleteIcon': {
       fontSize: '14px',
@@ -71,6 +76,9 @@ interface ConditionalPopoverProps {
   setBracketPopover: React.Dispatch<
     React.SetStateAction<BracketPopoverState | null>
   >;
+  setFunctionPopover: React.Dispatch<
+    React.SetStateAction<FunctionPopoverState | null>
+  >;
   setLocalMappings: React.Dispatch<React.SetStateAction<MappingItem[]>>;
   onMappingsChange: (mappings: MappingItem[]) => void;
   targetOptions: Record<string, Record<string, string>>;
@@ -97,6 +105,7 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
   conditionalPopover,
   setConditionalPopover,
   setBracketPopover,
+  setFunctionPopover,
   setLocalMappings,
   onMappingsChange,
   targetOptions,
@@ -109,6 +118,30 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
   returnInputRefs,
   returnContainerRefs,
 }) => {
+  // Helper to convert functionArgs (strings) to FieldExpression[] for editing
+  const convertArgsToFieldExpressions = (args: string[]): FieldExpression[] => {
+    return args.map((arg) => {
+      // Manual value
+      if (arg.startsWith('#')) {
+        return { type: 'manual', value: arg };
+      }
+      // Number
+      if (!isNaN(Number(arg))) {
+        return { type: 'number', value: arg };
+      }
+      // RID - convert to Parent.Child format
+      for (const parent in targetOptions) {
+        for (const child in targetOptions[parent]) {
+          if (targetOptions[parent][child] === arg) {
+            return { type: 'chip', value: `${parent}.${child}` };
+          }
+        }
+      }
+      // Unknown - treat as chip with the raw value
+      return { type: 'chip', value: arg };
+    });
+  };
+
   // ─── Clause condition handlers ──────────────────────────────────────────────
   const handleClauseInputChange = (index: number, value: string): void => {
     const newClauses = [...conditionalPopover.clauses];
@@ -251,6 +284,59 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
         clause.expressions = [
           ...(clause.expressions || []),
           { type: 'operator', value: currentInput.trim() },
+        ];
+        clause.inputValue = '';
+        clause.showAutocomplete = false;
+        newClauses[index] = clause;
+        setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+        return;
+      }
+
+      // Check for MIN/MAX function (complete or partial)
+      const trimmedInput = currentInput.trim();
+      const upperInput = trimmedInput.toUpperCase();
+
+      // Handle: MIN, MAX, MIN(, MAX( - Open function popover
+      if (
+        upperInput === 'MIN' ||
+        upperInput === 'MAX' ||
+        upperInput === 'MIN(' ||
+        upperInput === 'MAX('
+      ) {
+        const functionType = upperInput.startsWith('MIN') ? 'MIN' : 'MAX';
+        const anchorEl =
+          clauseContainerRefs.current[index] || conditionalPopover.anchorEl;
+        if (anchorEl) {
+          clause.inputValue = '';
+          newClauses[index] = clause;
+          setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+          setFunctionPopover({
+            rid: conditionalPopover.rid,
+            type: functionType,
+            args: [],
+            inputValue: '',
+            anchorEl,
+            source: 'clause-condition',
+            clauseIndex: index,
+          });
+        }
+        return;
+      }
+
+      // Handle complete function: MIN(...), MAX(...)
+      const functionMatch = trimmedInput.match(/^(MIN|MAX|min|max)\((.*)\)$/i);
+      if (functionMatch) {
+        const functionType = functionMatch[1].toUpperCase() as 'MIN' | 'MAX';
+        const argsStr = functionMatch[2];
+        const args = argsStr.split(',').map((arg) => arg.trim());
+        clause.expressions = [
+          ...(clause.expressions || []),
+          {
+            type: 'function',
+            value: `${functionType}(${args.join(', ')})`,
+            functionType,
+            functionArgs: args,
+          },
         ];
         clause.inputValue = '';
         clause.showAutocomplete = false;
@@ -459,6 +545,60 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
           { type: 'number', value: numberInput },
         ];
         clause.returnInputValue = '';
+      } else {
+        const trimmedInput = currentInput.trim();
+        const upperInput = trimmedInput.toUpperCase();
+
+        // Handle: MIN, MAX, MIN(, MAX( - Open function popover
+        if (
+          upperInput === 'MIN' ||
+          upperInput === 'MAX' ||
+          upperInput === 'MIN(' ||
+          upperInput === 'MAX('
+        ) {
+          const functionType = upperInput.startsWith('MIN') ? 'MIN' : 'MAX';
+          const anchorEl =
+            returnContainerRefs.current[index] || conditionalPopover.anchorEl;
+          if (anchorEl) {
+            clause.returnInputValue = '';
+            newClauses[index] = clause;
+            setConditionalPopover({
+              ...conditionalPopover,
+              clauses: newClauses,
+            });
+            setFunctionPopover({
+              rid: conditionalPopover.rid,
+              type: functionType,
+              args: [],
+              inputValue: '',
+              anchorEl,
+              source: 'clause-return',
+              clauseIndex: index,
+            });
+          }
+        } else {
+          // Check for complete MIN/MAX function
+          const functionMatch = trimmedInput.match(
+            /^(MIN|MAX|min|max)\((.*)\)$/i
+          );
+          if (functionMatch) {
+            const functionType = functionMatch[1].toUpperCase() as
+              | 'MIN'
+              | 'MAX';
+            const argsStr = functionMatch[2];
+            const args = argsStr.split(',').map((arg) => arg.trim());
+            clause.returnExpressions = [
+              ...(clause.returnExpressions || []),
+              {
+                type: 'function',
+                value: `${functionType}(${args.join(', ')})`,
+                functionType,
+                functionArgs: args,
+              },
+            ];
+            clause.returnInputValue = '';
+          }
+        }
       }
 
       newClauses[index] = clause;
@@ -573,6 +713,54 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
       setBracketPopover({
         rid: conditionalPopover.rid,
         items: expression.bracketItems || [],
+        inputValue: '',
+        anchorEl,
+        source: 'clause-return',
+        clauseIndex,
+        clauseChipEditIndex: chipIndex,
+      });
+    }
+  };
+
+  // ─── Function chip click in clause condition ───────────────────────────────
+  const handleClauseFunctionChipClick = (
+    clauseIndex: number,
+    chipIndex: number
+  ): void => {
+    const clause = conditionalPopover.clauses[clauseIndex];
+    const expression = (clause.expressions || [])[chipIndex];
+    if (!expression || expression.type !== 'function') return;
+    const anchorEl =
+      clauseContainerRefs.current[clauseIndex] || conditionalPopover.anchorEl;
+    if (anchorEl) {
+      setFunctionPopover({
+        rid: conditionalPopover.rid,
+        type: expression.functionType || 'MIN',
+        args: convertArgsToFieldExpressions(expression.functionArgs || []),
+        inputValue: '',
+        anchorEl,
+        source: 'clause-condition',
+        clauseIndex,
+        clauseChipEditIndex: chipIndex,
+      });
+    }
+  };
+
+  // ─── Function chip click in clause return ──────────────────────────────────
+  const handleReturnFunctionChipClick = (
+    clauseIndex: number,
+    chipIndex: number
+  ): void => {
+    const clause = conditionalPopover.clauses[clauseIndex];
+    const expression = (clause.returnExpressions || [])[chipIndex];
+    if (!expression || expression.type !== 'function') return;
+    const anchorEl =
+      returnContainerRefs.current[clauseIndex] || conditionalPopover.anchorEl;
+    if (anchorEl) {
+      setFunctionPopover({
+        rid: conditionalPopover.rid,
+        type: expression.functionType || 'MIN',
+        args: convertArgsToFieldExpressions(expression.functionArgs || []),
         inputValue: '',
         anchorEl,
         source: 'clause-return',
@@ -845,6 +1033,18 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
               return ` ${exp.value} `;
             } else if (exp.type === 'bracket') {
               return exp.value;
+            } else if (exp.type === 'function' && exp.functionArgs) {
+              const funcArgs = exp.functionArgs.map((arg) => {
+                if (arg.startsWith('#')) return arg;
+                if (arg.startsWith('@')) {
+                  const cleanArg = arg.substring(1);
+                  const [parent, child] = cleanArg.split('.', 2);
+                  return targetOptions[parent]?.[child] || arg;
+                }
+                const [parent, child] = arg.split('.', 2);
+                return targetOptions[parent]?.[child] || arg;
+              });
+              return ` ${exp.functionType}(${funcArgs.join(', ')})`;
             }
             return exp.value;
           })
@@ -860,6 +1060,18 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
             return ` ${exp.value} `;
           } else if (exp.type === 'bracket') {
             return exp.value;
+          } else if (exp.type === 'function' && exp.functionArgs) {
+            const funcArgs = exp.functionArgs.map((arg) => {
+              if (arg.startsWith('#')) return arg;
+              if (arg.startsWith('@')) {
+                const cleanArg = arg.substring(1);
+                const [parent, child] = cleanArg.split('.', 2);
+                return targetOptions[parent]?.[child] || arg;
+              }
+              const [parent, child] = arg.split('.', 2);
+              return targetOptions[parent]?.[child] || arg;
+            });
+            return ` ${exp.functionType}(${funcArgs.join(', ')})`;
           }
           return exp.value;
         })
@@ -948,6 +1160,26 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
             }
             onDelete={onDelete}
             sx={clauseChipSx('bracket')}
+          />
+        </Tooltip>
+      );
+    }
+
+    if (item.type === 'function') {
+      const label = item.value;
+      return (
+        <Tooltip key={chipIdx} title={label} arrow placement='top'>
+          <Chip
+            label={label}
+            size='small'
+            variant='outlined'
+            onClick={() =>
+              isReturn
+                ? handleReturnFunctionChipClick(clauseIndex, chipIdx)
+                : handleClauseFunctionChipClick(clauseIndex, chipIdx)
+            }
+            onDelete={onDelete}
+            sx={clauseChipSx('function')}
           />
         </Tooltip>
       );
@@ -1058,7 +1290,7 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
                         onKeyDown={(e) => handleClauseKeyDown(index, e)}
                         placeholder={
                           (clause.expressions || []).length === 0
-                            ? 'Type @ fields, # for IDs, ( for brackets, &&, ||, operators...'
+                            ? 'Type @ fields, # for IDs, ( for brackets, MIN/MAX functions, &&, ||, operators...'
                             : 'Add more...'
                         }
                         className='flex-1 min-w-[120px] rounded-[2px] border-none outline-none bg-transparent text-sm placeholder-gray-400'
@@ -1170,7 +1402,7 @@ const ConditionalPopover: React.FC<ConditionalPopoverProps> = ({
                       onKeyDown={(e) => handleReturnKeyDown(index, e)}
                       placeholder={
                         (clause.returnExpressions || []).length === 0
-                          ? 'Type @ fields, # for IDs, ( for brackets, numbers...'
+                          ? 'Type @ fields, # for IDs, ( for brackets, MIN/MAX functions, numbers...'
                           : 'Add more...'
                       }
                       className='flex-1 min-w-[120px] border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400'
