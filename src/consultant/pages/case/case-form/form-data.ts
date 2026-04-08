@@ -309,14 +309,11 @@ export const CaseFormData = (
         ],
       },
 
-      // ── Accordion Sections (expand/collapse — one open at a time) ──
-      // United States (US) - Federal Section
       // First Section - Financial Information (Non-US countries only)
       {
         sectionName: 'Financial Information',
         fillType: 'half',
         fields: [
-          // Keep all non-US fields from previous implementation
           createTextField('heat_light_power', 'Heating & Lighting Cost', {
             required: false,
             placeholder: 'Enter Heating & Lighting Cost',
@@ -343,9 +340,390 @@ export const CaseFormData = (
                 !permissionMap?.['heat_light_power']?.edit &&
                 !permissionMap?.['heat_light_power']?.read),
           }),
-          // ... other non-US fields (Ireland, UK, Australia, Canada)
+          createTextField(
+            'employers_pension_contribution',
+            'Employer Pension Contribution',
+            {
+              required: false,
+              placeholder: 'Enter Employer Pension Contribution',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total pension contributions made by the employer on behalf of employees.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['employers_pension_contribution']?.edit &&
+                  permissionMap?.['employers_pension_contribution']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.Australia ||
+                (isEditView &&
+                  !permissionMap?.['employers_pension_contribution']?.edit &&
+                  !permissionMap?.['employers_pension_contribution']?.read),
+            }
+          ),
+          createTextField(
+            'material_software_cost',
+            'Material & Software Cost',
+            {
+              required: false,
+              placeholder: 'Enter Material & Software Cost',
+              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Total cost of materials and software used for operational or development activities.',
+              },
+              regexErrorMessage:
+                'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              disabled:
+                isCaseClosed ||
+                (isCreateAndAmendmentType && hasParentCase) ||
+                (isEditView &&
+                  !permissionMap?.['material_software_cost']?.edit &&
+                  permissionMap?.['material_software_cost']?.read),
+              hide:
+                CountryName !== FinancialWorkingCountries.UK ||
+                (isEditView &&
+                  !permissionMap?.['material_software_cost']?.edit &&
+                  !permissionMap?.['material_software_cost']?.read),
+            }
+          ),
+          createTextField('sub_contracts', 'Subcontracts', {
+            required: false,
+            placeholder: 'Enter Subcontracts',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Payments made to subcontractors for services related to the project or business activities.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['sub_contracts']?.edit &&
+                permissionMap?.['sub_contracts']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.UK ||
+              (isEditView &&
+                !permissionMap?.['sub_contracts']?.edit &&
+                !permissionMap?.['sub_contracts']?.read),
+          }),
+          createTextField('cloud_software', 'Cloud Software', {
+            required: false,
+            placeholder: 'Enter Cloud Software',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Expenses incurred for cloud-based software services and platforms.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['cloud_software']?.edit &&
+                permissionMap?.['cloud_software']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Ireland ||
+              (isEditView &&
+                !permissionMap?.['cloud_software']?.edit &&
+                !permissionMap?.['cloud_software']?.read),
+          }),
+          createTextField('unpaid_amounts_paid', 'Unpaid Amounts (+)', {
+            required: false,
+            placeholder: 'Enter Unpaid Amounts (+)',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Eligible unpaid expenses that are added back for calculation purposes.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts_paid']?.edit &&
+                permissionMap?.['unpaid_amounts_paid']?.read),
+            hide:
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts_paid']?.edit &&
+                !permissionMap?.['unpaid_amounts_paid']?.read),
+          }),
+          createTextField('unpaid_amounts', 'Unpaid Amounts (-)', {
+            required: false,
+            placeholder: 'Enter Unpaid Amounts (-)',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Unpaid expenses that are deducted based on applicable rules or adjustments.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts']?.edit &&
+                permissionMap?.['unpaid_amounts']?.read),
+            hide:
+              ![FinancialWorkingCountries.Ireland].includes(
+                CountryName as FinancialWorkingCountries
+              ) ||
+              (isEditView &&
+                !permissionMap?.['unpaid_amounts']?.edit &&
+                !permissionMap?.['unpaid_amounts']?.read),
+          }),
+          createTextField('aggregated_turnover', 'Aggregated Turnover', {
+            required: false,
+            placeholder: 'Enter Aggregated Turnover',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Combined turnover of the company and any associated or related entities.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['aggregated_turnover']?.edit &&
+                permissionMap?.['aggregated_turnover']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['aggregated_turnover']?.edit &&
+                !permissionMap?.['aggregated_turnover']?.read),
+          }),
+          createTextField('total_expenses', 'Total Expenses', {
+            required: isAustralianCountry,
+            placeholder: 'Enter Total Expenses',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Total allowable business expenses recorded during the reporting period.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['total_expenses']?.edit &&
+                permissionMap?.['total_expenses']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['total_expenses']?.edit &&
+                !permissionMap?.['total_expenses']?.read),
+          }),
+          createTextField('taxable_income', 'Taxable Income', {
+            required: false,
+            placeholder: 'Enter Taxable Income',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Income subject to taxation after allowable deductions and adjustments.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['taxable_income']?.edit &&
+                permissionMap?.['taxable_income']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['taxable_income']?.edit &&
+                !permissionMap?.['taxable_income']?.read),
+          }),
+          createTextField('export_sales_revenue', 'Export Sales Revenue', {
+            required: false,
+            placeholder: 'Enter Export Sales Revenue',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Revenue generated from sales made to customers outside the domestic market.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                permissionMap?.['export_sales_revenue']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Australia ||
+              (isEditView &&
+                !permissionMap?.['export_sales_revenue']?.edit &&
+                !permissionMap?.['export_sales_revenue']?.read),
+          }),
+          createTextField('other_uk', 'Other', {
+            required: false,
+            placeholder: 'Enter Other',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.UK ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createTextField('other_irl', 'Other', {
+            required: false,
+            placeholder: 'Enter Other',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Ireland ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide:
+              ![
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.UK,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
+          }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+            hide:
+              ![
+                FinancialWorkingCountries.Canada,
+                FinancialWorkingCountries.Australia,
+                FinancialWorkingCountries.US,
+              ].includes(CountryName as FinancialWorkingCountries) ||
+              isEditView,
+          }),
         ],
       },
+
+      // ── Accordion Sections (expand/collapse — one open at a time) ──
+      // Canada (CA) - Federal Section
+      {
+        sectionName: 'Canada (CA) - Federal',
+        fillType: 'accordion',
+        accordionGroup: 'case_additional_info',
+        hide: CountryName !== FinancialWorkingCountries.Canada,
+        fields: [
+          createTextField('other_can', 'Other CAN', {
+            required: false,
+            placeholder: 'Enter Other CAN',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields - Canada.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Canada ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+        ],
+      },
+
+      // Canada (CA) - Alphabetical order starts here
+      {
+        sectionName: 'Ontario (ON)',
+        fillType: 'accordion',
+        accordionGroup: 'case_additional_info',
+        hide: CountryName !== FinancialWorkingCountries.Canada,
+        fields: [
+          createTextField('other_on', 'Other ON', {
+            required: false,
+            placeholder: 'Enter Other ON',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Any additional relevant income, expense, or adjustment not covered in other fields - Ontario.',
+            },
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                permissionMap?.['other']?.read),
+            hide:
+              CountryName !== FinancialWorkingCountries.Canada ||
+              (isEditView &&
+                !permissionMap?.['other']?.edit &&
+                !permissionMap?.['other']?.read),
+          }),
+        ],
+      },
+      // ── Accordion Sections (expand/collapse — one open at a time) ──
+      // United States (US) - Federal Section
 
       // United States (US) - Federal Section
       {
