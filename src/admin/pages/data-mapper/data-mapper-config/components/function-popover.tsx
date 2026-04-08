@@ -2,6 +2,7 @@ import React from 'react';
 import { Chip, Popover, Tooltip } from '@mui/material';
 import TextButton from '../../../../../components/button/text-button';
 import {
+  ConditionalPopoverState,
   FieldExpression,
   FunctionPopoverState,
   MappingItem,
@@ -11,6 +12,10 @@ interface FunctionPopoverProps {
   functionPopover: FunctionPopoverState;
   setFunctionPopover: React.Dispatch<
     React.SetStateAction<FunctionPopoverState | null>
+  >;
+  conditionalPopover?: ConditionalPopoverState | null;
+  setConditionalPopover?: React.Dispatch<
+    React.SetStateAction<ConditionalPopoverState | null>
   >;
   setLocalMappings: React.Dispatch<React.SetStateAction<MappingItem[]>>;
   onMappingsChange: (mappings: MappingItem[]) => void;
@@ -25,6 +30,8 @@ interface FunctionPopoverProps {
 const FunctionPopover: React.FC<FunctionPopoverProps> = ({
   functionPopover,
   setFunctionPopover,
+  conditionalPopover,
+  setConditionalPopover,
   setLocalMappings,
   onMappingsChange,
   targetOptions,
@@ -148,16 +155,68 @@ const FunctionPopover: React.FC<FunctionPopoverProps> = ({
 
     const displayArgs = functionPopover.args.map((arg) => arg.value);
 
+    const functionExpression: FieldExpression = {
+      type: 'function',
+      value: `${functionPopover.type}(${displayArgs.join(', ')})`,
+      functionType: functionPopover.type,
+      functionArgs: functionArgs,
+    };
+
+    // Save to clause condition field
+    if (
+      functionPopover.source === 'clause-condition' &&
+      conditionalPopover &&
+      setConditionalPopover &&
+      functionPopover.clauseIndex !== undefined
+    ) {
+      const newClauses = [...conditionalPopover.clauses];
+      const clause = { ...newClauses[functionPopover.clauseIndex] };
+      const newExpressions = [...(clause.expressions || [])];
+      if (functionPopover.clauseChipEditIndex !== undefined) {
+        newExpressions[functionPopover.clauseChipEditIndex] =
+          functionExpression;
+      } else {
+        newExpressions.push(functionExpression);
+      }
+      clause.expressions = newExpressions;
+      clause.inputValue = '';
+      clause.error = undefined;
+      newClauses[functionPopover.clauseIndex] = clause;
+      setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+      setFunctionPopover(null);
+      return;
+    }
+
+    // Save to clause return field
+    if (
+      functionPopover.source === 'clause-return' &&
+      conditionalPopover &&
+      setConditionalPopover &&
+      functionPopover.clauseIndex !== undefined
+    ) {
+      const newClauses = [...conditionalPopover.clauses];
+      const clause = { ...newClauses[functionPopover.clauseIndex] };
+      const newExpressions = [...(clause.returnExpressions || [])];
+      if (functionPopover.clauseChipEditIndex !== undefined) {
+        newExpressions[functionPopover.clauseChipEditIndex] =
+          functionExpression;
+      } else {
+        newExpressions.push(functionExpression);
+      }
+      clause.returnExpressions = newExpressions;
+      clause.returnInputValue = '';
+      clause.returnError = undefined;
+      newClauses[functionPopover.clauseIndex] = clause;
+      setConditionalPopover({ ...conditionalPopover, clauses: newClauses });
+      setFunctionPopover(null);
+      return;
+    }
+
+    // Save to main field
     setLocalMappings((prev) => {
       const updated = prev.map((m) => {
         if (m.rid === functionPopover.rid) {
           const newExpressions = [...(m.fieldExpressions || [])];
-          const functionExpression: FieldExpression = {
-            type: 'function',
-            value: `${functionPopover.type}(${displayArgs.join(', ')})`,
-            functionType: functionPopover.type,
-            functionArgs: functionArgs,
-          };
           if (functionPopover.editingIndex !== undefined) {
             newExpressions[functionPopover.editingIndex] = functionExpression;
           } else {

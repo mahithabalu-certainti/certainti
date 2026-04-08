@@ -78,6 +78,9 @@ export interface FunctionPopoverState {
   anchorEl: HTMLElement | null;
   editingIndex?: number;
   error?: string;
+  source?: 'main' | 'clause-condition' | 'clause-return';
+  clauseIndex?: number;
+  clauseChipEditIndex?: number;
 }
 
 export interface ConditionalPopoverState {
