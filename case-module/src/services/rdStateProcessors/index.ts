@@ -22,6 +22,8 @@ import { RdCreditCalculatorForIA } from "./iaRdCreditCalculator";
 import { RdCreditCalculatorForRI } from "./riRdCreditCalculator";
 import { RdCreditCalculatorForMN } from "./mnRdCreditCalculator";
 import { RdCreditCalculatorForVT } from "./vtRdCreditCalculator";
+import { RdCreditCalculatorForNH } from "./nhRdCreditCalculator";
+import { RdCreditCalculatorForME } from "./meRdCreditCalculator";
 
 
 export const stateCalculators: any = {
@@ -49,4 +51,6 @@ export const stateCalculators: any = {
     "RI": new RdCreditCalculatorForRI(),
     "MN": new RdCreditCalculatorForMN(),
     "VT": new RdCreditCalculatorForVT(),
+    "NH": new RdCreditCalculatorForNH(),
+    "ME": new RdCreditCalculatorForME()
 };

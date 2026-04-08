@@ -59,6 +59,14 @@ const createCaseSchema = Joi.object({
   employers_pension_contribution: positiveDecimal18_2,
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
+  
+  // USA Federal
+  energy_consortia_amount_usa: positiveDecimal18_2,
+  basic_research_payments_usa: positiveDecimal18_2,
+  qualified_org_baseamount_usa: positiveDecimal18_2,
+  lease_costs_of_computers_usa:positiveDecimal18_2,
+
+  
   other_can : positiveDecimal18_2,
   other_on : positiveDecimal18_2,
   other_uk : positiveDecimal18_2,
@@ -80,6 +88,69 @@ const createCaseSchema = Joi.object({
   current_year_gross_receipts: positiveDecimal18_2,
   other_credits_total_ga: positiveDecimal18_2,
   other_credits_total_sc: positiveDecimal18_2,
+
+  // Kansas
+  tax_liability_ks: positiveDecimal18_2,
+  machinery_equipments_ks: positiveDecimal18_2,
+
+  // Kentucky
+  llet_credit_ky: positiveDecimal18_2,
+  corporation_income_tax_credit_ky: positiveDecimal18_2,
+  individual_income_tax_credit_ky: positiveDecimal18_2,
+
+  // Maine
+  credit_carry_forward_py_me: positiveDecimal18_2,
+
+  // Minnesota
+  lease_costs_of_computers_mn: positiveDecimal18_2,
+  credit_tax_limit_mn: positiveDecimal18_2,
+  basic_research_amount_mn: positiveDecimal18_2,
+  nonprofit_development_contributions_mn: positiveDecimal18_2,
+
+  // Nebraska
+  property_factor_off_campus_ne: positiveDecimal18_2,
+  property_factor_on_campus_ne: positiveDecimal18_2,
+  payroll_factor_off_campus_ne: positiveDecimal18_2,
+  payroll_factor_on_campus_ne: positiveDecimal18_2,
+  off_campus_research_expenses_ne: positiveDecimal18_2,
+  credit_tax_refunds_ne: positiveDecimal18_2,
+  credit_distributed_ne: positiveDecimal18_2,
+
+  // Rhode Island
+  tax_liability_ri: positiveDecimal18_2,
+  credit_carry_forward_py_ri: positiveDecimal18_2,
+
+  // Vermont
+  energy_consortia_amount_vt: positiveDecimal18_2,
+  basic_research_payments_vt: positiveDecimal18_2,
+  qualified_org_baseamount_vt: positiveDecimal18_2,
+  lease_costs_of_computers_vt: positiveDecimal18_2,
+  credit_shared_wages_vt: positiveDecimal18_2,
+  pass_through_research_credit_vt: positiveDecimal18_2,
+  amount_allocated_beneficiaries_vt: positiveDecimal18_2,
+
+  // Wisconsin
+  qualified_computer_rental_time_expenses_wi: positiveDecimal18_2,
+  research_supplies_expenses_wi: positiveDecimal18_2,
+  additional_pass_through_credits_wi: positiveDecimal18_2,
+  fiduciary_beneficiary_credit_wi: positiveDecimal18_2,
+  orphan_drug_qualified_expenses_wi: positiveDecimal18_2,
+  credit_offset_tax_wi: positiveDecimal18_2,
+  credit_carry_forward_py_wi: positiveDecimal18_2,
+
+  // District of Columbia
+  energy_consortia_amount_dc: positiveDecimal18_2,
+  basic_research_payments_dc: positiveDecimal18_2,
+  qualified_org_baseamount_dc: positiveDecimal18_2,
+  lease_costs_of_computers_dc: positiveDecimal18_2,
+ basic_research_payments_ia: positiveDecimal18_2,
+  basic_period_amount_ia: positiveDecimal18_2,
+  non_qualifying_ia_wages: positiveDecimal18_2,
+  non_qualifying_contract_expenses_ia: positiveDecimal18_2,
+  cost_of_supplies_ia: positiveDecimal18_2,
+  rac_share_ia: positiveDecimal18_2,
+  supplemental_rac_ia: positiveDecimal18_2,
+  pass_through_supplemental_rac_ia: positiveDecimal18_2,
   amendment_case_info: Joi.array()
     .items(
       Joi.object({
@@ -141,6 +212,12 @@ const updateCaseSchema = Joi.object({
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
 
+  // USA Federal
+  energy_consortia_amount_usa: positiveDecimal18_2,
+  basic_research_payments_usa: positiveDecimal18_2,
+  qualified_org_baseamount_usa: positiveDecimal18_2,
+  lease_costs_of_computers_usa:positiveDecimal18_2,
+
   lease_costs_of_computers_nj: positiveDecimal18_2,
   lease_costs_of_computers_il: positiveDecimal18_2,
   lease_costs_of_computers_ca: positiveDecimal18_2,
@@ -149,6 +226,14 @@ const updateCaseSchema = Joi.object({
 
   illinois_rd_credit_partnership_corp: positiveDecimal18_2,
   illinois_research_payments_corp_only: positiveDecimal18_2,
+   basic_research_payments_ia: positiveDecimal18_2,
+  qualified_org_baseamount_ia: positiveDecimal18_2,
+  non_qualifying_ia_wages: positiveDecimal18_2,
+  non_qualifying_contract_expenses_ia: positiveDecimal18_2,
+  cost_of_supplies_ia: positiveDecimal18_2,
+  rac_share_ia: positiveDecimal18_2,
+  supplemental_rac_ia: positiveDecimal18_2,
+  pass_through_supplemental_rac_ia: positiveDecimal18_2,
   basic_research_payments_ma : positiveDecimal18_2,
   basic_research_payments_id : positiveDecimal18_2,
   qualified_computer_rental_time_expenses: positiveDecimal18_2,
@@ -161,7 +246,63 @@ const updateCaseSchema = Joi.object({
   other_can : positiveDecimal18_2,
   other_on : positiveDecimal18_2,
   other_uk : positiveDecimal18_2,
-  other_irl : positiveDecimal18_2
+  other_irl : positiveDecimal18_2,
+
+ 
+  // Kansas
+  tax_liability_ks: positiveDecimal18_2,
+  machinery_equipments_ks: positiveDecimal18_2,
+
+  // Kentucky
+  llet_credit_ky: positiveDecimal18_2,
+  corporation_income_tax_credit_ky: positiveDecimal18_2,
+  individual_income_tax_credit_ky: positiveDecimal18_2,
+
+  // Maine
+  credit_carry_forward_py_me: positiveDecimal18_2,
+
+  // Minnesota
+  lease_costs_of_computers_mn: positiveDecimal18_2,
+  credit_tax_limit_mn: positiveDecimal18_2,
+  basic_research_amount_mn: positiveDecimal18_2,
+  nonprofit_development_contributions_mn: positiveDecimal18_2,
+
+  // Nebraska
+  property_factor_off_campus_ne: positiveDecimal18_2,
+  property_factor_on_campus_ne: positiveDecimal18_2,
+  payroll_factor_off_campus_ne: positiveDecimal18_2,
+  payroll_factor_on_campus_ne: positiveDecimal18_2,
+  off_campus_research_expenses_ne: positiveDecimal18_2,
+  credit_tax_refunds_ne: positiveDecimal18_2,
+  credit_distributed_ne: positiveDecimal18_2,
+
+  // Rhode Island
+  tax_liability_ri: positiveDecimal18_2,
+  credit_carry_forward_py_ri: positiveDecimal18_2,
+
+  // Vermont
+  energy_consortia_amount_vt: positiveDecimal18_2,
+  basic_research_payments_vt: positiveDecimal18_2,
+  qualified_org_baseamount_vt: positiveDecimal18_2,
+  lease_costs_of_computers_vt: positiveDecimal18_2,
+  credit_shared_wages_vt: positiveDecimal18_2,
+  pass_through_research_credit_vt: positiveDecimal18_2,
+  amount_allocated_beneficiaries_vt: positiveDecimal18_2,
+
+  // Wisconsin
+  qualified_computer_rental_time_expenses_wi: positiveDecimal18_2,
+  research_supplies_expenses_wi: positiveDecimal18_2,
+  additional_pass_through_credits_wi: positiveDecimal18_2,
+  fiduciary_beneficiary_credit_wi: positiveDecimal18_2,
+  orphan_drug_qualified_expenses_wi: positiveDecimal18_2,
+  credit_offset_tax_wi: positiveDecimal18_2,
+  credit_carry_forward_py_wi: positiveDecimal18_2,
+
+  // District of Columbia
+  energy_consortia_amount_dc: positiveDecimal18_2,
+  basic_research_payments_dc: positiveDecimal18_2,
+  qualified_org_baseamount_dc: positiveDecimal18_2,
+  lease_costs_of_computers_dc: positiveDecimal18_2,
 });
 
 const caseClosedListSchema = Joi.object({

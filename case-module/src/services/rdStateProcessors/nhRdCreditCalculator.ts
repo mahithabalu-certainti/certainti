@@ -149,11 +149,11 @@ export class RdCreditCalculatorForNH {
         return {
             computed_fields: {
                 "NH Research & Development Tax Credit Application": {
-                    "[A] Qualified Manufacturing R&D expenditures (wages only) per Federal Return (attach Form 6765)":
+                    "[A] Qualified Manufacturing Research & Development expenditures (wages only) per Federal Return":
                         lines.lineA,
-                    "[B] Qualified Manufacturing R&D expenditures (wages only) attributable to NH":
+                    "[B] Qualified Manufacturing Research & Development expenditures (wages only) attributable to NH":
                         lines.lineB,
-                    [`[C] Credit requested (Line B × ${config.qre_credit_percentage}%, not to exceed $${config.qre_threshold_amount.toLocaleString()})`]:
+                    [`[C] Amount of Research & Development Credit requested (Line B x ${config.qre_credit_percentage}%) not to exceed $${config.qre_threshold_amount.toLocaleString()}`]:
                         lines.lineC,
                 },
             },
