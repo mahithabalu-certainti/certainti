@@ -263,7 +263,7 @@ export class Case
 
   public lease_costs_of_computers_mn?:number;
   public basic_research_amount?:number;
-  public nonprofit_development_contributions?:number;
+  public nonprofit_development_contributions_mn?:number;
   public credit_tax_limit_mn?:number;
   public credit_carry_over_mn?:number;
 
