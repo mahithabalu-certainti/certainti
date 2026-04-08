@@ -1339,6 +1339,14 @@ async fetchDossierPackage (data : any) : Promise<any> {
                 url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
               })
             }
+          } else if(stringToJson[j].name === 'Financial Calculations') {
+            if(stringToJson[j].url) {
+              responsePackage.push({
+                name : 'Financial Calculations',
+                url : await generateSasUrl(stringToJson[j].url),
+                extension: '.xlsx'
+              })
+            }
           } else {
             responsePackage.push({
               name : '',
