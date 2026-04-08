@@ -1,7 +1,10 @@
-import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Popover,
   Tooltip,
 } from '@mui/material';
@@ -22,8 +25,7 @@ import {
   type InboxMessageListItem,
   type MailboxFolder,
 } from '../../../../services/interactions/mailbox-service';
-import { formatDateToYYYYMMDDWithTime, sanitizeUrl } from '../../../../../common-utils';
-import { sanitizeHtml } from '../../../../../utils/html-utils';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
 type FlattenedMailboxFolder = MailboxFolder & {
   level: number;
@@ -57,9 +59,7 @@ const flattenFolders = (
  * Output:
  * - Returns the inbox folder when available, otherwise the first folder, otherwise `null`.
  */
-const findDefaultFolder = (
-  folders: MailboxFolder[]
-): FlattenedMailboxFolder | null => {
+const findDefaultFolder = (folders: MailboxFolder[]): FlattenedMailboxFolder | null => {
   const allFolders = flattenFolders(folders);
   return (
     allFolders.find(
@@ -70,12 +70,7 @@ const findDefaultFolder = (
   );
 };
 
-const FAVORITE_WELL_KNOWN_NAMES = [
-  'inbox',
-  'drafts',
-  'sentitems',
-  'deleteditems',
-];
+const FAVORITE_WELL_KNOWN_NAMES = ['inbox', 'drafts', 'sentitems', 'deleteditems'];
 const HIDDEN_FOLDER_TOKENS = ['conversationhistory'];
 const STATUS_FILTER_OPTIONS = [
   { key: 'all', label: 'All' },
@@ -143,64 +138,6 @@ const getEndOfDayTime = (dateValue: string) => {
   return new Date(`${dateValue}T23:59:59.999`).getTime();
 };
 
-/**
- * Renders plain-text email content with clickable URLs and email addresses.
- *
- * Input:
- * - `text`: plain text content already normalized for display.
- *
- * Output:
- * - Returns JSX with platform text styling while preserving clickable links.
- */
-const renderTextWithLinks = (text: string) => {
-  const lines = text.split('\n');
-  const urlOrEmailPattern = /(https?:\/\/[^\s]+|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi;
-
-  return lines.map((line, lineIndex) => {
-    const parts = line.split(urlOrEmailPattern);
-
-    return (
-      <Fragment key={`line-${lineIndex}`}>
-        {parts.map((part, partIndex) => {
-          if (!part) return null;
-
-          if (/^https?:\/\//i.test(part)) {
-            const safeUrl = sanitizeUrl(part);
-            if (!safeUrl) return <Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</Fragment>;
-
-            return (
-              <a
-                key={`part-${lineIndex}-${partIndex}`}
-                href={safeUrl}
-                target='_blank'
-                rel='noreferrer'
-                className='text-[#0F6CBD] underline break-all'
-              >
-                {part}
-              </a>
-            );
-          }
-
-          if (/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(part)) {
-            return (
-              <a
-                key={`part-${lineIndex}-${partIndex}`}
-                href={`mailto:${part}`}
-                className='text-[#0F6CBD] underline break-all'
-              >
-                {part}
-              </a>
-            );
-          }
-
-          return <Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</Fragment>;
-        })}
-        {lineIndex < lines.length - 1 ? <br /> : null}
-      </Fragment>
-    );
-  });
-};
-
 
 /**
  * Renders the visual icon for a mailbox folder row.
@@ -218,238 +155,100 @@ const renderFolderIcon = (folder: MailboxFolder, collapsed = false) => {
 
   if (token.includes('delete')) {
     return (
-      <svg
-        viewBox='0 0 20 20'
-        fill='none'
-        className={className}
-        aria-hidden='true'
-      >
-        <path
-          d='M6.5 6.5V15.5C6.5 16.05 6.95 16.5 7.5 16.5H12.5C13.05 16.5 13.5 16.05 13.5 15.5V6.5'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
-        <path
-          d='M5 6.5H15'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
-        <path
-          d='M8 6.5V4.75C8 4.34 8.34 4 8.75 4H11.25C11.66 4 12 4.34 12 4.75V6.5'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
-        <path
-          d='M8.75 9.25V13.25M11.25 9.25V13.25'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
+      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+        <path d='M6.5 6.5V15.5C6.5 16.05 6.95 16.5 7.5 16.5H12.5C13.05 16.5 13.5 16.05 13.5 15.5V6.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+        <path d='M5 6.5H15' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+        <path d='M8 6.5V4.75C8 4.34 8.34 4 8.75 4H11.25C11.66 4 12 4.34 12 4.75V6.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+        <path d='M8.75 9.25V13.25M11.25 9.25V13.25' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
       </svg>
     );
   }
 
   if (token.includes('draft')) {
     return (
-      <svg
-        viewBox='0 0 20 20'
-        fill='none'
-        className={className}
-        aria-hidden='true'
-      >
-        <path
-          d='M4.75 13.75L5.75 10.75L12.75 3.75L15.75 6.75L8.75 13.75L5.75 14.75L4.75 13.75Z'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M11.75 4.75L14.75 7.75'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
+      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+        <path d='M4.75 13.75L5.75 10.75L12.75 3.75L15.75 6.75L8.75 13.75L5.75 14.75L4.75 13.75Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
+        <path d='M11.75 4.75L14.75 7.75' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
       </svg>
     );
   }
 
   if (token.includes('sent')) {
     return (
-      <svg
-        viewBox='0 0 20 20'
-        fill='none'
-        className={className}
-        aria-hidden='true'
-      >
-        <path
-          d='M4 15.5L16 10L4 4.5L6.25 10L4 15.5Z'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M6.25 10H11.5'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
+      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+        <path d='M4 15.5L16 10L4 4.5L6.25 10L4 15.5Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
+        <path d='M6.25 10H11.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
       </svg>
     );
   }
 
   if (token.includes('archive')) {
     return (
-      <svg
-        viewBox='0 0 20 20'
-        fill='none'
-        className={className}
-        aria-hidden='true'
-      >
-        <rect
-          x='4'
-          y='5.5'
-          width='12'
-          height='10.5'
-          rx='1.5'
-          stroke='currentColor'
-          strokeWidth='1.5'
-        />
+      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+        <rect x='4' y='5.5' width='12' height='10.5' rx='1.5' stroke='currentColor' strokeWidth='1.5' />
         <path d='M4.5 7.5H15.5' stroke='currentColor' strokeWidth='1.5' />
-        <path
-          d='M8 11H12'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
+        <path d='M8 11H12' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
       </svg>
     );
   }
 
   if (token.includes('search')) {
     return (
-      <svg
-        viewBox='0 0 20 20'
-        fill='none'
-        className={className}
-        aria-hidden='true'
-      >
-        <path
-          d='M8.5 13.5C11.2614 13.5 13.5 11.2614 13.5 8.5C13.5 5.73858 11.2614 3.5 8.5 3.5C5.73858 3.5 3.5 5.73858 3.5 8.5C3.5 11.2614 5.73858 13.5 8.5 13.5Z'
-          stroke='currentColor'
-          strokeWidth='1.5'
-        />
-        <path
-          d='M12.25 12.25L16.5 16.5'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
+      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+        <path d='M8.5 13.5C11.2614 13.5 13.5 11.2614 13.5 8.5C13.5 5.73858 11.2614 3.5 8.5 3.5C5.73858 3.5 3.5 5.73858 3.5 8.5C3.5 11.2614 5.73858 13.5 8.5 13.5Z' stroke='currentColor' strokeWidth='1.5' />
+        <path d='M12.25 12.25L16.5 16.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
       </svg>
     );
   }
 
   if (token.includes('conversation')) {
     return (
-      <svg
-        viewBox='0 0 20 20'
-        fill='none'
-        className={className}
-        aria-hidden='true'
-      >
-        <path
-          d='M4 5.75C4 4.78 4.78 4 5.75 4H10.25C11.22 4 12 4.78 12 5.75V8.25C12 9.22 11.22 10 10.25 10H7L4.75 12V10C4.34 10 4 9.66 4 9.25V5.75Z'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M10 11H11.75C12.72 11 13.5 10.22 13.5 9.25V8.75L15.75 10.75H14.25C14.25 11.72 13.47 12.5 12.5 12.5H10'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
+      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+        <path d='M4 5.75C4 4.78 4.78 4 5.75 4H10.25C11.22 4 12 4.78 12 5.75V8.25C12 9.22 11.22 10 10.25 10H7L4.75 12V10C4.34 10 4 9.66 4 9.25V5.75Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
+        <path d='M10 11H11.75C12.72 11 13.5 10.22 13.5 9.25V8.75L15.75 10.75H14.25C14.25 11.72 13.47 12.5 12.5 12.5H10' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
       </svg>
     );
   }
 
   if (token.includes('junk')) {
     return (
-      <svg
-        viewBox='0 0 20 20'
-        fill='none'
-        className={className}
-        aria-hidden='true'
-      >
-        <path
-          d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M10.5 4.75V8H13.75'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
-        <path
-          d='M7 12.5L12.5 7'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-        />
+      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+        <path d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
+        <path d='M10.5 4.75V8H13.75' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+        <path d='M7 12.5L12.5 7' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
       </svg>
     );
   }
 
   return (
-    <svg
-      viewBox='0 0 20 20'
-      fill='none'
-      className={className}
-      aria-hidden='true'
-    >
-      <path
-        d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z'
-        stroke='currentColor'
-        strokeWidth='1.5'
-        strokeLinejoin='round'
-      />
-      <path
-        d='M10.5 4.75V8H13.75'
-        stroke='currentColor'
-        strokeWidth='1.5'
-        strokeLinecap='round'
-      />
+    <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
+      <path d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
+      <path d='M10.5 4.75V8H13.75' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
     </svg>
   );
 };
 
-const sanitizeSearchText = (value: string) =>
-  value
-    .replace(/[\r\n\t\0]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
 const Inbox = () => {
   const { accountid } = useParams();
-  const [selectedFolder, setSelectedFolder] =
-    useState<FlattenedMailboxFolder | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<FlattenedMailboxFolder | null>(
+    null
+  );
   const [selectedMessageId, setSelectedMessageId] = useState('');
   const [searchText, setSearchText] = useState('');
-  const deferredSearchText = useDeferredValue(sanitizeSearchText(searchText));
+  const [debouncedSearchText, setDebouncedSearchText] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText.trim());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+  const deferredSearchText = useDeferredValue(debouncedSearchText);
   const [pageToken, setPageToken] = useState<string | null>(null);
   const [messageItems, setMessageItems] = useState<InboxMessageListItem[]>([]);
   const [attachmentActionId, setAttachmentActionId] = useState('');
   const [folderPaneWidth, setFolderPaneWidth] = useState(280);
   const [messagePaneWidth, setMessagePaneWidth] = useState(390);
-  const [activeDivider, setActiveDivider] = useState<
-    'folders' | 'messages' | null
-  >(null);
+  const [activeDivider, setActiveDivider] = useState<'folders' | 'messages' | null>(null);
   const [isFolderPaneCollapsed, setIsFolderPaneCollapsed] = useState(false);
   const [filters, setFilters] = useState<MailboxFilters>({
     status: 'all',
@@ -460,12 +259,16 @@ const Inbox = () => {
     receivedFrom: '',
     receivedTo: '',
   });
-  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
-    null
-  );
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(null);
   const [isDesktopLayout, setIsDesktopLayout] = useState(
     () => typeof window !== 'undefined' && window.innerWidth >= 1024
   );
+  const [previewAttachment, setPreviewAttachment] = useState<{
+    name: string;
+    contentType: string;
+    objectUrl: string;
+    textContent?: string;
+  } | null>(null);
   const desktopLayoutRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{
     startX: number;
@@ -515,23 +318,11 @@ const Inbox = () => {
     }
   }, [folderData, selectedFolder]);
 
-  const [activeFolderId, setActiveFolderId] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const newFolderId = selectedFolder?.id;
-    if (newFolderId !== activeFolderId) {
-      setActiveFolderId(newFolderId);
-      setPageToken(null);
-      setMessageItems([]);
-      setSelectedMessageId('');
-    }
-  }, [selectedFolder?.id, activeFolderId]);
-
   useEffect(() => {
     setPageToken(null);
     setMessageItems([]);
     setSelectedMessageId('');
-  }, [deferredSearchText]);
+  }, [selectedFolder?.id, deferredSearchText]);
 
   useEffect(() => {
     setPageToken(null);
@@ -557,17 +348,13 @@ const Inbox = () => {
 
   useEffect(() => {
     if (!mailboxMessages) return;
-    if (mailboxMessages.selected_folder?.id && mailboxMessages.selected_folder.id !== selectedFolder?.id) return;
 
     setMessageItems((previous) =>
       pageToken
         ? [...previous, ...mailboxMessages.messages]
         : mailboxMessages.messages
     );
-  }, [mailboxMessages, pageToken, selectedFolder?.id]);
-
-  // Note: pageToken is already in the queryKey, so React Query will automatically
-  // trigger a new fetch when pageToken changes. No need to call refetchMessages().
+  }, [mailboxMessages, pageToken]);
 
   const filteredMessageItems = useMemo(() => {
     const fromFilter = normalizeFilterText(filters.from);
@@ -585,18 +372,13 @@ const Inbox = () => {
       }
 
       if (fromFilter) {
-        const senderText =
-          `${message.sender || ''} ${message.sender_email || ''}`.toLowerCase();
+        const senderText = `${message.sender || ''} ${message.sender_email || ''}`.toLowerCase();
         if (!senderText.includes(fromFilter)) return false;
       }
 
       if (toFilter) {
         const recipientsText = (message.to_recipients || [])
-          .map((recipient) =>
-            `${recipient.name || ''} ${recipient.email || ''}`
-              .trim()
-              .toLowerCase()
-          )
+          .map((recipient) => `${recipient.name || ''} ${recipient.email || ''}`.trim().toLowerCase())
           .join(' ');
         if (!recipientsText.includes(toFilter)) return false;
       }
@@ -630,8 +412,7 @@ const Inbox = () => {
   }, [filteredMessageItems, selectedMessageId]);
 
   const selectedListMessage = useMemo(
-    () =>
-      filteredMessageItems.find((message) => message.id === selectedMessageId),
+    () => filteredMessageItems.find((message) => message.id === selectedMessageId),
     [filteredMessageItems, selectedMessageId]
   );
 
@@ -640,23 +421,6 @@ const Inbox = () => {
     isLoading: isMessageLoading,
     isError: isMessageError,
   } = useInboxMessageById(accountid || '', selectedMessageId);
-
-  const formattedMessageBody = useMemo(() => {
-    if (!messageDetails) return '';
-
-    return (
-      messageDetails.body.content ||
-      messageDetails.body_preview ||
-      'No content available'
-    );
-  }, [messageDetails]);
-
-  const sanitizedHtmlMessageBody = useMemo(() => {
-    if (!messageDetails) return '';
-    if (messageDetails.body.content_type?.toLowerCase() !== 'html') return '';
-
-    return sanitizeHtml(messageDetails.body.content || '');
-  }, [messageDetails]);
 
   useEffect(() => {
     const syncDesktopLayout = () => {
@@ -685,41 +449,19 @@ const Inbox = () => {
    * - `recipients`: optional list of recipient name/email pairs.
    *
    * Output:
-   * - Returns a compact preview with a tooltip that exposes the full recipient list.
+   * - Returns a comma-separated string or `-` when no recipients exist.
    */
   const renderRecipientList = (
     recipients: { name: string; email: string }[] | undefined
   ) => {
     if (!recipients?.length) return '-';
-
-    const formattedRecipients = recipients.map((recipient) =>
-      recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email || '-'
-    );
-    const previewRecipients = formattedRecipients.slice(0, 3);
-    const remainingCount = formattedRecipients.length - previewRecipients.length;
-    const previewText = previewRecipients.join(', ');
-    const fullRecipientText = formattedRecipients.join('\n');
-
-    return (
-      <Tooltip
-        title={
-          <div className='max-w-[420px] whitespace-pre-wrap break-words text-[12px] leading-5'>
-            {fullRecipientText}
-          </div>
-        }
-        placement='top-start'
-        arrow
-      >
-        <span className='inline cursor-help break-words'>
-          {previewText}
-          {remainingCount > 0 ? (
-            <span className='font-medium text-[#0F6CBD]'>
-              {` +${remainingCount} more`}
-            </span>
-          ) : null}
-        </span>
-      </Tooltip>
-    );
+    return recipients
+      .map((recipient) =>
+        recipient.name
+          ? `${recipient.name} <${recipient.email}>`
+          : recipient.email || '-'
+      )
+      .join(', ');
   };
 
   /**
@@ -744,6 +486,26 @@ const Inbox = () => {
   };
 
   /**
+   * Determines whether an attachment can be previewed inline in the mailbox UI.
+   *
+   * Input:
+   * - `contentType`: attachment MIME type.
+   *
+   * Output:
+   * - Returns `true` for previewable image, PDF, text, and JSON files.
+   */
+  const isInlinePreviewable = (contentType: string) => {
+    const normalizedType = contentType.toLowerCase();
+
+    return (
+      normalizedType.startsWith('image/') ||
+      normalizedType === 'application/pdf' ||
+      normalizedType.startsWith('text/') ||
+      normalizedType.includes('json')
+    );
+  };
+
+  /**
    * Loads a mailbox attachment and either previews or downloads it.
    *
    * Input:
@@ -757,7 +519,7 @@ const Inbox = () => {
   const handleAttachmentAction = async (
     attachmentId: string,
     attachmentName: string,
-    action: 'download'
+    action: 'view' | 'download'
   ) => {
     if (!accountid || !selectedMessageId) return;
 
@@ -774,7 +536,35 @@ const Inbox = () => {
       );
       const objectUrl = window.URL.createObjectURL(blob);
 
-      // Download the attachment
+      if (action === 'view') {
+        if (isInlinePreviewable(attachment.content_type)) {
+          const previewData: {
+            name: string;
+            contentType: string;
+            objectUrl: string;
+            textContent?: string;
+          } = {
+            name: attachment.name,
+            contentType: attachment.content_type,
+            objectUrl,
+          };
+
+          if (
+            attachment.content_type.toLowerCase().startsWith('text/') ||
+            attachment.content_type.toLowerCase().includes('json')
+          ) {
+            previewData.textContent = await blob.text();
+          }
+
+          setPreviewAttachment(previewData);
+          return;
+        }
+
+        window.open(objectUrl, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60_000);
+        return;
+      }
+
       const link = document.createElement('a');
       link.href = objectUrl;
       link.download = attachmentName;
@@ -796,6 +586,20 @@ const Inbox = () => {
    * Output:
    * - Clears the preview state and revokes the browser object URL when present.
    */
+  const closePreview = () => {
+    if (previewAttachment?.objectUrl) {
+      window.URL.revokeObjectURL(previewAttachment.objectUrl);
+    }
+    setPreviewAttachment(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewAttachment?.objectUrl) {
+        window.URL.revokeObjectURL(previewAttachment.objectUrl);
+      }
+    };
+  }, [previewAttachment]);
 
   useEffect(() => {
     if (!activeDivider || !isDesktopLayout) return;
@@ -860,8 +664,8 @@ const Inbox = () => {
     () =>
       isDesktopLayout
         ? {
-          gridTemplateColumns: `${isFolderPaneCollapsed ? 58 : folderPaneWidth}px 10px ${messagePaneWidth}px 10px minmax(360px, 1fr)`,
-        }
+            gridTemplateColumns: `${isFolderPaneCollapsed ? 58 : folderPaneWidth}px 10px ${messagePaneWidth}px 10px minmax(360px, 1fr)`,
+          }
         : undefined,
     [folderPaneWidth, isFolderPaneCollapsed, messagePaneWidth, isDesktopLayout]
   );
@@ -875,10 +679,11 @@ const Inbox = () => {
           <button
             type='button'
             onClick={() => setSelectedFolder(folder)}
-            className={`flex min-h-[36px] w-full items-center justify-center rounded-[10px] transition-colors ${active
+            className={`flex min-h-[36px] w-full items-center justify-center rounded-[10px] transition-colors ${
+              active
                 ? 'bg-[#D8E9FB] text-[#0B57A3]'
                 : 'text-[#3A4A5B] hover:bg-[#EDF3FA]'
-              }`}
+            }`}
             style={{
               marginLeft: '6px',
               marginRight: '8px',
@@ -898,19 +703,18 @@ const Inbox = () => {
         key={folder.id}
         type='button'
         onClick={() => setSelectedFolder(folder)}
-        className={`flex min-h-[36px] w-full items-center gap-2 rounded-[6px] px-3 py-1.5 text-left text-[14px] leading-5 transition-colors ${active
+        className={`flex min-h-[36px] w-full items-center gap-2 rounded-[6px] px-3 py-1.5 text-left text-[14px] leading-5 transition-colors ${
+          active
             ? 'bg-[#CFE5FF] font-medium text-[#1B1B1B]'
             : 'text-[#2C2C2C] hover:bg-[#F3F6FA]'
-          }`}
+        }`}
         style={{
           marginLeft: `${12 + folder.level * 16}px`,
           marginRight: '12px',
         }}
         title={folder.name}
       >
-        <span className='flex-shrink-0 text-[#5F6368]'>
-          {renderFolderIcon(folder)}
-        </span>
+        <span className='flex-shrink-0 text-[#5F6368]'>{renderFolderIcon(folder)}</span>
         <span className='min-w-0 truncate'>{folder.name}</span>
       </button>
     );
@@ -931,9 +735,7 @@ const Inbox = () => {
             <p className='text-[12px] font-semibold text-[#202124]'>{title}</p>
           </div>
         ) : null}
-        <div
-          className={isFolderPaneCollapsed ? 'space-y-1 px-1' : 'space-y-0.5'}
-        >
+        <div className={isFolderPaneCollapsed ? 'space-y-1 px-1' : 'space-y-0.5'}>
           {folders.map(renderFolder)}
         </div>
       </div>
@@ -948,18 +750,20 @@ const Inbox = () => {
         key={message.id}
         type='button'
         onClick={() => setSelectedMessageId(message.id)}
-        className={`w-full border-b border-[#E7ECF2] px-3 py-2.5 text-left transition-colors ${isSelected
+        className={`w-full border-b border-[#E7ECF2] px-3 py-2.5 text-left transition-colors ${
+          isSelected
             ? 'border-l-4 border-l-[#0F6CBD] bg-[#EAF3FF] pl-2'
             : message.is_read
               ? 'bg-white hover:bg-[#F8FAFD]'
               : 'bg-[#F8FBFF] hover:bg-[#EEF5FC]'
-          }`}
+        }`}
       >
         <div className='mb-0.5 flex items-start justify-between gap-2'>
           <div className='min-w-0 flex-1'>
             <p
-              className={`truncate text-[13px] leading-5 ${message.is_read ? 'font-medium' : 'font-semibold'
-                } text-[#16202A]`}
+              className={`truncate text-[13px] leading-5 ${
+                message.is_read ? 'font-medium' : 'font-semibold'
+              } text-[#16202A]`}
             >
               {message.sender || message.sender_email || '-'}
             </p>
@@ -995,12 +799,6 @@ const Inbox = () => {
     );
   };
 
-  const today = new Date();
-  const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
-    2,
-    '0'
-  )}-${String(today.getDate()).padStart(2, '0')}`;
-
   const showInitialLoading = isFolderLoading || (!selectedFolder && isMessagesLoading);
   const activeFilterCount = [
     filters.status !== 'all',
@@ -1011,7 +809,6 @@ const Inbox = () => {
     Boolean(filters.receivedFrom),
     Boolean(filters.receivedTo),
   ].filter(Boolean).length;
-
   const mailboxErrorMessage =
     (
       (folderError as AxiosError<{ statusMessage?: string }>)?.response?.data
@@ -1020,19 +817,15 @@ const Inbox = () => {
         ?.statusMessage
     )?.trim() || 'Unable to load the mailbox for this account.';
 
-  // Check if error is due to missing email configuration
-  const isNoEmailConfigError = mailboxErrorMessage
-    ?.toLowerCase()
-    .includes('email configuration');
-
   return (
-    <div className='max-h-[calc(100vh-235px)] h-full w-full overflow-hidden p-2 pr-4'>
-      <div className='flex h-full w-full flex-col overflow-hidden rounded-[6px] border border-[#CBD6E2] bg-white shadow-[0_10px_32px_rgba(15,23,42,0.06)]'>
+    <div className='flex min-h-0 flex-1 w-full overflow-hidden p-2 pr-4' style={{ height: 'calc(100vh - 235px)', minHeight: '400px' }}>
+      <div className='flex h-full flex-col overflow-hidden rounded-[6px] border border-[#CBD6E2] bg-white shadow-[0_10px_32px_rgba(15,23,42,0.06)]'>
         <div className='flex h-[49px] items-center justify-between border-b border-[#CBD6E2] bg-white px-4'>
           <div className='flex min-w-0 items-center gap-2'>
             <DraftEmailIcon className='h-7 w-7 rounded-[2px] bg-[#0F6CBD] p-1 text-white' />
             <div className='min-w-0'>
               <p className='truncate text-[14px] font-semibold text-[#253240]'>Mailbox</p>
+              <p className='truncate text-[11px] text-[#5E6B78]'>{filteredMessageItems.length} items</p>
             </div>
           </div>
           <div className='ml-4 flex items-center gap-2'>
@@ -1043,30 +836,10 @@ const Inbox = () => {
                 className='inline-flex h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[4px] border border-[#C3CFDB] bg-white px-3 text-[12px] font-medium text-[#344054] transition-colors hover:bg-[#F8FAFC]'
                 aria-label='Filter messages'
               >
-                <svg
-                  viewBox='0 0 20 20'
-                  fill='none'
-                  className='h-4 w-4 text-[#5E6B78]'
-                  aria-hidden='true'
-                >
-                  <path
-                    d='M4 5H16'
-                    stroke='currentColor'
-                    strokeWidth='1.5'
-                    strokeLinecap='round'
-                  />
-                  <path
-                    d='M6.5 10H13.5'
-                    stroke='currentColor'
-                    strokeWidth='1.5'
-                    strokeLinecap='round'
-                  />
-                  <path
-                    d='M8.75 15H11.25'
-                    stroke='currentColor'
-                    strokeWidth='1.5'
-                    strokeLinecap='round'
-                  />
+                <svg viewBox='0 0 20 20' fill='none' className='h-4 w-4 text-[#5E6B78]' aria-hidden='true'>
+                  <path d='M4 5H16' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+                  <path d='M6.5 10H13.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+                  <path d='M8.75 15H11.25' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
                 </svg>
                 <span className='hidden sm:inline'>Filter</span>
                 {activeFilterCount ? (
@@ -1082,6 +855,8 @@ const Inbox = () => {
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder='Search'
+                autoComplete='off'
+                spellCheck={false}
                 className='w-full border-0 bg-transparent text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
               />
             </div>
@@ -1106,9 +881,7 @@ const Inbox = () => {
           }}
         >
           <div className='border-b border-[#E5EAF0] px-4 py-3'>
-            <p className='text-[13px] font-semibold text-[#16202A]'>
-              Filter mailbox
-            </p>
+            <p className='text-[13px] font-semibold text-[#16202A]'>Filter mailbox</p>
             <p className='mt-1 text-[11px] text-[#5E6B78]'>
               Narrow the current folder like Outlook.
             </p>
@@ -1124,15 +897,13 @@ const Inbox = () => {
                     key={option.key}
                     type='button'
                     onClick={() =>
-                      setFilters((current) => ({
-                        ...current,
-                        status: option.key,
-                      }))
+                      setFilters((current) => ({ ...current, status: option.key }))
                     }
-                    className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${filters.status === option.key
+                    className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                      filters.status === option.key
                         ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
                         : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
-                      }`}
+                    }`}
                   >
                     {option.label}
                   </button>
@@ -1146,10 +917,7 @@ const Inbox = () => {
                 <input
                   value={filters.from}
                   onChange={(event) =>
-                    setFilters((current) => ({
-                      ...current,
-                      from: event.target.value,
-                    }))
+                    setFilters((current) => ({ ...current, from: event.target.value }))
                   }
                   placeholder='Sender name or email'
                   className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
@@ -1160,10 +928,7 @@ const Inbox = () => {
                 <input
                   value={filters.to}
                   onChange={(event) =>
-                    setFilters((current) => ({
-                      ...current,
-                      to: event.target.value,
-                    }))
+                    setFilters((current) => ({ ...current, to: event.target.value }))
                   }
                   placeholder='Recipient name or email'
                   className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
@@ -1177,7 +942,6 @@ const Inbox = () => {
                 <input
                   type='date'
                   value={filters.receivedFrom}
-                  max={todayDateString}
                   onChange={(event) =>
                     setFilters((current) => ({
                       ...current,
@@ -1192,7 +956,6 @@ const Inbox = () => {
                 <input
                   type='date'
                   value={filters.receivedTo}
-                  max={todayDateString}
                   onChange={(event) =>
                     setFilters((current) => ({
                       ...current,
@@ -1213,10 +976,11 @@ const Inbox = () => {
                     hasAttachments: !current.hasAttachments,
                   }))
                 }
-                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${filters.hasAttachments
+                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                  filters.hasAttachments
                     ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
                     : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
-                  }`}
+                }`}
               >
                 Has attachments
               </button>
@@ -1228,10 +992,11 @@ const Inbox = () => {
                     highImportance: !current.highImportance,
                   }))
                 }
-                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${filters.highImportance
+                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                  filters.highImportance
                     ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
                     : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
-                  }`}
+                }`}
               >
                 High importance
               </button>
@@ -1272,24 +1037,9 @@ const Inbox = () => {
             <CircularProgress size={28} />
           </div>
         ) : isFolderError || isMessagesError ? (
-          isNoEmailConfigError ? (
-            <div className='flex h-full flex-col'>
-              <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
-                <div className='h-5 w-5 rounded-full bg-[#D32F2F] flex items-center justify-center flex-shrink-0'>
-                  <span className='text-white text-xs font-bold'>!</span>
-                </div>
-                <p className='text-[14px] font-medium text-[#B71C1C]'>
-                  Email isn't configured for this account. Configure it in
-                  Account Settings.
-                </p>
-              </div>
-              <div className='flex-1 bg-[#FAFAFA]' />
-            </div>
-          ) : (
-            <div className='p-4 text-sm text-[#B42318]'>
-              {mailboxErrorMessage}
-            </div>
-          )
+          <div className='p-4 text-sm text-[#B42318]'>
+            {mailboxErrorMessage}
+          </div>
         ) : (
           <div
             ref={desktopLayoutRef}
@@ -1297,40 +1047,24 @@ const Inbox = () => {
             style={desktopLayoutStyle}
           >
             <aside className='flex min-h-0 flex-col bg-[#F7F9FC]'>
-              <div
-                className={`flex h-[56px] border-b border-[#E5EAF0] bg-[#FDFEFF] ${isFolderPaneCollapsed ? 'px-2' : 'px-3'}`}
-              >
-                <div
-                  className={`flex w-full items-center ${isFolderPaneCollapsed ? 'justify-center' : 'justify-between'} gap-2`}
-                >
+              <div className={`flex h-[56px] border-b border-[#E5EAF0] bg-[#FDFEFF] ${isFolderPaneCollapsed ? 'px-2' : 'px-3'}`}>
+                <div className={`flex w-full items-center ${isFolderPaneCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
                   {!isFolderPaneCollapsed ? (
                     <div className='min-w-0 flex-1'>
-                      <p className='text-[13px] font-semibold text-[#202124]'>
-                        Folders
-                      </p>
+                      <p className='text-[13px] font-semibold text-[#202124]'>Folders</p>
                     </div>
                   ) : null}
                   {isDesktopLayout ? (
                     <Tooltip
-                      title={
-                        isFolderPaneCollapsed
-                          ? 'Expand folders'
-                          : 'Collapse folders'
-                      }
+                      title={isFolderPaneCollapsed ? 'Expand folders' : 'Collapse folders'}
                       placement='bottom'
                       arrow
                     >
                       <button
                         type='button'
-                        onClick={() =>
-                          setIsFolderPaneCollapsed((current) => !current)
-                        }
+                        onClick={() => setIsFolderPaneCollapsed((current) => !current)}
                         className={`inline-flex items-center justify-center rounded-[6px] text-[#5E6B78] transition-colors hover:bg-[#EEF3F8] hover:text-[#253240] ${isFolderPaneCollapsed ? 'h-8 w-8' : 'h-7 w-7'}`}
-                        aria-label={
-                          isFolderPaneCollapsed
-                            ? 'Expand folders'
-                            : 'Collapse folders'
-                        }
+                        aria-label={isFolderPaneCollapsed ? 'Expand folders' : 'Collapse folders'}
                       >
                         <ChevronLeftIcon
                           className={`h-4 w-4 transition-transform ${isFolderPaneCollapsed ? 'rotate-180' : ''}`}
@@ -1340,18 +1074,14 @@ const Inbox = () => {
                   ) : null}
                 </div>
               </div>
-              <div
-                className={`min-h-0 overflow-y-auto overflow-x-hidden ${isFolderPaneCollapsed ? 'py-2' : 'py-1.5'}`}
-              >
+              <div className={`min-h-0 overflow-y-auto overflow-x-hidden ${isFolderPaneCollapsed ? 'py-2' : 'py-1.5'}`}>
                 {flatFolders.length ? (
                   <>
                     {renderFolderGroup('Favorites', favoriteFolders)}
                     {renderFolderGroup(
                       (folderData?.support_email || 'Mailbox').split('@')[0],
                       regularFolders,
-                      !isFolderPaneCollapsed
-                        ? 'border-t border-[#EDF2F7] mt-2'
-                        : 'mt-3'
+                      !isFolderPaneCollapsed ? 'border-t border-[#EDF2F7] mt-2' : 'mt-3'
                     )}
                   </>
                 ) : (
@@ -1376,20 +1106,22 @@ const Inbox = () => {
                 };
                 setActiveDivider('folders');
               }}
-              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${isFolderPaneCollapsed
+              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${
+                isFolderPaneCollapsed
                   ? 'cursor-default bg-[#F7F9FC]'
                   : activeDivider === 'folders'
                     ? 'bg-[#DCEBFA]'
                     : 'bg-[#F3F6FA]'
-                }`}
+              }`}
             >
               <div
-                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${isFolderPaneCollapsed
+                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${
+                  isFolderPaneCollapsed
                     ? 'bg-[#E2E8F0]'
                     : activeDivider === 'folders'
-                      ? 'bg-[#7DB2E8]'
-                      : 'bg-[#D5DFEA] group-hover:bg-[#A9CDED]'
-                  }`}
+                    ? 'bg-[#7DB2E8]'
+                    : 'bg-[#D5DFEA] group-hover:bg-[#A9CDED]'
+                }`}
               />
             </div>
 
@@ -1398,6 +1130,10 @@ const Inbox = () => {
                 <div className='min-w-0'>
                   <p className='text-[14px] font-semibold text-[#16202A]'>
                     {selectedFolder?.name || 'Messages'}
+                  </p>
+                  <p className='truncate text-[11px] text-[#5E6B78]'>
+                    {filteredMessageItems.length}
+                    {activeFilterCount ? ' filtered' : ' loaded'}
                   </p>
                 </div>
               </div>
@@ -1415,12 +1151,8 @@ const Inbox = () => {
               <div className='border-t border-[#E5EAF0] bg-[#F8FAFC] p-3'>
                 <button
                   type='button'
-                  disabled={
-                    !mailboxMessages?.next_page_token || isMessagesLoading
-                  }
-                  onClick={() =>
-                    setPageToken(mailboxMessages?.next_page_token || null)
-                  }
+                  disabled={!mailboxMessages?.next_page_token || isMessagesLoading}
+                  onClick={() => setPageToken(mailboxMessages?.next_page_token || null)}
                   className='w-full rounded-[4px] border border-[#CBD6E2] bg-white px-3 py-2 text-[13px] font-medium text-[#16202A] disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   {isMessagesLoading && pageToken ? 'Loading...' : 'Load More'}
@@ -1441,14 +1173,16 @@ const Inbox = () => {
                 };
                 setActiveDivider('messages');
               }}
-              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${activeDivider === 'messages' ? 'bg-[#DCEBFA]' : 'bg-[#F3F6FA]'
-                }`}
+              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${
+                activeDivider === 'messages' ? 'bg-[#DCEBFA]' : 'bg-[#F3F6FA]'
+              }`}
             >
               <div
-                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${activeDivider === 'messages'
+                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${
+                  activeDivider === 'messages'
                     ? 'bg-[#7DB2E8]'
                     : 'bg-[#D5DFEA] group-hover:bg-[#A9CDED]'
-                  }`}
+                }`}
               />
             </div>
 
@@ -1457,12 +1191,9 @@ const Inbox = () => {
                 <div className='flex h-full min-h-0 flex-col items-center justify-center gap-3 bg-[#FCFDFE] text-sm text-[#5E6B78]'>
                   <InteractionDetailIcon className='h-12 w-12 rounded-[14px] bg-[#E8F1FB] p-2.5 text-[#0F6CBD]' />
                   <div className='text-center'>
-                    <p className='text-[15px] font-semibold text-[#16202A]'>
-                      Select an email to open
-                    </p>
+                    <p className='text-[15px] font-semibold text-[#16202A]'>Select an email to open</p>
                     <p className='mt-1 text-[12px] text-[#5E6B78]'>
-                      The reading pane will display the full message and
-                      attachments here.
+                      The reading pane will display the full message and attachments here.
                     </p>
                   </div>
                 </div>
@@ -1475,65 +1206,77 @@ const Inbox = () => {
                   Unable to load the selected email.
                 </div>
               ) : (
-                <div className='flex h-full min-h-0 min-w-0 flex-col bg-white'>
-                  <div className='flex min-h-[56px] min-w-0 items-center border-b border-[#E5EAF0] bg-[#FBFCFE] px-5 py-3'>
+                <div className='flex h-full min-h-0 flex-col bg-white'>
+                  <div className='flex min-h-[48px] flex-shrink-0 flex-wrap items-center border-b border-[#E5EAF0] bg-[#FBFCFE] px-5 py-2'>
                     <h2 className='min-w-0 break-words text-[18px] font-semibold text-[#16202A]'>
                       {messageDetails.subject || '(No Subject)'}
                     </h2>
                   </div>
 
-                  <div className='min-h-0 min-w-0 flex-1 overflow-auto bg-[#FFFFFF]'>
-                    <div className='m-3 flex min-h-full min-w-0 flex-col rounded-[4px] border border-[#D9E2EC] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]'>
-                      <div className='border-b border-[#E5EAF0] px-4 py-3'>
-                        <div className='mb-2 flex flex-wrap items-start justify-between gap-3'>
-                          <div className='flex min-w-0 flex-1 items-start gap-3'>
-                            <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#B8D8F7] text-[12px] font-semibold text-[#1D4F91]'>
-                              {(messageDetails.sender || messageDetails.sender_email || 'M')
-                                .split(' ')
-                                .filter(Boolean)
-                                .slice(0, 2)
-                                .map((part) => part.charAt(0).toUpperCase())
-                                .join('')}
-                            </div>
-                            <div className='min-w-0 flex-1'>
-                              <p className='break-words text-[13px] font-medium text-[#16202A]'>
-                                {messageDetails.sender || '-'}
-                              </p>
-                              <p className='break-all text-[12px] text-[#5E6B78]'>
-                                {messageDetails.sender_email || ''}
-                              </p>
-                            </div>
+                  <div className='min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#FFFFFF] p-4'>
+                    <div className='min-h-full rounded-[4px] border border-[#D9E2EC] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]'>
+                      <div className='flex items-start justify-between gap-4 px-3 py-2.5'>
+                        <div className='flex min-w-0 items-start gap-3'>
+                          <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#B8D8F7] text-[12px] font-semibold text-[#1D4F91]'>
+                            {(messageDetails.sender || messageDetails.sender_email || 'M')
+                              .split(' ')
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((part) => part.charAt(0).toUpperCase())
+                              .join('')}
                           </div>
-                          <p className='shrink-0 text-[11px] text-[#5E6B78]'>
+                          <div className='min-w-0 text-[13px] text-[#16202A]'>
+                            <p className='truncate'>
+                              {messageDetails.sender || '-'}
+                              {messageDetails.sender_email
+                                ? ` <${messageDetails.sender_email}>`
+                                : ''}
+                            </p>
+                            <p className='mt-0.5 truncate text-[12px] text-[#253240]'>
+                              <span className='font-medium'>To:</span>{' '}
+                              {renderRecipientList(messageDetails.to_recipients)}
+                            </p>
+                            <p className='mt-0.5 truncate text-[12px] text-[#253240]'>
+                              <span className='font-medium'>Cc:</span>{' '}
+                              {renderRecipientList(messageDetails.cc_recipients)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className='flex shrink-0 flex-col items-end gap-2'>
+                          <p className='text-[11px] text-[#5E6B78]'>
                             {formatDateToYYYYMMDDWithTime(
                               messageDetails.received_datetime
                             )}
                           </p>
                         </div>
-                        <div className='min-w-0 space-y-1 text-[12px] text-[#253240]'>
-                          <p className='break-words'>
-                            <span className='font-medium'>To:</span>{' '}
-                            {renderRecipientList(messageDetails.to_recipients)}
-                          </p>
-                          <p className='break-words'>
-                            <span className='font-medium'>Cc:</span>{' '}
-                            {renderRecipientList(messageDetails.cc_recipients)}
-                          </p>
-                        </div>
                       </div>
 
-                      <div className='min-h-0 min-w-0 flex-1 overflow-auto px-4 py-3'>
+                        <div className='px-4 pb-4 pt-2'>
                         {messageDetails.attachments?.length ? (
-                          <div className='mb-3 flex flex-wrap gap-2'>
+                          <div className='mb-4 flex flex-wrap gap-2'>
                             {messageDetails.attachments.map((attachment) => (
                               <div
                                 key={attachment.id}
-                                className='flex min-w-0 max-w-full flex-wrap items-center gap-2 rounded-[18px] border border-[#D6DEE8] bg-[#F8FAFC] px-3 py-1.5 text-[12px] text-[#16202A]'
+                                className='flex items-center gap-2 rounded-full border border-[#D6DEE8] bg-[#F8FAFC] px-3 py-1.5 text-[12px] text-[#16202A]'
                               >
-                                <PaperclipIcon className='h-3.5 w-3.5 shrink-0' />
-                                <span className='min-w-0 break-all'>
-                                  {attachment.name}
-                                </span>
+                                <PaperclipIcon className='h-3.5 w-3.5' />
+                                <span>{attachment.name}</span>
+                                <button
+                                  type='button'
+                                  onClick={() =>
+                                    handleAttachmentAction(
+                                      attachment.id,
+                                      attachment.name,
+                                      'view'
+                                    )
+                                  }
+                                  disabled={attachmentActionId !== ''}
+                                  className='rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#0F6CBD] disabled:opacity-50'
+                                >
+                                  {attachmentActionId === `${attachment.id}-view`
+                                    ? 'Opening...'
+                                    : 'View'}
+                                </button>
                                 <button
                                   type='button'
                                   onClick={() =>
@@ -1544,10 +1287,9 @@ const Inbox = () => {
                                     )
                                   }
                                   disabled={attachmentActionId !== ''}
-                                  className='shrink-0 rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#16202A] disabled:opacity-50'
+                                  className='rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#16202A] disabled:opacity-50'
                                 >
-                                  {attachmentActionId ===
-                                    `${attachment.id}-download`
+                                  {attachmentActionId === `${attachment.id}-download`
                                     ? 'Downloading...'
                                     : 'Download'}
                                 </button>
@@ -1556,22 +1298,21 @@ const Inbox = () => {
                           </div>
                         ) : null}
 
-                        <div className='min-h-[420px] w-full min-w-0 flex-1 rounded-[4px] bg-white'>
-                          {messageDetails.body.content_type?.toLowerCase() === 'html' ? (
-                            <div
-                              className='h-full w-full overflow-auto whitespace-normal break-words text-[13px] leading-6 text-[#16202A] [&>*]:m-0 [&>*+*]:mt-3 [&_a]:break-all [&_a]:text-[#0F6CBD] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-[#CBD6E2] [&_blockquote]:pl-3 [&_blockquote]:italic [&_code]:rounded [&_code]:bg-[#F3F4F6] [&_code]:px-1 [&_code]:font-mono [&_img]:max-w-full [&_img]:rounded [&_li]:ml-5 [&_ol]:list-decimal [&_p]:whitespace-pre-wrap [&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-[#F8FAFC] [&_pre]:p-3 [&_pre]:font-mono [&_table]:block [&_table]:max-w-full [&_table]:overflow-auto [&_table]:border-collapse [&_table]:border [&_td]:border [&_td]:border-[#D6DEE8] [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-[#D6DEE8] [&_th]:bg-[#F8FAFC] [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc'
-                              dangerouslySetInnerHTML={{
-                                __html: sanitizedHtmlMessageBody || '<p>No content available</p>',
-                              }}
-                            />
-                          ) : (
-                            <div className='h-full w-full overflow-auto whitespace-pre-wrap break-words font-sans text-[13px] leading-6 text-[#16202A]'>
-                              {renderTextWithLinks(
-                                formattedMessageBody || 'No content available'
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        {messageDetails.body.content_type?.toLowerCase() ===
+                        'html' ? (
+                          <iframe
+                            title='inbox-message-body'
+                            srcDoc={messageDetails.body.content || ''}
+                            sandbox='allow-same-origin allow-popups allow-popups-to-escape-sandbox'
+                            className='w-full min-h-[400px] rounded-[4px] bg-white'
+                          />
+                        ) : (
+                          <pre className='w-full min-h-[400px] overflow-auto whitespace-pre-wrap break-words rounded-[4px] bg-white font-sans text-[13px] leading-6 text-[#16202A]'>
+                            {messageDetails.body.content ||
+                              messageDetails.body_preview ||
+                              'No content available'}
+                          </pre>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1581,6 +1322,40 @@ const Inbox = () => {
           </div>
         )}
       </div>
+
+      <Dialog
+        open={Boolean(previewAttachment)}
+        onClose={closePreview}
+        maxWidth='lg'
+        fullWidth
+      >
+        <DialogTitle className='border-b border-[#E5EAF0] text-[16px] font-semibold text-[#16202A]'>
+          {previewAttachment?.name || 'Attachment Preview'}
+        </DialogTitle>
+        <DialogContent className='bg-[#F7F9FC] p-0'>
+          {!previewAttachment ? null : previewAttachment.contentType
+              .toLowerCase()
+              .startsWith('image/') ? (
+            <div className='flex min-h-[70vh] items-center justify-center p-6'>
+              <img
+                src={previewAttachment.objectUrl}
+                alt={previewAttachment.name}
+                className='max-h-[65vh] max-w-full rounded-[8px] border border-[#D8E1EB] bg-white object-contain shadow-[0_1px_2px_rgba(16,24,40,0.08)]'
+              />
+            </div>
+          ) : previewAttachment.contentType.toLowerCase() === 'application/pdf' ? (
+            <iframe
+              title='attachment-preview'
+              src={previewAttachment.objectUrl}
+              className='min-h-[75vh] w-full bg-white'
+            />
+          ) : (
+            <pre className='min-h-[75vh] overflow-auto whitespace-pre-wrap break-words bg-white p-6 font-mono text-[13px] text-[#16202A]'>
+              {previewAttachment.textContent || 'Preview unavailable'}
+            </pre>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
