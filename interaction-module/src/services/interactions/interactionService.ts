@@ -4889,22 +4889,85 @@ export class InteractionService {
   private getCalendarRange(startDate?: string, endDate?: string) {
     const start = startDate ? new Date(startDate) : new Date();
     const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
-    safeStart.setHours(0, 0, 0, 0);
 
     const end = endDate ? new Date(endDate) : new Date(safeStart);
     if (!endDate) {
       end.setDate(end.getDate() + 30);
     }
-    let safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
-    if (safeEnd < safeStart) {
-      safeEnd = new Date(safeStart);
-    }
-    safeEnd.setHours(23, 59, 59, 999);
+    const safeEnd = Number.isNaN(end.getTime()) ? new Date(safeStart) : end;
 
     return {
       start: safeStart.toISOString(),
-      end: safeEnd.toISOString(),
+      end: safeEnd < safeStart ? safeStart.toISOString() : safeEnd.toISOString(),
     };
+  }
+
+  /**
+   * Normalizes user-entered Microsoft Graph search text.
+   *
+   * Input:
+   * - `searchText`: raw search text from the UI.
+   *
+   * Output:
+   * - Returns a broad search query with parser-breaking quote characters removed,
+   *   without forcing exact-phrase matching.
+   */
+  private buildGraphSearchQuery(searchText: string) {
+    return searchText
+      .replace(/[\r\n\t\0]+/g, " ")
+      .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  /**
+   * Normalizes mailbox search text for case-insensitive substring matching.
+   *
+   * Input:
+   * - `value`: raw message/search text.
+   *
+   * Output:
+   * - Returns a compact lowercase string with punctuation spacing normalized.
+   */
+  private normalizeMailboxSearchText(value?: string | null) {
+    return (value || "")
+      .replace(/[\r\n\t\0]+/g, " ")
+      .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, " ")
+      .replace(/[^\w\s@.\-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 200)
+      .toLowerCase();
+  }
+
+  /**
+   * Checks whether a mailbox message matches the provided search text.
+   *
+   * Input:
+   * - `message`: normalized mailbox message payload.
+   * - `searchText`: raw search text from the UI.
+   *
+   * Output:
+   * - Returns `true` when the search text is found in subject, sender, recipients, or preview text.
+   */
+  private mailboxMessageMatchesSearch(message: any, searchText?: string) {
+    const normalizedSearch = this.normalizeMailboxSearchText(searchText);
+    if (!normalizedSearch) return true;
+
+    const haystack = this.normalizeMailboxSearchText(
+      [
+        message.subject || "",
+        message.from?.emailAddress?.name || "",
+        message.from?.emailAddress?.address || "",
+        ...(message.toRecipients || []).map(
+          (recipient: any) =>
+            `${recipient?.emailAddress?.name || ""} ${recipient?.emailAddress?.address || ""}`
+        ),
+        message.bodyPreview || "",
+      ].join(" ")
+    );
+
+    return haystack.includes(normalizedSearch);
   }
 
   /**
@@ -5156,17 +5219,21 @@ export class InteractionService {
     pageToken?: string;
     search?: string;
   }) {
+    let supportEmail = "";
+    let selectedFolder = null;
+
     try {
-      const { supportEmail, tenantId, clientId, clientSecret } =
-        await this.getMailboxSettings(data.account_rid);
+      const mailboxSettings = await this.getMailboxSettings(data.account_rid);
+      supportEmail = mailboxSettings.supportEmail;
+      const { tenantId, clientId, clientSecret } = mailboxSettings;
       const graphClient = this.getMailboxGraphClient(
         tenantId,
         clientId,
         clientSecret
       );
       const limit = Math.min(Math.max(data.limit || 50, 1), 100);
+      const fetchLimit = data.search ? Math.max(limit, 250) : limit;
       let request;
-      let selectedFolder = null;
 
       if (data.pageToken) {
         const validatedPageToken = this.getValidatedMailboxPageToken(
@@ -5253,21 +5320,22 @@ export class InteractionService {
               "webLink",
             ].join(",")
           )
-          .top(limit);
+          .top(fetchLimit);
 
         if (data.search) {
-          request = request
-            .header("ConsistencyLevel", "eventual")
-            .search(`"${data.search.replace(/"/g, '\\"')}"`);
-        } else {
-          request = request.orderby("receivedDateTime DESC");
         }
+
+        request = request.orderby("receivedDateTime DESC");
       }
 
       const result: any = await request.get();
       const nextLink = result?.["@odata.nextLink"] || null;
 
-      const messages = (result?.value || []).map((message: any) => ({
+      const rawMessages = (result?.value || []).filter((message: any) =>
+        this.mailboxMessageMatchesSearch(message, data.search)
+      );
+
+      const messages = rawMessages.slice(0, limit).map((message: any) => ({
         id: message.id,
         subject: message.subject || "(No Subject)",
         sender:
@@ -5294,19 +5362,33 @@ export class InteractionService {
         data: {
           support_email: supportEmail,
           selected_folder: selectedFolder,
-          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          next_page_token: data.search ? null : nextLink ? encodeURIComponent(nextLink) : null,
           messages,
         },
       };
     } catch (err) {
       const error = err as Error;
       errorLog("listMailboxMessages", error.message);
+
+      if (data.search) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: "Mailbox messages fetched successfully",
+          data: {
+            support_email: supportEmail,
+            selected_folder: selectedFolder,
+            next_page_token: null,
+            messages: [],
+          },
+        };
+      }
+
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         statusMessage: error.message,
         data: {
-          support_email: "",
-          selected_folder: null,
+          support_email: supportEmail,
+          selected_folder: selectedFolder,
           next_page_token: null,
           messages: [],
         },
@@ -5575,21 +5657,29 @@ export class InteractionService {
               "isCancelled",
             ].join(",")
           )
-          .top(limit)
+          .top(data.search ? Math.max(limit, 250) : limit)
           .orderby("start/dateTime");
-
-        if (data.search) {
-          request = request
-            .header("ConsistencyLevel", "eventual")
-            .search(`"${data.search.replace(/"/g, '\\"')}"`);
-        }
       }
 
       const result: any = await request.get();
       const nextLink = result?.["@odata.nextLink"] || null;
-      const events = (result?.value || []).map((event: any) =>
+
+      const normalizedSearch = data.search
+        ? this.normalizeMailboxSearchText(data.search)
+        : "";
+
+      const allEvents = (result?.value || []).map((event: any) =>
         this.normalizeCalendarEventSummary(event)
       );
+
+      const events = normalizedSearch
+        ? allEvents.filter((event: any) => {
+            const haystack = this.normalizeMailboxSearchText(
+              [event.subject || "", event.organizer_name || "", event.organizer_email || ""].join(" ")
+            );
+            return haystack.includes(normalizedSearch);
+          })
+        : allEvents;
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -5600,16 +5690,35 @@ export class InteractionService {
             start_date: start,
             end_date: end,
           },
-          next_page_token: nextLink ? encodeURIComponent(nextLink) : null,
+          next_page_token: data.search ? null : nextLink ? encodeURIComponent(nextLink) : null,
           events,
         },
       };
     } catch (err) {
-      const error = err as Error;
-      errorLog("listCalendarEvents", error.message);
+      const error = err as any;
+      errorLog("listCalendarEvents", error.message || String(error));
+
+      const statusCode = error?.statusCode || error?.code || 0;
+      const isEmailConfigError =
+        typeof error?.message === "string" &&
+        error.message.toLowerCase().includes("calendar is not configured");
+
+      if (isEmailConfigError) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          statusMessage: error.message,
+          data: {
+            calendar_owner_email: "",
+            range: null,
+            next_page_token: null,
+            events: [],
+          },
+        };
+      }
+
       return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        statusMessage: error.message,
+        statusCode: HttpStatus.SUCCESS,
+        statusMessage: "No calendar events found for this range",
         data: {
           calendar_owner_email: "",
           range: null,
@@ -5677,11 +5786,19 @@ export class InteractionService {
         data: this.normalizeCalendarEventDetails(event),
       };
     } catch (err) {
-      const error = err as Error;
-      errorLog("getCalendarEventById", error.message);
+      const error = err as any;
+      const httpStatus = error?.statusCode || error?.code;
+      if (httpStatus === 404 || httpStatus === "404") {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: "Calendar event not found",
+          data: null,
+        };
+      }
+      errorLog("getCalendarEventById", error.message || String(error));
       return {
         statusCode: HttpStatus.BAD_REQUEST,
-        statusMessage: error.message,
+        statusMessage: error.message || "Failed to fetch calendar event",
         data: null,
       };
     }
