@@ -150,7 +150,17 @@ const MappingTable: React.FC<MappingTableProps> = ({
                       tokens: string[]
                     ): BracketItem[] => {
                       const result: BracketItem[] = [];
-                      const mathOpsList = ['+', '-', '*', '/', '%'];
+                      const mathOpsList = [
+                        '+',
+                        '-',
+                        '*',
+                        '/',
+                        '%',
+                        '<',
+                        '>',
+                        '<=',
+                        '>=',
+                      ];
                       for (const tok of tokens) {
                         if (!tok) continue;
                         if (mathOpsList.includes(tok)) {
@@ -224,7 +234,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           (obj) => obj.rid === arg
                         );
                         return objectItem
-                          ? `@${objectItem.parent_object}.${objectItem.object_name}`
+                          ? `${objectItem.parent_object}.${objectItem.object_name}`
                           : arg;
                       });
                       return {
@@ -288,19 +298,43 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         for (let i = 0; i < input.length; i++) {
                           const char = input[i];
                           if (char === '(' && !inManualValue) {
-                            if (current.trim()) {
-                              tokens.push(current.trim());
+                            // Check if current ends with MIN or MAX (possibly with something before it)
+                            const trimmed = current.trim();
+                            const funcMatch =
+                              trimmed.match(/^(.*?)(MIN|MAX)$/i);
+                            if (funcMatch) {
+                              // Split: push the part before MIN/MAX if exists
+                              if (funcMatch[1]) {
+                                tokens.push(funcMatch[1]);
+                              }
+                              // Now handle MIN(...) or MAX(...) as single token
+                              let depth = 1;
+                              let j = i + 1;
+                              while (j < input.length && depth > 0) {
+                                if (input[j] === '(') depth++;
+                                if (input[j] === ')') depth--;
+                                j++;
+                              }
+                              // Push complete function: MIN(...) or MAX(...)
+                              tokens.push(funcMatch[2] + input.slice(i, j));
+                              i = j - 1;
                               current = '';
+                            } else {
+                              // Regular bracket expression
+                              if (current.trim()) {
+                                tokens.push(current.trim());
+                                current = '';
+                              }
+                              let depth = 1;
+                              let j = i + 1;
+                              while (j < input.length && depth > 0) {
+                                if (input[j] === '(') depth++;
+                                if (input[j] === ')') depth--;
+                                j++;
+                              }
+                              tokens.push(input.slice(i, j));
+                              i = j - 1;
                             }
-                            let depth = 1;
-                            let j = i + 1;
-                            while (j < input.length && depth > 0) {
-                              if (input[j] === '(') depth++;
-                              if (input[j] === ')') depth--;
-                              j++;
-                            }
-                            tokens.push(input.slice(i, j));
-                            i = j - 1;
                           } else if (char === '#' && !inManualValue) {
                             if (current.trim()) {
                               tokens.push(current.trim());
@@ -335,7 +369,13 @@ const MappingTable: React.FC<MappingTableProps> = ({
                               (obj) => obj.rid === nextToken
                             );
                             const isBracket = nextToken.startsWith('(');
-                            if (isOperator || isRid || isBracket) {
+                            const isFunction = /^(MIN|MAX)\(/i.test(nextToken);
+                            if (
+                              isOperator ||
+                              isRid ||
+                              isBracket ||
+                              isFunction
+                            ) {
                               if (current.trim()) {
                                 tokens.push(current.trim());
                                 current = '';
@@ -389,7 +429,17 @@ const MappingTable: React.FC<MappingTableProps> = ({
                         bTokens: string[]
                       ): BracketItem[] => {
                         const result: BracketItem[] = [];
-                        const mathOpsList = ['+', '-', '*', '/', '%'];
+                        const mathOpsList = [
+                          '+',
+                          '-',
+                          '*',
+                          '/',
+                          '%',
+                          '<',
+                          '>',
+                          '<=',
+                          '>=',
+                        ];
                         for (const tok of bTokens) {
                           if (!tok) continue;
                           if (mathOpsList.includes(tok)) {
@@ -449,6 +499,39 @@ const MappingTable: React.FC<MappingTableProps> = ({
                                 bracketItems: parseBracketTokens(
                                   tokenizeBracket(innerStr)
                                 ),
+                              };
+                            }
+                            // Check for MIN/MAX functions
+                            const funcMatch =
+                              part.match(/^(MIN|MAX)\((.*)\)$/i);
+                            if (funcMatch) {
+                              const functionType =
+                                funcMatch[1].toUpperCase() as 'MIN' | 'MAX';
+                              const argsStr = funcMatch[2];
+                              const args = argsStr
+                                .split(',')
+                                .map((arg) => arg.trim());
+
+                              // Convert RIDs in args to display format (without @ prefix)
+                              const displayArgs = args.map((arg) => {
+                                if (arg.startsWith('#')) return arg; // Manual value
+                                if (!isNaN(Number(arg))) return arg; // Number
+
+                                // Check if it's a RID
+                                const objectItem = objectsList.find(
+                                  (obj) => obj.rid === arg
+                                );
+                                if (objectItem) {
+                                  return `${objectItem.parent_object}.${objectItem.object_name}`;
+                                }
+                                return arg; // Unknown, keep as-is
+                              });
+
+                              return {
+                                type: 'function' as const,
+                                value: `${functionType}(${displayArgs.join(', ')})`,
+                                functionType,
+                                functionArgs: args, // Keep original RIDs for payload
                               };
                             }
                             const objectItem = objectsList.find(
@@ -1451,7 +1534,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
               <span>
                 <Tooltip
                   title={
-                    'How to add fields to Source:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.5555) - max 4 decimal places\n• Type ( then press Enter to add bracket expression (e.g., (#A - #B))\n• Type MIN, MAX or SUM for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if), then press Enter\n• Use operators: +, -, *, / between values'
+                    'How to add fields to Source:\n• Type @ to select fields from dropdown (e.g., @Parent.Child)\n• Type # for IDs, then press Enter (e.g., #ID123)\n• Enter numbers directly, then press Enter (e.g., 10, 10.5, 10.5555) - max 4 decimal places\n• Type ( then press Enter to add bracket expression with operators: +, -, *, /, %, <, >, <=, >= (e.g., (#A > #B))\n• Type MIN, MAX or SUM for functions, then press Enter\n• Type IF for conditional expressions (if/else/else if) with MIN/MAX functions and comparison operators, then press Enter\n• Use operators: +, -, *, /, %, <, >, <=, >= between values'
                   }
                   arrow
                   placement='left'
@@ -1660,7 +1743,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                           onBlur={() => handleInputBlur(mapping.rid)}
                           placeholder={
                             (mapping.fieldExpressions || []).length === 0
-                              ? 'Type @ fields, # for IDs, numbers, ( for Expression, MIN/MAX, SUM, IF or +, -, *, / for operators'
+                              ? 'Type @ fields, # for IDs, numbers, ( for Expression, MIN/MAX, SUM, IF or +, -, *, /, %, <, >, <=, >= for operators'
                               : 'Add more...'
                           }
                           className='flex-1 min-w-0 border-none outline-none rounded-[2px] bg-transparent text-sm placeholder-gray-400 align-top'
@@ -1771,6 +1854,8 @@ const MappingTable: React.FC<MappingTableProps> = ({
         <FunctionPopover
           functionPopover={functionPopover}
           setFunctionPopover={setFunctionPopover}
+          conditionalPopover={conditionalPopover}
+          setConditionalPopover={setConditionalPopover}
           setLocalMappings={setLocalMappings}
           onMappingsChange={onMappingsChange}
           targetOptions={targetOptions}
@@ -1786,6 +1871,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
           conditionalPopover={conditionalPopover}
           setConditionalPopover={setConditionalPopover}
           setBracketPopover={setBracketPopover}
+          setFunctionPopover={setFunctionPopover}
           setLocalMappings={setLocalMappings}
           onMappingsChange={onMappingsChange}
           targetOptions={targetOptions}

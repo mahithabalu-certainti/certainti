@@ -97,9 +97,36 @@ const BracketPopover: React.FC<BracketPopoverProps> = ({
   // ─── Input change ───────────────────────────────────────────────────────────
 
   const handleInputChange = (value: string): void => {
-    const mathOps = ['+', '-', '*', '/', '%'];
+    // Only auto-add simple operators that can't be extended
+    const autoAddOps = ['+', '-', '*', '/', '%'];
+    // Compound operators that should be auto-added when complete
+    const compoundOps = ['<=', '>='];
 
-    if (mathOps.includes(value)) {
+    if (autoAddOps.includes(value)) {
+      const targetList = bracketPopover.nestedMode
+        ? bracketPopover.nestedItems || []
+        : bracketPopover.items;
+      const newItem: BracketItem = { type: 'operator', value };
+      if (bracketPopover.nestedMode) {
+        setBracketPopover({
+          ...bracketPopover,
+          nestedItems: [...targetList, newItem],
+          inputValue: '',
+          error: undefined,
+        });
+      } else {
+        setBracketPopover({
+          ...bracketPopover,
+          items: [...targetList, newItem],
+          inputValue: '',
+          error: undefined,
+        });
+      }
+      return;
+    }
+
+    // Auto-add compound operators when complete
+    if (compoundOps.includes(value)) {
       const targetList = bracketPopover.nestedMode
         ? bracketPopover.nestedItems || []
         : bracketPopover.items;
@@ -304,10 +331,37 @@ const BracketPopover: React.FC<BracketPopoverProps> = ({
         return;
       }
 
+      // Check if it's a valid operator (including < and >)
+      const validOperators = ['+', '-', '*', '/', '%', '<', '>', '<=', '>='];
+      if (validOperators.includes(currentInput.trim())) {
+        const opItem: BracketItem = {
+          type: 'operator',
+          value: currentInput.trim(),
+        };
+        if (bracketPopover.nestedMode) {
+          setBracketPopover({
+            ...bracketPopover,
+            nestedItems: [...(bracketPopover.nestedItems || []), opItem],
+            inputValue: '',
+            showAutocomplete: false,
+            error: undefined,
+          });
+        } else {
+          setBracketPopover({
+            ...bracketPopover,
+            items: [...bracketPopover.items, opItem],
+            inputValue: '',
+            showAutocomplete: false,
+            error: undefined,
+          });
+        }
+        return;
+      }
+
       if (currentInput.trim()) {
         setBracketPopover({
           ...bracketPopover,
-          error: `Invalid input "${currentInput.trim()}". Use @ for fields, # for manual IDs, or numbers. Operators (+,-,*,/,%) are auto-added when typed.`,
+          error: `Invalid input "${currentInput.trim()}". Use @ for fields, # for manual IDs, or numbers. Operators (+,-,*,/,%,<,>,<=,>=) are auto-added when typed.`,
         });
       }
       return;
@@ -581,8 +635,8 @@ const BracketPopover: React.FC<BracketPopoverProps> = ({
         </div>
         <div className='text-xs text-gray-500 -mt-1'>
           Supports: <span>@field</span>, <span>#manual</span>, numbers,
-          operators <span>+ - * / %</span> and <span>(</span> for nested
-          sub-expressions
+          operators <span>+ - * / % &lt; &gt; &lt;= &gt;=</span> and{' '}
+          <span>(</span> for nested sub-expressions
         </div>
 
         {/* Field Container */}
