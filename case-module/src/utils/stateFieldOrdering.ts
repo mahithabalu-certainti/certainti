@@ -1061,7 +1061,7 @@ CA: {
                 { pattern: /^\[26\] If you elect to reduce the credit under section 280C/, order: 13 }
             ],
             "Section C—Current Year Credit": [
-                { pattern: /^\[27\] Enter.*portion.*credit.*Form 8932/, order: 1 },
+                { pattern: /^\[27\]/, order: 1 },
                 { pattern: /^\[28\] Subtract line 27 from line 13 or line 26/, order: 2 },
                 { pattern: /^\[29\] Credit for increasing research activities from partnerships/, order: 3 },
                 { pattern: "[30] Add lines 28 and 29", order: 4 },
@@ -1191,7 +1191,7 @@ CA: {
                 { pattern: /^\[26\] If you elect to reduce the credit under section 280C/, order: 14 }
             ],
             "Section C—Current Year Credit": [
-                { pattern: /^\[27\] Enter.*portion.*credit.*Form 8932/, order: 1 },
+                { pattern: /^\[27\]/, order: 1 },
                 { pattern: /^\[28\] Subtract line 27 from line 13 or line 26/, order: 2 },
                 { pattern: /^\[29\] Credit for increasing research activities from partnerships/, order: 3 },
                 { pattern: /^\[30\] Add lines 28 and 29/, order: 4 },
