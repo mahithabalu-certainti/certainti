@@ -81,17 +81,17 @@ export const getInteractionListColumns = (
         <span>{row.four_part_r_number || '-'}</span>
       ),
   },
-  {
-    id: 'is_primary',
-    sortId: 'is_primary',
-    label: 'Primary',
-    width: 100,
-    sortable: true,
-    hide:
-      !permissionMap?.['is_primary']?.edit &&
-      !permissionMap?.['is_primary']?.read,
-    render: (row: InteractionList) => (row.is_primary ? 'Yes' : 'No'),
-  },
+  // {
+  //   id: 'is_primary',
+  //   sortId: 'is_primary',
+  //   label: 'Primary',
+  //   width: 100,
+  //   sortable: true,
+  //   hide:
+  //     !permissionMap?.['is_primary']?.edit &&
+  //     !permissionMap?.['is_primary']?.read,
+  //   render: (row: InteractionList) => (row.is_primary ? 'Yes' : 'No'),
+  // },
   {
     id: 'interaction_batch_id',
     sortId: 'interaction_batch_id',
