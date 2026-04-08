@@ -526,7 +526,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       urls: stateUrls
     },
     {
-      name: "Financial Calculations",
+      name: "Financial Workings",
       url: stateFinancialCalcUrl ?? ''
     }
   ];
@@ -1339,7 +1339,7 @@ async fetchDossierPackage (data : any) : Promise<any> {
                 url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
               })
             }
-          } else if(stringToJson[j].name === 'Financial Calculations') {
+          } else if(stringToJson[j].name === 'Financial Workings') {
             if(stringToJson[j].url) {
               responsePackage.push({
                 name : 'Financial Calculations',
