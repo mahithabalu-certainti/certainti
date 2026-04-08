@@ -257,7 +257,7 @@ export class RdCreditCalculatorForVT {
 
         // [21] Enter your total QREs for the prior 3 tax years. If you had no QREs in any 1 of
         //      those years, skip lines 22 and 23
-        const prior3       = stateRdData.prior3YearsQREs ?? [];
+        const prior3       = (stateRdData.prior3YearsQREs ?? []).slice(0, 3);
         const line21       = new Decimal(prior3.reduce((s, y) => s + (y.qre ?? 0), 0));
         const hasPriorQREs = prior3.length >= 3 && prior3.every(y => (y.qre ?? 0) > 0);
 
