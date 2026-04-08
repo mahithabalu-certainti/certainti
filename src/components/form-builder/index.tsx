@@ -101,6 +101,45 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
   const [expandedParents, setExpandedParents] = React.useState<string[]>([]);
   const [menuOpen, setMenuOpen] = React.useState(false);
+  // Accordion state: tracks the currently expanded section name per accordion group
+  const [expandedAccordion, setExpandedAccordion] = React.useState<
+    Record<string, string>
+  >({});
+
+  const toggleAccordionSection = (group: string, sectionName: string) => {
+    setExpandedAccordion((prev) => ({
+      ...prev,
+      [group]: prev[group] === sectionName ? '' : sectionName,
+    }));
+  };
+
+  // Initialize accordion: open the first section in each group by default
+  React.useEffect(() => {
+    if (!data) return;
+    const groups = new Map<string, string>();
+    data.forEach((section) => {
+      if (
+        section.fillType === 'accordion' &&
+        section.accordionGroup &&
+        !section.hide &&
+        !groups.has(section.accordionGroup)
+      ) {
+        groups.set(section.accordionGroup, section.sectionName);
+      }
+    });
+    if (groups.size > 0) {
+      setExpandedAccordion((prev) => {
+        const next = { ...prev };
+        groups.forEach((sectionName, group) => {
+          if (!next[group]) {
+            next[group] = sectionName;
+          }
+        });
+        return next;
+      });
+    }
+  }, [data]);
+
   const toggleExpand = (parentId: string) => {
     setExpandedParents((prev) =>
       prev.includes(parentId)
@@ -3895,33 +3934,71 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       <form onSubmit={submitData} ref={formRef}>
         {formData?.map((section, i) => {
           const isHalf = section.fillType === 'half';
+          const isAccordion = section.fillType === 'accordion';
+          const accordionGroup = section.accordionGroup || '';
+          const isAccordionOpen =
+            isAccordion &&
+            expandedAccordion[accordionGroup] === section.sectionName;
 
           if (section.hide) return null;
           return (
             <div key={i}>
-              {section.sectionName && section.sectionName !== 'emptyName' && (
+              {/* Accordion section header — clickable with chevron toggle */}
+              {isAccordion && section.sectionName ? (
                 <h4
-                  className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                  className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'} ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'} cursor-pointer select-none flex items-center justify-between`}
+                  onClick={() =>
+                    toggleAccordionSection(accordionGroup, section.sectionName)
+                  }
                 >
-                  {section.sectionName.replace(/_/g, ' ')}
+                  <span>{section.sectionName.replace(/_/g, ' ')}</span>
+                  <span
+                    className={`transition-transform duration-300 ${isAccordionOpen ? '' : 'rotate-180'}`}
+                    style={{ display: 'inline-flex', alignItems: 'center' }}
+                  >
+                    <ArrowUpIcon style={{ width: 18, height: 18 }} />
+                  </span>
                 </h4>
+              ) : (
+                /* Standard section header (unchanged) */
+                section.sectionName &&
+                section.sectionName !== 'emptyName' && (
+                  <h4
+                    className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                  >
+                    {section.sectionName.replace(/_/g, ' ')}
+                  </h4>
+                )
               )}
-              <>
-                {!section.sectionName
-                  ? loadSectionsWithoutTitle(section)
-                  : section.sectionName === 'key_contacts_list'
-                    ? loadKeyContactSection(section)
-                    : section.renderAsDetailTable
-                      ? loadDetailTableSection(section)
-                      : section.renderAsTable
-                        ? loadDynamicTableSection(section)
-                        : loadDefaultSections(
-                            section,
-                            isHalf,
-                            i
-                            // isFirstOneRestTwo
-                          )}
-              </>
+              {/* Accordion content — collapse/expand with transition */}
+              {isAccordion ? (
+                <div
+                  style={{
+                    maxHeight: isAccordionOpen ? '2000px' : '0px',
+                    overflow: 'hidden',
+                    transition: 'max-height 0.35s ease-in-out',
+                  }}
+                >
+                  {loadDefaultSections(section, true, i)}
+                </div>
+              ) : (
+                <>
+                  {!section.sectionName
+                    ? loadSectionsWithoutTitle(section)
+                    : section.sectionName === 'key_contacts_list'
+                      ? loadKeyContactSection(section)
+                      : section.renderAsDetailTable
+                        ? loadDetailTableSection(section)
+                        : section.renderAsTable
+                          ? loadDynamicTableSection(section)
+                          : loadDefaultSections(
+                              section,
+                              isHalf,
+                              i
+                              // isFirstOneRestTwo
+                            )}
+                </>
+              )}
             </div>
           );
         })}

@@ -82,22 +82,23 @@ export const getInteractionListColumns = (
         <span>{row.four_part_r_number || '-'}</span>
       ),
   },
-  {
-    id: 'is_primary',
-    sortId: 'is_primary',
-    label: 'Primary',
-    width: 100,
-    sortable: true,
-    hide:
-      !permissionMap?.['is_primary']?.edit &&
-      !permissionMap?.['is_primary']?.read,
-    render: (row: InteractionList) => {
-      if (row.is_primary === null || row.is_primary === undefined) {
-        return 'Not Applicable';
-      }
-      return row.is_primary ? 'Yes' : 'No';
-    }
-  },
+  //  need enable after BE changes moved
+  // {
+  //   id: 'is_primary',
+  //   sortId: 'is_primary',
+  //   label: 'Primary',
+  //   width: 100,
+  //   sortable: true,
+  //   hide:
+  //     !permissionMap?.['is_primary']?.edit &&
+  //     !permissionMap?.['is_primary']?.read,
+  //   render: (row: InteractionList) => {
+  //     if (row.is_primary === null || row.is_primary === undefined) {
+  //       return 'Not Applicable';
+  //     }
+  //     return row.is_primary ? 'Yes' : 'No';
+  //   }
+  // },
   {
     id: 'interaction_batch_id',
     sortId: 'interaction_batch_id',

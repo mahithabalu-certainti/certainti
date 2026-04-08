@@ -180,16 +180,13 @@ export const fetchInboxAttachmentById = async (
 ): Promise<InboxAttachmentDetails> => {
   const { data } = await interactionServiceApi.get<{
     data: InboxAttachmentDetails;
-  }>(
-    `/api/interactions/mailbox/messages/attachments`,
-    {
-      params: {
-        account_rid: accountRid,
-        messageId,
-        attachmentId,
-      },
-    }
-  );
+  }>(`/api/interactions/mailbox/messages/attachments`, {
+    params: {
+      account_rid: accountRid,
+      messageId,
+      attachmentId,
+    },
+  });
 
   return data.data;
 };

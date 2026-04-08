@@ -59,7 +59,9 @@ const flattenFolders = (
  * Output:
  * - Returns the inbox folder when available, otherwise the first folder, otherwise `null`.
  */
-const findDefaultFolder = (folders: MailboxFolder[]): FlattenedMailboxFolder | null => {
+const findDefaultFolder = (
+  folders: MailboxFolder[]
+): FlattenedMailboxFolder | null => {
   const allFolders = flattenFolders(folders);
   return (
     allFolders.find(
@@ -70,7 +72,12 @@ const findDefaultFolder = (folders: MailboxFolder[]): FlattenedMailboxFolder | n
   );
 };
 
-const FAVORITE_WELL_KNOWN_NAMES = ['inbox', 'drafts', 'sentitems', 'deleteditems'];
+const FAVORITE_WELL_KNOWN_NAMES = [
+  'inbox',
+  'drafts',
+  'sentitems',
+  'deleteditems',
+];
 const HIDDEN_FOLDER_TOKENS = ['conversationhistory'];
 const STATUS_FILTER_OPTIONS = [
   { key: 'all', label: 'All' },
@@ -138,7 +145,6 @@ const getEndOfDayTime = (dateValue: string) => {
   return new Date(`${dateValue}T23:59:59.999`).getTime();
 };
 
-
 /**
  * Renders the visual icon for a mailbox folder row.
  *
@@ -155,84 +161,221 @@ const renderFolderIcon = (folder: MailboxFolder, collapsed = false) => {
 
   if (token.includes('delete')) {
     return (
-      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-        <path d='M6.5 6.5V15.5C6.5 16.05 6.95 16.5 7.5 16.5H12.5C13.05 16.5 13.5 16.05 13.5 15.5V6.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
-        <path d='M5 6.5H15' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
-        <path d='M8 6.5V4.75C8 4.34 8.34 4 8.75 4H11.25C11.66 4 12 4.34 12 4.75V6.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
-        <path d='M8.75 9.25V13.25M11.25 9.25V13.25' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+      <svg
+        viewBox='0 0 20 20'
+        fill='none'
+        className={className}
+        aria-hidden='true'
+      >
+        <path
+          d='M6.5 6.5V15.5C6.5 16.05 6.95 16.5 7.5 16.5H12.5C13.05 16.5 13.5 16.05 13.5 15.5V6.5'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
+        <path
+          d='M5 6.5H15'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
+        <path
+          d='M8 6.5V4.75C8 4.34 8.34 4 8.75 4H11.25C11.66 4 12 4.34 12 4.75V6.5'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
+        <path
+          d='M8.75 9.25V13.25M11.25 9.25V13.25'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
       </svg>
     );
   }
 
   if (token.includes('draft')) {
     return (
-      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-        <path d='M4.75 13.75L5.75 10.75L12.75 3.75L15.75 6.75L8.75 13.75L5.75 14.75L4.75 13.75Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
-        <path d='M11.75 4.75L14.75 7.75' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+      <svg
+        viewBox='0 0 20 20'
+        fill='none'
+        className={className}
+        aria-hidden='true'
+      >
+        <path
+          d='M4.75 13.75L5.75 10.75L12.75 3.75L15.75 6.75L8.75 13.75L5.75 14.75L4.75 13.75Z'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinejoin='round'
+        />
+        <path
+          d='M11.75 4.75L14.75 7.75'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
       </svg>
     );
   }
 
   if (token.includes('sent')) {
     return (
-      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-        <path d='M4 15.5L16 10L4 4.5L6.25 10L4 15.5Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
-        <path d='M6.25 10H11.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+      <svg
+        viewBox='0 0 20 20'
+        fill='none'
+        className={className}
+        aria-hidden='true'
+      >
+        <path
+          d='M4 15.5L16 10L4 4.5L6.25 10L4 15.5Z'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinejoin='round'
+        />
+        <path
+          d='M6.25 10H11.5'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
       </svg>
     );
   }
 
   if (token.includes('archive')) {
     return (
-      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-        <rect x='4' y='5.5' width='12' height='10.5' rx='1.5' stroke='currentColor' strokeWidth='1.5' />
+      <svg
+        viewBox='0 0 20 20'
+        fill='none'
+        className={className}
+        aria-hidden='true'
+      >
+        <rect
+          x='4'
+          y='5.5'
+          width='12'
+          height='10.5'
+          rx='1.5'
+          stroke='currentColor'
+          strokeWidth='1.5'
+        />
         <path d='M4.5 7.5H15.5' stroke='currentColor' strokeWidth='1.5' />
-        <path d='M8 11H12' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+        <path
+          d='M8 11H12'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
       </svg>
     );
   }
 
   if (token.includes('search')) {
     return (
-      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-        <path d='M8.5 13.5C11.2614 13.5 13.5 11.2614 13.5 8.5C13.5 5.73858 11.2614 3.5 8.5 3.5C5.73858 3.5 3.5 5.73858 3.5 8.5C3.5 11.2614 5.73858 13.5 8.5 13.5Z' stroke='currentColor' strokeWidth='1.5' />
-        <path d='M12.25 12.25L16.5 16.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+      <svg
+        viewBox='0 0 20 20'
+        fill='none'
+        className={className}
+        aria-hidden='true'
+      >
+        <path
+          d='M8.5 13.5C11.2614 13.5 13.5 11.2614 13.5 8.5C13.5 5.73858 11.2614 3.5 8.5 3.5C5.73858 3.5 3.5 5.73858 3.5 8.5C3.5 11.2614 5.73858 13.5 8.5 13.5Z'
+          stroke='currentColor'
+          strokeWidth='1.5'
+        />
+        <path
+          d='M12.25 12.25L16.5 16.5'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
       </svg>
     );
   }
 
   if (token.includes('conversation')) {
     return (
-      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-        <path d='M4 5.75C4 4.78 4.78 4 5.75 4H10.25C11.22 4 12 4.78 12 5.75V8.25C12 9.22 11.22 10 10.25 10H7L4.75 12V10C4.34 10 4 9.66 4 9.25V5.75Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
-        <path d='M10 11H11.75C12.72 11 13.5 10.22 13.5 9.25V8.75L15.75 10.75H14.25C14.25 11.72 13.47 12.5 12.5 12.5H10' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
+      <svg
+        viewBox='0 0 20 20'
+        fill='none'
+        className={className}
+        aria-hidden='true'
+      >
+        <path
+          d='M4 5.75C4 4.78 4.78 4 5.75 4H10.25C11.22 4 12 4.78 12 5.75V8.25C12 9.22 11.22 10 10.25 10H7L4.75 12V10C4.34 10 4 9.66 4 9.25V5.75Z'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinejoin='round'
+        />
+        <path
+          d='M10 11H11.75C12.72 11 13.5 10.22 13.5 9.25V8.75L15.75 10.75H14.25C14.25 11.72 13.47 12.5 12.5 12.5H10'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
       </svg>
     );
   }
 
   if (token.includes('junk')) {
     return (
-      <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-        <path d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
-        <path d='M10.5 4.75V8H13.75' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
-        <path d='M7 12.5L12.5 7' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+      <svg
+        viewBox='0 0 20 20'
+        fill='none'
+        className={className}
+        aria-hidden='true'
+      >
+        <path
+          d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinejoin='round'
+        />
+        <path
+          d='M10.5 4.75V8H13.75'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
+        <path
+          d='M7 12.5L12.5 7'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+        />
       </svg>
     );
   }
 
   return (
-    <svg viewBox='0 0 20 20' fill='none' className={className} aria-hidden='true'>
-      <path d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z' stroke='currentColor' strokeWidth='1.5' strokeLinejoin='round' />
-      <path d='M10.5 4.75V8H13.75' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+    <svg
+      viewBox='0 0 20 20'
+      fill='none'
+      className={className}
+      aria-hidden='true'
+    >
+      <path
+        d='M5.5 4.5H10.75C11.16 4.5 11.55 4.66 11.84 4.95L14.55 7.66C14.84 7.95 15 8.34 15 8.75V14.5C15 15.05 14.55 15.5 14 15.5H5.5C4.95 15.5 4.5 15.05 4.5 14.5V5.5C4.5 4.95 4.95 4.5 5.5 4.5Z'
+        stroke='currentColor'
+        strokeWidth='1.5'
+        strokeLinejoin='round'
+      />
+      <path
+        d='M10.5 4.75V8H13.75'
+        stroke='currentColor'
+        strokeWidth='1.5'
+        strokeLinecap='round'
+      />
     </svg>
   );
 };
 
 const Inbox = () => {
   const { accountid } = useParams();
-  const [selectedFolder, setSelectedFolder] = useState<FlattenedMailboxFolder | null>(
-    null
-  );
+  const [selectedFolder, setSelectedFolder] =
+    useState<FlattenedMailboxFolder | null>(null);
   const [selectedMessageId, setSelectedMessageId] = useState('');
   const [searchText, setSearchText] = useState('');
   const deferredSearchText = useDeferredValue(searchText.trim());
@@ -241,7 +384,9 @@ const Inbox = () => {
   const [attachmentActionId, setAttachmentActionId] = useState('');
   const [folderPaneWidth, setFolderPaneWidth] = useState(280);
   const [messagePaneWidth, setMessagePaneWidth] = useState(390);
-  const [activeDivider, setActiveDivider] = useState<'folders' | 'messages' | null>(null);
+  const [activeDivider, setActiveDivider] = useState<
+    'folders' | 'messages' | null
+  >(null);
   const [isFolderPaneCollapsed, setIsFolderPaneCollapsed] = useState(false);
   const [filters, setFilters] = useState<MailboxFilters>({
     status: 'all',
@@ -252,7 +397,9 @@ const Inbox = () => {
     receivedFrom: '',
     receivedTo: '',
   });
-  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(null);
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
+    null
+  );
   const [isDesktopLayout, setIsDesktopLayout] = useState(
     () => typeof window !== 'undefined' && window.innerWidth >= 1024
   );
@@ -364,13 +511,18 @@ const Inbox = () => {
       }
 
       if (fromFilter) {
-        const senderText = `${message.sender || ''} ${message.sender_email || ''}`.toLowerCase();
+        const senderText =
+          `${message.sender || ''} ${message.sender_email || ''}`.toLowerCase();
         if (!senderText.includes(fromFilter)) return false;
       }
 
       if (toFilter) {
         const recipientsText = (message.to_recipients || [])
-          .map((recipient) => `${recipient.name || ''} ${recipient.email || ''}`.trim().toLowerCase())
+          .map((recipient) =>
+            `${recipient.name || ''} ${recipient.email || ''}`
+              .trim()
+              .toLowerCase()
+          )
           .join(' ');
         if (!recipientsText.includes(toFilter)) return false;
       }
@@ -404,7 +556,8 @@ const Inbox = () => {
   }, [filteredMessageItems, selectedMessageId]);
 
   const selectedListMessage = useMemo(
-    () => filteredMessageItems.find((message) => message.id === selectedMessageId),
+    () =>
+      filteredMessageItems.find((message) => message.id === selectedMessageId),
     [filteredMessageItems, selectedMessageId]
   );
 
@@ -706,7 +859,9 @@ const Inbox = () => {
         }}
         title={folder.name}
       >
-        <span className='flex-shrink-0 text-[#5F6368]'>{renderFolderIcon(folder)}</span>
+        <span className='flex-shrink-0 text-[#5F6368]'>
+          {renderFolderIcon(folder)}
+        </span>
         <span className='min-w-0 truncate'>{folder.name}</span>
       </button>
     );
@@ -727,7 +882,9 @@ const Inbox = () => {
             <p className='text-[12px] font-semibold text-[#202124]'>{title}</p>
           </div>
         ) : null}
-        <div className={isFolderPaneCollapsed ? 'space-y-1 px-1' : 'space-y-0.5'}>
+        <div
+          className={isFolderPaneCollapsed ? 'space-y-1 px-1' : 'space-y-0.5'}
+        >
           {folders.map(renderFolder)}
         </div>
       </div>
@@ -791,7 +948,8 @@ const Inbox = () => {
     );
   };
 
-  const showInitialLoading = isFolderLoading || (!selectedFolder && isMessagesLoading);
+  const showInitialLoading =
+    isFolderLoading || (!selectedFolder && isMessagesLoading);
   const activeFilterCount = [
     filters.status !== 'all',
     filters.hasAttachments,
@@ -811,7 +969,9 @@ const Inbox = () => {
     )?.trim() || 'Unable to load the mailbox for this account.';
 
   // Check if error is due to missing email configuration
-  const isNoEmailConfigError = mailboxErrorMessage?.toLowerCase().includes('email configuration');
+  const isNoEmailConfigError = mailboxErrorMessage
+    ?.toLowerCase()
+    .includes('email configuration');
 
   return (
     <div className='h-[calc(100vh-235px)] w-full overflow-hidden p-2 pr-4'>
@@ -820,8 +980,12 @@ const Inbox = () => {
           <div className='flex min-w-0 items-center gap-2'>
             <DraftEmailIcon className='h-7 w-7 rounded-[2px] bg-[#0F6CBD] p-1 text-white' />
             <div className='min-w-0'>
-              <p className='truncate text-[14px] font-semibold text-[#253240]'>Mailbox</p>
-              <p className='truncate text-[11px] text-[#5E6B78]'>{filteredMessageItems.length} items</p>
+              <p className='truncate text-[14px] font-semibold text-[#253240]'>
+                Mailbox
+              </p>
+              <p className='truncate text-[11px] text-[#5E6B78]'>
+                {filteredMessageItems.length} items
+              </p>
             </div>
           </div>
           <div className='ml-4 flex items-center gap-2'>
@@ -832,10 +996,30 @@ const Inbox = () => {
                 className='inline-flex h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[4px] border border-[#C3CFDB] bg-white px-3 text-[12px] font-medium text-[#344054] transition-colors hover:bg-[#F8FAFC]'
                 aria-label='Filter messages'
               >
-                <svg viewBox='0 0 20 20' fill='none' className='h-4 w-4 text-[#5E6B78]' aria-hidden='true'>
-                  <path d='M4 5H16' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
-                  <path d='M6.5 10H13.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
-                  <path d='M8.75 15H11.25' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
+                <svg
+                  viewBox='0 0 20 20'
+                  fill='none'
+                  className='h-4 w-4 text-[#5E6B78]'
+                  aria-hidden='true'
+                >
+                  <path
+                    d='M4 5H16'
+                    stroke='currentColor'
+                    strokeWidth='1.5'
+                    strokeLinecap='round'
+                  />
+                  <path
+                    d='M6.5 10H13.5'
+                    stroke='currentColor'
+                    strokeWidth='1.5'
+                    strokeLinecap='round'
+                  />
+                  <path
+                    d='M8.75 15H11.25'
+                    stroke='currentColor'
+                    strokeWidth='1.5'
+                    strokeLinecap='round'
+                  />
                 </svg>
                 <span className='hidden sm:inline'>Filter</span>
                 {activeFilterCount ? (
@@ -875,7 +1059,9 @@ const Inbox = () => {
           }}
         >
           <div className='border-b border-[#E5EAF0] px-4 py-3'>
-            <p className='text-[13px] font-semibold text-[#16202A]'>Filter mailbox</p>
+            <p className='text-[13px] font-semibold text-[#16202A]'>
+              Filter mailbox
+            </p>
             <p className='mt-1 text-[11px] text-[#5E6B78]'>
               Narrow the current folder like Outlook.
             </p>
@@ -891,7 +1077,10 @@ const Inbox = () => {
                     key={option.key}
                     type='button'
                     onClick={() =>
-                      setFilters((current) => ({ ...current, status: option.key }))
+                      setFilters((current) => ({
+                        ...current,
+                        status: option.key,
+                      }))
                     }
                     className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
                       filters.status === option.key
@@ -911,7 +1100,10 @@ const Inbox = () => {
                 <input
                   value={filters.from}
                   onChange={(event) =>
-                    setFilters((current) => ({ ...current, from: event.target.value }))
+                    setFilters((current) => ({
+                      ...current,
+                      from: event.target.value,
+                    }))
                   }
                   placeholder='Sender name or email'
                   className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
@@ -922,7 +1114,10 @@ const Inbox = () => {
                 <input
                   value={filters.to}
                   onChange={(event) =>
-                    setFilters((current) => ({ ...current, to: event.target.value }))
+                    setFilters((current) => ({
+                      ...current,
+                      to: event.target.value,
+                    }))
                   }
                   placeholder='Recipient name or email'
                   className='h-9 w-full rounded-[6px] border border-[#C3CFDB] px-3 text-[13px] text-[#16202A] outline-none placeholder:text-[#7B8794]'
@@ -1038,7 +1233,8 @@ const Inbox = () => {
                   <span className='text-white text-xs font-bold'>!</span>
                 </div>
                 <p className='text-[14px] font-medium text-[#B71C1C]'>
-                  Email isn't configured for this account. Configure it in Account Settings.
+                  Email isn't configured for this account. Configure it in
+                  Account Settings.
                 </p>
               </div>
               <div className='flex-1 bg-[#FAFAFA]' />
@@ -1055,24 +1251,40 @@ const Inbox = () => {
             style={desktopLayoutStyle}
           >
             <aside className='flex min-h-0 flex-col bg-[#F7F9FC]'>
-              <div className={`flex h-[56px] border-b border-[#E5EAF0] bg-[#FDFEFF] ${isFolderPaneCollapsed ? 'px-2' : 'px-3'}`}>
-                <div className={`flex w-full items-center ${isFolderPaneCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
+              <div
+                className={`flex h-[56px] border-b border-[#E5EAF0] bg-[#FDFEFF] ${isFolderPaneCollapsed ? 'px-2' : 'px-3'}`}
+              >
+                <div
+                  className={`flex w-full items-center ${isFolderPaneCollapsed ? 'justify-center' : 'justify-between'} gap-2`}
+                >
                   {!isFolderPaneCollapsed ? (
                     <div className='min-w-0 flex-1'>
-                      <p className='text-[13px] font-semibold text-[#202124]'>Folders</p>
+                      <p className='text-[13px] font-semibold text-[#202124]'>
+                        Folders
+                      </p>
                     </div>
                   ) : null}
                   {isDesktopLayout ? (
                     <Tooltip
-                      title={isFolderPaneCollapsed ? 'Expand folders' : 'Collapse folders'}
+                      title={
+                        isFolderPaneCollapsed
+                          ? 'Expand folders'
+                          : 'Collapse folders'
+                      }
                       placement='bottom'
                       arrow
                     >
                       <button
                         type='button'
-                        onClick={() => setIsFolderPaneCollapsed((current) => !current)}
+                        onClick={() =>
+                          setIsFolderPaneCollapsed((current) => !current)
+                        }
                         className={`inline-flex items-center justify-center rounded-[6px] text-[#5E6B78] transition-colors hover:bg-[#EEF3F8] hover:text-[#253240] ${isFolderPaneCollapsed ? 'h-8 w-8' : 'h-7 w-7'}`}
-                        aria-label={isFolderPaneCollapsed ? 'Expand folders' : 'Collapse folders'}
+                        aria-label={
+                          isFolderPaneCollapsed
+                            ? 'Expand folders'
+                            : 'Collapse folders'
+                        }
                       >
                         <ChevronLeftIcon
                           className={`h-4 w-4 transition-transform ${isFolderPaneCollapsed ? 'rotate-180' : ''}`}
@@ -1082,14 +1294,18 @@ const Inbox = () => {
                   ) : null}
                 </div>
               </div>
-              <div className={`min-h-0 overflow-y-auto overflow-x-hidden ${isFolderPaneCollapsed ? 'py-2' : 'py-1.5'}`}>
+              <div
+                className={`min-h-0 overflow-y-auto overflow-x-hidden ${isFolderPaneCollapsed ? 'py-2' : 'py-1.5'}`}
+              >
                 {flatFolders.length ? (
                   <>
                     {renderFolderGroup('Favorites', favoriteFolders)}
                     {renderFolderGroup(
                       (folderData?.support_email || 'Mailbox').split('@')[0],
                       regularFolders,
-                      !isFolderPaneCollapsed ? 'border-t border-[#EDF2F7] mt-2' : 'mt-3'
+                      !isFolderPaneCollapsed
+                        ? 'border-t border-[#EDF2F7] mt-2'
+                        : 'mt-3'
                     )}
                   </>
                 ) : (
@@ -1127,8 +1343,8 @@ const Inbox = () => {
                   isFolderPaneCollapsed
                     ? 'bg-[#E2E8F0]'
                     : activeDivider === 'folders'
-                    ? 'bg-[#7DB2E8]'
-                    : 'bg-[#D5DFEA] group-hover:bg-[#A9CDED]'
+                      ? 'bg-[#7DB2E8]'
+                      : 'bg-[#D5DFEA] group-hover:bg-[#A9CDED]'
                 }`}
               />
             </div>
@@ -1159,8 +1375,12 @@ const Inbox = () => {
               <div className='border-t border-[#E5EAF0] bg-[#F8FAFC] p-3'>
                 <button
                   type='button'
-                  disabled={!mailboxMessages?.next_page_token || isMessagesLoading}
-                  onClick={() => setPageToken(mailboxMessages?.next_page_token || null)}
+                  disabled={
+                    !mailboxMessages?.next_page_token || isMessagesLoading
+                  }
+                  onClick={() =>
+                    setPageToken(mailboxMessages?.next_page_token || null)
+                  }
                   className='w-full rounded-[4px] border border-[#CBD6E2] bg-white px-3 py-2 text-[13px] font-medium text-[#16202A] disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   {isMessagesLoading && pageToken ? 'Loading...' : 'Load More'}
@@ -1199,9 +1419,12 @@ const Inbox = () => {
                 <div className='flex h-full min-h-0 flex-col items-center justify-center gap-3 bg-[#FCFDFE] text-sm text-[#5E6B78]'>
                   <InteractionDetailIcon className='h-12 w-12 rounded-[14px] bg-[#E8F1FB] p-2.5 text-[#0F6CBD]' />
                   <div className='text-center'>
-                    <p className='text-[15px] font-semibold text-[#16202A]'>Select an email to open</p>
+                    <p className='text-[15px] font-semibold text-[#16202A]'>
+                      Select an email to open
+                    </p>
                     <p className='mt-1 text-[12px] text-[#5E6B78]'>
-                      The reading pane will display the full message and attachments here.
+                      The reading pane will display the full message and
+                      attachments here.
                     </p>
                   </div>
                 </div>
@@ -1226,7 +1449,11 @@ const Inbox = () => {
                       <div className='flex items-start justify-between gap-4 px-3 py-2.5'>
                         <div className='flex min-w-0 items-start gap-3'>
                           <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#B8D8F7] text-[12px] font-semibold text-[#1D4F91]'>
-                            {(messageDetails.sender || messageDetails.sender_email || 'M')
+                            {(
+                              messageDetails.sender ||
+                              messageDetails.sender_email ||
+                              'M'
+                            )
                               .split(' ')
                               .filter(Boolean)
                               .slice(0, 2)
@@ -1242,11 +1469,15 @@ const Inbox = () => {
                             </p>
                             <p className='mt-0.5 truncate text-[12px] text-[#253240]'>
                               <span className='font-medium'>To:</span>{' '}
-                              {renderRecipientList(messageDetails.to_recipients)}
+                              {renderRecipientList(
+                                messageDetails.to_recipients
+                              )}
                             </p>
                             <p className='mt-0.5 truncate text-[12px] text-[#253240]'>
                               <span className='font-medium'>Cc:</span>{' '}
-                              {renderRecipientList(messageDetails.cc_recipients)}
+                              {renderRecipientList(
+                                messageDetails.cc_recipients
+                              )}
                             </p>
                           </div>
                         </div>
@@ -1259,7 +1490,7 @@ const Inbox = () => {
                         </div>
                       </div>
 
-                        <div className='px-4 pb-4 pt-2'>
+                      <div className='px-4 pb-4 pt-2'>
                         {messageDetails.attachments?.length ? (
                           <div className='mb-4 flex flex-wrap gap-2'>
                             {messageDetails.attachments.map((attachment) => (
@@ -1281,7 +1512,8 @@ const Inbox = () => {
                                   disabled={attachmentActionId !== ''}
                                   className='rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#0F6CBD] disabled:opacity-50'
                                 >
-                                  {attachmentActionId === `${attachment.id}-view`
+                                  {attachmentActionId ===
+                                  `${attachment.id}-view`
                                     ? 'Opening...'
                                     : 'View'}
                                 </button>
@@ -1297,7 +1529,8 @@ const Inbox = () => {
                                   disabled={attachmentActionId !== ''}
                                   className='rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#16202A] disabled:opacity-50'
                                 >
-                                  {attachmentActionId === `${attachment.id}-download`
+                                  {attachmentActionId ===
+                                  `${attachment.id}-download`
                                     ? 'Downloading...'
                                     : 'Download'}
                                 </button>
@@ -1351,7 +1584,8 @@ const Inbox = () => {
                 className='max-h-[70vh] max-w-full rounded-[8px] border border-[#D8E1EB] bg-white object-contain shadow-[0_1px_2px_rgba(16,24,40,0.08)]'
               />
             </div>
-          ) : previewAttachment.contentType.toLowerCase() === 'application/pdf' ? (
+          ) : previewAttachment.contentType.toLowerCase() ===
+            'application/pdf' ? (
             <iframe
               title='attachment-preview'
               src={previewAttachment.objectUrl}
