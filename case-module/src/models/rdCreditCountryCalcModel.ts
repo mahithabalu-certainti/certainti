@@ -36,28 +36,28 @@ export class RdCreditCountryCalculations
         RdCreditCountryCalcCreationAttributes
     >
     implements RdCreditCountryCalcAttributes {
-    public rid?: string;
-    public r_number? : string;
-    public case_rid?: string;
-    public country_rid?: string;
-    public input_params?: object | null;
-    public computed_fields?: object | null;
-    public total_qre?: number | null;
-    public average_annual_gross_receipts?: number | null;
-    public prev_year1_qre?: number | null;
-    public prev_year2_qre?: number | null;
-    public prev_year3_qre?: number | null;
-    public total_wages?: number | null;
-    public total_supplies?: number | null;
-    public total_subcontract?: number | null;
-    public final_credit?: number | null;
-    public config_json?: JSON;
-    public created_datetime?: Date;
-    public modified_datetime?: Date;
-    public final_credit_submitted?: number | null;
-    public final_credit_approved?: number | null;
-    public rd_form_url? : string | null
-    public form_error_message? : string | null
+    declare rid?: string;
+    declare r_number? : string;
+    declare case_rid?: string;
+    declare country_rid?: string;
+    declare input_params?: object | null;
+    declare computed_fields?: object | null;
+    declare total_qre?: number | null;
+    declare average_annual_gross_receipts?: number | null;
+    declare prev_year1_qre?: number | null;
+    declare prev_year2_qre?: number | null;
+    declare prev_year3_qre?: number | null;
+    declare total_wages?: number | null;
+    declare total_supplies?: number | null;
+    declare total_subcontract?: number | null;
+    declare final_credit?: number | null;
+    declare config_json?: JSON;
+    declare created_datetime?: Date;
+    declare modified_datetime?: Date;
+    declare final_credit_submitted?: number | null;
+    declare final_credit_approved?: number | null;
+    declare rd_form_url? : string | null
+    declare form_error_message? : string | null
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditCountryCalculations.init(

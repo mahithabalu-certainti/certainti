@@ -363,19 +363,49 @@ export const fetchTotalResourcesForCase = (caseRid: string, accountRid: string, 
     `;
     return query;
   }
-export const fetchStateRidsWithResourcesForCase = (schemaName:string) => 
+export const fetchStateRidsWithResourcesForCase = (schemaName:string) =>
 {
     return `
           SELECT DISTINCT pfr.region_rid as state_rid
           FROM ${schemaName}.case_projects cp
           JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
           JOIN ${schemaName}.project_resource_fiscal pfr ON pf.rid = pfr.project_fiscal_rid
-          JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid 
+          JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid
               AND pr.region_rid = pfr.region_rid
-          WHERE cp.case_rid = :case_rid 
+          WHERE cp.case_rid = :case_rid
               AND pf.fiscal_year = cp.fiscal_year
               AND pr.rid IS NOT NULL
               and pf.is_qualified = true
+        `
+}
+
+export const fetchFederalQREAndBaseForRI = (schemaName: string) => {
+    return `
+        SELECT
+            total_qre,
+            final_credit,
+            config_json
+        FROM ${schemaName}.rd_credit_country_calculations
+        WHERE case_rid = :case_rid
+          AND country_rid = :country_rid
+        LIMIT 1
+    `
+}
+
+export const fetchEmployeeCountForCase = (schemaName: string) =>
+{
+    return `
+          SELECT pfr.region_rid as state_rid, COUNT(DISTINCT pr.rid) AS employee_count
+          FROM ${schemaName}.case_projects cp
+          JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+          JOIN ${schemaName}.project_resource_fiscal pfr ON pf.rid = pfr.project_fiscal_rid
+          JOIN ${schemaName}.project_resource pr ON pf.rid = pr.project_fiscal_rid
+              AND pr.region_rid = pfr.region_rid
+          WHERE cp.case_rid = :case_rid
+              AND pf.fiscal_year = cp.fiscal_year
+              AND pr.rid IS NOT NULL
+              AND pf.is_qualified = true
+          GROUP BY pfr.region_rid
         `
 }
 

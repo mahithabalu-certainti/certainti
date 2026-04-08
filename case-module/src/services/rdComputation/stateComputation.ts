@@ -9,7 +9,7 @@ import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 import { kafkaProducerService } from "../../kafka/producerService";
 import FederalComputationService from "./federalComputation";
 import Decimal from "decimal.js";
-
+import { fetchEmployeeCountForCase, fetchFederalQREAndBaseForRI } from "../../utils/rdFinancialWorkingQueries";
 enum ConfigType {
     NONE = "NONE",
     FEDERAL_ONLY = "FEDERAL_ONLY",
@@ -156,20 +156,25 @@ export class StateComputationService {
      * @param orgDb 
      * @param schemaName 
      */
-    async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
+    async findStateInputData(accountRid: string, caseRid: string, countryRid:string,regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
         const currentFiscalYear = fiscalYear
 
         const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb, currentFiscalYear); //current yer QREs
         logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
+        
 
-        const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, regionRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
+        const currentYearQREsFederal = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryRid, schemaName, orgDb, false); //current yer QREs
+        logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
+
+
+        const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, regionRid, 4, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
         logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
 
         const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, this.jurisdictionColumn, regionRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
 
         logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
 
-        const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
+        const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts,currentYearQREsFederal);
         return stateRDData;
     }
 
@@ -188,40 +193,63 @@ export class StateComputationService {
         const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
         let currentFiscalYear = caseDetails.fiscal_year;
+
         for (const config of configStateLevel) {
             try {
                 const stateComputation = stateCalculators[config.state_code];
                 const extractConfig = this.extractConfigJson(config.config_json);
                 logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                 if (stateComputation) {
-                    
-                    const date = new Date(effectiveEnd);
-                    const formatted = date.toLocaleDateString("en-US", {
+                
+                const date = new Date(effectiveEnd);
+                const formatted = date.toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
                     year: "numeric"
-                    });
-                    const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName, currentFiscalYear);
+                });
+                const stateRDData = await this.findStateInputData(accountRid, caseRid,config.country_rid, config.state_rid, orgDb, schemaName, currentFiscalYear);
                     logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
-                    let result;
-                    
-                    if(config.state_code === "ON") {
-                        const [getCompletedTaskStatus] = await mainDb.query<{rid : string}>(rawQueries.getCaseTaskCompletedStatus(), {type : QueryTypes.SELECT});
-                        let caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid ? true : false
-                        result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails, caseClosed)
-                    } else {
-                        result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
-                    }                  
-                    
-                    await this.rdCreditSchemaService.insertRDStateCreditCalculation(
-                        fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid,config.state_code,
-                        result.inputFields, result.computedFields, result.finalCredit,result?.totalQRE ?? null,stateRDData,extractConfig,result
-                    );
+                let result;
+
+                if (config.state_code === "ON") {
+                    const [getCompletedTaskStatus] = await mainDb.query<{rid: string}>(rawQueries.getCaseTaskCompletedStatus(), {type: QueryTypes.SELECT});
+                    const caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid;
+                    result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails, caseClosed);
+                } else {
+                    if (config.state_code === "LA") {
+                        const employeeCounts: any[] = await orgDb.query(fetchEmployeeCountForCase(schemaName), {
+                            replacements: { case_rid: caseRid },
+                            type: QueryTypes.SELECT
+                        });
+                        const laStateCount = employeeCounts.find((r: any) => r.state_rid === config.state_rid);
+                        caseDetails.employee_count = laStateCount ? Number(laStateCount.employee_count) : 0;
+                        logMessage(`[LA] Employee count resolved from DB: ${caseDetails.la_employee_count}`);
+                    }
+                    if (config.state_code === "RI") {
+                        const [federalRow]: any = await orgDb.query(fetchFederalQREAndBaseForRI(schemaName), {
+                            replacements: { case_rid: caseRid, country_rid: config.country_rid },
+                            type: QueryTypes.SELECT
+                        });
+                        if (federalRow) {
+                            caseDetails.ri_federal_qre = Number(federalRow.total_qre ?? 0);
+                            caseDetails.ri_federal_base_amount = Number(federalRow.final_credit ?? 0);
+                            logMessage(`[RI] Federal QRE from DB: ${caseDetails.ri_federal_qre}, base amount: ${caseDetails.ri_federal_base_amount}`);
+                        }
+                    }
+                    result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
+                }
+
+                await this.rdCreditSchemaService.insertRDStateCreditCalculation(
+                    fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid, config.state_code,
+                    result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig,caseDetails.employee_count ?? 0,result
+                );
+
                 }
             } catch (err) {
                 logMessage(`Error processing state ${config.state_code}: ${err}`);
             }
         }
+
     }
 
     /**
@@ -231,11 +259,12 @@ export class StateComputationService {
      * @param annualGrossReceipts 
      * @returns 
      */
-    async getStateRDData(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[]): Promise<StateRDData> {
+    async getStateRDData(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[],currentYearQREsFederal: QRE): Promise<StateRDData> {
         return {
             currentYearQREs,
             prior3YearsQREs,
-            annualGrossReceipts
+            annualGrossReceipts,
+            currentYearQREsFederal
         }
     }
 

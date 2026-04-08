@@ -1,3 +1,5 @@
+import { MAIN_SCHEMA_NAME } from "./constants";
+
 export const fetchCaseClosingRemarks = (schemaName : string, caseRid : string, sort : string, sortBy : string, isSortingRestricted : boolean) => {
   let sortValue;
   if(isSortingRestricted) {
@@ -47,9 +49,9 @@ export const fetchRdFormUrlForCountry = (schemaName : string, caseRid : string) 
 
 export const fetchRdFormUrlForState = (schemaName : string, caseRid : string) => {
   let query = `
-  SELECT 
+  SELECT
   rs.rd_form_url AS state_url, rs.state_rid
-  FROM 
+  FROM
   ${schemaName}.rd_credit_state_calculations rs
   WHERE
   rs.case_rid = '${caseRid}'
@@ -57,4 +59,39 @@ export const fetchRdFormUrlForState = (schemaName : string, caseRid : string) =>
   rs.form_error_message IS NULL
   `
   return query;
+}
+
+export const fetchStateCalcDataForDossier = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
+    rs.state_rid,
+    rs.input_params,
+    rs.computed_fields
+  FROM
+    ${schemaName}.rd_credit_state_calculations rs
+  WHERE
+    rs.case_rid = '${caseRid}'
+    AND rs.input_params IS NOT NULL
+    AND rs.computed_fields IS NOT NULL
+  `
+}
+
+export const fetchStateCodesByRids = (stateRids: string[]) => {
+  const ridList = stateRids.map(r => `'${r}'`).join(', ');
+  return `SELECT rid, state_code FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (${ridList})`
+}
+
+export const fetchCountryCalcDataForDossier = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
+    rc.input_params,
+    rc.computed_fields
+  FROM
+    ${schemaName}.rd_credit_country_calculations rc
+  WHERE
+    rc.case_rid = '${caseRid}'
+    AND rc.input_params IS NOT NULL
+    AND rc.computed_fields IS NOT NULL
+  LIMIT 1
+  `
 }
