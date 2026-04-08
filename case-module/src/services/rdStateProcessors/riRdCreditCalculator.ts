@@ -133,8 +133,8 @@ export class RdCreditCalculatorForRI {
         const line7 = line5.plus(line6);
 
         //---- Line 8: Tax liability (Form RI-1120C line 11 or T-71 line 7)
-       // const line8 = new Decimal(cd.tax_liability_ri ?? 0);
-          const line8 = new Decimal(0);
+        const line8 = new Decimal(cd.tax_liability_ri ?? 0);
+        //  const line8 = new Decimal(0);
 
         //---- Line 9: Maximum credit = Line 8 × 50%
         //    When line 8 = 0, max credit = 0 and full credit carries over via line 10

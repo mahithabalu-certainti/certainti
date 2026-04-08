@@ -130,11 +130,13 @@ export class RdCreditCalculatorForIA {
     // Part II — US QRE Calculation (lines 5–16)
     // -------------------------------------------------------------------------
     private partII(config: ConfigJson, stateRdData: StateRDData, caseData: Case) {
-        const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
+        const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREsFederal!;
         const cd = caseData as any;
 
         //---- Line 2: Energy consortia (hardcoded 0 — not in scope)
-        const line2 = new Decimal(0);
+        const line2 = new Decimal(cd.energy_consortia_amount_usa ?? 0);
+        const line3 = new Decimal(cd.basic_research_payments_usa ?? 0);
+        const line4 = new Decimal(cd.qualified_org_baseamount_usa ?? 0);
 
         //---- Line 5: Wages
         const line5 = new Decimal(wages);
@@ -214,8 +216,8 @@ export class RdCreditCalculatorForIA {
         const suppliesInclusion = config.qre_credit_percentage_c3 / 100;
 
         //---- Lines 17–20: Basic research payments in Iowa (hardcoded 0)
-        const line17 = new Decimal(0);
-        const line18 = new Decimal(0);
+        const line17 = new Decimal(cd.basic_research_payments_ia ?? 0);
+        const line18 = new Decimal(cd.qualified_org_baseamount_ia ?? 0);
         const line19 = Decimal.max(line17.minus(line18), 0);
         const line20 = line19.mul(creditRate);
 
@@ -230,7 +232,7 @@ export class RdCreditCalculatorForIA {
 
         //---- Lines 26–28: Iowa contract expenses
         const line26 = new Decimal(contract ?? 0);
-        const line27 = new Decimal(0);
+        const line27 = new Decimal(cd.non_qualifying_contract_expenses_ia ?? 0);
         const line28 = line26.minus(line27);
 
         //---- Line 29: Total Iowa QRE = line 23 + line 25 + line 28
@@ -350,7 +352,7 @@ export class RdCreditCalculatorForIA {
                     "[5] Wages for qualified research services":                                          p2.wages,
                     "[6] Cost of supplies used in conducting qualified research":                         p2.supplies,
                     "[7] Rental or lease costs of computers used in conducting qualified research":                                             p2.computer_rental,
-                    "[[8] Applicable portion of contract research expenses": p2.contract,
+                    "[8] Applicable portion of contract research expenses": p2.contract,
                     "[9] Total qualified research expenses. Add lines 5 through 8":                      p2.total_us_qre,
                     [`[10] Fixed-base percentage (not more than 16%): ${p2.fixed_base_pct}%`]:           `${p2.fixed_base_pct}%`,
                     "[11] Average U.S. annual gross receipts for tax years ":                                           p2.avg_gross_receipts,

@@ -59,6 +59,14 @@ const createCaseSchema = Joi.object({
   employers_pension_contribution: positiveDecimal18_2,
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
+  
+  // USA Federal
+  energy_consortia_amount_usa: positiveDecimal18_2,
+  basic_research_payments_usa: positiveDecimal18_2,
+  qualified_org_baseamount_usa: positiveDecimal18_2,
+  lease_costs_of_computers_usa:positiveDecimal18_2,
+
+  
   other_can : positiveDecimal18_2,
   other_on : positiveDecimal18_2,
   other_uk : positiveDecimal18_2,
@@ -138,6 +146,7 @@ const createCaseSchema = Joi.object({
  basic_research_payments_ia: positiveDecimal18_2,
   basic_period_amount_ia: positiveDecimal18_2,
   non_qualifying_ia_wages: positiveDecimal18_2,
+  non_qualifying_contract_expenses_ia: positiveDecimal18_2,
   cost_of_supplies_ia: positiveDecimal18_2,
   rac_share_ia: positiveDecimal18_2,
   supplemental_rac_ia: positiveDecimal18_2,
@@ -203,6 +212,12 @@ const updateCaseSchema = Joi.object({
   taxable_income: positiveDecimal18_2,
   export_sales_revenue: positiveDecimal18_2,
 
+  // USA Federal
+  energy_consortia_amount_usa: positiveDecimal18_2,
+  basic_research_payments_usa: positiveDecimal18_2,
+  qualified_org_baseamount_usa: positiveDecimal18_2,
+  lease_costs_of_computers_usa:positiveDecimal18_2,
+
   lease_costs_of_computers_nj: positiveDecimal18_2,
   lease_costs_of_computers_il: positiveDecimal18_2,
   lease_costs_of_computers_ca: positiveDecimal18_2,
@@ -212,8 +227,9 @@ const updateCaseSchema = Joi.object({
   illinois_rd_credit_partnership_corp: positiveDecimal18_2,
   illinois_research_payments_corp_only: positiveDecimal18_2,
    basic_research_payments_ia: positiveDecimal18_2,
-  basic_period_amount_ia: positiveDecimal18_2,
+  qualified_org_baseamount_ia: positiveDecimal18_2,
   non_qualifying_ia_wages: positiveDecimal18_2,
+  non_qualifying_contract_expenses_ia: positiveDecimal18_2,
   cost_of_supplies_ia: positiveDecimal18_2,
   rac_share_ia: positiveDecimal18_2,
   supplemental_rac_ia: positiveDecimal18_2,

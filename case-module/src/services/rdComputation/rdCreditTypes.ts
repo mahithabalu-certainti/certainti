@@ -20,6 +20,7 @@ export interface AnnualGrossReceipt {
 export interface StateRDData {
     currentYearQREs: QRE;
     prior3YearsQREs: QRE[];
+    currentYearQREsFederal?:QRE;
     annualGrossReceipts?: AnnualGrossReceipt[]; // current year + prior 4 years
 }
 
