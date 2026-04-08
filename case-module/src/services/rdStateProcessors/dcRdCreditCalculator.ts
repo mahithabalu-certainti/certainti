@@ -150,7 +150,7 @@ export class RdCreditCalculatorForDC {
         const line11 = Decimal.min(line9, line10);
         const line12 = line1.plus(line4).plus(line11);
         const rrcMultiplier = caseData.rrc_credit_280_c === "Yes" ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
-        const line13 = line12.mul(rrcMultiplier);
+        const line13 = line12.mul(rrcMultiplier / 100);
 
         return {
             line1:          this.round2(line1),
@@ -177,7 +177,8 @@ export class RdCreditCalculatorForDC {
         caseData:Case,
         sectionA:any
     ) {
-        const line19 = new Decimal(config.asc_qre_credit_percentage_c1 / 100);
+        const line18  = new Decimal(0);
+        const line19 = line18.mul(config.asc_qre_credit_percentage_c1 / 100);
         const line20 = new Decimal(sectionA.line48);
         const prior3 = stateRdData.prior3YearsQREs ?? [];
         const line21 = new Decimal(prior3.reduce((s, y) => s + (y.qre ?? 0), 0));
@@ -197,7 +198,7 @@ export class RdCreditCalculatorForDC {
         }
 
         const line25 = line19.plus(line24);
-        const line26 = caseData.asc_credit_280_c ? line25.mul(config.asc_elect_280c_yes) : line25;
+        const line26 = caseData.asc_credit_280_c ? line25.mul(config.asc_elect_280c_yes / 100) : line25;
 
         return {
             line19:         this.round2(line19),
@@ -227,7 +228,7 @@ export class RdCreditCalculatorForDC {
     
             //---- Active method credit: Line 13 (RRC) or Line 26 (ASC)
             //const activeMethodCredit = config.use_asc ? sectionB._line26 : sectionA._line13;
-            const activeMethodCredit =  sectionA._line13;
+            const activeMethodCredit =  Decimal.max(sectionA._line13,sectionB._line26);
     
             //---- Line 27: Form 8932 payroll tax wages
             const line27 = new Decimal(cd.credit_shared_wages_dc ?? 0);

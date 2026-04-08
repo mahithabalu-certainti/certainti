@@ -95,8 +95,8 @@ const createCaseSchema = Joi.object({
 
   // Kentucky
   llet_credit_ky: positiveDecimal18_2,
-  corporation_income_tax_credit_ky: positiveDecimal18_2,
-  individual_income_tax_credit_ky: positiveDecimal18_2,
+  corporation_tax_credit_ky: positiveDecimal18_2,
+  individual_tax_credit_ky: positiveDecimal18_2,
 
   // Maine
   credit_carry_forward_py_me: positiveDecimal18_2,
@@ -119,6 +119,7 @@ const createCaseSchema = Joi.object({
   // Rhode Island
   tax_liability_ri: positiveDecimal18_2,
   credit_carry_forward_py_ri: positiveDecimal18_2,
+  credit_carry_over_mn:positiveDecimal18_2,
 
   // Vermont
   energy_consortia_amount_vt: positiveDecimal18_2,
@@ -144,7 +145,7 @@ const createCaseSchema = Joi.object({
   qualified_org_baseamount_dc: positiveDecimal18_2,
   lease_costs_of_computers_dc: positiveDecimal18_2,
  basic_research_payments_ia: positiveDecimal18_2,
-  basic_period_amount_ia: positiveDecimal18_2,
+   qualified_org_baseamount_ia: positiveDecimal18_2,
   non_qualifying_ia_wages: positiveDecimal18_2,
   non_qualifying_contract_expenses_ia: positiveDecimal18_2,
   cost_of_supplies_ia: positiveDecimal18_2,
@@ -255,13 +256,13 @@ const updateCaseSchema = Joi.object({
 
   // Kentucky
   llet_credit_ky: positiveDecimal18_2,
-  corporation_income_tax_credit_ky: positiveDecimal18_2,
-  individual_income_tax_credit_ky: positiveDecimal18_2,
-
+    corporation_tax_credit_ky: positiveDecimal18_2,
+  individual_tax_credit_ky: positiveDecimal18_2,
   // Maine
   credit_carry_forward_py_me: positiveDecimal18_2,
 
   // Minnesota
+  credit_carry_over_mn:positiveDecimal18_2,
   lease_costs_of_computers_mn: positiveDecimal18_2,
   credit_tax_limit_mn: positiveDecimal18_2,
   basic_research_amount_mn: positiveDecimal18_2,
