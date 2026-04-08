@@ -108,10 +108,12 @@ class TableCell(BaseModel):
     """
     One cell in a tabular structure.
     """
-    header: str = Field(
+    header: Optional[str] = Field(
+        default=None,
         description=(
-            "The header text of the column this cell belongs to."
-        )
+            "The header text of the column this cell belongs to. "
+            "Null when the model cannot infer the column header (e.g. body cells)."
+        ),
     )
     value: Optional[str] = Field(
         default=None,
