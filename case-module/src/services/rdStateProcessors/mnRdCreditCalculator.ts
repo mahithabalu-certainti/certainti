@@ -160,7 +160,7 @@ export class RdCreditCalculatorForMN {
         const line19 = line15.plus(line16).plus(line17).plus(line18);
 
         //---- Line 20: Average gross income × 25% (25% is fixed per MN form)
-        const line20 = line19.mul(config.gross_credit_percentage);
+        const line20 = line19.mul(config.gross_credit_percentage / 100);
 
         //---- Line 21: Base income amount
         //    DUAL PATH:
