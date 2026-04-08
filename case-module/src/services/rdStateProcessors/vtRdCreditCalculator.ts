@@ -198,8 +198,11 @@ export class RdCreditCalculatorForVT {
         // [13] If you elect to reduce the credit under section 280C, then multiply line 12
         //      by 15.8% (0.158). If not, multiply line 12 by 20% (0.20) and see instructions
         //      for the statement that must be attached
-        const rrcMultiplier = caseData.rrc_credit_280_c ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
+        const rrcMultiplier = caseData.rrc_credit_280_c === "Yes" ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
         const line13        = line12.mul(rrcMultiplier / 100);
+        console.log(caseData.rrc_credit_280_c)
+        console.log("RRC config",rrcMultiplier)
+         console.log("RRC config vT check",line13)
 
         return {
             line1:           this.round2(line1),
@@ -215,7 +218,7 @@ export class RdCreditCalculatorForVT {
             line11:          this.round2(line11),
             line12:          this.round2(line12),
             line13:          this.round2(line13),
-            rrc_multiplier:  rrcMultiplier * 100,   // 20 or 15.8
+            rrc_multiplier:  rrcMultiplier ,   // 20 or 15.8
             _line13:         line13,
         };
     }
@@ -285,7 +288,7 @@ export class RdCreditCalculatorForVT {
         // [26] If you elect to reduce the credit under section 280C, then multiply line 25
         //      by 79% (0.79). If not, enter the amount from line 25 and see the line 13
         //      instructions for the statement that must be attached
-        const line26 = caseData.asc_credit_280_c ? line25.mul(config.asc_elect_280c_yes) : line25;
+        const line26 = caseData.asc_credit_280_c === "Yes" ? line25.mul(config.asc_elect_280c_yes / 100) : line25;
 
         return {
             line14:          this.round2(line14),
@@ -322,7 +325,7 @@ export class RdCreditCalculatorForVT {
 
         //---- Active method credit: Line 13 (RRC) or Line 26 (ASC)
         //const activeMethodCredit = config.use_asc ? sectionB._line26 : sectionA._line13;
-        const activeMethodCredit =  sectionA._line13;
+        const activeMethodCredit =   Decimal.max(sectionA._line13,sectionB._line26);
 
         //---- Line 27: Form 8932 payroll tax wages
         const line27 = new Decimal(cd.credit_shared_wages_vt ?? 0);

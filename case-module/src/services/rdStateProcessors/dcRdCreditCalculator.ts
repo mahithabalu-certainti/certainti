@@ -198,7 +198,7 @@ export class RdCreditCalculatorForDC {
         }
 
         const line25 = line19.plus(line24);
-        const line26 = caseData.asc_credit_280_c ? line25.mul(config.asc_elect_280c_yes / 100) : line25;
+        const line26 = caseData.asc_credit_280_c === "Yes" ? line25.mul(config.asc_elect_280c_yes / 100) : line25;
 
         return {
             line19:         this.round2(line19),

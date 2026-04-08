@@ -1173,7 +1173,17 @@ export const rawQueries = {
     lease_costs_of_computers_nj, lease_costs_of_computers_il, lease_costs_of_computers_ca,
     lease_costs_of_computers_az, lease_costs_of_computers_id, illinois_rd_credit_partnership_corp, illinois_research_payments_corp_only,
     basic_research_payments_ma, basic_research_payments_id, qualified_computer_rental_time_expenses,credit_carry_forward_py_ga, credit_carry_forward_py_sc, credit_carry_forward_py_tx,current_year_gross_receipts,other_credits_total_ga,
-    other_credits_total_sc, rrc_credit_280_c, asc_credit_280_c
+    other_credits_total_sc, rrc_credit_280_c, asc_credit_280_c,
+    tax_liability_ri, credit_carry_forward_py_ri,
+    basic_research_payments_ia, qualified_org_baseamount_ia, non_qualifying_wages_ia, non_qualifying_contract_expenses_ia, cost_of_supplies_ia, rac_share_ia, supplement_rac_ia, passthrough_supplement_rac_ia,
+    tax_liability_ks, machinery_equipments_ks,
+    llet_credit_ky, corporation_tax_credit_ky, individual_tax_credit_ky,
+    energy_consortia_amount_dc, basic_research_payments_dc, qualified_org_baseamount_dc, lease_costs_of_computers_dc,
+    energy_consortia_amount_vt, basic_research_payments_vt, qualified_org_baseamount_vt, lease_costs_of_computers_vt,
+    credit_carry_forward_py_me,
+    lease_costs_of_computers_mn, nonprofit_development_contributions, credit_tax_limit_mn, credit_carry_over_mn,
+    property_factor_off_campus_ne, property_factor_on_campus_ne, payroll_factor_off_campus_ne, payroll_factor_on_campus_ne, off_campus_research_expenses_ne, credit_tax_refunds_ne, credit_distributed_ne,
+    lease_costs_of_computers_usa, energy_consortia_amount_usa, basic_research_payments_usa, qualified_org_baseamount_usa
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
