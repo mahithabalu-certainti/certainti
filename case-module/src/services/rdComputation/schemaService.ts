@@ -278,7 +278,7 @@ class RDCreditSchemaService {
                 LIMIT :prior
             `,
                 {
-                    replacements: { accountRid, prior: 3, currentFiscalYear, jurisdictionRid },
+                    replacements: { accountRid, prior: prior, currentFiscalYear, jurisdictionRid },
                     type: QueryTypes.SELECT,
                 }
             );

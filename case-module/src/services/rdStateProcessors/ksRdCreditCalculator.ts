@@ -199,21 +199,22 @@ export class RdCreditCalculatorForKS {
         return {
             computed_fields: {
                 "PART A – COMPUTATION OF MAXIMUM ALLOWABLE CREDIT FOR THIS YEAR'S EXPENDITURES": {
-                    "[1] Research and development expenditures for current year":                       partA.currentYearTotal,
-                    "[1a] Machinery and Equipment":                                                    partA.machinery_and_equipment,
-                    "[1b] Payroll":                                                                    partA.payroll,
-                    "[1c] Other (contract research expenses)":                                         partA.other_contract,
-                    "[2a] First preceding taxable year expenditures":                                  partA.prior_year_1,
-                    "[2b] Second preceding taxable year expenditures":                                 partA.prior_year_2,
-                    "[3] Total (add lines 1, 2a, and 2b)":                                            partA.three_year_total,
-                    "[4] Average (divide line 3 by 3)":                                               partA.three_year_average,
-                    "[5] Expenditure amount for credit (line 1 minus line 4, not less than zero)":    partA.expenditure_for_credit,
-                    [`[6] Total research and development credit (line 5 × ${config.qre_credit_percentage_c1}%)`]:          partA.total_credit,
-                    [`[7] Maximum allowable credit in any one year (line 6 × ${config.qre_credit_percentage_c2}%)`]: partA.maximumAnnualCredit,
+                    "[1] Research and development expenditures for current year.":                                                                                  partA.currentYearTotal,
+                    "[a] Machinery and Equipment":                                                                                                                  partA.machinery_and_equipment,
+                    "[b] Payroll":                                                                                                                                  partA.payroll,
+                    "[c] Other (describe)":                                                                                                                         partA.other_contract,
+                    "[2] Research and development expenditures for the:":                                                                                           null,
+                    "[a] first preceding taxable year.":                                                                                                            partA.prior_year_1,
+                    "[b] second preceding taxable year, if applicable (see instructions).":                                                                         partA.prior_year_2,
+                    "[3] Total (add lines 1, 2a, and if applicable 2b, and enter the total on line 3; see instructions).":                                          partA.three_year_total,
+                    "[4] Average (divide line 3 by 3). This is your average expenditure over the last three years.":                                                partA.three_year_average,
+                    "[5] Expenditure amount for credit (subtract line 4 from line 1; cannot be less than zero).":                                                   partA.expenditure_for_credit,
+                    [`[6] Total research and development credit (multiply line 5 by ${config.qre_credit_percentage_c1}% or .${String(config.qre_credit_percentage_c1).padStart(2,"0")}).`]: partA.total_credit,
+                    [`[7] Maximum allowable credit in any one year (multiply line 6 by ${config.qre_credit_percentage_c2}% or .${config.qre_credit_percentage_c2 / 100}).`]:                partA.maximumAnnualCredit,
                 },
                 "PART B – COMPUTATION OF ALLOWED CREDIT FOR THIS YEAR'S EXPENDITURES": {
-                    "[8] Tax liability for this tax year after all other credits": partB.tax_liability,
-                    "[9] Amount of credit allowable (lesser of line 7 or line 8)": partB.allowableCredit,
+                    "[8] Amount of your tax liability for this tax year after all other credits other than this credit.":                                            partB.tax_liability,
+                    "[9] Amount of credit allowable as a result of expenditures made this tax year (enter amount from line 7 or line 8, whichever is less).":       partB.allowableCredit,
                 }
             },
         };

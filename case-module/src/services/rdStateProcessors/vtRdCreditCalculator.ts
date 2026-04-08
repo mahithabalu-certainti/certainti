@@ -198,11 +198,16 @@ export class RdCreditCalculatorForVT {
         // [13] If you elect to reduce the credit under section 280C, then multiply line 12
         //      by 15.8% (0.158). If not, multiply line 12 by 20% (0.20) and see instructions
         //      for the statement that must be attached
-        const rrcMultiplier = caseData.rrc_credit_280_c ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
+        const rrcMultiplier = caseData.rrc_credit_280_c === "Yes" ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
         const line13        = line12.mul(rrcMultiplier / 100);
+        console.log(caseData.rrc_credit_280_c)
+        console.log("RRC config",rrcMultiplier)
+         console.log("RRC config vT check",line13)
 
         return {
             line1:           this.round2(line1),
+            line2:           this.round2(line2),
+            line3:           this.round2(line3),
             line4:           this.round2(line4),
             line5:           this.round2(line5),
             fixed_base_pct:  fixedBasePct,
@@ -213,7 +218,7 @@ export class RdCreditCalculatorForVT {
             line11:          this.round2(line11),
             line12:          this.round2(line12),
             line13:          this.round2(line13),
-            rrc_multiplier:  rrcMultiplier * 100,   // 20 or 15.8
+            rrc_multiplier:  rrcMultiplier ,   // 20 or 15.8
             _line13:         line13,
         };
     }
@@ -283,7 +288,7 @@ export class RdCreditCalculatorForVT {
         // [26] If you elect to reduce the credit under section 280C, then multiply line 25
         //      by 79% (0.79). If not, enter the amount from line 25 and see the line 13
         //      instructions for the statement that must be attached
-        const line26 = caseData.asc_credit_280_c ? line25.mul(config.asc_elect_280c_yes) : line25;
+        const line26 = caseData.asc_credit_280_c === "Yes" ? line25.mul(config.asc_elect_280c_yes / 100) : line25;
 
         return {
             line14:          this.round2(line14),
@@ -320,7 +325,7 @@ export class RdCreditCalculatorForVT {
 
         //---- Active method credit: Line 13 (RRC) or Line 26 (ASC)
         //const activeMethodCredit = config.use_asc ? sectionB._line26 : sectionA._line13;
-        const activeMethodCredit =  sectionA._line13;
+        const activeMethodCredit =   Decimal.max(sectionA._line13,sectionB._line26);
 
         //---- Line 27: Form 8932 payroll tax wages
         const line27 = new Decimal(cd.credit_shared_wages_vt ?? 0);
@@ -454,39 +459,24 @@ export class RdCreditCalculatorForVT {
         //     ? `Multiply line 25 by 79% (0.79)`
         //     : `Enter the amount from line 25`;
 
-        const ascRateLine24 = b.has_prior_qres
-            ? `Multiply line 23 by 14% (0.14). If you skipped lines 22 and 23, multiply line 20 by 6% (0.06)`
-            : `Multiply line 20 by 6% (0.06) [lines 22 and 23 skipped — no prior QREs in one or more years]`;
+        const ascRateLine24 = `Multiply line 23 by ${config.asc_qre_credit_percentage_c2}% (${config.asc_qre_credit_percentage_c2 / 100}). If you skipped lines 22 and 23, multiply line 20 by ${config.asc_qre_credit_percentage_c3}% (${config.asc_qre_credit_percentage_c3 / 100})`
+       //     ? `Multiply line 23 by 14% (0.14). If you skipped lines 22 and 23, multiply line 20 by 6% (0.06)`
+       //     : `Multiply line 20 by 6% (0.06) [lines 22 and 23 skipped — no prior QREs in one or more years]`;
 
         return {
             computed_fields: {
-                // ── Section F ────────────────────────────────────────────────
-                "Section F—Qualified Research Expenses Summary. See instructions.": {
-                    "[42] Total  wages  for  qualified  services  for  all  business  components  (do  not  include  any  wages  used figuring the work opportunity credit)":
-                        f.line42,
-                    "[43] Total costs of supplies for all business components":
-                        f.line43,
-                    "[44] Total rental or lease cost of computers for all business components":
-                        f.line44,
-                    "[45] Total applicable amount of contract research for all business components (do not include basic research payments)":
-                        f.line45,
-                    "[46] Enter the applicable amount of all basic research payments. See instructions":
-                        f.line46,
-                    "[47] Add line 45 and line 46":
-                        f.line47,
-                    "[48] Add lines 42, 43, 44, and 47, then enter line 48 on either line 5 or line 20, whichever is appropriate":
-                        f.line48,
-                },
-
                 // ── Section A ────────────────────────────────────────────────
                 "Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit": {
                     "[1] Certain amounts paid or incurred to energy consortia (see instructions)":
                         a.line1,
+                    "[2] Basic research payments to qualified organizations (see instructions) ":a.line2,
+                    "[3] Qualified organization base period amount": a.line3,
                     "[4] Subtract line 3 from line 2. If zero or less, enter -0-":
                         a.line4,
+                    "Note: Complete Section F before going to line 5.":"",
                     "[5] Total qualified research expenses (QREs). Enter amount from line 48":
                         a.line5,
-                    [`[6] Enter fixed-base percentage, but not more than 16% (0.16). See instructions: ${a.fixed_base_pct}%`]:
+                    [`[6] Enter fixed-base percentage, but not more than ${config.rrc_fixed_base_percentage}% (${config.rrc_fixed_base_percentage / 100}). See instructions: ${a.fixed_base_pct}%`]:
                         `${a.fixed_base_pct}%`,
                     "[7] Enter average annual gross receipts. See instructions":
                         a.line7,
@@ -494,7 +484,7 @@ export class RdCreditCalculatorForVT {
                         a.line8,
                     "[9] Subtract line 8 from line 5. If zero or less, enter -0-":
                         a.line9,
-                    "[10] Multiply line 5 by 50% (0.50)":
+                    [`[10] Multiply line 5 by ${config.rrc_qre_credit_percentage}% (${config.rrc_qre_credit_percentage / 100})`]:
                         a.line10,
                     "[11] Enter the smaller of line 9 or line 10":
                         a.line11,
@@ -516,7 +506,7 @@ export class RdCreditCalculatorForVT {
                         b.line17,
                     "[18] Add lines 14 and 17":
                         b.line18,
-                    "[19] Multiply line 18 by 20% (0.20)":
+                    [`[19] Multiply line 18 by ${config.asc_qre_credit_percentage_c1}% (${config.asc_qre_credit_percentage_c1 /100})`]:
                         b.line19,
                     "[20] Total qualified research expenses (QREs). Enter amount from line 48":
                         b.line20,
@@ -530,7 +520,7 @@ export class RdCreditCalculatorForVT {
                         b.line24,
                     "[25] Add lines 19 and 24":
                         b.line25,
-                    [`[26] If you elect to reduce the credit under section 280C, then multiply line 25 by 79% (0.79). If not, enter the amount from line 25 and see the line 13 instructions for the statement that must be attached `]:
+                    [`[26] If you elect to reduce the credit under section 280C, then multiply line 25 by ${config.asc_elect_280c_yes}% (${config.asc_elect_280c_yes / 100}). If not, enter the amount from line 25 and see the line 13 instructions for the statement that must be attached `]:
                         b.line26,
                 },
 
@@ -574,6 +564,24 @@ export class RdCreditCalculatorForVT {
                         0,
                     "[41] Did you determine any of the QREs on line 5 or line 20 following the ASC 730 Directive?":
                         0,
+                },
+
+                // ── Section F ────────────────────────────────────────────────
+                "Section F—Qualified Research Expenses Summary. See instructions.": {
+                    "[42] Total wages for qualified services for all business components (do not include any wages used figuring the work opportunity credit)":
+                        f.line42,
+                    "[43] Total costs of supplies for all business components":
+                        f.line43,
+                    "[44] Total rental or lease cost of computers for all business components":
+                        f.line44,
+                    "[45] Total applicable amount of contract research for all business components (do not include basic research payments)":
+                        f.line45,
+                    "[46] Enter the applicable amount of all basic research payments. See instructions":
+                        f.line46,
+                    "[47] Add line 45 and line 46":
+                        f.line47,
+                    "[48] Add lines 42, 43, 44, and 47, then enter line 48 on either line 5 or line 20, whichever is appropriate":
+                        f.line48,
                 },
             }
         };

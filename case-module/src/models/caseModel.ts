@@ -51,6 +51,11 @@ interface CaseAttributes {
   taxable_income ? : number;
   export_sales_revenue? : number;
 
+  energy_consortia_amount_usa? :number;
+  basic_research_payments_usa? :number;
+  qualified_org_baseamount_usa? :number;
+  lease_costs_of_computers_usa?:number;
+
   lease_costs_of_computers_nj? : number;
   lease_costs_of_computers_il? : number;
   lease_costs_of_computers_ca? : number;
@@ -80,8 +85,9 @@ interface CaseAttributes {
   credit_carry_forward_py_ri?: number;
 
   basic_research_payments_ia?: number;
-  basic_period_amount_ia?: number;
+  qualified_org_baseamount_ia?: number;
   non_qualifying_wages_ia?: number;
+  non_qualifying_contract_expenses_ia?:number;
   cost_of_supplies_ia?: number;
   rac_share_ia?: number;
   supplement_rac_ia?: number;
@@ -116,6 +122,7 @@ interface CaseAttributes {
   credit_tax_limit_mn?:number;
   basic_research_amount_mn?:number;
   nonprofit_development_contributions_mn?:number;
+  credit_carry_over_mn?:number;
 
   property_factor_off_campus_ne?: number;
   property_factor_on_campus_ne?: number;
@@ -192,6 +199,9 @@ export class Case
   public total_expenses ? : number;
   public taxable_income ? : number;
   public export_sales_revenue? : number;
+  public energy_consortia_amount_usa? : number;
+  public basic_research_payments_usa? : number;
+  public qualified_org_baseamount_usa? : number;
   public lease_costs_of_computers_nj? : number;
   public lease_costs_of_computers_il? : number;
   public lease_costs_of_computers_ca? : number;
@@ -224,8 +234,9 @@ export class Case
   public credit_carry_forward_py_ri?:number;
 
   public basic_research_payments_ia?:number;
-  public basic_period_amount_ia?:number;
+  public qualified_org_baseamount_ia?:number;
   public non_qualifying_wages_ia?:number;
+  public non_qualifying_contract_expenses_ia?:number;
   public cost_of_supplies_ia?:number;
   public rac_share_ia?:number;
   public supplement_rac_ia?:number;
@@ -254,6 +265,7 @@ export class Case
   public basic_research_amount?:number;
   public nonprofit_development_contributions?:number;
   public credit_tax_limit_mn?:number;
+  public credit_carry_over_mn?:number;
 
   public property_factor_off_campus_ne?: number;
   public property_factor_on_campus_ne?: number;
@@ -262,6 +274,7 @@ export class Case
   public off_campus_research_expenses_ne?: number;
   public credit_tax_refunds_ne?: number;
   public credit_distributed_ne?: number;
+  public lease_costs_of_computers_usa?:number;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -328,6 +341,11 @@ export class Case
         total_expenses : {type : DataTypes.DECIMAL, allowNull : true},
         taxable_income : {type : DataTypes.DECIMAL, allowNull : true},
         export_sales_revenue : {type : DataTypes.DECIMAL, allowNull : true},
+        
+        energy_consortia_amount_usa: { type: DataTypes.DECIMAL, allowNull: true },
+        basic_research_payments_usa: { type: DataTypes.DECIMAL, allowNull: true },
+        qualified_org_baseamount_usa: { type: DataTypes.DECIMAL, allowNull: true },
+        lease_costs_of_computers_usa: { type: DataTypes.DECIMAL, allowNull: true },
 
         lease_costs_of_computers_nj: { type: DataTypes.DECIMAL, allowNull: true },
         lease_costs_of_computers_il: { type: DataTypes.DECIMAL, allowNull: true },
@@ -362,8 +380,9 @@ export class Case
         credit_carry_forward_py_ri:{ type : DataTypes.DECIMAL, allowNull : true},
 
         basic_research_payments_ia: { type : DataTypes.DECIMAL, allowNull : true},
-        basic_period_amount_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        qualified_org_baseamount_ia: { type : DataTypes.DECIMAL, allowNull : true},
         non_qualifying_wages_ia: { type : DataTypes.DECIMAL, allowNull : true},
+        non_qualifying_contract_expenses_ia: { type : DataTypes.DECIMAL, allowNull : true},
         cost_of_supplies_ia: { type : DataTypes.DECIMAL, allowNull : true},
         rac_share_ia: { type : DataTypes.DECIMAL, allowNull : true},
         supplement_rac_ia: { type : DataTypes.DECIMAL, allowNull : true},
@@ -391,7 +410,7 @@ export class Case
         credit_tax_limit_mn: { type: DataTypes.DECIMAL, allowNull: true },
         basic_research_amount_mn: { type: DataTypes.DECIMAL, allowNull: true },
         nonprofit_development_contributions_mn: { type: DataTypes.DECIMAL, allowNull: true },
-
+        credit_carry_over_mn: { type: DataTypes.DECIMAL, allowNull: true },
          property_factor_off_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
          property_factor_on_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },
          payroll_factor_off_campus_ne: { type: DataTypes.DECIMAL, allowNull: true },

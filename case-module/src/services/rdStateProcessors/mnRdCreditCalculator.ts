@@ -212,7 +212,8 @@ export class RdCreditCalculatorForMN {
             : line31;
 
         //---- Line 34: Carryover to next year = line31 − line33
-        const line34 = line31.minus(line33);
+      //  const line34 = line31.minus(line33);
+      const line34 = new Decimal((caseData as any).credit_carry_over_mn?? 0);
 
         return {
             // QRE lines
@@ -319,19 +320,17 @@ export class RdCreditCalculatorForMN {
                         0,
                     "[7] Total qualified research expenses in Minnesota for the tax year (add lines 1 through 6)":
                         r.total_mn_qre,
-                    "[14] Fixed base percentage (divide line 13B by line 13A; do not fill in more than 16% [.16]). Start-up companies, see instructions":
-                        `${r.fixed_base_pct}%`,
                     [`[15] Tax year ${py1}`]: r.gross_income_yr1,
                     [`[16] Tax year ${py2}`]: r.gross_income_yr2,
                     [`[17] Tax year ${py3}`]: r.gross_income_yr3,
                     [`[18] Tax year ${py4}`]: r.gross_income_yr4,
                     "[19] Add lines 15 through 18":
                         r.sum_gross_income,
-                    "[20] Average annual gross income/mine value (multiply line 19 by 25% [.25])":
+                    [`[20] Average annual gross income/mine value (multiply line 19 by ${config.gross_credit_percentage}% [${config.gross_credit_percentage / 100} ])`]:
                         r.avg_gross_income,
                     "[21] Multiply line 20 by the percentage on line 14":
                         r.base_income_amount,
-                    [`"[22] Multiply line 7 by ${config.qre_credit_percentage_c1} (${config.qre_credit_percentage_c1 / 100})`]:
+                    [`[22] Multiply line 7 by ${config.qre_credit_percentage_c1} (${config.qre_credit_percentage_c1 / 100})`]:
                         r.qre_floor,
                     "[23] Base amount (enter amount from line 21 or line 22, whichever is greater)":
                         r.base_amount,
