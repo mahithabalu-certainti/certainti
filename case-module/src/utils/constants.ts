@@ -1181,9 +1181,9 @@ export const rawQueries = {
     energy_consortia_amount_dc, basic_research_payments_dc, qualified_org_baseamount_dc, lease_costs_of_computers_dc,
     energy_consortia_amount_vt, basic_research_payments_vt, qualified_org_baseamount_vt, lease_costs_of_computers_vt,
     credit_carry_forward_py_me,
-    lease_costs_of_computers_mn, basic_research_amount, nonprofit_development_contributions, credit_tax_limit_mn, credit_carry_over_mn,
+    lease_costs_of_computers_mn, nonprofit_development_contributions, credit_tax_limit_mn, credit_carry_over_mn,
     property_factor_off_campus_ne, property_factor_on_campus_ne, payroll_factor_off_campus_ne, payroll_factor_on_campus_ne, off_campus_research_expenses_ne, credit_tax_refunds_ne, credit_distributed_ne,
-    lease_costs_of_computers_usa
+    lease_costs_of_computers_usa, energy_consortia_amount_usa, basic_research_payments_usa, qualified_org_baseamount_usa
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
