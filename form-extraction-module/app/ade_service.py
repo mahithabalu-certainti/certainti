@@ -11,6 +11,7 @@ from .config import get_settings
 from .schemas import ExtractionResponse
 from .pdf_field_mapper import attach_field_ids_to_extraction
 
+
 def _coerce_position_component(value: Any) -> float:
     """Normalize a single bbox coordinate for Pydantic List[float] validation."""
     if value is None:
@@ -28,11 +29,28 @@ def _coerce_position_component(value: Any) -> float:
     return 0.0
 
 
-def _sanitize_extraction_positions(extraction: Dict[str, Any]) -> Dict[str, Any]:
+def _coerce_header_text(value: Any) -> str:
+    """Normalize table headers so Pydantic does not receive null / blank values."""
+    if isinstance(value, str):
+        header = value.strip()
+        if header:
+            return header
+    elif value is not None:
+        header = str(value).strip()
+        if header:
+            return header
+    return "EMPTY_HEADER"
+
+
+def _sanitize_extraction(extraction: Dict[str, Any]) -> Dict[str, Any]:
     """
     ADE / vision models sometimes emit bounding boxes with null components, e.g.
     [x0, null, null, null]. Pydantic expects List[float] with no null elements, so we
     coerce missing or invalid coordinates to 0.0 before validation.
+
+    ADE can also emit null / blank table headers, which violate the response schema's
+    List[str] requirement for section tables. Normalize those to stable placeholder
+    strings so extraction can continue and downstream code retains column positions.
     """
 
     def walk(obj: Any) -> Any:
@@ -41,6 +59,11 @@ def _sanitize_extraction_positions(extraction: Dict[str, Any]) -> Dict[str, Any]
             for k, v in obj.items():
                 if k == "position" and isinstance(v, (list, tuple)):
                     out[k] = [_coerce_position_component(x) for x in v]
+                elif k == "column_headers" and isinstance(v, (list, tuple)):
+                    out[k] = [
+                        _coerce_header_text(header)
+                        for idx, header in enumerate(v)
+                    ]
                 else:
                     out[k] = walk(v)
             return out
@@ -93,7 +116,7 @@ class ADEForm6765Service:
 
         # Normalize bbox coordinates before field-id attachment: pdf_field_mapper
         # computes centers with (pos[0] + pos[2]) / 2; ADE may emit null components.
-        extraction_for_attach = _sanitize_extraction_positions(raw_extraction)
+        extraction_for_attach = _sanitize_extraction(raw_extraction)
 
         # 3) Attach PDF field ids agentically
         enriched = attach_field_ids_to_extraction(
@@ -103,7 +126,7 @@ class ADEForm6765Service:
             extraction=extraction_for_attach,
         )
 
-        sanitized = _sanitize_extraction_positions(enriched)
+        sanitized = _sanitize_extraction(enriched)
 
         # 4) Validate against Pydantic model (extra fields allowed)
         return ExtractionResponse.model_validate(sanitized)
