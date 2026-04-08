@@ -146,10 +146,14 @@ const toIsoDate = (date: Date) =>
  * Output:
  * - Returns the date key when present, otherwise `null`.
  */
+const toUtcNormalized = (value: string) =>
+  /Z$|[+\-]\d{2}:\d{2}$/.test(value) ? value : `${value}Z`;
+
 const getRawDateKey = (value?: string | null) => {
   if (!value) return null;
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match?.[1] || null;
+  const date = new Date(toUtcNormalized(value));
+  if (Number.isNaN(date.getTime())) return null;
+  return toIsoDate(date);
 };
 
 /**
@@ -163,7 +167,7 @@ const getRawDateKey = (value?: string | null) => {
  */
 const parseDate = (value?: string | null) => {
   if (!value) return null;
-  const parsed = new Date(value);
+  const parsed = new Date(toUtcNormalized(value));
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
@@ -178,9 +182,8 @@ const parseDate = (value?: string | null) => {
  */
 const formatTime = (value?: string | null) => {
   if (!value) return 'All day';
-  const match = value.match(/T(\d{2}):(\d{2})/);
-  if (!match) return 'All day';
-  const date = new Date(2026, 0, 1, Number(match[1]), Number(match[2]));
+  const date = new Date(toUtcNormalized(value));
+  if (Number.isNaN(date.getTime())) return 'All day';
   return date.toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit',
@@ -326,12 +329,19 @@ const rangeLabel = (mode: RangeMode, anchorDate: Date) => {
   return `${MONTH_NAMES[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
 };
 
+const sanitizeSearchText = (value: string) =>
+  value
+    .replace(/[\r\n\t\0]+/g, ' ')
+    .replace(/[\u201C\u201D\u2018\u2019\u0022\u0027\u0060]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const Calendar = () => {
   const { accountid } = useParams();
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [anchorDate, setAnchorDate] = useState(() => startOfDay(new Date()));
   const [searchText, setSearchText] = useState('');
-  const deferredSearch = useDeferredValue(searchText.trim());
+  const deferredSearch = useDeferredValue(sanitizeSearchText(searchText).slice(0, 200));
   const [selectedEventId, setSelectedEventId] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [splitPercent, setSplitPercent] = useState(50);
@@ -401,6 +411,8 @@ const Calendar = () => {
     setSelectedEventId(events[0]?.event_id || '');
   }, [events, selectedEventId]);
 
+  const anchorDateKey = toIsoDate(anchorDate);
+
   const groupedEvents = useMemo(() => {
     const grouped = new Map<string, CalendarEventSummary[]>();
 
@@ -412,6 +424,7 @@ const Calendar = () => {
           : null);
 
       if (!key) return;
+      if (rangeMode === 'day' && key !== anchorDateKey) return;
 
       const current = grouped.get(key) || [];
       current.push(event);
@@ -422,7 +435,7 @@ const Calendar = () => {
       date,
       items,
     }));
-  }, [events]);
+  }, [events, rangeMode, anchorDateKey]);
 
   const { data: eventDetail, isLoading: isDetailLoading } =
     useCalendarEventById(accountid || '', selectedEventId || undefined);
@@ -523,7 +536,7 @@ const Calendar = () => {
                 {isMetadataLoading
                   ? 'Loading calendar owner...'
                   : metadata?.calendar_owner_email ||
-                    'Connected Microsoft 365 calendar'}
+                  'Connected Microsoft 365 calendar'}
               </p>
             </div>
 
@@ -534,11 +547,10 @@ const Calendar = () => {
                     key={mode}
                     type='button'
                     onClick={() => setRangeMode(mode)}
-                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
-                      rangeMode === mode
+                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${rangeMode === mode
                         ? 'bg-[#0F6CBD] text-white'
                         : 'text-[#323130] hover:bg-[#F3F2F1]'
-                    }`}
+                      }`}
                   >
                     {mode}
                   </button>
@@ -610,7 +622,7 @@ const Calendar = () => {
           </div>
         </div>
 
-        {isMetadataError || isEventsError ? (
+        {isMetadataError || (isEventsError && isNoEmailConfigError) ? (
           isNoEmailConfigError ? (
             <div className='flex h-full flex-col'>
               <div className='flex items-center gap-3 bg-[#FFEBEE] px-4 py-3 border-b border-[#EF5350]'>
@@ -665,11 +677,10 @@ const Calendar = () => {
                                 onClick={() =>
                                   setSelectedEventId(event.event_id)
                                 }
-                                className={`flex w-full flex-col rounded-lg border px-2.5 py-2 text-left transition-all ${
-                                  isSelected
+                                className={`flex w-full flex-col rounded-lg border px-2.5 py-2 text-left transition-all ${isSelected
                                     ? 'border-[#B7D7F0] bg-[#F6FAFD] shadow-[0_4px_12px_rgba(15,108,189,0.08)]'
                                     : 'border-[#E1DFDD] bg-white hover:border-[#D6E6F5] hover:bg-[#FCFCFC]'
-                                }`}
+                                  }`}
                               >
                                 <div className='flex flex-wrap items-start justify-between gap-1.5'>
                                   <div className='min-w-0 flex-1'>
@@ -692,31 +703,12 @@ const Calendar = () => {
                                           ? 'All day'
                                           : `${formatTime(event.start)} - ${formatTime(event.end)}`}
                                       </span>
-                                      <span className='line-clamp-1'>
-                                        {event.organizer_name ||
-                                          event.organizer_email ||
-                                          'Organizer unavailable'}
-                                      </span>
                                       {event.location_display_name ? (
-                                        <span className='line-clamp-1'>
-                                          {event.location_display_name}
-                                        </span>
+                                        <span className='line-clamp-1'>{event.location_display_name}</span>
                                       ) : null}
                                     </div>
                                   </div>
 
-                                  <div className='flex flex-wrap items-center gap-1'>
-                                    {event.has_join_link ? (
-                                      <span className='rounded-full bg-[#EEF3F8] px-1.5 py-[2px] text-[9px] font-semibold text-[#35526B]'>
-                                        Online
-                                      </span>
-                                    ) : null}
-                                    {event.can_cancel ? (
-                                      <span className='rounded-full bg-[#F3F2F1] px-1.5 py-[2px] text-[9px] font-semibold text-[#605E5C]'>
-                                        Cancel
-                                      </span>
-                                    ) : null}
-                                  </div>
                                 </div>
                               </button>
                             );
@@ -786,12 +778,6 @@ const Calendar = () => {
                         >
                           {responseLabel(eventDetail.response_status)}
                         </span>
-                        {eventDetail.is_online_meeting ? (
-                          <span className='rounded-full bg-[#EEF3F8] px-2 py-[3px] text-[10px] font-semibold text-[#35526B]'>
-                            {eventDetail.online_meeting_provider ||
-                              'Online meeting'}
-                          </span>
-                        ) : null}
                       </div>
                     </div>
 
@@ -823,16 +809,6 @@ const Calendar = () => {
                         </p>
                       </div>
 
-                      <div className='rounded-lg bg-white px-3 py-2'>
-                        <p className='text-[10px] font-semibold uppercase tracking-wide text-[#605E5C]'>
-                          Organizer
-                        </p>
-                        <p className='mt-1 text-[13px] leading-5 text-[#323130]'>
-                          {eventDetail.organizer_name ||
-                            eventDetail.organizer_email ||
-                            '-'}
-                        </p>
-                      </div>
 
                       {eventDetail.location_display_name ? (
                         <div className='col-span-2 rounded-lg bg-white px-3 py-2'>
