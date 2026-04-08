@@ -1162,7 +1162,7 @@ export async function uploadCombinedWorkbook(
 ): Promise<string | null> {
     try {
         const buffer   = Buffer.from(await workbook.xlsx.writeBuffer());
-        const fileName = `RD_Credits_${caseRid}_${fiscalYear}.xlsx`;
+        const fileName = `Financial_Calculations.xlsx`;
 
         const mockFile: Express.Multer.File = {
             fieldname:    "file",

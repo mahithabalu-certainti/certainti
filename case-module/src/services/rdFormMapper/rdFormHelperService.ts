@@ -2048,6 +2048,17 @@ export class RdFormHelperService {
         safeSet(upToComma, value ?? 0);
         safeSet(upToComma.replace(/\s+/g, ""), value ?? 0);
       }
+
+      // Also store the prefix before "or $N,NNN" patterns in labels like
+      // "Line25Entertheamountfromline24or$2,000,000,whicheverisless".
+      // This allows references like "#Line25Entertheamountfromline24" (which omit
+      // the "or $2,000,000" qualifier) to still resolve correctly.
+      const orDollarMatch = rawKey.match(/^(.+?)or\s*\$[\d,]+/i);
+      if (orDollarMatch && orDollarMatch[1]) {
+        const prefixKey = orDollarMatch[1].trim();
+        safeSet(prefixKey, value ?? 0);
+        safeSet(prefixKey.replace(/\s+/g, ""), value ?? 0);
+      }
     };
 
     enhancedConfigs.forEach((item) => {
@@ -2447,8 +2458,11 @@ export class RdFormHelperService {
         // = and ? are also stop characters so that ternary/comparison operators produced by
         // normalizeExpressionSyntax (=== → ==, IF → ternary ?) are never swallowed into the label.
         // e.g. "#Item01b == 0 ? ..." must capture only "Item01b", not "Item01b == 0 ?".
+        // The space-dash-space lookahead also triggers on "(", so that after Pass 2 replaces a RID
+        // with a numeric literal, "...fromline24 - (10 / 100)" correctly stops at " - (" rather
+        // than swallowing "- (10" into the label key.
         replaced = replaced.replace(
-          /#([^#+*/=?]+?)(?=\s*[+*\/:<>{}=?]|\s+-\s+(?=[#\d])|\s*,|\s*#|\s*$)/g,
+          /#([^#+*/=?]+?)(?=\s*[+*\/:<>{}=?]|\s+-\s+(?=[(#\d])|\s*,|\s*#|\s*$)/g,
           (_match: string, rawKey: string) => resolveRef(rawKey),
         );
 
@@ -2466,6 +2480,16 @@ export class RdFormHelperService {
         replaced = replaced.replace(
           /,\s*[^+\-*/()#\d,][^+\-*/()*]*(?=[+\-*/])/g,
           " ",
+        );
+
+        // Strip comma-formatted number tails left by dollar-amount labels (e.g. "$2,000,000").
+        // When "#Line25...or$2,000,000,whicheverisless" is resolved, the regex captures only
+        // up to the first comma ("...or$2" → 82812.5), leaving ",000,000,whicheverisless"
+        // as junk text. This cleanup removes that remainder so validation passes.
+        // Pattern: a digit followed by ,NNN[,NNN]* [,prose] at end-of-expression or before operator.
+        replaced = replaced.replace(
+          /(\d),\d{3}(?:,\d{3})*(?:,[a-zA-Z][^+\-*/()]*)?(?=[+\-*/\s]|$)/g,
+          "$1",
         );
 
         // Defensive: Validate only allowed characters/operators
