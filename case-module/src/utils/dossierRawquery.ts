@@ -94,3 +94,31 @@ export const fetchCountryCalcDataForDossier = (schemaName: string, caseRid: stri
     AND rs.computed_fields IS NOT NULL
   `
 }
+
+export const fetchCountryCalcDataForDossierForUSA = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
+    rc.input_params,
+    rc.computed_fields
+  FROM
+    ${schemaName}.rd_credit_country_calculations rc
+  WHERE
+    rc.case_rid = '${caseRid}'
+    AND rc.input_params IS NOT NULL
+    AND rc.computed_fields IS NOT NULL
+  LIMIT 1
+  `
+}
+
+export const fetchCountryRidForCode = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
+    rs.country_rid
+  FROM
+    ${schemaName}.rd_credit_country_calculations rs
+  WHERE
+    rs.case_rid = '${caseRid}'
+    AND rs.input_params IS NOT NULL
+    AND rs.computed_fields IS NOT NULL
+  `
+}

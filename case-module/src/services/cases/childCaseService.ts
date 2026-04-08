@@ -7,7 +7,7 @@ import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, D
 import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
 import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
-import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids, fetchCountryCalcDataForDossier } from "../../utils/dossierRawquery";
+import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids, fetchCountryCalcDataForDossier, fetchCountryCalcDataForDossierForUSA, fetchCountryRidForCode } from "../../utils/dossierRawquery";
 import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook, addFederalSheetToWorkbook, addStateSummarySheetToWorkbook, STATE_SHEET_ORDER } from "../rdStateProcessors/stateRdCreditExcelGenerators";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
@@ -409,22 +409,34 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     // Generate combined financial calculations Excel
     // Sheet order matches reference: Fed R&D-2025 → State-Credit Summary → state sheets
     let stateFinancialCalcUrl: string | null = null;
+    let usBasedFinancialCalculations = []
     let countryFinancialCalUrl : string | null = null;
     let countryCode : string | null = null;
     try {
       const combinedWorkbook = createWorkbook();
       let sheetsAdded = 0;
 
-      // 1. Federal sheet (first)
-      const federalCalcRows: any[] = (await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid)))[0];
-      if (federalCalcRows.length > 0) {
-        const fedRow = federalCalcRows[0];
+      // 1. Federal sheet (first)\
+      const countryRid : any = await orgDb.query(fetchCountryRidForCode(schemaName, caseRid));
+      const countryRes : any = await mainDB.query(rawQueries.fetchCountryById(), {replacements : {id : countryRid[0][0].country_rid}})
+      countryCode = countryRes[0][0].country_code ?? ''
+      if(countryCode === 'USA') {
+        const countryRow : any[] = (await orgDb.query(fetchCountryCalcDataForDossierForUSA(schemaName, caseRid)))[0];
+        if (countryRow.length > 0) {
+        const fedRow = countryRow[0];
         const inputParams    = typeof fedRow.input_params    === "string" ? JSON.parse(fedRow.input_params)    : (fedRow.input_params    ?? {});
         const computedFields = typeof fedRow.computed_fields === "string" ? JSON.parse(fedRow.computed_fields) : (fedRow.computed_fields ?? {});
         addFederalSheetToWorkbook(combinedWorkbook, inputParams, computedFields);
         sheetsAdded++;
       }
-
+      } else {
+        const countryRow : any[] = (await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid)))[0];
+        if(countryRow.length > 0) {
+        countryFinancialCalUrl = countryRow[0].country_export_data
+        } else {
+          countryFinancialCalUrl = ''
+        }
+      }
       // 2. State Credit Summary sheet (second)
       const stateSummary = await this.rdCreditSchemaService.getStateSummaryResults(accountNumber, caseRid, schemaName);
       if (stateSummary && Object.keys(stateSummary.federal ?? stateSummary).length > 0) {
@@ -434,14 +446,6 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
 
       // 3. State sheets in reference order
       const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossier(schemaName, caseRid)))[0];
-      const countryRow : any = await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid));
-      if(countryRow[0].length > 0) {
-        countryFinancialCalUrl = countryRow[0][0].country_export_data
-      } else {
-        countryFinancialCalUrl = ''
-      }
-      const countryRes : any = await mainDB.query(rawQueries.fetchCountryById(), {replacements : {id : countryRow[0][0].country_rid}})
-      countryCode = countryRes[0][0].country_code ?? ''
       if (stateCalcRows.length > 0) {
         const stateRids = stateCalcRows.map((r: any) => r.state_rid);
         const stateCodeRows: any[] = (await mainDB.query(fetchStateCodesByRids(stateRids)))[0];
@@ -494,6 +498,10 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
 
       if (sheetsAdded > 0) {
         stateFinancialCalcUrl = await uploadCombinedWorkbook(combinedWorkbook, caseRid, caseDetails!.fiscal_year, accountRid, accountNumber);
+        if(stateFinancialCalcUrl)
+          usBasedFinancialCalculations.push(stateFinancialCalcUrl)
+        else 
+          usBasedFinancialCalculations = []
       }
     } catch (err) {
       logMessage(`Error generating financial calculations Excel for dossier: ${err}`);
@@ -531,8 +539,8 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       extension: ".xlsx"
     },
     {
-      name: "Financial Calculations State",
-      url: stateFinancialCalcUrl ?? ''
+      name: "Financial Calculations",
+      urls: usBasedFinancialCalculations
     }
   ];
   if (Array.isArray(finalStructuredData)) {
@@ -1344,12 +1352,21 @@ async fetchDossierPackage (data : any) : Promise<any> {
               })
             }
           } else {
-            responsePackage.push({
-              name : '',
-              urls : stringToJson[j].urls?.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
-                return await generateSasUrl(d)
-              })) : []
-            })
+            if(stringToJson[j].name === 'Financial Calculations') {
+              responsePackage.push({
+                name : 'Financial Calculations',
+                urls : stringToJson[j].urls?.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
+                  return await generateSasUrl(d)
+                })) : []
+              })
+            } else {
+              responsePackage.push({
+                name : '',
+                urls : stringToJson[j].urls?.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
+                  return await generateSasUrl(d)
+                })) : []
+              })
+            }
           }
         }
       }
