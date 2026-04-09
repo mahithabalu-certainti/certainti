@@ -52,6 +52,7 @@ interface StateLayout {
     hasQRETable?: boolean;      // Render a QRE summary table (Year / Wages / Contract / Total) from inputFields
     qreTableStartCol?: number;  // Starting column for the side-by-side QRE table (e.g. 8 = col H)
     dualColumnSectionHeader?: string; // Section header row rendered above dual-column headers (default: IL's label; "" = skip)
+    mixedColumns?: boolean;     // VA-style: some sections are dual-column arrays, others are single-value objects
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -236,6 +237,21 @@ const LAYOUT: Record<string, StateLayout> = {
         fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
         sheetLabel: "Vermont - Credit Calculations",
         hasQRETable: true, qreTableStartCol: 17,
+    },
+
+    // VA — mixed-column: dual-column arrays for Form RDC & Schedule A/C sec4; single-value objects for Schedule B & Schedule C sec1-3
+    //   Col 1  (8)  : line number
+    //   Cols 2-10   : description (merged)
+    //   Col 11 (16) : Column A value  (dual sections) / single value (plain sections)
+    //   Col 12 (16) : Column B value  (dual sections only)
+    //   QRE side table: cols 14-17
+    VA: {
+        valueCol: 11, labelCol: 2, lineNumCol: 1, labelMergeEndCol: 10,
+        colWidths: { 1: 8, 2: 80, 11: 16, 12: 16 },
+        fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
+        sheetLabel: "Virginia - Credit Calculations",
+        dualColumn: { colAIndex: 11, colBIndex: 12, headerFill: "FFBFBFBF" },
+        mixedColumns: true,
     },
 
     // GA — complex table structure; computedFields has NO computed_fields wrapper
@@ -825,6 +841,127 @@ function renderGA(ws: ExcelJS.Worksheet, computedFields: Record<string, any>, la
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// VA — mixed-column renderer
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// VA computed_fields is an OBJECT where each key is a section name and value is:
+//   - Array of two objects [{Column A ...}, {Column B ...}]  → dual-column rendering
+//   - Plain object { "[Xa] label": value, ... }              → single-column rendering
+//
+// Layout:
+//   Col 1 (lineNumCol) : line number
+//   Cols 2–10 merged   : description
+//   Col 11 (colAIndex) : Column A value  /  single value
+//   Col 12 (colBIndex) : Column B value  (dual sections only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderVA(ws: ExcelJS.Worksheet, sections: Record<string, any>, layout: StateLayout, fyYear: number) {
+    const { fontSize } = layout;
+    const dc = layout.dualColumn!;
+    const DC_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: dc.headerFill } };
+
+    // Year label (row 6, valueCol)
+    const yrCell = ws.getCell(6, layout.valueCol);
+    yrCell.value = fyYear;
+    yrCell.font  = { bold: true, size: fontSize };
+    yrCell.alignment = { horizontal: "center" };
+
+    let row = layout.dataStartRow;
+
+    for (const [sectionKey, sectionData] of Object.entries(sections)) {
+        if (!sectionData || typeof sectionData !== "object") continue;
+
+        if (Array.isArray(sectionData)) {
+            // ── Dual-column section ──────────────────────────────────────────
+            const colA = (sectionData[0] ?? {}) as Record<string, unknown>;
+            const colB = (sectionData[1] ?? {}) as Record<string, unknown>;
+
+            // Section header — spans to colBIndex
+            try { ws.mergeCells(row, 1, row, dc.colBIndex); } catch (_) {}
+            const sh = ws.getCell(row, 1);
+            sh.value     = sectionKey;
+            sh.fill      = SECTION_HEADER_FILL;
+            sh.font      = { bold: true, size: fontSize };
+            sh.alignment = { horizontal: "left", wrapText: true };
+            sh.border    = ALL_THIN;
+            row++;
+
+            // Column name row
+            for (const [col, obj] of [[dc.colAIndex, colA], [dc.colBIndex, colB]] as [number, Record<string, unknown>][]) {
+                const c = ws.getCell(row, col);
+                c.value     = (obj["Column Name"] as string) ?? (col === dc.colAIndex ? "Column A" : "Column B");
+                c.font      = { bold: true, size: fontSize };
+                c.fill      = DC_FILL;
+                c.alignment = { horizontal: "center" };
+                c.border    = BOTTOM_THIN;
+            }
+            row++;
+
+            // Sub-column name row
+            ws.getRow(row).height = 40;
+            for (const [col, obj] of [[dc.colAIndex, colA], [dc.colBIndex, colB]] as [number, Record<string, unknown>][]) {
+                const c = ws.getCell(row, col);
+                c.value     = (obj["SubColumn Name"] as string) ?? "";
+                c.font      = { bold: true, size: fontSize };
+                c.fill      = DC_FILL;
+                c.alignment = { horizontal: "center", wrapText: true };
+                c.border    = BOTTOM_THIN;
+            }
+            row++;
+
+            // Data rows — colA keys are authoritative order
+            const lineKeys = Object.keys(colA).filter(k => k !== "Column Name" && k !== "SubColumn Name");
+            for (const lineKey of lineKeys) {
+                const parsed = parseLineKey(lineKey);
+                const valA   = colA[lineKey];
+                const valB   = colB[lineKey];
+
+                // Line number
+                if (layout.lineNumCol && !parsed.isAnnotation) {
+                    const ln = ws.getCell(row, layout.lineNumCol);
+                    ln.value     = parsed.lineNum;
+                    ln.font      = { size: fontSize };
+                    ln.border    = BOTTOM_THIN;
+                    ln.alignment = { horizontal: "center" };
+                }
+
+                // Description — merge labelCol to just before colAIndex
+                try { ws.mergeCells(row, layout.labelCol, row, dc.colAIndex - 1); } catch (_) {}
+                const desc = ws.getCell(row, layout.labelCol);
+                desc.value     = parsed.description;
+                desc.font      = { size: fontSize };
+                desc.alignment = { horizontal: "left", wrapText: true };
+                desc.border    = BOTTOM_THIN;
+
+                // Col A
+                const cA = ws.getCell(row, dc.colAIndex);
+                cA.border = BOTTOM_THIN;
+                if (valA !== undefined && valA !== "") setVal(cA, valA, CURRENCY_FMT);
+
+                // Col B
+                const cB = ws.getCell(row, dc.colBIndex);
+                cB.border = BOTTOM_THIN;
+                if (valB !== undefined && valB !== "") setVal(cB, valB, CURRENCY_FMT);
+
+                row++;
+            }
+
+        } else {
+            // ── Single-column section ────────────────────────────────────────
+            writeSectionHeader(ws, row, sectionKey, layout);
+            row++;
+
+            for (const [lineKey, rawValue] of Object.entries(sectionData as Record<string, unknown>)) {
+                writeDataRow(ws, row, parseLineKey(lineKey), rawValue, layout);
+                row++;
+            }
+        }
+
+        row++; // spacer between sections
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // QRE input summary table
 // ─────────────────────────────────────────────────────────────────────────────
 //
@@ -941,6 +1078,12 @@ export async function generateStateSheet(
 
     applyColWidths(ws, layout.colWidths);
     writeMetaBlock(ws, meta, layout.fontSize);
+
+    // ── VA: mixed-column ───────────────────────────────────────────────────
+    if (layout.mixedColumns) {
+        renderVA(ws, sections as Record<string, any>, layout, fyYear);
+        return workbook;
+    }
 
     // ── IL: dual-column ────────────────────────────────────────────────────
     if (layout.dualColumn) {

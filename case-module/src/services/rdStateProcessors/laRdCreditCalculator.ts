@@ -216,7 +216,11 @@ export class RdCreditCalculatorForLA {
         config: ConfigJson,
         currentYear: number
     ) {
-        const sectionTitle = `RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765`;
+        
+        const sectionTitle = bracket === "small"
+         ? "LQRE-6765 (Less than 50 Employees)" : 
+         bracket === "mid" ? "EXPENDITURES (50·99 EMPLOYEES)" :
+         "CREDIT FOR INCREASING R&D EXPENDITURES (100 OR MORE EMPLOYEES)";
 
         const yr1Label = String(currentYear - 3);
         const yr2Label = String(currentYear - 2);
@@ -233,6 +237,7 @@ export class RdCreditCalculatorForLA {
 
         return {
             computed_fields: {
+                "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765":{},
                 [sectionTitle]: {
                     [`[1] ${yr1Label} LA Research & Development Expenditures`]: result.priorYearOldest,
                     [`[2] ${yr2Label} LA Research & Development Expenditures`]: result.priorYearMiddle,

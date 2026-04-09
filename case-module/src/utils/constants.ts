@@ -1981,6 +1981,13 @@ WHERE dmf.country_rid = '${countryRid}'
             and country_rid  =:countryRid
             and state_rid = :stateRid`
   },
+  updateStateFinancialCalculationError(schemaName: string) {
+    return `UPDATE ${schemaName}.rd_credit_state_calculations
+            SET financial_calculation_error_message = :errorMessage,
+            WHERE case_rid = :caseRid
+            and country_rid  =:countryRid
+            and state_rid = :stateRid`
+  },
   fetchFederalFormUrl(schemaName: string) {
     return `
       SELECT rd_form_url,form_error_message FROM ${schemaName}.rd_credit_country_calculations

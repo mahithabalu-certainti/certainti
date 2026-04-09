@@ -8,13 +8,13 @@ import { Case } from "../../models/caseModel";
  */
 
 export interface ConfigJson {
-    primary_credit_rate: number;            // 15%
-    college_credit_rate: number;            // 20%
-    eligible_expense_cap: number;           // 300,000
-    max_credit_primary: number;             // 45,000
-    max_credit_college: number;             // 60,000
-    base_amount_floor_percent: number;      // 50%
-    asc_base_multiplier: number;            // 50%
+    qre_credit_percentage_all: number;            // 15%
+    qre_credit_percentage_college: number;            // 20%
+    eligible_expense_threshold: number;           // 300,000
+    qre_credit_limit_all: number;             // 45,000
+    qre_credit_limit_college: number;             // 60,000
+    qre_credit_percentage_c1: number;      // 50%
+    qre_credit_percentage_c2: number;            // 50%
     sub_con_percent: number;                // 65%
 }
 
@@ -167,7 +167,7 @@ export class RdCreditCalculatorForVA {
 
         // --- Section 4: Virginia Base Amount ---
         // Line 4a: MAX(line 3g, 50% × line 1a)
-        const fiftyPercentPriorYear = line_1a.mul(config.base_amount_floor_percent / 100);
+        const fiftyPercentPriorYear = line_1a.mul(config.qre_credit_percentage_c1 / 100);
         const line_4a = Decimal.max(line_3g, fiftyPercentPriorYear);
 
         return {
@@ -232,16 +232,16 @@ export class RdCreditCalculatorForVA {
         const line4_col_b = Decimal.max(line1_col_b.minus(line3_col_b), 0);
 
         // Line 5: Eligible Expenses = MIN(cap, adjusted)
-        const line5_col_a = Decimal.min(new Decimal(config.eligible_expense_cap), line4_col_a);
-        const line5_col_b = Decimal.min(new Decimal(config.eligible_expense_cap), line4_col_b);
+        const line5_col_a = Decimal.min(new Decimal(config.eligible_expense_threshold), line4_col_a);
+        const line5_col_b = Decimal.min(new Decimal(config.eligible_expense_threshold), line4_col_b);
 
         // Line 6: Credit Computation
-        const line6_col_a = line5_col_a.mul(config.primary_credit_rate / 100);
-        const line6_col_b = line5_col_b.mul(config.college_credit_rate / 100);
+        const line6_col_a = line5_col_a.mul(config.qre_credit_percentage_all / 100);
+        const line6_col_b = line5_col_b.mul(config.qre_credit_percentage_college / 100);
 
         // Line 7: Credit Requested — MAX of (Col A capped at max_credit_primary, Col B capped at max_credit_college)
-        const capped_col_a = Decimal.min(line6_col_a, new Decimal(config.max_credit_primary));
-        const capped_col_b = Decimal.min(line6_col_b, new Decimal(config.max_credit_college));
+        const capped_col_a = Decimal.min(line6_col_a, new Decimal(config.qre_credit_limit_all));
+        const capped_col_b = Decimal.min(line6_col_b, new Decimal(config.qre_credit_limit_college));
         const line7 = Decimal.max(capped_col_a, capped_col_b);
 
         return {
@@ -336,8 +336,8 @@ export class RdCreditCalculatorForVA {
         const line_4c_col_b = line_4c_col_a.mul(line_4b);
 
         // Line 4d: Multiply Line 4c by 50%
-        const line_4d_col_a = line_4c_col_a.mul(config.asc_base_multiplier / 100);
-        const line_4d_col_b = line_4c_col_b.mul(config.asc_base_multiplier / 100);
+        const line_4d_col_a = line_4c_col_a.mul(config.qre_credit_percentage_c2 / 100);
+        const line_4d_col_b = line_4c_col_b.mul(config.qre_credit_percentage_c2 / 100);
 
         // Line 4e: Subtract Line 4d from Line 4a
         const line_4e_col_a = Decimal.max(line_4a_col_a.minus(line_4d_col_a), 0);
@@ -377,16 +377,16 @@ export class RdCreditCalculatorForVA {
         const expenses_col_b = new Decimal(scheduleC.adjusted_expenses_col_b || 0);
 
         // Eligible = MIN(cap, adjusted)
-        const eligible_col_a = Decimal.min(new Decimal(config.eligible_expense_cap), expenses_col_a);
-        const eligible_col_b = Decimal.min(new Decimal(config.eligible_expense_cap), expenses_col_b);
+        const eligible_col_a = Decimal.min(new Decimal(config.eligible_expense_threshold), expenses_col_a);
+        const eligible_col_b = Decimal.min(new Decimal(config.eligible_expense_threshold), expenses_col_b);
 
         // Credit
-        const credit_col_a = eligible_col_a.mul(config.primary_credit_rate / 100);
-        const credit_col_b = eligible_col_b.mul(config.college_credit_rate / 100);
+        const credit_col_a = eligible_col_a.mul(config.qre_credit_percentage_all / 100);
+        const credit_col_b = eligible_col_b.mul(config.qre_credit_percentage_college / 100);
 
         // Capped
-        const capped_col_a = Decimal.min(credit_col_a, new Decimal(config.max_credit_primary));
-        const capped_col_b = Decimal.min(credit_col_b, new Decimal(config.max_credit_college));
+        const capped_col_a = Decimal.min(credit_col_a, new Decimal(config.qre_credit_limit_all));
+        const capped_col_b = Decimal.min(credit_col_b, new Decimal(config.qre_credit_limit_college));
         const credit_requested = Decimal.max(capped_col_a, capped_col_b);
 
         return {
@@ -439,38 +439,64 @@ export class RdCreditCalculatorForVA {
     buildComputedFields(scheduleA: any, scheduleB: any, primaryCredit: any, scheduleC: any, ascCredit: any, config: ConfigJson) {
 
         // ── Section 1 – Primary Credit Calculation ──
-        const formRDC_section1_fields = {
-            "[1] Virginia Qualified Research and Development Expenses. Enter amount paid or incurred during the calendar year. (See Schedule A, Section 1, Line 4, Columns A and B). Column A: All qualified R&D Amt.": primaryCredit.va_qrd_expenses_col_a,
-            "[1] Virginia Qualified Research and Development Expenses. Column B: College & University R&D Amt.": primaryCredit.va_qrd_expenses_col_b,
-            "[2] College and University Expenses Percentage. If expenses were incurred in conjunction with a Virginia college or university, divide the amount on Line 1, Column B by the amount on Line 1, Column A. Enter in Column B.": primaryCredit.college_percentage,
-            "[3] Virginia Base Amount for the Taxable Year. Enter the amount from Schedule B, Line 4a in Column A. Column A.": primaryCredit.va_base_amount_col_a,
-            "[3] College and University Base Amount. If expenses were incurred in conjunction with a Virginia college or university, multiply the amount in Column A by the percentage on Line 2 and enter in Column B. Column B.": primaryCredit.va_base_amount_col_b,
-            "[4] Adjusted Expenses Amount. Subtract Line 3 from Line 1. Column A.": primaryCredit.adjusted_expenses_col_a,
-            "[4] Adjusted Expenses Amount. Subtract Line 3 from Line 1. Column B.": primaryCredit.adjusted_expenses_col_b,
-            [`[5] Total Eligible Research Expenses. Enter in Column A the lesser of $${config.eligible_expense_cap.toLocaleString()} or the amount from Line 4, Column A.`]: primaryCredit.eligible_expenses_col_a,
-            [`[5] Eligible College and University Research Expenses. Enter in Column B the lesser of $${config.eligible_expense_cap.toLocaleString()} or the amount from Line 4, Column B.`]: primaryCredit.eligible_expenses_col_b,
-            [`[6] Credit Computation. Multiply Line 5, Column A by ${config.primary_credit_rate}% (${config.primary_credit_rate / 100}) and enter in Column A.`]: primaryCredit.credit_col_a,
-            [`[6] Credit Computation. Multiply Line 5, Column B by ${config.college_credit_rate}% (${config.college_credit_rate / 100}) and enter in Column B.`]: primaryCredit.credit_col_b,
-            [`[7] Credit Requested. Enter the greater of Line 6, Column A (not to exceed $${config.max_credit_primary.toLocaleString()}) or Column B (not to exceed $${config.max_credit_college.toLocaleString()}).`]: primaryCredit.credit_requested,
-        };
+        const formRDC_section1_fields = [
+            {
+                "Column Name": "Column A",
+                "SubColumn Name": "All qualified R&D Amt",
+                "[1] Virginia Qualified Research and Development Expenses. Enter amount paid or incurred during the calendar year. (See Schedule A, Section 1, Line 4, Columns A and B).": primaryCredit.va_qrd_expenses_col_a,
+                "[2] College and University Expenses Percentage. If expenses were incurred in conjunction with a Virginia college or university, divide the amount on Line 1, Column B by the amount on Line 1, Column A. Enter in Column B.": primaryCredit.college_percentage,
+                "[3] Virginia Base Amount for the Taxable Year. Enter the amount from Schedule B, Line 4a in Column A.": primaryCredit.va_base_amount_col_a,
+                "[4] Adjusted Expenses Amount. Subtract Line 3 from Line 1.": primaryCredit.adjusted_expenses_col_a,
+                [`[5] Total Eligible Research Expenses. Enter the lesser of $${config.eligible_expense_threshold.toLocaleString()} or the amount from Line 4.`]: primaryCredit.eligible_expenses_col_a,
+                [`[6] Credit Computation. Multiply Line 5 by ${config.qre_credit_percentage_all}% (${config.qre_credit_percentage_all / 100}).`]: primaryCredit.credit_col_a,
+                [`[7] Credit Requested. Enter the greater of Line 6, Column A (not to exceed $${config.qre_credit_limit_all.toLocaleString()}) or Column B (not to exceed $${config.qre_credit_limit_college.toLocaleString()}).`]: primaryCredit.credit_requested_col_a,
+            },
+            {
+                "Column Name": "Column B",
+                "SubColumn Name": "College & University R&D Amt",
+                "[1] Virginia Qualified Research and Development Expenses. Enter amount paid or incurred during the calendar year. (See Schedule A, Section 1, Line 4, Columns A and B).": primaryCredit.va_qrd_expenses_col_b,
+                "[2] College and University Expenses Percentage. If expenses were incurred in conjunction with a Virginia college or university, divide the amount on Line 1, Column B by the amount on Line 1, Column A. Enter in Column B.": primaryCredit.college_percentage,
+                "[3] College and University Base Amount. If expenses were incurred in conjunction with a Virginia college or university, multiply the amount in Column A by the percentage on Line 2 and enter in Column B.": primaryCredit.va_base_amount_col_b,
+                "[4] Adjusted Expenses Amount. Subtract Line 3 from Line 1.": primaryCredit.adjusted_expenses_col_b,
+                [`[5] Eligible College and University Research Expenses. Enter the lesser of $${config.eligible_expense_threshold.toLocaleString()} or the amount from Line 4.`]: primaryCredit.eligible_expenses_col_b,
+                [`[6] Credit Computation. Multiply Line 5 by ${config.qre_credit_percentage_college}% (${config.qre_credit_percentage_college / 100}).`]: primaryCredit.credit_col_b,
+                [`[7] Credit Requested. Enter the greater of Line 6, Column A (not to exceed $${config.qre_credit_limit_all.toLocaleString()}) or Column B (not to exceed $${config.qre_credit_limit_college.toLocaleString()}).`]: primaryCredit.credit_requested,
+            },
+        ];
 
         // ── Section 2 – Alternative Simplified Credit Calculation ──
-        const formRDC_section2_fields = {
-            "[1] Total Adjusted Calendar Year Qualified Research and Development Expenses. Enter the amount(s) from Schedule C, Line 4e in the applicable column(s). Taxpayers without qualified research and development expenses for the preceding 3 taxable years, enter the applicable amount(s) from Schedule C, Line 1a in the applicable column(s). Column A.": ascCredit.asc_expenses_col_a,
-            "[1] Total Adjusted Calendar Year Qualified Research and Development Expenses. Column B.": ascCredit.asc_expenses_col_b,
-        };
+        const formRDC_section2_fields = [
+            {
+                "Column Name": "Column A",
+                "SubColumn Name": "All qualified R&D Amt",
+                "[1] Total Adjusted Calendar Year Qualified Research and Development Expenses. Enter the amount(s) from Schedule C, Line 4e in the applicable column(s). Taxpayers without qualified research and development expenses for the preceding 3 taxable years, enter the applicable amount(s) from Schedule C, Line 1a in the applicable column(s).": ascCredit.asc_expenses_col_a,
+            },
+            {
+                "Column Name": "Column B",
+                "SubColumn Name": "College & University R&D Amt",
+                "[1] Total Adjusted Calendar Year Qualified Research and Development Expenses. Enter the amount(s) from Schedule C, Line 4e in the applicable column(s). Taxpayers without qualified research and development expenses for the preceding 3 taxable years, enter the applicable amount(s) from Schedule C, Line 1a in the applicable column(s).": ascCredit.asc_expenses_col_b,
+            },
+        ];
 
         // ── Section 1 – Summary of Expenses ──
-        const scheduleA_fields = {
-            "[1] Contract Research Expenses. Column A: Enter amount from Schedule RD-CON, Column G.": scheduleA.contract_col_a,
-            "[1] Contract Research Expenses. Column B: Enter the amount associated with a college or university.": scheduleA.contract_col_b,
-            "[2] Supply Expenses. Column A: Enter the amount from Schedule RD-SUP, Column C.": scheduleA.supplies_col_a,
-            "[2] Supply Expenses. Column B: Enter the amount associated with a college or university.": scheduleA.supplies_col_b,
-            "[3] Wages. Column A: Enter the amount from Schedule RD-WAGE, Column C.": scheduleA.wages_col_a,
-            "[3] Wages. Column B: Enter the amount associated with a college or university.": scheduleA.wages_col_b,
-            "[4] Total Qualified Expenses. Column A: Add Column A, Lines 1-3 and enter result in Column A, Line 4.": scheduleA.total_qualified_expenses_col_a,
-            "[4] Total Qualified Expenses. Column B: Add Column B, Lines 1-3 and enter result in Column B, Line 4.": scheduleA.total_qualified_expenses_col_b,
-        };
+        const scheduleA_fields = [
+            {
+                "Column Name": "Column A",
+                "SubColumn Name": "All Virginia Exp",
+                "[1] Contract Research Expenses. Enter amount from Schedule RD-CON, Column G.": scheduleA.contract_col_a,
+                "[2] Supply Expenses. Enter the amount from Schedule RD-SUP, Column C.": scheduleA.supplies_col_a,
+                "[3] Wages. Enter the amount from Schedule RD-WAGE, Column C.": scheduleA.wages_col_a,
+                "[4] Total Qualified Expenses. Add Lines 1-3.": scheduleA.total_qualified_expenses_col_a,
+            },
+            {
+                "Column Name": "Column B",
+                "SubColumn Name": "College & University Exp",
+                "[1] Contract Research Expenses. Enter the amount associated with a college or university.": scheduleA.contract_col_b,
+                "[2] Supply Expenses. Enter the amount associated with a college or university.": scheduleA.supplies_col_b,
+                "[3] Wages. Enter the amount associated with a college or university.": scheduleA.wages_col_b,
+                "[4] Total Qualified Expenses. Add Lines 1-3.": scheduleA.total_qualified_expenses_col_b,
+            },
+        ];
 
         // ── Section 1 – VA Qualified Research and Development Expenses ──
         const scheduleB_sec1_fields = {
@@ -507,7 +533,7 @@ export class RdCreditCalculatorForVA {
 
         // ── Section 4 – Virginia Base Amount ──
         const scheduleB_sec4_fields = {
-            [`[4a] Virginia Base Amount. Your Virginia Base Amount is the greater of the amount on Line 3g OR ${config.base_amount_floor_percent}% (${config.base_amount_floor_percent / 100}) of the Virginia Qualified Expenses from Line 1a. Enter here and on Form RDC, Section 1, Line 3, Column A.`]: scheduleB.va_base_amount,
+            [`[4a] Virginia Base Amount. Your Virginia Base Amount is the greater of the amount on Line 3g OR ${config.qre_credit_percentage_c1}% (${config.qre_credit_percentage_c1 / 100}) of the Virginia Qualified Expenses from Line 1a. Enter here and on Form RDC, Section 1, Line 3, Column A.`]: scheduleB.va_base_amount,
         };
 
         // ── Section 1 – Virginia Qualified Research and Development Expenses ──
@@ -533,32 +559,46 @@ export class RdCreditCalculatorForVA {
         };
 
         // ── Section 4 – Adjusted Expenses Calculation ──
-        const scheduleC_sec4_fields = {
-            "[4a] Enter the current year expenses. Column A must include the amount reported in Column B, if any. Column A.": scheduleC.current_year_expenses_col_a,
-            "[4a] Enter the current year expenses. Column B.": scheduleC.current_year_expenses_col_b,
-            "[4b] If expenses were incurred in connection with a Virginia college or university, divide the amount on Line 4a, Column B by the amount on Line 4a, Column A.": scheduleC.college_percentage,
-            "[4c] Column A – Enter the amount from Line 3e.": scheduleC.avg_prior_3yr_col_a,
-            "[4c] Column B – If expenses were incurred in connection with a Virginia college or university, multiply the amount on Line 4c, Column A by the percentage on Line 4b, Column B.": scheduleC.avg_prior_3yr_col_b,
-            [`[4d] Multiply the amount(s) on Line 4c by ${config.asc_base_multiplier}% (${config.asc_base_multiplier / 100}). Column A.`]: scheduleC.avg_times_50_percent_col_a,
-            [`[4d] Multiply the amount(s) on Line 4c by ${config.asc_base_multiplier}% (${config.asc_base_multiplier / 100}). Column B.`]: scheduleC.avg_times_50_percent_col_b,
-            "[4e] Subtract Line 4d from Line 4a. Enter here and on Form RDC, Section 2, Line 1 in the applicable column(s). Column A.": scheduleC.adjusted_expenses_col_a,
-            "[4e] Subtract Line 4d from Line 4a. Enter here and on Form RDC, Section 2, Line 1 in the applicable column(s). Column B.": scheduleC.adjusted_expenses_col_b,
-        };
+        const scheduleC_sec4_fields = [
+            {
+                "Column Name": "Column A",
+                "SubColumn Name": "All qualified R&D Amt",
+                "[4a] Enter the current year expenses. Column A must include the amount reported in Column B, if any.": scheduleC.current_year_expenses_col_a,
+                "[4b] If expenses were incurred in connection with a Virginia college or university, divide the amount on Line 4a, Column B by the amount on Line 4a, Column A.": scheduleC.college_percentage,
+                "[4c] Enter the amount from Line 3e.": scheduleC.avg_prior_3yr_col_a,
+                [`[4d] Multiply the amount(s) on Line 4c by ${config.qre_credit_percentage_c2}% (${config.qre_credit_percentage_c2 / 100}).`]: scheduleC.avg_times_50_percent_col_a,
+                "[4e] Subtract Line 4d from Line 4a. Enter here and on Form RDC, Section 2, Line 1 in the applicable column(s).": scheduleC.adjusted_expenses_col_a,
+            },
+            {
+                "Column Name": "Column B",
+                "SubColumn Name": "College & University R&D Amt",
+                "[4a] Enter the current year expenses. Column A must include the amount reported in Column B, if any.": scheduleC.current_year_expenses_col_b,
+                "[4b] If expenses were incurred in connection with a Virginia college or university, divide the amount on Line 4a, Column B by the amount on Line 4a, Column A.": scheduleC.college_percentage,
+                "[4c] If expenses were incurred in connection with a Virginia college or university, multiply the amount on Line 4c, Column A by the percentage on Line 4b, Column B.": scheduleC.avg_prior_3yr_col_b,
+                [`[4d] Multiply the amount(s) on Line 4c by ${config.qre_credit_percentage_c2}% (${config.qre_credit_percentage_c2 / 100}).`]: scheduleC.avg_times_50_percent_col_b,
+                "[4e] Subtract Line 4d from Line 4a. Enter here and on Form RDC, Section 2, Line 1 in the applicable column(s).": scheduleC.adjusted_expenses_col_b,
+            },
+        ];
 
         return {
-            computed_fields: {
-                "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": formRDC_section1_fields,
-                "Section 2 – Alternative Simplified Credit Calculation": formRDC_section2_fields,
-                "Section 1 – Summary of Expenses": scheduleA_fields,
-                "Section 1 – VA Qualified Research and Development Expenses": scheduleB_sec1_fields,
-                "Section 2 – Determine the Fixed Base Percentage": scheduleB_sec2_fields,
-                "Section 3 – Determine the Virginia Base Amount": scheduleB_sec3_fields,
-                "Section 4 – Virginia Base Amount": scheduleB_sec4_fields,
-                "Section 1 – Virginia Qualified Research and Development Expenses": scheduleC_sec1_fields,
-                "Section 2 – Determination of How to Compute the Credit": scheduleC_sec2_fields,
-                "Section 3 – Average Qualified Research and Development Expenses Calculation": scheduleC_sec3_fields,
-                "Section 4 – Adjusted Expenses Calculation": scheduleC_sec4_fields,
-            },
+             
+                virginia: {
+                    "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": formRDC_section1_fields,
+                    "Section 2 – Alternative Simplified Credit Calculation": formRDC_section2_fields,
+                    "Section 1 – Summary of Expenses": scheduleA_fields,
+                },
+                computed_fields: {
+                    "Section 1 – VA Qualified Research and Development Expenses": scheduleB_sec1_fields,
+                    "Section 2 – Determine the Fixed Base Percentage": scheduleB_sec2_fields,
+                    "Section 3 – Determine the Virginia Base Amount": scheduleB_sec3_fields,
+                    "Section 4 – Virginia Base Amount": scheduleB_sec4_fields,
+                    "Section 1 – Virginia Qualified Research and Development Expenses": scheduleC_sec1_fields,
+                    "Section 2 – Determination of How to Compute the Credit": scheduleC_sec2_fields,
+                    "Section 3 – Average Qualified Research and Development Expenses Calculation": scheduleC_sec3_fields,
+                },
+                virginiasection4: {
+                    "Section 4 – Adjusted Expenses Calculation": scheduleC_sec4_fields,
+                },
         };
     }
 

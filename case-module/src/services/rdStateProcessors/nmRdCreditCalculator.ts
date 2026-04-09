@@ -117,7 +117,7 @@ export class RdCreditCalculatorForNM {
                 line9:       this.round2(line9),
             },
             config,
-            fiscalYear
+            year
         );
 
         return {
@@ -178,7 +178,7 @@ export class RdCreditCalculatorForNM {
             line9: number;
         },
         config: ConfigJson,
-        fiscalYear: string
+        fiscalYear: number
     ) {
         return {
             newMexico: [
