@@ -71,15 +71,27 @@ class InteractionSchemaService {
       interactionData.recipient_name = interactionData.email_info?.name || null
       interactionData.recipient_email = interactionData.email_info?.email || null
 
-      // Account-level interactions store is_primary as null; project-level is true/false
+      // Account-level interactions store is_primary as null; project-level is true/false.
+      // For project-level, is_primary is true only for the first interaction of the same
+      // source type (Manual vs Auto/RD-Assessment) within the project.
+      // Manual and RD Assessment are tracked independently even though they share the same
+      // interaction_assessment_source_rid ("RD Assessment"), because they differ in interaction_source_rid.
       if (intLevel === 'Account') {
         interactionData.is_primary = null;
       } else {
+        const whereClause: any = { project_fiscal_rid: interactionData.project_fiscal_rid };
+        if (interactionData.interaction_assessment_source_rid) {
+          whereClause.interaction_assessment_source_rid = interactionData.interaction_assessment_source_rid;
+        }
+        if (interactionData.interaction_source_rid) {
+          whereClause.interaction_source_rid = interactionData.interaction_source_rid;
+        }
         const existingCount = await Interaction.count({
-          where: { project_fiscal_rid: interactionData.project_fiscal_rid },
+          where: whereClause,
           transaction,
         });
         interactionData.is_primary = existingCount === 0;
+        logMessage(`[createInteractions] is_primary=${interactionData.is_primary} for project_fiscal_rid=${interactionData.project_fiscal_rid}, source_rid=${interactionData.interaction_source_rid}, assessment_source_rid=${interactionData.interaction_assessment_source_rid}, existingCount=${existingCount}`);
       }
 
       const interaction = await Interaction.create(interactionData, {

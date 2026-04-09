@@ -333,16 +333,19 @@ export const rawQueries = {
         p.currency_rid,
         ad.account_name,
         CASE 
+          WHEN i.is_primary = true THEN 'Not Applicable'
           WHEN a.four_part_assessment_error_message IS NOT NULL AND a.four_part_assessment_error_message::text != 'null' THEN 'Failed'
           WHEN a.is_four_part_assessment_processed = true THEN 'Completed'
           ELSE 'Pending'
         END as four_part_assessment,
         CASE 
+          WHEN i.is_primary = true THEN 'Not Applicable'
           WHEN a.technical_summary_error_message IS NOT NULL AND a.technical_summary_error_message::text != 'null' THEN 'Failed'
           WHEN a.is_tech_summary_processed = true THEN 'Completed'
           ELSE 'Pending'
         END as project_summary,
         CASE 
+          WHEN i.is_primary = true THEN 'Not Applicable'
           WHEN a.qre_error_message IS NOT NULL AND a.qre_error_message::text != 'null' THEN 'Failed'
           WHEN a.is_qre_processed = true THEN 'Completed'
           ELSE 'Pending'
@@ -355,6 +358,7 @@ export const rawQueries = {
       FROM ${schemaName}.ai_assessment_audit a
       LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
       LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
+      LEFT JOIN ${schemaName}.interactions i ON i.transaction_id = a.transaction_id
       ${whereString}
       ORDER BY ${dbSortBy} ${dbSortOrder}
       LIMIT :limit OFFSET :offset
@@ -366,6 +370,7 @@ export const rawQueries = {
       FROM ${schemaName}.ai_assessment_audit a
       LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
       LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
+      LEFT JOIN ${schemaName}.interactions i ON i.transaction_id = a.transaction_id
       ${whereString}
     `;
   },
