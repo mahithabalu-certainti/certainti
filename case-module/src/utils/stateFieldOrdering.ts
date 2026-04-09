@@ -688,36 +688,13 @@ CA: {
             "Section 4 – Adjusted Expenses Calculation"
         ],
         sectionFieldOrders: {
-            "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": [
-                { pattern: /^\[1\] Virginia Qualified Research and Development Expenses\. Enter amount paid/, order: 1 },
-                { pattern: /^\[1\] Virginia Qualified Research and Development Expenses\. Column B/, order: 2 },
-                { pattern: /^\[2\] College and University Expenses Percentage/, order: 3 },
-                { pattern: /^\[3\] Virginia Base Amount for the Taxable Year/, order: 4 },
-                { pattern: /^\[3\] College and University Base Amount/, order: 5 },
-                { pattern: /^\[4\] Adjusted Expenses Amount\. Subtract Line 3 from Line 1\. Column A/, order: 6 },
-                { pattern: /^\[4\] Adjusted Expenses Amount\. Subtract Line 3 from Line 1\. Column B/, order: 7 },
-                { pattern: /^\[5\] Total Eligible Research Expenses/, order: 8 },
-                { pattern: /^\[5\] Eligible College and University Research Expenses/, order: 9 },
-                { pattern: /^\[6\] Credit Computation\. Multiply Line 5, Column A/, order: 10 },
-                { pattern: /^\[6\] Credit Computation\. Multiply Line 5, Column B/, order: 11 },
-                { pattern: /^\[7\] Credit Requested/, order: 12 },
-            ],
-            "Section 2 – Alternative Simplified Credit Calculation": [
-                { pattern: /^\[1\] Total Adjusted Calendar Year Qualified Research and Development Expenses\. Enter the amount/, order: 1 },
-                { pattern: /^\[1\] Total Adjusted Calendar Year Qualified Research and Development Expenses\. Column B/, order: 2 },
-            ],
-            "Section 1 – Summary of Expenses": [
-                { pattern: /^\[1\] Contract Research Expenses\. Column A/, order: 1 },
-                { pattern: /^\[1\] Contract Research Expenses\. Column B/, order: 2 },
-                { pattern: /^\[2\] Supply Expenses\. Column A/, order: 3 },
-                { pattern: /^\[2\] Supply Expenses\. Column B/, order: 4 },
-                { pattern: /^\[3\] Wages\. Column A/, order: 5 },
-                { pattern: /^\[3\] Wages\. Column B/, order: 6 },
-                { pattern: /^\[4\] Total Qualified Expenses\. Column A/, order: 7 },
-                { pattern: /^\[4\] Total Qualified Expenses\. Column B/, order: 8 },
-            ],
+            // Array sections (dual-column) are passed through as-is — no field ordering entries needed.
+            // Single-column sections (Schedule B and Schedule C sec 1–3) are ordered below.
+
             "Section 1 – VA Qualified Research and Development Expenses": [
                 { pattern: /^\[1a\] VA Qualified Research and Development Expenses in CY/, order: 1 },
+                { pattern: /^\[1b\] Short year filers only: Enter the number of months/, order: 2 },
+                { pattern: /^\[1c\] Short year filers only: Divide the number of months/, order: 3 },
             ],
             "Section 2 – Determine the Fixed Base Percentage": [
                 { pattern: /^\[2a\] Expenses for the 3rd preceding taxable year/, order: 1 },
@@ -745,8 +722,9 @@ CA: {
                 { pattern: /^\[4a\] Virginia Base Amount/, order: 1 },
             ],
             "Section 1 – Virginia Qualified Research and Development Expenses": [
-                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column A/, order: 1 },
-                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column B/, order: 2 },
+                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY/, order: 1 },
+                { pattern: /^\[1b\] Short year filers only: Enter the number of days/, order: 2 },
+                { pattern: /^\[1c\] Short year filers only: Divide the number of days/, order: 3 },
             ],
             "Section 2 – Determination of How to Compute the Credit": [
                 { pattern: /^\[2\] Were research and development expenses paid or incurred/, order: 1 },
@@ -757,17 +735,6 @@ CA: {
                 { pattern: /^\[3c\] Expenses for the preceding taxable year/, order: 3 },
                 { pattern: /^\[3d\] Total expenses from preceding 3 taxable years/, order: 4 },
                 { pattern: /^\[3e\] Average qualified research and development expenses/, order: 5 },
-            ],
-            "Section 4 – Adjusted Expenses Calculation": [
-                { pattern: /^\[4a\] Enter the current year expenses\. Column A must include/, order: 1 },
-                { pattern: /^\[4a\] Enter the current year expenses\. Column B/, order: 2 },
-                { pattern: /^\[4b\] If expenses were incurred in connection with a Virginia college/, order: 3 },
-                { pattern: /^\[4c\] Column A/, order: 4 },
-                { pattern: /^\[4c\] Column B/, order: 5 },
-                { pattern: /^\[4d\] Multiply the amount\(s\) on Line 4c by .+\. Column A/, order: 6 },
-                { pattern: /^\[4d\] Multiply the amount\(s\) on Line 4c by .+\. Column B/, order: 7 },
-                { pattern: /^\[4e\] Subtract Line 4d from Line 4a.+Column A/, order: 8 },
-                { pattern: /^\[4e\] Subtract Line 4d from Line 4a.+Column B/, order: 9 },
             ],
         },
         BOLD: []
