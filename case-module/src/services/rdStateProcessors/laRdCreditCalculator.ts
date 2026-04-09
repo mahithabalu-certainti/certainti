@@ -78,23 +78,23 @@ export class RdCreditCalculatorForLA {
         logMessage(`LA employee count from DB: ${employeeCount}, bracket resolved: ${bracket}`);
 
         const creditResult   = this.computeCredit(config, stateRdData, bracket);
-        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
-            country: this.country,
-            creditType: this.creditType,
-            currency: this.currency,
-            fiscalYearEnded : fiscalYear,
-            currentYear : year
-        },config);
+        const inputFields    = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
+            country:         this.country,
+            creditType:      this.creditType,
+            currency:        this.currency,
+            fiscalYearEnded: fiscalYear,
+            currentYear:     year,
+        }, config);
         const computedFields = this.buildComputedFields(creditResult, bracket, config, year);
 
         return {
             inputFields,
             computedFields,
-            finalCredit:   creditResult.la_research_credit,
-            totalQRE:      creditResult.current_year_qre,
-            totalWages:    this.round2(new Decimal(stateRdData.currentYearQREs.wages    ?? 0)),
-            totalContract: this.round2(new Decimal(stateRdData.currentYearQREs.contract ?? 0)),
-            totalSupplies: this.round2(new Decimal(stateRdData.currentYearQREs.supplies ?? 0)),
+            finalCredit:     creditResult.laResearchCredit,
+            totalQRE:        creditResult.currentYearQre,
+            totalWages:      this.round2(new Decimal(stateRdData.currentYearQREs.wages    ?? 0)),
+            totalContract:   this.round2(new Decimal(stateRdData.currentYearQREs.contract ?? 0)),
+            totalSupplies:   this.round2(new Decimal(stateRdData.currentYearQREs.supplies ?? 0)),
             employeeBracket: bracket,
         };
     }
@@ -103,41 +103,32 @@ export class RdCreditCalculatorForLA {
     // Core credit computation — shared logic, bracket-specific rates
     // -------------------------------------------------------------------------
     private computeCredit(config: ConfigJson, stateRdData: StateRDData, bracket: EmployeeBracket) {
-        const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
+        const { wages = 0, contract = 0 } = stateRdData.currentYearQREs;
 
         //---- Current year total LA QRE (Line 6)
-        const currentYearQRE = new Decimal(wages)
+        const currentYearQre = new Decimal(wages)
             .plus(new Decimal(contract).mul(config.sub_con_percent / 100));
-         const qreSum = stateRdData?.prior3YearsQREs.map(item => ({
-                    fiscalYear: item.fiscalYear,
-                    wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
-                }));
-                logMessage(`${JSON.stringify(qreSum)}`)
-                //----Line2a: Enter prior year QRE for la State
-                const prev1_qre = new Decimal(qreSum[0]?.wagesContractSum || 0);
-        
-                //----Line3a: Enter 2 years prior QRE for la State
-                const prev2_qre = new Decimal(qreSum[1]?.wagesContractSum || 0);
-        
-                //----Line4a: Enter 3 years prior QRE for la State
-                const prev3_qre = new Decimal(qreSum[2]?.wagesContractSum || 0);
-        //---- Prior 3 years QRE (Lines 1, 2, 3) — oldest to newest
-        //     prior3YearsQREs[0] = most recent prior year (e.g. 2024)
-        //     prior3YearsQREs[1] = 2 years ago (e.g. 2023)
-        //     prior3YearsQREs[2] = 3 years ago (e.g. 2022)
-        //const prior1 = new Decimal(stateRdData.prior3YearsQREs?.[0]?.qre ?? 0); // oldest
-       // const prior2 = new Decimal(stateRdData.prior3YearsQREs?.[1]?.qre ?? 0);
-      //  const prior3 = new Decimal(stateRdData.prior3YearsQREs?.[2]?.qre ?? 0); // most recent prior
-      //  const prior4 = new Decimal(stateRdData.prior3YearsQREs?.[3]?.qre ?? 0); 
+
+        const qreSum = stateRdData?.prior3YearsQREs.map(item => ({
+            fiscalYear:       item.fiscalYear,
+            wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0)),
+        }));
+        logMessage(`${JSON.stringify(qreSum)}`);
+
+        //---- Lines 1–3: Prior year QREs (oldest → newest)
+        const prev1Qre = new Decimal(qreSum[0]?.wagesContractSum || 0);
+        const prev2Qre = new Decimal(qreSum[1]?.wagesContractSum || 0);
+        const prev3Qre = new Decimal(qreSum[2]?.wagesContractSum || 0);
+
         //---- Line 4: 3-year average
-        const line4 = prev2_qre.plus(prev3_qre).plus(prev1_qre).div(3);
+        const line4 = prev3Qre.plus(prev2Qre).plus(prev1Qre).div(3);
 
         //---- Line 5: Base calculation (base% × Line 4)
         const basePct = this.getBasePct(config, bracket);
         const line5   = line4.mul(basePct / 100);
 
         //---- Line 7: Increase in LA R&D expenditures = max(Line 6 − Line 5, 0)
-        const line7 = Decimal.max(currentYearQRE.minus(line5), 0);
+        const line7 = Decimal.max(currentYearQre.minus(line5), 0);
 
         //---- Line 8: Credit rate for this bracket
         const creditRate = this.getCreditRate(config, bracket);
@@ -146,16 +137,16 @@ export class RdCreditCalculatorForLA {
         const line9 = line7.mul(creditRate / 100);
 
         return {
-            prior_year_oldest:   this.round2(prev3_qre),   // Line 1
-            prior_year_middle:   this.round2(prev2_qre),   // Line 2
-            prior_year_newest:   this.round2(prev1_qre),   // Line 3
-            three_year_average:  this.round2(line4),    // Line 4
-            base_calculation:    this.round2(line5),    // Line 5
-            current_year_qre:    this.round2(currentYearQRE), // Line 6
-            increase_in_rd:      this.round2(line7),    // Line 7
-            credit_rate:         creditRate,             // Line 8
-            la_research_credit:  this.round2(line9),    // Line 9
-            base_pct:            basePct,
+            priorYearOldest:  this.round2(prev3Qre),       // Line 1
+            priorYearMiddle:  this.round2(prev2Qre),       // Line 2
+            priorYearNewest:  this.round2(prev1Qre),       // Line 3
+            threeYearAverage: this.round2(line4),          // Line 4
+            baseCalculation:  this.round2(line5),          // Line 5
+            currentYearQre:   this.round2(currentYearQre), // Line 6
+            increaseInRd:     this.round2(line7),          // Line 7
+            creditRate,                                     // Line 8
+            laResearchCredit: this.round2(line9),          // Line 9
+            basePct,
         };
     }
 
@@ -183,38 +174,38 @@ export class RdCreditCalculatorForLA {
     // -------------------------------------------------------------------------
     // Input params builder
     // -------------------------------------------------------------------------
-    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson ) {
-        
-                let storeData : any[] = []
-                let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
-                storeData.push({
-                    year : metadata.currentYear,
-                    wages: this.round2(currentYearQREs.wages),
-                    contract: this.round2(currentYearContract),
-                    sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
-                })
-         
-                prior3YearsQREs.forEach((item) => {
-                    storeData.push({
-                        year : item.fiscalYear,
-                        wages: item.wages,
-                        contract: item.contract,
-                        sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
-                    })
-                });
-        
-                return {
-                    metadata: {
-                        country: metadata.country || "US",
-                        credit_type: metadata.creditType || "STATE_RD_LA",
-                        currency: metadata.currency || "USD",
-                        "Fiscal Year Ended" : metadata.fiscalYearEnded,
-                        "Description": "Research Tax Credit",
-                        stateDetails : "Lousiana - Credit Calculations"
-                    },
-                    "Current & Prior years information" : storeData
-                };
-            }
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}, config: ConfigJson) {
+        const storeData: any[]         = [];
+        const currentYearContract      = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100);
+
+        storeData.push({
+            year:     metadata.currentYear,
+            wages:    this.round2(currentYearQREs.wages),
+            contract: this.round2(currentYearContract),
+            sum:      this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0,
+        });
+
+        prior3YearsQREs.forEach(item => {
+            storeData.push({
+                year:     item.fiscalYear,
+                wages:    item.wages,
+                contract: item.contract,
+                sum:      this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0,
+            });
+        });
+
+        return {
+            metadata: {
+                country:             metadata.country    || "US",
+                credit_type:         metadata.creditType || "STATE_RD_LA",
+                currency:            metadata.currency   || "USD",
+                "Fiscal Year Ended": metadata.fiscalYearEnded,
+                "Description":       "Research Tax Credit",
+                stateDetails:        "Lousiana - Credit Calculations",
+            },
+            "Current & Prior years information": storeData,
+        };
+    }
 
     // -------------------------------------------------------------------------
     // Computed fields builder — exact Excel label text (LQRE-6765 form)
@@ -230,60 +221,41 @@ export class RdCreditCalculatorForLA {
         const yr1Label = String(currentYear - 3);
         const yr2Label = String(currentYear - 2);
         const yr3Label = String(currentYear - 1);
-        const yr6Label = String(currentYear - 0);
+        const yr6Label = String(currentYear);
 
-        // Line 5 base % label
-        const basePctLabel = bracket === "small"
-            ? `Base Calculation (${result.base_pct}% x Line 4)`
-            : `Base Calculation (${result.base_pct}% x Line 4)`;
+        const basePctLabel = `Base Calculation (${result.basePct}% x Line 4)`;
 
-        // Line 8 credit % label — exact Excel wording per bracket
         const creditPctLabel = bracket === "small"
-            ? `Credit Percentage (${result.credit_rate} % with 1 to 49 LA employees)`
+            ? `Credit Percentage (${result.creditRate} % with 1 to 49 LA employees)`
             : bracket === "mid"
-            ? `Credit Percentage (${result.credit_rate} % with 50 to 99 LA employees)`
-            : `Credit Percentage (${result.credit_rate} % with 100 or more LA employees)`;
+            ? `Credit Percentage (${result.creditRate} % with 50 to 99 LA employees)`
+            : `Credit Percentage (${result.creditRate} % with 100 or more LA employees)`;
 
         return {
             computed_fields: {
                 [sectionTitle]: {
-                    [`[1] ${yr1Label} LA Research & Development Expenditures`]:
-                        result.prior_year_oldest,
-                    [`[2] ${yr2Label} LA Research & Development Expenditures`]:
-                        result.prior_year_middle,
-                    [`[3] ${yr3Label} LA Research & Development Expenditures`]:
-                        result.prior_year_newest,
-                    "[4] 3 Previous Years Average":
-                        result.three_year_average,
-                    [`[5] ${basePctLabel}`]:
-                        result.base_calculation,
-                    [`[6] ${currentYear} LA Research & Development Expenditures`]:
-                        result.current_year_qre,
-                    "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)":
-                        result.increase_in_rd,
-                    [`[8] ${creditPctLabel}`]:
-                        result.credit_rate,
-                    "[9] Louisiana Research Credit (Line 7 times Line 8)":
-                        result.la_research_credit,
-                }
+                    [`[1] ${yr1Label} LA Research & Development Expenditures`]: result.priorYearOldest,
+                    [`[2] ${yr2Label} LA Research & Development Expenditures`]: result.priorYearMiddle,
+                    [`[3] ${yr3Label} LA Research & Development Expenditures`]: result.priorYearNewest,
+                    "[4] 3 Previous Years Average":                             result.threeYearAverage,
+                    [`[5] ${basePctLabel}`]:                                    result.baseCalculation,
+                    [`[6] ${yr6Label} LA Research & Development Expenditures`]: result.currentYearQre,
+                    "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)": result.increaseInRd,
+                    [`[8] ${creditPctLabel}`]:                                  result.creditRate,
+                    "[9] Louisiana Research Credit (Line 7 times Line 8)":      result.laResearchCredit,
+                },
             },
         };
     }
 
     // -------------------------------------------------------------------------
-    // Rounding utility — consistent with AZ / CA / CO / KS implementations
+    // Rounding utility
     // -------------------------------------------------------------------------
     round2(value: any): number {
         if (value === null || value === undefined) return value;
-
-        if (Decimal.isDecimal(value)) {
-            return value.toDecimalPlaces(2).toNumber();
-        }
-
-        if (typeof value === "number" || typeof value === "string") {
+        if (Decimal.isDecimal(value)) return value.toDecimalPlaces(2).toNumber();
+        if (typeof value === "number" || typeof value === "string")
             return new Decimal(value).toDecimalPlaces(2).toNumber();
-        }
-
         return value;
     }
 }

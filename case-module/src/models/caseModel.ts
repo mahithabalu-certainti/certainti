@@ -111,6 +111,7 @@ interface CaseAttributes {
   qualified_computer_rental_time_expenses_wi?: number;
   research_supplies_expenses_wi?: number;
   additional_pass_through_credits_wi?: number;
+  is_fiduciary_wi?: boolean;
   fiduciary_beneficiary_credit_wi?: number;
   orphan_drug_qualified_expenses_wi?: number;
   credit_offset_tax_wi?:number;
@@ -139,6 +140,10 @@ interface CaseAttributes {
   credit_shared_wages_vt?:number;
   pass_through_research_credit_vt?:number;
   amount_allocated_beneficiaries_vt?:number;
+
+  rural_basic_rd_credit_nm?:number;
+  additional_tech_jobs_rd_credit_nm?:number;
+  rural_additional_tech_jobs_rd_credit_nm?:number;
   
 
 
@@ -215,6 +220,7 @@ export class Case
   public qualified_computer_rental_time_expenses_wi?: number;
   public research_supplies_expenses_wi?: number;
   public additional_pass_through_credits_wi?: number;
+  public is_fiduciary_wi?: boolean;
   public fiduciary_beneficiary_credit_wi?: number;
   public orphan_drug_qualified_expenses_wi?: number;
   public credit_offset_tax_wi?:number;
@@ -275,6 +281,9 @@ export class Case
   public credit_tax_refunds_ne?: number;
   public credit_distributed_ne?: number;
   public lease_costs_of_computers_usa?:number;
+  public rural_basic_rd_credit_nm?: number;
+  public additional_tech_jobs_rd_credit_nm?: number;
+  public rural_additional_tech_jobs_rd_credit_nm?: number;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -361,6 +370,7 @@ export class Case
         qualified_computer_rental_time_expenses_wi: {type : DataTypes.DECIMAL, allowNull : true},
         research_supplies_expenses_wi: {type : DataTypes.DECIMAL, allowNull : true},
         additional_pass_through_credits_wi: {type : DataTypes.DECIMAL, allowNull : true},
+        is_fiduciary_wi: {type : DataTypes.BOOLEAN, defaultValue : false},
         fiduciary_beneficiary_credit_wi: {type : DataTypes.DECIMAL, allowNull : true},
         orphan_drug_qualified_expenses_wi: {type : DataTypes.DECIMAL, allowNull : true},
         credit_offset_tax_wi:{type : DataTypes.DECIMAL, allowNull : true},
@@ -418,6 +428,9 @@ export class Case
          off_campus_research_expenses_ne: { type: DataTypes.DECIMAL, allowNull: true },
          credit_tax_refunds_ne: { type: DataTypes.DECIMAL, allowNull: true },
          credit_distributed_ne: { type: DataTypes.DECIMAL, allowNull: true },
+         rural_basic_rd_credit_nm: { type: DataTypes.DECIMAL, allowNull: true },
+         additional_tech_jobs_rd_credit_nm: { type: DataTypes.DECIMAL, allowNull: true },
+         rural_additional_tech_jobs_rd_credit_nm: { type: DataTypes.DECIMAL, allowNull: true },
       },
       {
         sequelize,

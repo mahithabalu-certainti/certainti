@@ -70,8 +70,7 @@ import { Case } from "../../models/caseModel";
 export interface ConfigJson {
     /** Regular credit rate applied to off-campus research — default 15 (i.e. 15%) */
     off_campus_research_tax_percentage: number;
-    sub_con_percent:number;
-
+    sub_con_percent: number;
     /**
      * Enhanced credit rate applied to on-campus / university research — default 35 (i.e. 35%).
      * Applies when R&D is conducted on the campus of a Nebraska college or university.
@@ -97,7 +96,6 @@ export class RdCreditCalculatorForNE {
 
         const cd = caseData as any;
 
-        // Warn early if federal credit is absent — entire calculation will be zero
         if (!cd.federal_rd_credit || cd.federal_rd_credit === 0) {
             logMessage(`WARNING: NE — federal_rd_credit is 0 or missing. ` +
                 `Nebraska credit requires Federal Form 6765 credit as input.`);
@@ -108,28 +106,25 @@ export class RdCreditCalculatorForNE {
         }
 
         const method1Result  = this.method1(config, cd);
-        const method2Result  = this.method2(config, cd);
+        const method2Result  = this.method2(config, cd, stateRdData);
         const finalResult    = this.finalCredit(method1Result, method2Result, cd);
-        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
-            country: this.country,
-            creditType: this.creditType,
-            currency: this.currency,
-            fiscalYearEnded : fiscalYear,
-            currentYear : year
-        },config);
+        const inputFields    = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
+            country:         this.country,
+            creditType:      this.creditType,
+            currency:        this.currency,
+            fiscalYearEnded: fiscalYear,
+            currentYear:     year,
+        }, config);
         const computedFields = this.buildComputedFields(method1Result, method2Result, finalResult, config);
 
         return {
             inputFields,
             computedFields,
-            finalCredit:         finalResult.ne_rd_credit,        // line 21
-            totalQRE:            finalResult.ne_qre_total,         // line 10
-            winningMethod:       finalResult.winning_method,       // "method1" | "method2"
-            // NE does not separately track wages/contract/supplies
-            // as they come from the federal return — return 0 for consistency
-            totalWages:    0,
-            totalContract: 0,
-            totalSupplies: 0,
+            finalCredit:   finalResult.neRdCredit,
+            totalQRE:      finalResult.neQreTotal,
+            totalWages:    method2Result.wages,
+            totalContract: method2Result.contract,
+            totalSupplies: method2Result.supplies,
         };
     }
 
@@ -137,101 +132,79 @@ export class RdCreditCalculatorForNE {
     // Method 1 — Property + Payroll Factor Apportionment (lines 2–9)
     // -------------------------------------------------------------------------
     private method1(config: ConfigJson, cd: any) {
-        //---- Line 2: Federal credit
-        const line2 = new Decimal(cd.federal_rd_credit ?? 0);
-
-        //---- Lines 3a/3b: NE property factors (supplied as decimals, e.g. 0.30)
+        const line2  = new Decimal(cd.federal_rd_credit             ?? 0);
         const line3a = new Decimal(cd.property_factor_off_campus_ne ?? 0);
         const line3b = new Decimal(cd.property_factor_on_campus_ne  ?? 0);
-
-        //---- Lines 4a/4b: NE payroll factors
-        const line4a = new Decimal(cd.payroll_factor_off_campus_ne ?? 0);
-        const line4b = new Decimal(cd.payroll_factor_on_campus_ne  ?? 0);
-
-        //---- Lines 5a/5b: Sum of property + payroll per campus type
+        const line4a = new Decimal(cd.payroll_factor_off_campus_ne  ?? 0);
+        const line4b = new Decimal(cd.payroll_factor_on_campus_ne   ?? 0);
         const line5a = line3a.plus(line4a);
         const line5b = line3b.plus(line4b);
-
-        //---- Lines 6a/6b: Average factors (÷ 2)
         const line6a = line5a.div(2);
         const line6b = line5b.div(2);
-
-        //---- Lines 7a/7b: Federal credit apportioned by average factor
         const line7a = line2.mul(line6a.div(100));
         const line7b = line2.mul(line6b.div(100));
-
-        //---- Lines 8a/8b: Apply credit rates
-        const line8a = line7a.mul(config.off_campus_research_tax_percentage  / 100);
-        const line8b = line7b.mul(config.on_campus_research_tax_percentage / 100);
-
-        //---- Line 9: Method 1 total
-        const line9 = line8a.plus(line8b);
+        const line8a = line7a.mul(config.off_campus_research_tax_percentage / 100);
+        const line8b = line7b.mul(config.on_campus_research_tax_percentage  / 100);
+        const line9  = line8a.plus(line8b);
 
         return {
-            federal_credit:             this.round2(line2),
-            property_factor_offcampus:  this.round2(line3a),
-            property_factor_oncampus:   this.round2(line3b),
-            payroll_factor_offcampus:   this.round2(line4a),
-            payroll_factor_oncampus:    this.round2(line4b),
-            sum_factors_offcampus:      this.round2(line5a),
-            sum_factors_oncampus:       this.round2(line5b),
-            avg_factor_offcampus:       this.round2(line6a),
-            avg_factor_oncampus:        this.round2(line6b),
-            apportioned_offcampus:      this.round2(line7a),
-            apportioned_oncampus:       this.round2(line7b),
-            regular_credit_offcampus:   this.round2(line8a),
-            enhanced_credit_oncampus:   this.round2(line8b),
-            method1_total:              this.round2(line9),
+            federalCredit:          this.round2(line2),
+            propertyFactorOffcampus: this.round2(line3a),
+            propertyFactorOncampus:  this.round2(line3b),
+            payrollFactorOffcampus:  this.round2(line4a),
+            payrollFactorOncampus:   this.round2(line4b),
+            sumFactorsOffcampus:     this.round2(line5a),
+            sumFactorsOncampus:      this.round2(line5b),
+            avgFactorOffcampus:      this.round2(line6a),
+            avgFactorOncampus:       this.round2(line6b),
+            apportionedOffcampus:    this.round2(line7a),
+            apportionedOncampus:     this.round2(line7b),
+            regularCreditOffcampus:  this.round2(line8a),
+            enhancedCreditOncampus:  this.round2(line8b),
+            method1Total:            this.round2(line9),
         };
     }
 
     // -------------------------------------------------------------------------
     // Method 2 — NE QRE / Total US QRE Ratio (lines 10–20)
     // -------------------------------------------------------------------------
-    private method2(config: ConfigJson, cd: any) {
-        //---- Line 2: Federal credit (shared with Method 1)
+    private method2(config: ConfigJson, cd: any, stateRdData: StateRDData) {
         const line2 = new Decimal(cd.federal_rd_credit ?? 0);
+        const { wages = 0, contract = 0, supplies = 0 } = stateRdData.currentYearQREs;
 
-        //---- Lines 10/11: NE QRE breakdown
-        const ne_qre_offcampus = new Decimal(cd.ne_qre_offcampus ?? 0);
-        const ne_qre_oncampus  = new Decimal(cd.ne_qre_oncampus  ?? 0);
-        const line10 = ne_qre_offcampus.plus(ne_qre_oncampus);  // total NE QRE
-        const line11 = ne_qre_offcampus;                         // off-campus portion
+        const currentYearWages    = new Decimal(wages);
+        const currentYearContract = new Decimal(contract).mul(config.sub_con_percent / 100);
+        const currentYearQre      = currentYearWages.plus(currentYearContract);
+        const currentYearSupplies = new Decimal(supplies);
 
-        //---- Line 12: On-campus portion = line10 − line11 (derived)
-        const line12 = line10.minus(line11);
-
-        //---- Line 13: Total US QRE from Federal Form 6765
-        const line13 = new Decimal(cd.us_total_qre_federal ?? 0);
-
-        //---- Lines 14/15: NE apportionment ratios
-        //    Guard against division by zero when line13 = 0
-        const line14 = line13.gt(0) ? line11.div(line13) : new Decimal(0);
-        const line15 = line13.gt(0) ? line12.div(line13) : new Decimal(0);
-
-        //---- Lines 16/17: Federal credit × NE ratios
-        const line16 = line2.mul(line14);
-        const line17 = line2.mul(line15);
-
-        //---- Lines 18/19: Apply credit rates
-        const line18 = line16.mul(config.off_campus_research_tax_percentage  / 100);
-        const line19 = line17.mul(config.on_campus_research_tax_percentage / 100);
-
-        //---- Line 20: Method 2 total
-        const line20 = line18.plus(line19);
+        const neQreOffcampus = new Decimal(cd.off_campus_research_expenses_ne ?? 0);
+        const line10         = currentYearQre;
+        const line11         = neQreOffcampus;
+        const line12         = line10.minus(line11);
+        const line13         = new Decimal(cd.us_total_qre_federal ?? 0);
+        const line14         = line13.gt(0) ? line11.div(line13) : new Decimal(0);
+        const line15         = line13.gt(0) ? line12.div(line13) : new Decimal(0);
+        const line16         = line2.mul(line14);
+        const line17         = line2.mul(line15);
+        const line18         = line16.mul(config.off_campus_research_tax_percentage / 100);
+        const line19         = line17.mul(config.on_campus_research_tax_percentage  / 100);
+        const line20         = line18.plus(line19);
 
         return {
-            ne_qre_total:               this.round2(line10),
-            ne_qre_offcampus:           this.round2(line11),
-            ne_qre_oncampus:            this.round2(line12),
-            us_qre_total_federal:       this.round2(line13),
-            ratio_offcampus:            this.round2(line14),
-            ratio_oncampus:             this.round2(line15),
-            apportioned_offcampus:      this.round2(line16),
-            apportioned_oncampus:       this.round2(line17),
-            regular_credit_offcampus:   this.round2(line18),
-            enhanced_credit_oncampus:   this.round2(line19),
-            method2_total:              this.round2(line20),
+            neQreTotal:             this.round2(line10),
+            neQreOffcampus:         this.round2(line11),
+            neQreOncampus:          this.round2(line12),
+            usQreTotalFederal:      this.round2(line13),
+            ratioOffcampus:         this.round2(line14),
+            ratioOncampus:          this.round2(line15),
+            apportionedOffcampus:   this.round2(line16),
+            apportionedOncampus:    this.round2(line17),
+            regularCreditOffcampus: this.round2(line18),
+            enhancedCreditOncampus: this.round2(line19),
+            method2Total:           this.round2(line20),
+            wages:                  currentYearWages,
+            contract:               currentYearContract,
+            supplies:               currentYearSupplies,
         };
     }
 
@@ -243,24 +216,12 @@ export class RdCreditCalculatorForNE {
         m2: ReturnType<RdCreditCalculatorForNE["method2"]>,
         cd: any
     ) {
-        //---- Line 21: max(Method 1, Method 2)
-        const line21 = Decimal.max(
-            new Decimal(m1.method1_total),
-            new Decimal(m2.method2_total)
-        );
-
-        const winningMethod = new Decimal(m1.method1_total).gte(new Decimal(m2.method2_total))
-            ? "method1"
-            : "method2";
-
-        //---- Lines 22–24: Usage allocation (taxpayer-elected, defaults 0)
-        const line22 = new Decimal(cd.ne_credit_income_tax   ?? 0);
-        const line23 = new Decimal(cd.ne_credit_sales_tax    ?? 0);
-        const line24 = new Decimal(cd.ne_credit_distributed  ?? 0);
-
-        //---- Line 25: Total usage — enforced cap at line 21
+        const line21   = Decimal.max(new Decimal(m1.method1Total), new Decimal(m2.method2Total));
+        const line22   = line21;
+        const line23   = new Decimal(cd.credit_tax_refunds_ne  ?? 0);
+        const line24   = new Decimal(cd.credit_distributed_ne  ?? 0);
         const rawLine25 = line22.plus(line23).plus(line24);
-        const line25    = Decimal.min(rawLine25, line21);
+        const line25   = Decimal.min(rawLine25, line21);
 
         if (rawLine25.gt(line21)) {
             logMessage(`WARNING: NE — credit usage total (${rawLine25.toNumber()}) ` +
@@ -268,51 +229,50 @@ export class RdCreditCalculatorForNE {
         }
 
         return {
-            ne_rd_credit:     this.round2(line21),   // line 21 — final credit
-            winning_method:   winningMethod,
-            ne_qre_total:     m2.ne_qre_total,        // for top-level return
-            income_tax_credit:     this.round2(line22),
-            sales_tax_refund:      this.round2(line23),
-            distributed_credit:    this.round2(line24),
-            total_credit_usage:    this.round2(line25),
+            neRdCredit:       this.round2(line21),
+            neQreTotal:       m2.neQreTotal,
+            incomeTaxCredit:  this.round2(line22),
+            salesTaxRefund:   this.round2(line23),
+            distributedCredit: this.round2(line24),
+            totalCreditUsage: this.round2(line25),
         };
     }
 
     // -------------------------------------------------------------------------
     // Input params builder
     // -------------------------------------------------------------------------
-     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson ) {
-        
-                let storeData : any[] = []
-                let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
-                storeData.push({
-                    year : metadata.currentYear,
-                    wages: this.round2(currentYearQREs.wages),
-                    contract: this.round2(currentYearContract),
-                    sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
-                })
-         
-                prior3YearsQREs.forEach((item) => {
-                    storeData.push({
-                        year : item.fiscalYear,
-                        wages: item.wages,
-                        contract: item.contract,
-                        sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
-                    })
-                });
-        
-                return {
-                    metadata: {
-                        country: metadata.country || "US",
-                        credit_type: metadata.creditType || "STATE_RD_NE",
-                        currency: metadata.currency || "USD",
-                        "Fiscal Year Ended" : metadata.fiscalYearEnded,
-                        "Description": "Research Tax Credit",
-                        stateDetails : "Nebraska - Credit Calculations"
-                    },
-                    "Current & Prior years information" : storeData
-                };
-            }
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}, config: ConfigJson) {
+        const storeData: any[]    = [];
+        const currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100);
+
+        storeData.push({
+            year:     metadata.currentYear,
+            wages:    this.round2(currentYearQREs.wages),
+            contract: this.round2(currentYearContract),
+            sum:      this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0,
+        });
+
+        prior3YearsQREs.forEach(item => {
+            storeData.push({
+                year:     item.fiscalYear,
+                wages:    item.wages,
+                contract: item.contract,
+                sum:      this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0,
+            });
+        });
+
+        return {
+            metadata: {
+                country:             metadata.country    || "US",
+                credit_type:         metadata.creditType || "STATE_RD_NE",
+                currency:            metadata.currency   || "USD",
+                "Fiscal Year Ended": metadata.fiscalYearEnded,
+                "Description":       "Research Tax Credit",
+                stateDetails:        "Nebraska - Credit Calculations",
+            },
+            "Current & Prior years information": storeData,
+        };
+    }
 
     // -------------------------------------------------------------------------
     // Computed fields builder — mirrors Form 3800N line layout
@@ -327,73 +287,82 @@ export class RdCreditCalculatorForNE {
             computed_fields: {
                 "NoTitle": {
                     "[2] Enter total amount of federal research credit allowed for this tax year from Federal Form 6765, line 38 or line 40. (Attach Federal Form 6765.) Do not include any amounts which were distributed on Federal Form 6765, line 39 (see instructions)":
-                        m1.federal_credit,
+                        m1.federalCredit,
                     "[3] Nebraska property factor (attach schedule showing calculations)": "",
-                    "[3a] Off-campus, but in Nebraska.":                                         m1.property_factor_offcampus,
+                    "[3a] Off-campus, but in Nebraska.":
+                        m1.propertyFactorOffcampus,
                     "[3b] On-campus in Nebraska. Address of college or university campus or facility in Nebraska:":
-                        m1.property_factor_oncampus,
+                        m1.propertyFactorOncampus,
                     "[4] Nebraska payroll factor (attach schedule showing calculations)": "",
-                    "[4a] Off-campus, but in Nebraska.":                                         m1.payroll_factor_offcampus,
-                    "[4b] On-campus in Nebraska.":                                                m1.payroll_factor_oncampus,
-                    "[5a] Add lines 3a and 4a (off-campus).":                                    m1.sum_factors_offcampus,
-                    "[5b] Add lines 3b and 4b (on-campus).":                                     m1.sum_factors_oncampus,
+                    "[4a] Off-campus, but in Nebraska.":
+                        m1.payrollFactorOffcampus,
+                    "[4b] On-campus in Nebraska.":
+                        m1.payrollFactorOncampus,
+                    "[5a] Add lines 3a and 4a (off-campus).":
+                        m1.sumFactorsOffcampus,
+                    "[5b] Add lines 3b and 4b (on-campus).":
+                        m1.sumFactorsOncampus,
                     "[6] Average property and payroll factors": "",
-                    "[6a] Off-campus (line 5a ÷ 2).":                                            m1.avg_factor_offcampus,
-                    "[6b] On-campus (line 5b ÷ 2).":                                             m1.avg_factor_oncampus,
-                    "[7a] Multiply line 2 x line 6a (off-campus) .":                             m1.apportioned_offcampus,
-                    "[7b] Multiply line 2 x line 6b (on-campus).":                               m1.apportioned_oncampus,
-                    "[8a] Regular research tax credit (line 7a x 15%) (off-campus).":            m1.regular_credit_offcampus,
-                    "[8b] Enhanced research tax credit (line 7b x 35%) (on-campus).":            m1.enhanced_credit_oncampus,
-                    "[9] Total research tax credit (line 8a plus line 8b) .":                    m1.method1_total,
+                    "[6a] Off-campus (line 5a ÷ 2).":
+                        m1.avgFactorOffcampus,
+                    "[6b] On-campus (line 5b ÷ 2).":
+                        m1.avgFactorOncampus,
+                    "[7a] Multiply line 2 x line 6a (off-campus) .":
+                        m1.apportionedOffcampus,
+                    "[7b] Multiply line 2 x line 6b (on-campus).":
+                        m1.apportionedOncampus,
+                    "[8a] Regular research tax credit (line 7a x 15%) (off-campus).":
+                        m1.regularCreditOffcampus,
+                    "[8b] Enhanced research tax credit (line 7b x 35%) (on-campus).":
+                        m1.enhancedCreditOncampus,
+                    "[9] Total research tax credit (line 8a plus line 8b) .":
+                        m1.method1Total,
                     "[10] Enter amount of all qualified expenses for R&D activities in Nebraska.":
-                        m2.ne_qre_total,
+                        m2.neQreTotal,
                     "[11] Enter amount of expenses on line 10 which were not performed on the campus of a college or university .":
-                        m2.ne_qre_offcampus,
+                        m2.neQreOffcampus,
                     "[12] Enter amount of expenses on line 10 which were performed on the campus of a college or university (line 10 minus line 11) Address of college or university campus or facility in Nebraska":
-                        m2.ne_qre_oncampus,
+                        m2.neQreOncampus,
                     "[13] Enter total amount of qualified expenses for R&D activities in all states (from Federal Form 6765, line 9 or line 28).":
-                        m2.us_qre_total_federal,
-                    "[14] Divide line 11 by line 13 (off-campus).":                              m2.ratio_offcampus,
-                    "[15] Divide line 12 by line 13 (on-campus).":                               m2.ratio_oncampus,
-                    "[16] Multiply line 2 x line 14 (off-campus).":                              m2.apportioned_offcampus,
-                    "[17] Multiply line 2 x line 15 (on-campus).":                               m2.apportioned_oncampus,
-                   [`[18] Regular research tax credit (line 16 × ${config.off_campus_research_tax_percentage}%) — off-campus`]:            m2.regular_credit_offcampus,
-                     [`[19] Enhanced research tax credit (line 17 × ${config.on_campus_research_tax_percentage}%) — on-campus`]:           m2.enhanced_credit_oncampus,
-                    "[20] Total research tax credit (line 18 plus line 19.":                     m2.method2_total,
-                    "[21] Enter the larger of line 9 or line 20.":                               final.ne_rd_credit,
+                        m2.usQreTotalFederal,
+                    "[14] Divide line 11 by line 13 (off-campus).":
+                        m2.ratioOffcampus,
+                    "[15] Divide line 12 by line 13 (on-campus).":
+                        m2.ratioOncampus,
+                    "[16] Multiply line 2 x line 14 (off-campus).":
+                        m2.apportionedOffcampus,
+                    "[17] Multiply line 2 x line 15 (on-campus).":
+                        m2.apportionedOncampus,
+                    [`[18] Regular research tax credit (line 16 × ${config.off_campus_research_tax_percentage}%) — off-campus`]:
+                        m2.regularCreditOffcampus,
+                    [`[19] Enhanced research tax credit (line 17 × ${config.on_campus_research_tax_percentage}%) — on-campus`]:
+                        m2.enhancedCreditOncampus,
+                    "[20] Total research tax credit (line 18 plus line 19.":
+                        m2.method2Total,
+                    "[21] Enter the larger of line 9 or line 20.":
+                        final.neRdCredit,
                     "[22] Amount of credit (refundable to the entity claiming the credit) from line 21 used on Nebraska income tax return (enter here and on line 18 of Form 3800N)":
-                        final.income_tax_credit,
+                        final.incomeTaxCredit,
                     "[23] Amount of credit from line 21 used for refunds of state sales/use taxes paid on qualifying expenditures (see instructions)":
-                        final.sales_tax_refund,
+                        final.salesTaxRefund,
                     "[24] Amount of credit from line 21 (nonrefundable) distributed to partners, shareholders, members, or beneficiaries (see instructions)":
-                        final.distributed_credit,
+                        final.distributedCredit,
                     "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21":
-                        final.total_credit_usage,
+                        final.totalCreditUsage,
                 },
-                "BOLD": [
-                    "[9] Total research tax credit (line 8a plus line 8b) .",
-                    "[20] Total research tax credit (line 18 plus line 19.",
-                    "[21] Enter the larger of line 9 or line 20.",
-                    "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21",
-                ],
+                "BOLD": [],
             },
         };
     }
 
     // -------------------------------------------------------------------------
-    // Rounding utility — consistent with AZ / CA / CO / KS / LA / MN
+    // Rounding utility
     // -------------------------------------------------------------------------
     round2(value: any): number {
         if (value === null || value === undefined) return value;
-
-        if (Decimal.isDecimal(value)) {
-            return value.toDecimalPlaces(2).toNumber();
-        }
-
-        if (typeof value === "number" || typeof value === "string") {
+        if (Decimal.isDecimal(value)) return value.toDecimalPlaces(2).toNumber();
+        if (typeof value === "number" || typeof value === "string")
             return new Decimal(value).toDecimalPlaces(2).toNumber();
-        }
-
         return value;
     }
 }
