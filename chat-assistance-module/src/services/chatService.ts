@@ -7,6 +7,10 @@ import {
   getFourPartAssessment, getTechnicalSummary, getProjectActivities,
   getProjectNotes, getProjectAttachments, getProjectChecklists, getRDAssessmentHistory,
   getAccountSummary, getCaseSummary, getCaseProjects,
+  getAccountResources, getAccountCases, getAccountInteractions, getAccountMeetings,
+  getAccountAttachments, getAccountNotes, getAccountKeyContacts,
+  getCaseResources, getCaseTasks, getCaseTeam, getCaseKeyContacts,
+  getCaseMilestones, getCaseInteractions, getCaseWorkflowTasks, getCaseHistory,
   getPlatformSummary, getTopAccountsByProjects,
   resolveActualProjectRid,
 } from './queryService';
@@ -44,11 +48,23 @@ const HELP_MESSAGES: Record<ChatLevel, string> = {
   account: `I can answer questions about this account, including:
 - Project summary (total projects, qualified, costs)
 - List of projects (with filters by status, R&D qualification)
-- Project counts and statistics`,
+- Project counts and statistics
+- Resources for this account
+- Cases for this account
+- Meetings and interactions
+- Attachments, notes, and key contacts`,
 
-  case: `I can answer questions about R&D cases, including:
-- Case summary (QRE, costs, submission dates, status)
-- Projects included in a case`,
+  case: `I can answer detailed questions about this case, including:
+- Summary (QRE, total cost, completion %, submission dates, status)
+- Projects in this case (QRE, R&D credits, assessment status per project)
+- Resources working across all projects in this case
+- Tasks across all projects in this case
+- Case team members
+- Key contacts (primary and secondary)
+- Milestones and timeline
+- Interactions/emails sent for this case
+- Workflow tasks and their status
+- Case history and audit trail`,
 
   platform: `I can answer platform-wide questions, including:
 - Total projects and accounts on the platform
@@ -178,6 +194,54 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
         );
         break;
 
+      case 'getAccountResources':
+        data = await getAccountResources(
+          params.account_rid || context.account_rid!,
+          params.limit || 50
+        );
+        break;
+
+      case 'getAccountCases':
+        data = await getAccountCases(
+          params.account_rid || context.account_rid!,
+          params.limit || 20
+        );
+        break;
+
+      case 'getAccountInteractions':
+        data = await getAccountInteractions(
+          params.account_rid || context.account_rid!,
+          params.limit || 20
+        );
+        break;
+
+      case 'getAccountMeetings':
+        data = await getAccountMeetings(
+          params.account_rid || context.account_rid!,
+          params.limit || 20
+        );
+        break;
+
+      case 'getAccountAttachments':
+        data = await getAccountAttachments(
+          params.account_rid || context.account_rid!,
+          params.limit || 30
+        );
+        break;
+
+      case 'getAccountNotes':
+        data = await getAccountNotes(
+          params.account_rid || context.account_rid!,
+          params.limit || 30
+        );
+        break;
+
+      case 'getAccountKeyContacts':
+        data = await getAccountKeyContacts(
+          params.account_rid || context.account_rid!
+        );
+        break;
+
       case 'getProjectResourceList':
         data = await getProjectResourceList(
           params.project_rid || resolvedProjectRid!,
@@ -289,6 +353,62 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
 
       case 'getCaseProjects':
         data = await getCaseProjects(
+          params.case_rid || context.case_rid!,
+          params.account_rid || context.account_rid!
+        );
+        break;
+
+      case 'getCaseResources':
+        data = await getCaseResources(
+          params.case_rid || context.case_rid!,
+          params.account_rid || context.account_rid!
+        );
+        break;
+
+      case 'getCaseTasks':
+        data = await getCaseTasks(
+          params.case_rid || context.case_rid!,
+          params.account_rid || context.account_rid!
+        );
+        break;
+
+      case 'getCaseTeam':
+        data = await getCaseTeam(
+          params.case_rid || context.case_rid!,
+          params.account_rid || context.account_rid!
+        );
+        break;
+
+      case 'getCaseKeyContacts':
+        data = await getCaseKeyContacts(
+          params.case_rid || context.case_rid!,
+          params.account_rid || context.account_rid!
+        );
+        break;
+
+      case 'getCaseMilestones':
+        data = await getCaseMilestones(
+          params.case_rid || context.case_rid!,
+          params.account_rid || context.account_rid!
+        );
+        break;
+
+      case 'getCaseInteractions':
+        data = await getCaseInteractions(
+          params.case_rid || context.case_rid!,
+          params.limit || 20
+        );
+        break;
+
+      case 'getCaseWorkflowTasks':
+        data = await getCaseWorkflowTasks(
+          params.case_rid || context.case_rid!,
+          params.account_rid || context.account_rid!
+        );
+        break;
+
+      case 'getCaseHistory':
+        data = await getCaseHistory(
           params.case_rid || context.case_rid!,
           params.account_rid || context.account_rid!
         );

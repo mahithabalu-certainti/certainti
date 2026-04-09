@@ -127,6 +127,41 @@ export const API_REGISTRY: Record<ChatLevel, ApiDefinition[]> = {
       params: ['account_rid', 'account_name?'],
     },
     {
+      id: 'getAccountResources',
+      description: 'List resources for this account with names, codes, designations, roles, and start/end dates.',
+      params: ['account_rid', 'limit?'],
+    },
+    {
+      id: 'getAccountCases',
+      description: 'List R&D cases for this account with fiscal year, total projects, QRE, completion percentage, submission dates, and status.',
+      params: ['account_rid', 'limit?'],
+    },
+    {
+      id: 'getAccountInteractions',
+      description: 'List account-level interactions or emails with sent date, recipient, response status, interaction type, and attachment count.',
+      params: ['account_rid', 'limit?'],
+    },
+    {
+      id: 'getAccountMeetings',
+      description: 'List meetings for this account with subject, start and end times, participants, recurrence, and status.',
+      params: ['account_rid', 'limit?'],
+    },
+    {
+      id: 'getAccountAttachments',
+      description: 'List account attachments or documents with document name, fiscal year, format, size, comments, created date, and download link when available.',
+      params: ['account_rid', 'limit?'],
+    },
+    {
+      id: 'getAccountNotes',
+      description: 'List account notes with title, description, owner, fiscal year, document name, format, created date, and download link when available.',
+      params: ['account_rid', 'limit?'],
+    },
+    {
+      id: 'getAccountKeyContacts',
+      description: 'List account key contacts with name, email, role, primary contact flag, communication flags, and status.',
+      params: ['account_rid'],
+    },
+    {
       id: 'listProjects',
       description: 'List all projects for an account with name, code, status, dates, QRE, cost.',
       params: ['account_rid', 'status?', 'is_rd_qualified?', 'limit?'],
@@ -146,6 +181,46 @@ export const API_REGISTRY: Record<ChatLevel, ApiDefinition[]> = {
     {
       id: 'getCaseProjects',
       description: 'List all projects in a case with their fiscal year, QRE, R&D credits, R&D percentage, and assessment status.',
+      params: ['case_rid', 'account_rid'],
+    },
+    {
+      id: 'getCaseResources',
+      description: 'List all resources/employees working across all projects in a case — with name, designation, hours, cost, R&D %, QRE, and which project they belong to.',
+      params: ['case_rid', 'account_rid'],
+    },
+    {
+      id: 'getCaseTasks',
+      description: 'List all project tasks across all projects in a case — with task name, hours, cost, dates, and which project the task belongs to.',
+      params: ['case_rid', 'account_rid'],
+    },
+    {
+      id: 'getCaseTeam',
+      description: 'List the case team members — the people assigned to work on this case with their name, designation, and role.',
+      params: ['case_rid', 'account_rid'],
+    },
+    {
+      id: 'getCaseKeyContacts',
+      description: 'Get key contacts for the case — primary and secondary contacts with their name, email, and role.',
+      params: ['case_rid', 'account_rid'],
+    },
+    {
+      id: 'getCaseMilestones',
+      description: 'List case milestones and their planned vs actual dates and status — shows the case timeline/schedule.',
+      params: ['case_rid', 'account_rid'],
+    },
+    {
+      id: 'getCaseInteractions',
+      description: 'List all interactions/emails sent for this case — type, recipient, sent date, response status, interaction age.',
+      params: ['case_rid', 'limit?'],
+    },
+    {
+      id: 'getCaseWorkflowTasks',
+      description: 'List workflow/admin tasks for this case — task name, assigned to, due date, status. These are case management tasks, not R&D project tasks.',
+      params: ['case_rid', 'account_rid'],
+    },
+    {
+      id: 'getCaseHistory',
+      description: 'Get the case history log — all actions, status changes, and notes with who made them and when.',
       params: ['case_rid', 'account_rid'],
     },
   ],
@@ -321,19 +396,46 @@ function fallbackApiSelection(
   const lower = message.toLowerCase();
   let api_id = apis[0].id;
 
-  if (lower.match(/attachment|attachments|document|documents|file|files|download/)) api_id = 'getProjectAttachments';
-  else if (lower.match(/note|notes/)) api_id = 'getProjectNotes';
-  else if (lower.match(/meeting|meetings|calendar/)) api_id = 'getProjectMeetings';
-  else if (lower.match(/interaction|interactions|email|emails/)) api_id = 'getProjectInteractions';
-  else if (lower.match(/checklist|checklists/)) api_id = 'getProjectChecklists';
-  else if (lower.match(/how many|count|total/)) api_id = 'countProjects';
-  else if (lower.match(/list|show|all|multiple/)) api_id = 'listProjects';
-  else if (lower.match(/resource|employee|staff|team/)) api_id = 'getProjectResources';
-  else if (lower.match(/task|work|activity/)) api_id = 'getProjectTasks';
-  else if (lower.match(/fiscal|year|annual|breakdown/)) api_id = 'getProjectFiscalBreakdown';
-  else if (lower.match(/credit|qre|r&d|rd |qualification/)) api_id = 'getProjectRDCredits';
-  else if (lower.match(/case/)) api_id = 'getCaseSummary';
-  else if (lower.match(/platform|overall|all accounts/)) api_id = 'getPlatformSummary';
+  if (level === 'project') {
+    if (lower.match(/attachment|attachments|document|documents|file|files|download/)) api_id = 'getProjectAttachments';
+    else if (lower.match(/note|notes/)) api_id = 'getProjectNotes';
+    else if (lower.match(/meeting|meetings|calendar/)) api_id = 'getProjectMeetings';
+    else if (lower.match(/interaction|interactions|email|emails/)) api_id = 'getProjectInteractions';
+    else if (lower.match(/checklist|checklists/)) api_id = 'getProjectChecklists';
+    else if (lower.match(/who.*point of contact|point of contact|technical point of contact|poc/)) api_id = 'getProjectPointOfContact';
+    else if (lower.match(/is .* working|who.*working|resource|employee|staff|team/)) api_id = 'getProjectResources';
+    else if (lower.match(/task|tasks/)) api_id = 'getProjectTasks';
+    else if (lower.match(/activity|activities/)) api_id = 'getProjectActivities';
+    else if (lower.match(/fiscal|year|annual|breakdown/)) api_id = 'getProjectFiscalBreakdown';
+    else if (lower.match(/assessment history|history/)) api_id = 'getRDAssessmentHistory';
+    else if (lower.match(/assessment|qualified|qualification|credit|qre|r&d|rd /)) api_id = 'getProjectRDCredits';
+  } else if (level === 'case') {
+    if (lower.match(/resource|employee|staff/)) api_id = 'getCaseResources';
+    else if (lower.match(/team/)) api_id = 'getCaseTeam';
+    else if (lower.match(/contact|contacts/)) api_id = 'getCaseKeyContacts';
+    else if (lower.match(/milestone|timeline/)) api_id = 'getCaseMilestones';
+    else if (lower.match(/interaction|interactions|email|emails/)) api_id = 'getCaseInteractions';
+    else if (lower.match(/workflow|admin task/)) api_id = 'getCaseWorkflowTasks';
+    else if (lower.match(/history|audit trail|status change/)) api_id = 'getCaseHistory';
+    else if (lower.match(/task|tasks/)) api_id = 'getCaseTasks';
+    else if (lower.match(/project|projects/)) api_id = 'getCaseProjects';
+    else if (lower.match(/qre|credit|completion|submission|approved|approval|summary/)) api_id = 'getCaseSummary';
+  } else if (level === 'account') {
+    if (lower.match(/attachment|attachments|document|documents|file|files|download/)) api_id = 'getAccountAttachments';
+    else if (lower.match(/note|notes/)) api_id = 'getAccountNotes';
+    else if (lower.match(/meeting|meetings|calendar/)) api_id = 'getAccountMeetings';
+    else if (lower.match(/interaction|interactions|email|emails/)) api_id = 'getAccountInteractions';
+    else if (lower.match(/case|cases/)) api_id = 'getAccountCases';
+    else if (lower.match(/contact|contacts|finance lead|finance executive|consultant/)) api_id = 'getAccountKeyContacts';
+    else if (lower.match(/resource|employee|staff|team/)) api_id = 'getAccountResources';
+    else if (lower.match(/how many|count|total/)) api_id = 'countProjects';
+    else if (lower.match(/list|show|all|multiple|active/)) api_id = 'listProjects';
+    else if (lower.match(/summary|qre|cost|effort|qualified/)) api_id = 'getAccountSummary';
+  } else if (level === 'platform') {
+    if (lower.match(/top accounts|top account/)) api_id = 'getTopAccountsByProjects';
+    else if (lower.match(/how many|count|total/)) api_id = 'countProjects';
+    else if (lower.match(/platform|overall|all accounts|summary/)) api_id = 'getPlatformSummary';
+  }
 
   // Validate the selected api_id exists in this level
   if (!apis.find(a => a.id === api_id)) api_id = apis[0].id;
@@ -351,6 +453,12 @@ function fallbackApiSelection(
 
 function formatFallback(apiId: string, data: any): string {
   if (!data || (Array.isArray(data) && data.length === 0)) {
+    if (apiId.startsWith('getAccount') || apiId === 'listProjects' || apiId === 'countProjects') {
+      return "I don't have that information available for this account right now. You could try asking about the account summary, projects, resources, cases, or key contacts instead.";
+    }
+    if (apiId.startsWith('getCase')) {
+      return "I don't have that information available for this case right now. You could try asking about the case summary, projects, resources, milestones, or interactions instead.";
+    }
     return "I don't have that information available for this project right now. You could try asking about the project overview, resources, R&D credits, or fiscal breakdown instead.";
   }
   if (apiId === 'countProjects' && data?.total !== undefined) {
@@ -364,10 +472,35 @@ function formatFallback(apiId: string, data: any): string {
         attachment.format || null,
         attachment.size_in_mb ? `${attachment.size_in_mb} MB` : null,
       ].filter(Boolean);
-      const link = attachment.download_link ? ` Download: ${attachment.download_link}` : '';
+      const link = attachment.download_url ? ` Download: ${attachment.download_url}` : '';
       return `- ${parts.join(' | ')}${link}`;
     });
     return `I found ${data.length} attachment(s) for this project:\n${lines.join('\n')}`;
+  }
+  if (apiId === 'getAccountAttachments' && Array.isArray(data)) {
+    const lines = data.slice(0, 5).map((attachment: any) => {
+      const parts = [
+        attachment.document_name || 'Unnamed attachment',
+        attachment.fiscal_year ? `FY ${attachment.fiscal_year}` : null,
+        attachment.format || null,
+        attachment.size_in_mb ? `${attachment.size_in_mb} MB` : null,
+      ].filter(Boolean);
+      const link = attachment.download_url ? ` Download: ${attachment.download_url}` : '';
+      return `- ${parts.join(' | ')}${link}`;
+    });
+    return `I found ${data.length} attachment(s) for this account:\n${lines.join('\n')}`;
+  }
+  if (apiId === 'getAccountNotes' && Array.isArray(data)) {
+    const lines = data.slice(0, 5).map((note: any) => {
+      const parts = [
+        note.title || 'Untitled note',
+        note.notes_owner ? `Owner: ${note.notes_owner}` : null,
+        note.fiscal_year ? `FY ${note.fiscal_year}` : null,
+      ].filter(Boolean);
+      const link = note.download_url ? ` Download: ${note.download_url}` : '';
+      return `- ${parts.join(' | ')}${link}`;
+    });
+    return `I found ${data.length} note(s) for this account:\n${lines.join('\n')}`;
   }
   if (Array.isArray(data)) {
     const names = data.slice(0, 5).map((d: any) => d.project_name || d.case_name || d.account_name || d.rid).filter(Boolean).join(', ');

@@ -44,6 +44,29 @@ async function getAccountRNumber(accountRid: string): Promise<string | null> {
   return res.rows[0]?.r_number || null;
 }
 
+async function getAccountSchemaRNumber(accountRid: string): Promise<string | null> {
+  const pool = getMainPool();
+  const res = await pool.query(
+    `SELECT r_number, storage_type, parent_account_rid
+     FROM ${MAIN}.account
+     WHERE rid = $1
+     LIMIT 1`,
+    [accountRid]
+  );
+  const account = res.rows[0];
+  if (!account) return null;
+
+  if (account.storage_type === 'store_in_parent' && account.parent_account_rid) {
+    const parentRes = await pool.query(
+      `SELECT r_number FROM ${MAIN}.account WHERE rid = $1 LIMIT 1`,
+      [account.parent_account_rid]
+    );
+    return parentRes.rows[0]?.r_number || account.r_number || null;
+  }
+
+  return account.r_number || null;
+}
+
 /**
  * Resolve org schema for a project.
  * First tries account r_number -> schema. If that schema doesn't have the project,
@@ -342,6 +365,8 @@ export async function getAccountSummary(accountRid?: string, accountName?: strin
   const sql = `
     SELECT
       a.account_name, a.r_number AS account_number,
+      a.is_parent,
+      COUNT(DISTINCT child.rid) AS child_account_count,
       COUNT(ps.project_rid) AS total_projects,
       COUNT(*) FILTER (WHERE ps.is_rd_qualified = true) AS rd_qualified_projects,
       COALESCE(SUM(ps.qre), 0) AS total_qre,
@@ -352,13 +377,230 @@ export async function getAccountSummary(accountRid?: string, accountName?: strin
       COALESCE(SUM(ps.total_subcon), 0) AS total_subcon
     FROM ${MAIN}.project_summary ps
     LEFT JOIN ${MAIN}.account a ON ps.account_rid = a.rid
+    LEFT JOIN ${MAIN}.account child ON child.parent_account_rid = a.rid
     LEFT JOIN ${MAIN}.status s ON ps.status_rid = s.rid
     WHERE ${conds.join(' AND ')}
-    GROUP BY a.account_name, a.r_number
+    GROUP BY a.account_name, a.r_number, a.is_parent
     LIMIT 1`;
 
   const res = await pool.query(sql, vals);
   return res.rows[0] || null;
+}
+
+export async function getAccountResources(accountRid: string, limit = 50): Promise<any[]> {
+  try {
+    const rNumber = await getAccountSchemaRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        r.rid, r.resource_name, r.resource_firstname, r.resource_lastname,
+        r.resource_code, r.resource_designation, r.resource_role,
+        r.resource_startdate, r.resource_enddate, r.resource_orgname
+      FROM ${schema}.resources r
+      WHERE r.account_rid = $1
+      ORDER BY r.resource_name ASC NULLS LAST, r.created_datetime DESC
+      LIMIT ${limit}`;
+
+    const res = await orgPool.query(sql, [accountRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getAccountResources error: ${err.message}`);
+    return [];
+  }
+}
+
+export async function getAccountCases(accountRid: string, limit = 20): Promise<any[]> {
+  const pool = getMainPool();
+  try {
+    const sql = `
+      SELECT
+        cs.case_rid AS rid, cs.case_name, cs.fiscal_year,
+        cs.case_total_projects, cs.case_total_project_cost,
+        cs.case_total_rd_cost, cs.case_total_qre_cost,
+        cs.case_total_qualified_projects, cs.case_completion_percentage,
+        cs.case_startdate, cs.planned_submission_date, cs.statutory_submission_date,
+        cs.submitted_datetime, cs.approved_datetime,
+        s.status_name AS status
+      FROM ${MAIN}.case_summary cs
+      LEFT JOIN ${MAIN}.status s ON cs.status_rid = s.rid
+      WHERE cs.account_rid = $1
+      ORDER BY cs.created_datetime DESC
+      LIMIT $2`;
+
+    const res = await pool.query(sql, [accountRid, limit]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getAccountCases error: ${err.message}`);
+    return [];
+  }
+}
+
+export async function getAccountInteractions(accountRid: string, limit = 20): Promise<any[]> {
+  const pool = getMainPool();
+  try {
+    const sql = `
+      SELECT
+        ins.rid, ins.r_number, ins.fiscal_year,
+        ins.sent_on_datetime, ins.sent_to, ins.sent_by_mail_id,
+        ins.response_from, ins.response_updated_on, ins.response_submitted_on,
+        ins.interaction_age, ins.attachment_count,
+        ins.recipient_email, ins.recipient_name,
+        it.interaction_type_name, isrc.interaction_source_name,
+        ist.status_name AS interaction_status
+      FROM ${MAIN}.interactions_summary ins
+      LEFT JOIN ${MAIN}.interaction_type it ON ins.interaction_type_rid = it.rid
+      LEFT JOIN ${MAIN}.interaction_source isrc ON ins.interaction_source_rid = isrc.rid
+      LEFT JOIN ${MAIN}.interaction_status ist ON ins.interaction_status_rid = ist.rid
+      WHERE ins.account_rid = $1
+      ORDER BY ins.sent_on_datetime DESC
+      LIMIT $2`;
+
+    const res = await pool.query(sql, [accountRid, limit]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getAccountInteractions error: ${err.message}`);
+    return [];
+  }
+}
+
+export async function getAccountMeetings(accountRid: string, limit = 20): Promise<any[]> {
+  const pool = getMainPool();
+  try {
+    const sql = `
+      SELECT
+        ms.rid, ms.r_number, ms.subject,
+        ms.effective_start_datetime, ms.effective_end_datetime,
+        ms.meeting_participants, ms.invited_by,
+        ms.recurrence_type, ms.recurrence_interval, ms.recurrence_days,
+        ms.minutes_of_meeting, ms.time_zone,
+        s.status_name AS status
+      FROM ${MAIN}.meeting_summary ms
+      LEFT JOIN ${MAIN}.status s ON ms.status_rid = s.rid
+      WHERE ms.account_rid = $1
+      ORDER BY ms.effective_start_datetime DESC
+      LIMIT $2`;
+
+    const res = await pool.query(sql, [accountRid, limit]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getAccountMeetings error: ${err.message}`);
+    return [];
+  }
+}
+
+export async function getAccountAttachments(accountRid: string, limit = 30): Promise<any[]> {
+  const pool = getMainPool();
+  try {
+    const sql = `
+      SELECT
+        rid, r_number, document_name, attach_to, attachment_level,
+        fiscal_year, format, size_in_mb, comments, created_datetime, browse_file
+      FROM ${MAIN}.attachment_summary
+      WHERE attach_to = $1
+        AND attachment_level = 'account'
+        AND browse_file IS NOT NULL
+        AND browse_file != ''
+      ORDER BY created_datetime DESC
+      LIMIT $2`;
+
+    const res = await pool.query(sql, [accountRid, limit]);
+    const rows = await Promise.all(
+      res.rows.map(async (row: any) => ({
+        ...row,
+        download_url: row.browse_file ? await generateSasUrl(row.browse_file) : null,
+      }))
+    );
+    return rows;
+  } catch (err: any) {
+    logMessage(`getAccountAttachments error: ${err.message}`);
+    return [];
+  }
+}
+
+export async function getAccountNotes(accountRid: string, limit = 30): Promise<any[]> {
+  const pool = getMainPool();
+  try {
+    const sql = `
+      SELECT
+        rid, r_number, title, descriptions, notes_owner,
+        document_name, browse_file, attachment_level,
+        fiscal_year, format, size_in_mb, created_datetime
+      FROM ${MAIN}.notes_summary
+      WHERE attach_to = $1
+        AND attachment_level = 'account'
+      ORDER BY created_datetime DESC
+      LIMIT $2`;
+
+    const res = await pool.query(sql, [accountRid, limit]);
+    const rows = await Promise.all(
+      res.rows.map(async (row: any) => ({
+        ...row,
+        download_url: row.browse_file ? await generateSasUrl(row.browse_file) : null,
+      }))
+    );
+    return rows;
+  } catch (err: any) {
+    logMessage(`getAccountNotes error: ${err.message}`);
+    return [];
+  }
+}
+
+export async function getAccountKeyContacts(accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountSchemaRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+    const pool = getMainPool();
+
+    const sql = `
+      SELECT
+        kc.rid, kc.entity_rid, kc.entity_type,
+        kc.key_contact_name, kc.key_contact_email, kc.key_contact_role,
+        kc.is_primary_contact, kc.include_in_communication,
+        kc.interaction_cc_recipient, kc.status_rid
+      FROM ${schema}.key_contact_details kc
+      WHERE kc.entity_rid = $1
+        AND kc.entity_type = 'Account'
+      ORDER BY kc.is_primary_contact DESC NULLS LAST, kc.key_contact_name`;
+
+    const res = await orgPool.query(sql, [accountRid]);
+    if (res.rows.length === 0) return [];
+
+    const roleIds = [...new Set(res.rows.map((row: any) => row.key_contact_role).filter(Boolean))];
+    const statusIds = [...new Set(res.rows.map((row: any) => row.status_rid).filter(Boolean))];
+
+    const roleMap = new Map<string, string>();
+    const statusMap = new Map<string, string>();
+
+    if (roleIds.length > 0) {
+      const roleRes = await pool.query(
+        `SELECT rid, role_name FROM ${MAIN}.key_contact_role WHERE rid = ANY($1)`,
+        [roleIds]
+      );
+      roleRes.rows.forEach((row: any) => roleMap.set(row.rid, row.role_name));
+    }
+
+    if (statusIds.length > 0) {
+      const statusRes = await pool.query(
+        `SELECT rid, status_name FROM ${MAIN}.status WHERE rid = ANY($1)`,
+        [statusIds]
+      );
+      statusRes.rows.forEach((row: any) => statusMap.set(row.rid, row.status_name));
+    }
+
+    return res.rows.map((row: any) => ({
+      ...row,
+      role_name: row.key_contact_role ? roleMap.get(row.key_contact_role) || null : null,
+      status_name: row.status_rid ? statusMap.get(row.status_rid) || null : null,
+    }));
+  } catch (err: any) {
+    logMessage(`getAccountKeyContacts error: ${err.message}`);
+    return [];
+  }
 }
 
 // ─── CASE LEVEL QUERIES ───────────────────────────────────────────────────────
@@ -860,4 +1102,222 @@ export async function getTopAccountsByProjects(limit = 10): Promise<any[]> {
 
   const res = await pool.query(sql);
   return res.rows;
+}
+
+// ─── CASE LEVEL QUERIES (extended) ───────────────────────────────────────────
+
+/** Case resources — all people working across projects in a case */
+export async function getCaseResources(caseRid: string, accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        r.resource_name, r.resource_firstname, r.resource_lastname,
+        r.resource_designation, r.resource_code,
+        cpr.fiscal_year,
+        cpr.total_hours_pro_res, cpr.total_cost_pro_res,
+        cpr.rd_percent_final, cpr.qre_final,
+        pf.project_name, pf.project_code
+      FROM ${schema}.case_project_resource cpr
+      LEFT JOIN ${schema}.resources r ON cpr.resource_rid = r.rid
+      LEFT JOIN ${schema}.project_fiscal pf ON cpr.project_fiscal_rid = pf.rid
+      WHERE cpr.case_rid = $1
+      ORDER BY cpr.fiscal_year DESC, cpr.total_cost_pro_res DESC NULLS LAST
+      LIMIT 100`;
+
+    const res = await orgPool.query(sql, [caseRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseResources error: ${err.message}`);
+    return [];
+  }
+}
+
+/** Case tasks — all tasks across projects in a case */
+export async function getCaseTasks(caseRid: string, accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        cpt.rid, cpt.task_name, cpt.fiscal_year,
+        cpt.total_hours_pro_task, cpt.total_cost_pro_task,
+        cpt.start_date, cpt.end_date,
+        pf.project_name, pf.project_code
+      FROM ${schema}.case_project_task cpt
+      LEFT JOIN ${schema}.project_fiscal pf ON cpt.project_fiscal_rid = pf.rid
+      WHERE cpt.case_rid = $1
+      ORDER BY cpt.fiscal_year DESC, cpt.total_cost_pro_task DESC NULLS LAST
+      LIMIT 100`;
+
+    const res = await orgPool.query(sql, [caseRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseTasks error: ${err.message}`);
+    return [];
+  }
+}
+
+/** Case team members */
+export async function getCaseTeam(caseRid: string, accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        ct.rid, ct.team_member_rid,
+        r.resource_name, r.resource_designation, r.resource_code
+      FROM ${schema}.case_team ct
+      LEFT JOIN ${schema}.resources r ON ct.team_member_rid = r.rid
+      WHERE ct.case_rid = $1
+      ORDER BY r.resource_name`;
+
+    const res = await orgPool.query(sql, [caseRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseTeam error: ${err.message}`);
+    return [];
+  }
+}
+
+/** Case key contacts */
+export async function getCaseKeyContacts(caseRid: string, accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        rid, key_contact_name, key_contact_email,
+        key_contact_role, is_primary_contact
+      FROM ${schema}.case_key_contact_details
+      WHERE case_rid = $1
+      ORDER BY is_primary_contact DESC NULLS LAST, key_contact_name`;
+
+    const res = await orgPool.query(sql, [caseRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseKeyContacts error: ${err.message}`);
+    return [];
+  }
+}
+
+/** Case milestones / timeline */
+export async function getCaseMilestones(caseRid: string, accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        cm.rid, cm.milestone_name, cm.milestone_description,
+        cm.planned_date, cm.actual_date,
+        s.status_name AS status
+      FROM ${schema}.case_milestone cm
+      LEFT JOIN ${schema}.status s ON cm.status_rid = s.rid
+      WHERE cm.case_rid = $1
+      ORDER BY cm.planned_date ASC NULLS LAST`;
+
+    const res = await orgPool.query(sql, [caseRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseMilestones error: ${err.message}`);
+    return [];
+  }
+}
+
+/** Case interactions — emails/interactions for the case */
+export async function getCaseInteractions(caseRid: string, limit = 20): Promise<any[]> {
+  const pool = getMainPool();
+  try {
+    const sql = `
+      SELECT
+        ins.rid, ins.r_number, ins.fiscal_year,
+        ins.sent_on_datetime, ins.sent_to, ins.sent_by_mail_id,
+        ins.response_from, ins.response_updated_on,
+        ins.interaction_age, ins.attachment_count,
+        ins.recipient_email, ins.recipient_name,
+        it.interaction_type_name, isrc.interaction_source_name,
+        ist.status_name AS interaction_status
+      FROM ${MAIN}.interactions_summary ins
+      LEFT JOIN ${MAIN}.interaction_type it ON ins.interaction_type_rid = it.rid
+      LEFT JOIN ${MAIN}.interaction_source isrc ON ins.interaction_source_rid = isrc.rid
+      LEFT JOIN ${MAIN}.interaction_status ist ON ins.interaction_status_rid = ist.rid
+      WHERE ins.case_rid = $1
+      ORDER BY ins.sent_on_datetime DESC
+      LIMIT $2`;
+
+    const res = await pool.query(sql, [caseRid, limit]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseInteractions error: ${err.message}`);
+    return [];
+  }
+}
+
+/** Case tasks (workflow tasks, not project tasks) */
+export async function getCaseWorkflowTasks(caseRid: string, accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        ct.rid, ct.task_name, ct.task_description,
+        ct.assigned_to, ct.due_date,
+        s.status_name AS status,
+        ct.created_datetime
+      FROM ${schema}.case_task ct
+      LEFT JOIN ${schema}.status s ON ct.status_rid = s.rid
+      WHERE ct.case_rid = $1
+      ORDER BY ct.due_date ASC NULLS LAST, ct.created_datetime DESC
+      LIMIT 50`;
+
+    const res = await orgPool.query(sql, [caseRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseWorkflowTasks error: ${err.message}`);
+    return [];
+  }
+}
+
+/** Case history — submission/approval history */
+export async function getCaseHistory(caseRid: string, accountRid: string): Promise<any[]> {
+  try {
+    const rNumber = await getAccountRNumber(accountRid);
+    if (!rNumber) return [];
+    const schema = getOrgSchema(rNumber);
+    const orgPool = getOrgPool();
+
+    const sql = `
+      SELECT
+        ch.rid, ch.action, ch.notes,
+        ch.created_by, ch.created_datetime
+      FROM ${schema}.case_history ch
+      WHERE ch.case_rid = $1
+      ORDER BY ch.created_datetime DESC
+      LIMIT 50`;
+
+    const res = await orgPool.query(sql, [caseRid]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseHistory error: ${err.message}`);
+    return [];
+  }
 }
