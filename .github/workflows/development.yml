@@ -15,6 +15,7 @@ on:
       - rule-builder-module/**
       - form-extraction-module/**
       - report-module/**
+      - chat-assistance-module/**
 
 env:
   ENVIRONMENT: development
@@ -35,6 +36,7 @@ jobs:
       rule-builder-module: ${{ steps.filter.outputs.rule-builder-module }}
       form-extraction-module: ${{ steps.filter.outputs.form-extraction-module }}
       report-module: ${{ steps.filter.outputs.report-module }}
+      chat-assistance-module: ${{ steps.filter.outputs.chat-assistance-module }}
     # For pull requests it's not necessary to checkout the code
     steps:
       - uses: actions/checkout@v3
@@ -63,6 +65,9 @@ jobs:
               - 'form-extraction-module/**'
             report-module:
               - 'report-module/**'
+            chat-assistance-module:
+              - 'chat-assistance-module/**'
+
 
   # JOB to build backend user-module code
   user-module:
@@ -1512,6 +1517,153 @@ jobs:
           
             # Pull latest changes and restart
             if docker compose up -d --pull always --no-deps report-module; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
+
+ # JOB to build backend chat-assistance-module code
+  chat-assistance-module:
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.chat-assistance-module == 'true' }}
+    name: Build and Deploy Report Module
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+        working-directory: chat-assistance-module
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/chat-assistance-module:${{ env.IMAGE_TAG }} .
+        working-directory: chat-assistance-module
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/chat-assistance-module:${{ env.IMAGE_TAG }}
+        working-directory: chat-assistance-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          REPO_NAME="chat-assistance-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: chat-assistance-module
+        run: |
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
+          ENV_FILE=".env.chatassistancemodule"
+          
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+          echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+          exit 1
+          fi
+          
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
+          MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
+          MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
+                    
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5014
+          NODE_ENV=DEVELOPMENT
+          APP_ENV=DEVELOPMENT
+
+          KEY_VAULT_URI=$KEY_VAULT_URI
+
+          TRD365_AI_DEV_ENDPOINT="https://development-thinkrd365-api-management.azure-api.net/eventStreamService/api/aiAssessment/updateResponse%22"
+          TRD365_AI_DEV_JWT_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXBwaWQiOiJjNTc4MWZlNS02MmM4LTQyMGMtYWVlNC0wMTkyOTY5MTEyNmUiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vMzI4ZTk2ZmQtNTU4Yi00ZGQ5LThhYzYtY2NhODczNDE3MGVjL3YyLjAiLCJhdWQiOiJjNTc4MWZlNS02MmM4LTQyMGMtYWVlNC0wMTkyOTY5MTEyNmUiLCJpYXQiOjE3NTY0NjkxMjQsIm5iZiI6MTc1NjQ2OTA5NCwiZXhwIjoxNzg4MDA1MTI0fQ.hAMN_dUhAGE_8V7bXmRsWh79mkRbo66QlPTVNWZ-CbnDMaKgfusb9HCDKQTQbRB-c7Oh88dxuMbPWtORvGpchp_VaDl7rjJD1qucsPtXa0KKGb0goLo6ZvsZQjSPyEprhMUMEO8A12PZsL79Un4_Be1LJ3drSGfevehaBwxNrNF8__YX4rKl3xwvzP32FPQvoxLne1Km8aN9ggQyzu_MEeMLPWGtoN5Fw7T22Dl23uXjLo-5Kvro3FIeoSlpljy33BBm30jm-LTd2h6A-T-EqXqLWO7Gnp56gkQsFi-fGTC5QECzxZSNgbIOdbRCGkcsnGEtD5r9JJW-iSwqg99rOQ"
+
+          DEV_MAIN_DB_NAME=main-database-name
+          DEV_MAIN_DB_HOST=main-db-endpoint
+          DEV_MAIN_DB_USER=main-db-admin-username
+          DEV_MAIN_DB_PASSWORD=main-db-admin-password
+          DEV_MAIN_DB_MAINTENANCE="postgres
+
+          DEV_ORG_DB_NAME=org-database-name
+          DEV_ORG_DB_HOST=org-db-endpoint
+          DEV_ORG_DB_USER=org-db-admin-username
+          DEV_ORG_DB_PASSWORD=org-db-admin-password
+          DEV_ORG_DB_MAINTENANCE="postgres
+
+          AZURE_OPENAI_API_ENDPOINT_URL="https://pdfscraper.openai.azure.com/"
+          AZURE_OPENAI_API_KEY="4X21jzrPJ98o9nZSZRO27qMAAyKTHLoDbbNRcdEvK3IjCZduxjIqJQQJ99BCACYeBjFXJ3w3AAABACOGPdEg"
+          AZURE_OPENAI_API_DEPLOYMENT_PRIMARY="gpt-4o"
+          AZURE_OPENAI_API_VERSION="2024-08-01-preview"
+          FPA_CHAT_PROMPT_TEMPERATURE=0.2
+          FPA_CHAT_PROMPT_MAX_TOKENS=900
+          EOF
+          echo "$ENV_FILE file created successfully!"
+      - name: Copy .env file to VM
+        run: |
+          scp -o StrictHostKeyChecking=no .env.chatassistancemodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
+        working-directory: chat-assistance-module
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/backend
+
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
+            
+            # Move .env file with sudo
+            sudo mv /tmp/.env.chatassistancemodule /app/backend/.env.chatassistancemodule
+            echo ".env file moved successfully!"
+          
+            # Update only the chat-assistance-module image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*chat-assistance-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/chat-assistance-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
+          
+            # Login to ACR 
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
+          
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps chat-assistance-module; then
               echo "Deployment successful!"
               # Remove old stopped containers
               docker container prune -f || true
