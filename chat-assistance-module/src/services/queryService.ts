@@ -1240,6 +1240,35 @@ export async function getCaseMilestones(caseRid: string, accountRid: string): Pr
   }
 }
 
+/** Case interactions — emails/interactions for the case */
+export async function getCaseInteractions(caseRid: string, limit = 20): Promise<any[]> {
+  const pool = getMainPool();
+  try {
+    const sql = `
+      SELECT
+        ins.rid, ins.r_number, ins.fiscal_year,
+        ins.sent_on_datetime, ins.sent_to, ins.sent_by_mail_id,
+        ins.response_from, ins.response_updated_on,
+        ins.interaction_age, ins.attachment_count,
+        ins.recipient_email, ins.recipient_name,
+        it.interaction_type_name, isrc.interaction_source_name,
+        ist.status_name AS interaction_status
+      FROM ${MAIN}.interactions_summary ins
+      LEFT JOIN ${MAIN}.interaction_type it ON ins.interaction_type_rid = it.rid
+      LEFT JOIN ${MAIN}.interaction_source isrc ON ins.interaction_source_rid = isrc.rid
+      LEFT JOIN ${MAIN}.interaction_status ist ON ins.interaction_status_rid = ist.rid
+      WHERE ins.case_rid = $1
+      ORDER BY ins.sent_on_datetime DESC
+      LIMIT $2`;
+
+    const res = await pool.query(sql, [caseRid, limit]);
+    return res.rows;
+  } catch (err: any) {
+    logMessage(`getCaseInteractions error: ${err.message}`);
+    return [];
+  }
+}
+
 /** Case tasks (workflow tasks, not project tasks) */
 export async function getCaseWorkflowTasks(caseRid: string, accountRid: string): Promise<any[]> {
   try {
