@@ -55,26 +55,6 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
             let splittedName = url.split('/').pop() as string;
             let finalizedName = splittedName.split('_').slice(2,4).join('_');
               if(finalizedName !== '') {
-                if(file.name === "Financial Calculations") {
-                  const urlWithoutQuery = url.split('?')[0] as string;
-                  let splittedName = urlWithoutQuery.split('/').pop() as string;
-                  let finalizedName = splittedName.split('_').slice(2, 4).join('_');
-
-                  if (finalizedName !== '') {
-                    const response = await axios.get(url, { // fetch with full SAS URL
-                      responseType: "arraybuffer",
-                      timeout: 30_000,
-                    });
-
-                    if (!response.data || response.data.byteLength === 0) {
-                      throw new Error(`Empty response from URL: ${url}`);
-                    }
-
-                    ext = ".xlsx";
-                    const buffer = Buffer.from(new Uint8Array(response.data));
-                    archive.append(buffer, { name: `Financial Calculations${ext}` });
-                  }
-                } else {
                   const response = await axios.get(url, {
                     responseType: "stream",
                     timeout: 30_000,
@@ -82,8 +62,21 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
                   archive.append(response.data, {
                     name: `RD Form-${finalizedName}${ext}`,
                   });
+              } else {
+                if(file.name === 'Financial Workings') {
+                  const response = await axios.get(url, {
+                    responseType: "arraybuffer",
+                    timeout: 30_000,
+                  });
+
+                  if (!response.data || response.data.byteLength === 0) {
+                    throw new Error(`Empty response from URL: ${url}`);
+                  }
+                  ext = ".xlsx";
+                  const buffer = Buffer.from(new Uint8Array(response.data));
+                  archive.append(buffer, { name: `Financial Workings${ext}` });
+                  }
                 }
-              }
               index++;
             }
           }

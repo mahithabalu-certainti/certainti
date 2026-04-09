@@ -3,6 +3,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { calculateRDExpenditureQuery } from "../../utils/rdFinancialWorkingQueries";
 import { CalculateQreCostType } from "../../utils/types";
 import { Case } from "../../models/caseModel";
+import { generateAustraliaRdExcelBase64 } from "../../utils/australiaExcelExport";
 
 type extractConfig = {
     tax_rate : number,
@@ -113,8 +114,11 @@ export class RdCreditCalculatorForAus {
           "Tier of intensity" : calculateCredit,
           "Non-refundable R&D tax offset": {
             "Total Offset Amount" : nonRefundableRdTaxOffset
-          }
+          },
+          country_export_data : ''
         }
+        const excelBase64 = await generateAustraliaRdExcelBase64(finalData);
+        finalData.country_export_data = excelBase64
         return {
           inputFields : {
                 country : this.country,

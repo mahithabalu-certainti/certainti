@@ -315,7 +315,9 @@ export class FederalComputationService {
                 const federalComputation = federalCalculators[countryInfo.countryCode];
                 if(federalComputation) {
                     const result = await federalComputation.computeForAus(caseRid, accountRid, schemaName, extractConfig, caseDetails, countryInfo, caseClosed);
-                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields, federalComputation.finalCredit,result,extractConfig); 
+                    await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, result.computedFields, federalComputation.finalCredit,result,extractConfig, result.computedFields.country_export_data); 
+                    const {country_export_data, ...rest} = result.computedFields
+                    result.computedFields = rest
                     return {
                         statusCode : HttpStatus.SUCCESS,
                         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
