@@ -235,7 +235,7 @@ export class RdCreditCalculatorForRI {
 
         return {
             computed_fields: {
-                "RI Schedule RC — R&D Expense Credit": {
+                "Complete address(es) of Rhode Island location(s) where Research & Development Expenses were Incurred": {
                     "[1] Federal Qualified Research Expenses from Federal Form 6765, line 9 or line 20":
                         lines.line1,
                     "[2] Federal Base Amount from Federal Form 6765, line 9 or 23":

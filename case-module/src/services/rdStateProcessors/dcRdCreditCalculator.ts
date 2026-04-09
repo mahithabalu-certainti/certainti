@@ -312,7 +312,7 @@ export class RdCreditCalculatorForDC {
 
         return {
             computed_fields: {
-                "Section A — Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.": {
+                "Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.": {
                     "[1] Certain amounts paid or incurred to energy consortia (see instructions)":                                  a.line1,
                     "[2] Basic research payments to qualified organizations (see instructions)":                             a.line4,
                     "[3] Qualified organization base period amount":0,

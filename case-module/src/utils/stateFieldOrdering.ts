@@ -817,10 +817,13 @@ CA: {
     },
     LA: {
         sectionOrder: [
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765"
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765",
+            "LQRE-6765 (Less than 50 Employees)",
+            "EXPENDITURES (50\u00B799 EMPLOYEES)",
+            "CREDIT FOR INCREASING R&D EXPENDITURES (100 OR MORE EMPLOYEES)",
         ],
         sectionFieldOrders: {
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765": [
+            "LQRE-6765 (Less than 50 Employees)": [
                 { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
                 { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
                 { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
@@ -829,8 +832,30 @@ CA: {
                 { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
                 { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
                 { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
-                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 }
-            ]
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 },
+            ],
+            "EXPENDITURES (50\u00B799 EMPLOYEES)": [
+                { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
+                { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
+                { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
+                { pattern: "[4] 3 Previous Years Average", order: 4 },
+                { pattern: /^\[5\] Base Calculation \(\d+(\.\d+)?% x Line 4\)$/, order: 5 },
+                { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
+                { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
+                { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 },
+            ],
+            "CREDIT FOR INCREASING R&D EXPENDITURES (100 OR MORE EMPLOYEES)": [
+                { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
+                { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
+                { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
+                { pattern: "[4] 3 Previous Years Average", order: 4 },
+                { pattern: /^\[5\] Base Calculation \(\d+(\.\d+)?% x Line 4\)$/, order: 5 },
+                { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
+                { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
+                { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 },
+            ],
         },
         BOLD: []
     },
@@ -955,10 +980,10 @@ CA: {
     },
     RI: {
         sectionOrder: [
-            "RI Schedule RC — R&D Expense Credit"
+            "Complete address(es) of Rhode Island location(s) where Research & Development Expenses were Incurred"
         ],
         sectionFieldOrders: {
-            "RI Schedule RC — R&D Expense Credit": [
+            "Complete address(es) of Rhode Island location(s) where Research & Development Expenses were Incurred": [
                 { pattern: "[1] Federal Qualified Research Expenses from Federal Form 6765, line 9 or line 20", order: 1 },
                 { pattern: "[2] Federal Base Amount from Federal Form 6765, line 9 or 23", order: 2 },
                 { pattern: "[3] Federal Excess Expenses. Subtract line 2 from line 1", order: 3 },
@@ -1182,6 +1207,27 @@ CA: {
                 { pattern: /^\[26\]\s*Electing reduced credit under 280C$/, order: 8 },
                 { pattern: /^Multiply line 20 by/, order: 9 }
             ]
+        },
+        BOLD: []
+    },
+
+    KY: {
+        sectionOrder: [
+            "PART I—Computation of Allowable Tax Credit",
+            "PART II—Current Year Credit",
+        ],
+        sectionFieldOrders: {
+            "PART I—Computation of Allowable Tax Credit": [
+                { pattern: "[1] Cost of construction (attach schedule)", order: 1 },
+                { pattern: "[2] Cost of equipment (attach schedule)", order: 2 },
+                { pattern: "[3] Total qualified costs (add lines 1 and 2)", order: 3 },
+                { pattern: /^\[4\] Allowable tax credit \(enter \d+(\.\d+)?% of line 3\)$/, order: 4 },
+            ],
+            "PART II—Current Year Credit": [
+                { pattern: "[1] LLET Credit—Enter on Schedule TCS, Part II, Column E", order: 1 },
+                { pattern: "[2] Corporation Income Tax Credit—Enter on Schedule TCS, Part II, Column F", order: 2 },
+                { pattern: "[3] Individual Income Tax Credit—Enter on Form 740, 740-NP, or 741", order: 3 },
+            ],
         },
         BOLD: []
     }
