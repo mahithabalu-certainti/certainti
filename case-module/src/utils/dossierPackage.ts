@@ -24,7 +24,7 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
 
     try {
       for (const file of files) {
-        const ext = file.extension ?? ".pdf";
+        let ext = file.extension ?? ".pdf";
         if ("buffer" in file) {
           if(file.name === 'Technical Summary') {
               archive.append(file.buffer, {
@@ -52,18 +52,31 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
           let index = 1;
           if(file.urls.length > 0) {
             for (const url of file.urls) {
-              const response = await axios.get(url, {
-              responseType: "stream",
-              timeout: 30_000,
-            });
             let splittedName = url.split('/').pop() as string;
-
             let finalizedName = splittedName.split('_').slice(2,4).join('_');
               if(finalizedName !== '') {
-                archive.append(response.data, {
-                  name: `RD Form-${finalizedName}${ext}`,
-                });
-              }
+                  const response = await axios.get(url, {
+                    responseType: "stream",
+                    timeout: 30_000,
+                  });
+                  archive.append(response.data, {
+                    name: `RD Form-${finalizedName}${ext}`,
+                  });
+              } else {
+                if(file.name === 'Financial Workings') {
+                  const response = await axios.get(url, {
+                    responseType: "arraybuffer",
+                    timeout: 30_000,
+                  });
+
+                  if (!response.data || response.data.byteLength === 0) {
+                    throw new Error(`Empty response from URL: ${url}`);
+                  }
+                  ext = ".xlsx";
+                  const buffer = Buffer.from(new Uint8Array(response.data));
+                  archive.append(buffer, { name: `Financial Workings${ext}` });
+                  }
+                }
               index++;
             }
           }
