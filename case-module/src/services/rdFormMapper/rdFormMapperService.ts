@@ -26,10 +26,10 @@ import { calculateFiscalYearDateRange } from "../../utils/dateFunction";
 import { HelperMethods } from "../cases/helperMethods";
 import { CaseModelService } from "../caseModelsService";
 import { RdFormHelperService } from "./rdFormHelperService";
-import { processMassachusettsForm } from "./maScheduleRcGenerator";
-import { processNewJerseyForm } from "./njForm306Generator";
-import { processSouthCarolinaForm } from "./scSchTC18Generator";
-import { processWisconsinForm } from "./wiScheduleRGenerator";
+import { processMassachusettsForm } from "./maFormGenerator";
+import { processNewJerseyForm } from "./njFormGenerator";
+import { processSouthCarolinaForm } from "./scFormGenerator";
+import { processWisconsinForm } from "./wiFormGenerator";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -497,26 +497,26 @@ export class RdFormMapperService {
           filledFormUrl = ''
           if (resolvedStateCode === "MA") {
              filledFormUrl = await processMassachusettsForm(
-              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,resolvedStateCode,countryCode
             );
             
           }
           if (resolvedStateCode === "NJ") {
             filledFormUrl = await processNewJerseyForm(
-                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state
+                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,resolvedStateCode,countryCode
               );
              
           }
           if (resolvedStateCode === "SC") {
             filledFormUrl = await processSouthCarolinaForm(
-              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,resolvedStateCode,countryCode
             );
            
           }
 
           if (resolvedStateCode === "WI") {
               filledFormUrl= await processWisconsinForm(
-                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb, state,
+                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb, state,resolvedStateCode,countryCode
               );
 }
           // filledFormUrl = await this.generatePDFNonFillable(

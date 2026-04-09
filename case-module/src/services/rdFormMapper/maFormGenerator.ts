@@ -162,7 +162,9 @@ export async function processMassachusettsForm(
   accountNumber: string,
   templateBlobUrl: string,
   orgDb: Sequelize,
-  stateRid: string
+  stateRid: string,
+  stateCode:string,
+  countryCode: string
 ): Promise<string> {
   logMessage(`[MA RC] Starting form generation for case: ${caseRid}`);
 
@@ -251,16 +253,19 @@ export async function processMassachusettsForm(
   };
 
   // 4. Generate and upload PDF
-  return _generatePdf(data, caseRid, accountNumber, templateBlobUrl);
+  return generatePdf(data, caseRid, accountNumber, templateBlobUrl,stateCode,countryCode);
 }
 
 // --- PDF generator (private to this module) ----------------------------------
 
-async function _generatePdf(
+async function generatePdf(
   data: MAScheduleRCData,
   caseRid: string,
   accountNumber: string,
   templateBlobUrl: string,
+  stateCode: string,
+  countryCode: string
+
 ): Promise<string> {
   const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 
@@ -436,9 +441,12 @@ async function _generatePdf(
   // Serialize and upload
     const pdfBuffer = Buffer.from(await pdfDoc.save());
     const pdfBuf = pdfBuffer;
+    const outputFileName = `rd_form_${countryCode}${stateCode}.pdf`;
+    const outputBlobName = `cases/${caseRid}/rdForms/${outputFileName}`;
+
   
-  const blobName  = `cases/${caseRid}/rdForms/ma_schedule_rc_${caseRid}_${Date.now()}.pdf`;
-  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, blobName, accountNumber);
+ /// const blobName  = `cases/${caseRid}/rdForms/ma_schedule_rc_${caseRid}_${Date.now()}.pdf`;
+  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outputBlobName, accountNumber);
 
   logMessage(`[MA RC] Filled PDF uploaded: ${blobUrl}`);
   return blobUrl;

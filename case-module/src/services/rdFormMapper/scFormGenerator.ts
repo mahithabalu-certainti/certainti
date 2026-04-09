@@ -73,6 +73,8 @@ export async function processSouthCarolinaForm(
   accountNumber: string,
   templateBlobUrl: string,
   orgDb: Sequelize,
+  stateCode: string,
+  countryCode: string
 ): Promise<string> {
   logMessage(`[SC TC-18] Starting form generation for case: ${caseRid}`);
 
@@ -133,16 +135,18 @@ export async function processSouthCarolinaForm(
   };
 
   // 4. Generate and upload
-  return _generatePdf(data, caseRid, accountNumber, templateBlobUrl);
+  return generatePdf(data, caseRid, accountNumber, templateBlobUrl,stateCode,countryCode);
 }
 
 // --- PDF generator (private) -------------------------------------------------
 
-async function _generatePdf(
+async function generatePdf(
   data: SCSchTC18Data,
   caseRid: string,
   accountNumber: string,
   templateBlobUrl: string,
+  stateCode: string,
+  countryCode: string
 ): Promise<string> {
   const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 
@@ -234,8 +238,10 @@ async function _generatePdf(
 
   // --- Serialize and upload -------------------------------------------------
   const pdfBuffer = Buffer.from(await pdfDoc.save());
-  const outBlob   = `cases/${caseRid}/rdForms/sc_tc18_${caseRid}_${Date.now()}.pdf`;
-  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outBlob, accountNumber);
+  const outputFileName = `rd_form_${countryCode}${stateCode}.pdf`;
+  const outputBlobName = `cases/${caseRid}/rdForms/${outputFileName}`;
+
+  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outputBlobName, accountNumber);
 
   logMessage(`[SC TC-18] Filled PDF uploaded: ${blobUrl}`);
   return blobUrl;
