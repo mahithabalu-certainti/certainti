@@ -927,50 +927,51 @@ CA: {
     },
     NE: {
         sectionOrder: [
-            "Method 1 — Property and Payroll Factor Apportionment (Lines 2–9)",
-            "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)",
-            "Final Credit and Usage Allocation (Lines 21–25)"
+            "NoTitle"
         ],
         sectionFieldOrders: {
-            "Method 1 — Property and Payroll Factor Apportionment (Lines 2–9)": [
-                { pattern: "[2] Federal research credit (Form 6765, line 38 or 40)", order: 1 },
-                { pattern: "[3a] Nebraska property factor — off-campus (%)", order: 2 },
-                { pattern: "[3b] Nebraska property factor — on-campus (%)", order: 3 },
-                { pattern: "[4a] Nebraska payroll factor — off-campus (%)", order: 4 },
-                { pattern: "[4b] Nebraska payroll factor — on-campus (%)", order: 5 },
-                { pattern: "[5a] Add lines 3a and 4a (off-campus)", order: 6 },
-                { pattern: "[5b] Add lines 3b and 4b (on-campus)", order: 7 },
-                { pattern: "[6a] Average off-campus factor (line 5a ÷ 2)", order: 8 },
-                { pattern: "[6b] Average on-campus factor (line 5b ÷ 2)", order: 9 },
-                { pattern: "[7a] Federal credit apportioned off-campus (line 2 × line 6a)", order: 10 },
-                { pattern: "[7b] Federal credit apportioned on-campus (line 2 × line 6b)", order: 11 },
-                { pattern: /^\[8a\] Regular research tax credit \(line 7a × \d+(\.\d+)?%\) — off-campus$/, order: 12 },
-                { pattern: /^\[8b\] Enhanced research tax credit \(line 7b × \d+(\.\d+)?%\) — on-campus$/, order: 13 },
-                { pattern: "[9] Method 1 total (line 8a + line 8b)", order: 14 }
-            ],
-            "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)": [
-                { pattern: "[10] Total NE qualified R&D expenses", order: 1 },
-                { pattern: "[11] NE expenses — off-campus portion", order: 2 },
-                { pattern: "[12] NE expenses — on-campus portion (line 10 minus line 11)", order: 3 },
-                { pattern: "[13] Total US QREs from Federal Form 6765 (line 9 or line 28)", order: 4 },
-                { pattern: "[14] Off-campus NE ratio (line 11 ÷ line 13)", order: 5 },
-                { pattern: "[15] On-campus NE ratio (line 12 ÷ line 13)", order: 6 },
-                { pattern: "[16] Federal credit × off-campus ratio (line 2 × line 14)", order: 7 },
-                { pattern: "[17] Federal credit × on-campus ratio (line 2 × line 15)", order: 8 },
-                { pattern: /^\[18\] Regular research tax credit \(line 16 × \d+(\.\d+)?%\) — off-campus$/, order: 9 },
-                { pattern: /^\[19\] Enhanced research tax credit \(line 17 × \d+(\.\d+)?%\) — on-campus$/, order: 10 },
-                { pattern: "[20] Method 2 total (line 18 + line 19)", order: 11 }
-            ],
-            "Final Credit and Usage Allocation (Lines 21–25)": [
-                { pattern: "[21] Nebraska R&D credit — larger of line 9 or line 20", order: 1 },
-                { pattern: /^\[21\] Winning method:/, order: 2 },
-                { pattern: "[22] Credit used on Nebraska income tax return (refundable — Form 3800N line 18)", order: 3 },
-                { pattern: "[23] Credit used for refund of state sales/use taxes", order: 4 },
-                { pattern: "[24] Credit distributed to partners, shareholders, or beneficiaries (nonrefundable)", order: 5 },
-                { pattern: "[25] Total credit usage (lines 22 + 23 + 24, must not exceed line 21)", order: 6 }
+            "NoTitle": [
+                { pattern: /^\[2\] Enter total amount of federal research credit allowed/, order: 1 },
+                { pattern: "[3] Nebraska property factor (attach schedule showing calculations)", order: 2 },
+                { pattern: "[3a] Off-campus, but in Nebraska.", order: 3 },
+                { pattern: /^\[3b\] On-campus in Nebraska\./, order: 4 },
+                { pattern: "[4] Nebraska payroll factor (attach schedule showing calculations)", order: 5 },
+                { pattern: "[4a] Off-campus, but in Nebraska.", order: 6 },
+                { pattern: "[4b] On-campus in Nebraska.", order: 7 },
+                { pattern: "[5a] Add lines 3a and 4a (off-campus).", order: 8 },
+                { pattern: "[5b] Add lines 3b and 4b (on-campus).", order: 9 },
+                { pattern: "[6] Average property and payroll factors", order: 10 },
+                { pattern: "[6a] Off-campus (line 5a ÷ 2).", order: 11 },
+                { pattern: "[6b] On-campus (line 5b ÷ 2).", order: 12 },
+                { pattern: "[7a] Multiply line 2 x line 6a (off-campus) .", order: 13 },
+                { pattern: "[7b] Multiply line 2 x line 6b (on-campus).", order: 14 },
+                { pattern: "[8a] Regular research tax credit (line 7a x 15%) (off-campus).", order: 15 },
+                { pattern: "[8b] Enhanced research tax credit (line 7b x 35%) (on-campus).", order: 16 },
+                { pattern: "[9] Total research tax credit (line 8a plus line 8b) .", order: 17 },
+                { pattern: "[10] Enter amount of all qualified expenses for R&D activities in Nebraska.", order: 18 },
+                { pattern: /^\[11\] Enter amount of expenses on line 10 which were not performed/, order: 19 },
+                { pattern: /^\[12\] Enter amount of expenses on line 10 which were performed/, order: 20 },
+                { pattern: /^\[13\] Enter total amount of qualified expenses for R&D activities in all states/, order: 21 },
+                { pattern: "[14] Divide line 11 by line 13 (off-campus).", order: 22 },
+                { pattern: "[15] Divide line 12 by line 13 (on-campus).", order: 23 },
+                { pattern: "[16] Multiply line 2 x line 14 (off-campus).", order: 24 },
+                { pattern: "[17] Multiply line 2 x line 15 (on-campus).", order: 25 },
+                { pattern: /^\[18\] Regular research tax credit \(line 16 × \d+(\.\d+)?%\) — off-campus$/, order: 26 },
+                { pattern: /^\[19\] Enhanced research tax credit \(line 17 × \d+(\.\d+)?%\) — on-campus$/, order: 27 },
+                { pattern: "[20] Total research tax credit (line 18 plus line 19.", order: 28 },
+                { pattern: "[21] Enter the larger of line 9 or line 20.", order: 29 },
+                { pattern: /^\[22\] Amount of credit \(refundable to the entity/, order: 30 },
+                { pattern: /^\[23\] Amount of credit from line 21 used for refunds/, order: 31 },
+                { pattern: /^\[24\] Amount of credit from line 21 \(nonrefundable\) distributed/, order: 32 },
+                { pattern: "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21", order: 33 }
             ]
         },
-        BOLD: []
+        BOLD: [
+            "[9] Total research tax credit (line 8a plus line 8b) .",
+            "[20] Total research tax credit (line 18 plus line 19.",
+            "[21] Enter the larger of line 9 or line 20.",
+            "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21"
+        ]
     },
     NH: {
         sectionOrder: [
