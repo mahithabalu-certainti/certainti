@@ -255,9 +255,9 @@ export class StateComputationService {
 
                 await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                     fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid, config.state_code,
-                    result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig,caseDetails.employee_count ?? 0,result
+                    result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig,caseDetails.employee_count ?? 0,result,
+                    result.computedFields.base64Result ?? null
                 );
-
                 }
             } catch (err) {
                 logMessage(`Error processing state ${config.state_code}: ${err}`);

@@ -7,7 +7,7 @@ import { ALPHANUMERIC_CONDITIONS, caseFilingTypes, caseStatuses, countryCodes, D
 import { CaseCloseType, CaseClosureRemarks, CaseCountryComputedType, CaseData, CaseStateComputedType, CaseSubmissionType, ComputedValueRequest, CountryType, DossierFormResponse, ParentAccountType, ProjectFiscalIds, RdCreditsState, RegionDetails, RegionIds, RevokeSignoffRequest, StateType } from "../../utils/types";
 import { fetchDossierForm, getCaseSummaryData, getValidRegionIdsFromCases } from "../../utils/rawQueries";
 import { errorLog, generateExcelBase64, generateSasUrl, isValidTimezone, logMessage, uploadMultipleFilesToAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
-import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossier, fetchStateCodesByRids, fetchCountryCalcDataForDossier } from "../../utils/dossierRawquery";
+import { fetchCaseClosingRemarks, fetchRdFormUrlForCountry, fetchRdFormUrlForState, fetchStateCalcDataForDossierForOther, fetchStateCalcDataForDossierForUS, fetchStateCodesByRids, fetchCountryCalcDataForDossier, fetchCountryCalcDataForDossierForUSA, fetchCountryRidForCode } from "../../utils/dossierRawquery";
 import { createWorkbook, addStateSheetToWorkbook, uploadCombinedWorkbook, addFederalSheetToWorkbook, addStateSummarySheetToWorkbook, STATE_SHEET_ORDER } from "../rdStateProcessors/stateRdCreditExcelGenerators";
 import { ENV, kafka } from "../../config/kafka";
 import { Kafka, Producer } from "kafkajs";
@@ -25,6 +25,9 @@ import Decimal from "decimal.js";
 import { generatePdfBuffer } from "../../utils/generatePdf";
 import { CaseTechnicalSummary } from "../../models/caseTechnicalSummary";
 import { truncate } from "node:fs";
+import { generateCanadaRdExcelBase64 } from "../../utils/canadaExcelExport";
+import { generateIrelandRdExcelBase64 } from "../../utils/irelandExcelExport";
+import { mergeExcelsToSingleFile } from "../../utils/mergeExcelData";
 
 export class ChildCaseService extends CaseService {
     private producer! : Producer;
@@ -362,19 +365,13 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     const generateQualifiedProjectsCSV = await generateExcelBase64(getProjectQualifiedData.data,"Qualified-Projects")
     const getProjectResourceSummary = await this.projectResourceService.exportProjectResources(accountRid, caseRid,caseDetails!.fiscal_year, {}, "resource_code", "ASC", userId, "", "qualifiedProjects");
     const generateResourceSummaryCSV = await generateExcelBase64(getProjectResourceSummary.data?.projectResources,"Resource-Summary")
-    let caseClosingPayload : any = {}
-    caseClosingPayload.case_rid = caseRid;
-    caseClosingPayload.account_rid = accountRid;
-    caseClosingPayload.sort = 'signoff_at';
-    caseClosingPayload.sort_by = 'ASC';
-    caseClosingPayload.timezone = timez
-    const closingRemarksData = await this.exportCaseClosingRemarks(caseClosingPayload);
     const fetchCountryUrl : any = await orgDb.query(fetchRdFormUrlForCountry(schemaName, caseRid));
     const fetchStateUrl : any = await orgDb.query(fetchRdFormUrlForState(schemaName, caseRid));
     let countryUrlData = fetchCountryUrl[0].filter((c : any) => c.country_url !== null);
     let stateUrlData = fetchStateUrl[0].filter((d : any) => d.state_url !== null);
     let stateUrls : string[];
     let countryUrls : string;
+    const files: any[] = []
     if(countryUrlData.length > 0) {
       countryUrlData = countryUrlData.map((c : any) => {
       return {
@@ -414,20 +411,26 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
     // Generate combined financial calculations Excel
     // Sheet order matches reference: Fed R&D-2025 → State-Credit Summary → state sheets
     let stateFinancialCalcUrl: string | null = null;
+    let usBasedFinancialCalculations = []
+    let finalCountryBaseUrl : string = ''
+    let countryCode : string | null = null;
     try {
       const combinedWorkbook = createWorkbook();
       let sheetsAdded = 0;
 
-      // 1. Federal sheet (first)
-      const federalCalcRows: any[] = (await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid)))[0];
-      if (federalCalcRows.length > 0) {
-        const fedRow = federalCalcRows[0];
+      // 1. Federal sheet (first)\
+      const countryRid : any = await orgDb.query(fetchCountryRidForCode(schemaName, caseRid));
+      const countryRes : any = await mainDB.query(rawQueries.fetchCountryById(), {replacements : {id : countryRid[0][0].country_rid}})
+      countryCode = countryRes[0][0].country_code ?? ''
+      if(countryCode === 'USA') {
+        const countryRow : any[] = (await orgDb.query(fetchCountryCalcDataForDossierForUSA(schemaName, caseRid)))[0];
+        if (countryRow.length > 0) {
+        const fedRow = countryRow[0];
         const inputParams    = typeof fedRow.input_params    === "string" ? JSON.parse(fedRow.input_params)    : (fedRow.input_params    ?? {});
         const computedFields = typeof fedRow.computed_fields === "string" ? JSON.parse(fedRow.computed_fields) : (fedRow.computed_fields ?? {});
         addFederalSheetToWorkbook(combinedWorkbook, inputParams, computedFields);
         sheetsAdded++;
       }
-
       // 2. State Credit Summary sheet (second)
       const stateSummary = await this.rdCreditSchemaService.getStateSummaryResults(accountNumber, caseRid, schemaName);
       if (stateSummary && Object.keys(stateSummary.federal ?? stateSummary).length > 0) {
@@ -436,7 +439,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       }
 
       // 3. State sheets in reference order
-      const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossier(schemaName, caseRid)))[0];
+      const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossierForUS(schemaName, caseRid)))[0];
       if (stateCalcRows.length > 0) {
         const stateRids = stateCalcRows.map((r: any) => r.state_rid);
         const stateCodeRows: any[] = (await mainDB.query(fetchStateCodesByRids(stateRids)))[0];
@@ -486,15 +489,64 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
           if (added) sheetsAdded++;
         }
       }
-
       if (sheetsAdded > 0) {
         stateFinancialCalcUrl = await uploadCombinedWorkbook(combinedWorkbook, caseRid, caseDetails!.fiscal_year, accountRid, accountNumber);
+        if(stateFinancialCalcUrl)
+          usBasedFinancialCalculations.push(stateFinancialCalcUrl)
+        else 
+          usBasedFinancialCalculations = []
       }
+      files.push({
+        name: "Financial Workings",
+        urls: usBasedFinancialCalculations
+      })
+    } else if(countryCode === 'CAN') {
+      let canadaurl : string = ''
+      const countryRow : any[] = (await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid)))[0];
+      if(countryRow.length > 0) {
+        canadaurl = countryRow[0].country_export_data
+      } else {
+        canadaurl = ''
+      }
+      const stateCalcRows: any[] = (await orgDb.query(fetchStateCalcDataForDossierForOther(schemaName, caseRid)))[0];
+      let stateCalUrl : string = ''
+      if(stateCalcRows.length > 0) {
+        stateCalUrl = stateCalcRows[0].state_export_data
+      } else {
+        stateCalUrl = ''
+      }
+      const mergedBase64 = await mergeExcelsToSingleFile(
+        canadaurl,
+        stateCalUrl
+      );
+      finalCountryBaseUrl = mergedBase64
+      files.push({
+        name : `Financial Workings`,
+        project_code : null,
+        buffer : finalCountryBaseUrl,
+        extension: ".xlsx"
+      })
+    } else {
+      let otherFederalUrl : string = ''
+      const countryRow : any[] = (await orgDb.query(fetchCountryCalcDataForDossier(schemaName, caseRid)))[0];
+      if(countryRow.length > 0) {
+        otherFederalUrl = countryRow[0].country_export_data
+      } else {
+        otherFederalUrl = ''
+      }
+      finalCountryBaseUrl = otherFederalUrl
+      files.push({
+        name : `Financial Workings`,
+        project_code : null,
+        buffer : finalCountryBaseUrl,
+        extension: ".xlsx"
+      })
+    }
     } catch (err) {
       logMessage(`Error generating financial calculations Excel for dossier: ${err}`);
     }
 
-    const files: any[] = [
+    files.push(
     {
       name: "Qualified Projects",
       project_code : null,
@@ -512,24 +564,13 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       urls : exportedUrls
     },
     {
-      name: "Approval Status",
-      project_code : null,
-      buffer: closingRemarksData,
-      extension: ".xlsx"
-    },
-    {
       name: "RD Form Federal",
       url: countryUrls
     },
     {
       name: "RD Form State",
       urls: stateUrls
-    },
-    {
-      name: "Financial Workings",
-      url: stateFinancialCalcUrl ?? ''
-    }
-  ];
+    })
   if (Array.isArray(finalStructuredData)) {
     if(finalStructuredData.length > 0) {
         finalStructuredData.forEach((pdf, index) => {
@@ -627,13 +668,12 @@ private async cloneTechnicalSummaryForDossierForm(accountNumber: string, caseRid
     bind: [accountRid, projectFiscalRidList],
     type: QueryTypes.SELECT
   });
-  console.log("Technical Summary Data : ", technicalSummaryData)
 
   if (technicalSummaryData.length > 0) {
     // Minimal mapping to reduce processing time
     const clonedTechnicalSummaryData = technicalSummaryData.map((d: any) => ({
       account_rid: d.account_rid,
-      r_number: d.r_number,
+      // r_number: d.r_number,
       project_rid: d.project_rid,
       case_rid: caseRid,
       project_fiscal_rid: d.project_fiscal_rid,
@@ -1339,21 +1379,23 @@ async fetchDossierPackage (data : any) : Promise<any> {
                 url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
               })
             }
-          } else if(stringToJson[j].name === 'Financial Workings') {
-            if(stringToJson[j].url) {
-              responsePackage.push({
-                name : 'Financial Calculations',
-                url : await generateSasUrl(stringToJson[j].url),
-                extension: '.xlsx'
-              })
-            }
-          } else {
-            responsePackage.push({
-              name : '',
-              urls : stringToJson[j].urls?.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
-                return await generateSasUrl(d)
-              })) : []
-            })
+          } 
+          else {
+              if(stringToJson[j].name === 'Financial Workings' && stringToJson[j].extension === undefined) {
+                responsePackage.push({
+                  name : 'Financial Workings',
+                  urls : stringToJson[j].urls?.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
+                    return await generateSasUrl(d, 1440)
+                  })) : []
+                })
+              } else {
+                responsePackage.push({
+                  name : '',
+                  urls : stringToJson[j].urls?.length > 0 ? await Promise.all(stringToJson[j].urls.filter((f : any) => f !== '').map(async (d: any) => {
+                    return await generateSasUrl(d, 1440)
+                  })) : []
+                })
+              }
           }
         }
       }

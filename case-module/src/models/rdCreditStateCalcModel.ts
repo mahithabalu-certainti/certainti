@@ -29,6 +29,7 @@ export interface RdCreditStateCalcAttributes {
     financial_calculation_error_message? : string | null;
     config_json?:JSON
     total_resources?: number | null;
+    state_export_data? : string | null
 }
 
 export interface RdCreditStateCalcCreationAttributes
@@ -64,6 +65,7 @@ export class RdCreditStateCalculations
     declare form_error_message? : string | null;
     declare config_json?: JSON;
     declare total_resources?: number | null;
+    declare state_export_data? : string | null
     declare financial_calculation_error_message? :string | null;
 
     static initialize(sequelize: Sequelize, schemaName: string) {
@@ -167,6 +169,10 @@ export class RdCreditStateCalculations
                      type: DataTypes.STRING(1000),
                      allowNull: true,
                  },
+                state_export_data : {
+                    type : DataTypes.TEXT,
+                    allowNull : true
+                }
             },
             {
                 sequelize,
