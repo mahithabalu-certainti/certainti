@@ -25,16 +25,23 @@ export async function generateSasUrl(blobUrl: string, expectedAccountContainer?:
     }
 
     // Parse blob URL to extract container and blob name
+    // Expected format: https://<account>.blob.core.windows.net/<container>/<blobPath>
     const parsedUrl = parse(blobUrl);
     const pathParts = (parsedUrl.pathname || '').replace(/^\/+/, '').split('/');
-    
+
+    logMessage(`blobHelper: raw browse_file URL = ${blobUrl}`);
+    logMessage(`blobHelper: parsed pathname = ${parsedUrl.pathname}`);
+    logMessage(`blobHelper: pathParts = ${JSON.stringify(pathParts)}`);
+
     if (pathParts.length < 2) {
       logMessage(`Invalid blob URL format: ${blobUrl}`);
       return blobUrl;
     }
 
     const containerName = pathParts[0];
-    const blobName = pathParts.slice(1).join('/');
+    const blobName = decodeURIComponent(pathParts.slice(1).join('/'));
+
+    logMessage(`blobHelper: containerName=${containerName}, blobName=${blobName}`);
 
     // Validate this blob belongs to the expected account container
     if (expectedAccountContainer && containerName !== expectedAccountContainer) {

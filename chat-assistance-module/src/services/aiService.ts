@@ -277,7 +277,8 @@ Answer the user's question concisely and clearly.
 - Format dates as Month DD, YYYY
 - If data has multiple rows, summarise the key points
 - Be professional and specific — use actual values from the data
-- If no data is available, respond naturally and helpfully — do NOT say "no records found". Instead say something like "I don't have that information available for this project right now" or "That data hasn't been recorded yet" or similar conversational phrasing. Suggest what else the user could ask.`;
+- If no data is available, respond naturally and helpfully — do NOT say "no records found". Instead say something like "I don't have that information available for this project right now" or "That data hasn't been recorded yet" or similar conversational phrasing. Suggest what else the user could ask.
+- ATTACHMENTS: If the data contains a "download_url" field, render it as a clickable markdown link like this: [Download document_name](download_url). Always include the download link for every attachment row that has a download_url.`;
 
   const userPrompt = isEmpty
     ? `User asked: "${userMessage}"

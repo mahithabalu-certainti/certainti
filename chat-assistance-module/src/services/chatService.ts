@@ -63,15 +63,22 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
 
   logMessage(`chatService: level=${level}, message="${message}"`);
 
-  // Resolve project_fiscal_rid → actual project_rid for project-level queries.
-  // The FE URL param `projectid` is the project_fiscal_rid, not the actual project_rid.
-  // DB queries need the real project_rid from project_fiscal_summary.
+  // The FE sends project_fiscal_rid as project_rid (from URL param).
+  // Main DB tables (interactions_summary, project_summary, meeting_summary) store project_fiscal_rid
+  // in their project_rid column, so they need the ORIGINAL value.
+  // Org DB tables (project_resource, project_fiscal, etc.) use the ACTUAL project_rid.
+  // We keep both: projectFiscalRid = original (for main DB), resolvedProjectRid = actual (for org DB).
+  let projectFiscalRid = context.project_rid;   // original — used for main DB queries
+  let resolvedProjectRid = context.project_rid; // resolved — used for org DB queries
+
   if (level === 'project' && context.project_rid) {
     const actualRid = await resolveActualProjectRid(context.project_rid);
-    if (actualRid && actualRid !== context.project_rid) {
-      logMessage(`chatService: resolved project_fiscal_rid ${context.project_rid} → project_rid ${actualRid}`);
-      context = { ...context, project_rid: actualRid };
+    if (actualRid) {
+      resolvedProjectRid = actualRid;
+      logMessage(`chatService: project_fiscal_rid=${projectFiscalRid} → actual project_rid=${resolvedProjectRid}`);
     }
+    // Keep context.project_rid as the resolved rid for GPT param injection
+    context = { ...context, project_rid: resolvedProjectRid };
   }
 
   // Help request
@@ -103,8 +110,9 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
   try {
     switch (selection.api_id) {
       case 'getProjectOverview':
+        // project_summary uses project_fiscal_rid in its project_rid column
         data = await getProjectOverview({
-          project_rid: params.project_rid || context.project_rid,
+          project_rid: params.project_rid || projectFiscalRid,
           project_code: params.project_code,
           project_name: params.project_name || context.project_name,
           account_rid: params.account_rid || context.account_rid,
@@ -114,14 +122,14 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
 
       case 'getProjectFiscalBreakdown':
         data = await getProjectFiscalBreakdown(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getProjectResources':
         data = await getProjectResources(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!,
           params.fiscal_year
         );
@@ -129,7 +137,7 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
 
       case 'getProjectTasks':
         data = await getProjectTasks(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!,
           params.fiscal_year
         );
@@ -137,7 +145,7 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
 
       case 'getProjectRDCredits':
         data = await getProjectRDCredits(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
@@ -172,49 +180,52 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
 
       case 'getProjectResourceList':
         data = await getProjectResourceList(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'checkPersonOnProject':
         data = await checkPersonOnProject(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!,
           params.person_name || ''
         );
         break;
 
       case 'getProjectPointOfContact':
+        // project_summary uses project_fiscal_rid in its project_rid column
         data = await getProjectPointOfContact(
-          params.project_rid || context.project_rid!
+          params.project_rid || projectFiscalRid!
         );
         break;
 
       case 'getProjectInteractions':
+        // interactions_summary.project_rid stores the project_fiscal_rid
         data = await getProjectInteractions(
-          params.project_rid || context.project_rid!,
+          params.project_rid || projectFiscalRid!,
           params.limit || 20
         );
         break;
 
       case 'getProjectMeetings':
+        // meeting_summary.project_rid stores the project_fiscal_rid
         data = await getProjectMeetings(
-          params.project_rid || context.project_rid!,
+          params.project_rid || projectFiscalRid!,
           params.limit || 20
         );
         break;
 
       case 'getProjectRDAssessment':
         data = await getProjectRDAssessment(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getProjectResourceFiscal':
         data = await getProjectResourceFiscal(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!,
           params.fiscal_year
         );
@@ -222,49 +233,49 @@ export async function handleChatMessage(request: ChatRequest): Promise<ChatRespo
 
       case 'getFourPartAssessment':
         data = await getFourPartAssessment(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getTechnicalSummary':
         data = await getTechnicalSummary(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getProjectActivities':
         data = await getProjectActivities(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getProjectNotes':
         data = await getProjectNotes(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getProjectAttachments':
         data = await getProjectAttachments(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getProjectChecklists':
         data = await getProjectChecklists(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;
 
       case 'getRDAssessmentHistory':
         data = await getRDAssessmentHistory(
-          params.project_rid || context.project_rid!,
+          params.project_rid || resolvedProjectRid!,
           params.account_rid || context.account_rid!
         );
         break;

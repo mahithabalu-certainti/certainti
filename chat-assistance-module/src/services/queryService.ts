@@ -1,5 +1,6 @@
 import { getMainPool, getOrgPool, getOrgSchema, findOrgSchemaForProject } from '../config/database';
 import { logMessage } from '../utils/logger';
+import { generateSasUrl } from '../utils/blobHelper';
 
 const MAIN = 'trd365';
 
@@ -632,8 +633,22 @@ export async function getProjectAttachments(projectRid: string, accountRid: stri
 
     logMessage(`getProjectAttachments projectRid=${projectRid} accountRid=${accountRid}`);
     const res = await pool.query(sql, [projectRid]);
-    
-    return res.rows;
+
+    // Generate SAS tokens so download links are usable
+    const rows = await Promise.all(
+      res.rows.map(async (row: any) => {
+        if (row.browse_file) {
+          try {
+            row.download_url = await generateSasUrl(row.browse_file);
+          } catch {
+            row.download_url = row.browse_file;
+          }
+        }
+        return row;
+      })
+    );
+
+    return rows;
   } catch (err: any) {
     logMessage(`getProjectAttachments error: ${err.message}`);
     return [];
