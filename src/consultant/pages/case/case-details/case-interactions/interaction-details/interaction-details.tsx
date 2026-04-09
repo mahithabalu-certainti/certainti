@@ -34,6 +34,7 @@ interface InteractionDetailsProps {
   // projectDetails: NewProjectData | null;
   isSendInteraction: boolean;
   isFinancialWorkingSignoff?: boolean;
+  isCaseClosed?: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
@@ -42,6 +43,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   // projectDetails,
   isSendInteraction,
   isFinancialWorkingSignoff,
+  isCaseClosed,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -182,7 +184,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled:
         accountInActive ||
         disableInteractionEditBtn ||
-        isFinancialWorkingSignoff,
+        isFinancialWorkingSignoff ||
+        isCaseClosed,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
@@ -194,7 +197,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         accountInActive ||
         !disableReminderBtn ||
         !isSendInteraction ||
-        isFinancialWorkingSignoff,
+        isFinancialWorkingSignoff ||
+        isCaseClosed,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
     },
@@ -205,7 +209,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         accountInActive ||
         !disableReminderBtn ||
         !isSendInteraction ||
-        isFinancialWorkingSignoff,
+        isFinancialWorkingSignoff ||
+        isCaseClosed,
       onClick: () => handleReminder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,

@@ -1,10 +1,13 @@
-import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import {
-  CircularProgress,
-  Popover,
-  Tooltip,
-} from '@mui/material';
+  Fragment,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useParams } from 'react-router-dom';
+import { CircularProgress, Popover, Tooltip } from '@mui/material';
 import type { AxiosError } from 'axios';
 import {
   DraftEmailIcon,
@@ -22,7 +25,10 @@ import {
   type InboxMessageListItem,
   type MailboxFolder,
 } from '../../../../services/interactions/mailbox-service';
-import { formatDateToYYYYMMDDWithTime, sanitizeUrl } from '../../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  sanitizeUrl,
+} from '../../../../../common-utils';
 import { sanitizeHtml } from '../../../../../utils/html-utils';
 
 type FlattenedMailboxFolder = MailboxFolder & {
@@ -154,7 +160,8 @@ const getEndOfDayTime = (dateValue: string) => {
  */
 const renderTextWithLinks = (text: string) => {
   const lines = text.split('\n');
-  const urlOrEmailPattern = /(https?:\/\/[^\s]+|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi;
+  const urlOrEmailPattern =
+    /(https?:\/\/[^\s]+|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi;
 
   return lines.map((line, lineIndex) => {
     const parts = line.split(urlOrEmailPattern);
@@ -166,7 +173,12 @@ const renderTextWithLinks = (text: string) => {
 
           if (/^https?:\/\//i.test(part)) {
             const safeUrl = sanitizeUrl(part);
-            if (!safeUrl) return <Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</Fragment>;
+            if (!safeUrl)
+              return (
+                <Fragment key={`part-${lineIndex}-${partIndex}`}>
+                  {part}
+                </Fragment>
+              );
 
             return (
               <a
@@ -193,14 +205,15 @@ const renderTextWithLinks = (text: string) => {
             );
           }
 
-          return <Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</Fragment>;
+          return (
+            <Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</Fragment>
+          );
         })}
         {lineIndex < lines.length - 1 ? <br /> : null}
       </Fragment>
     );
   });
 };
-
 
 /**
  * Renders the visual icon for a mailbox folder row.
@@ -515,7 +528,9 @@ const Inbox = () => {
     }
   }, [folderData, selectedFolder]);
 
-  const [activeFolderId, setActiveFolderId] = useState<string | undefined>(undefined);
+  const [activeFolderId, setActiveFolderId] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     const newFolderId = selectedFolder?.id;
@@ -549,7 +564,11 @@ const Inbox = () => {
 
   useEffect(() => {
     if (!mailboxMessages) return;
-    if (mailboxMessages.selected_folder?.id && mailboxMessages.selected_folder.id !== selectedFolder?.id) return;
+    if (
+      mailboxMessages.selected_folder?.id &&
+      mailboxMessages.selected_folder.id !== selectedFolder?.id
+    )
+      return;
 
     setMessageItems((previous) =>
       pageToken
@@ -685,10 +704,13 @@ const Inbox = () => {
     if (!recipients?.length) return '-';
 
     const formattedRecipients = recipients.map((recipient) =>
-      recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email || '-'
+      recipient.name
+        ? `${recipient.name} <${recipient.email}>`
+        : recipient.email || '-'
     );
     const previewRecipients = formattedRecipients.slice(0, 3);
-    const remainingCount = formattedRecipients.length - previewRecipients.length;
+    const remainingCount =
+      formattedRecipients.length - previewRecipients.length;
     const previewText = previewRecipients.join(', ');
     const fullRecipientText = formattedRecipients.join('\n');
 
@@ -852,8 +874,8 @@ const Inbox = () => {
     () =>
       isDesktopLayout
         ? {
-          gridTemplateColumns: `${isFolderPaneCollapsed ? 58 : folderPaneWidth}px 10px ${messagePaneWidth}px 10px minmax(360px, 1fr)`,
-        }
+            gridTemplateColumns: `${isFolderPaneCollapsed ? 58 : folderPaneWidth}px 10px ${messagePaneWidth}px 10px minmax(360px, 1fr)`,
+          }
         : undefined,
     [folderPaneWidth, isFolderPaneCollapsed, messagePaneWidth, isDesktopLayout]
   );
@@ -867,10 +889,11 @@ const Inbox = () => {
           <button
             type='button'
             onClick={() => setSelectedFolder(folder)}
-            className={`flex min-h-[36px] w-full items-center justify-center rounded-[10px] transition-colors ${active
+            className={`flex min-h-[36px] w-full items-center justify-center rounded-[10px] transition-colors ${
+              active
                 ? 'bg-[#D8E9FB] text-[#0B57A3]'
                 : 'text-[#3A4A5B] hover:bg-[#EDF3FA]'
-              }`}
+            }`}
             style={{
               marginLeft: '6px',
               marginRight: '8px',
@@ -890,10 +913,11 @@ const Inbox = () => {
         key={folder.id}
         type='button'
         onClick={() => setSelectedFolder(folder)}
-        className={`flex min-h-[36px] w-full items-center gap-2 rounded-[6px] px-3 py-1.5 text-left text-[14px] leading-5 transition-colors ${active
+        className={`flex min-h-[36px] w-full items-center gap-2 rounded-[6px] px-3 py-1.5 text-left text-[14px] leading-5 transition-colors ${
+          active
             ? 'bg-[#CFE5FF] font-medium text-[#1B1B1B]'
             : 'text-[#2C2C2C] hover:bg-[#F3F6FA]'
-          }`}
+        }`}
         style={{
           marginLeft: `${12 + folder.level * 16}px`,
           marginRight: '12px',
@@ -940,18 +964,20 @@ const Inbox = () => {
         key={message.id}
         type='button'
         onClick={() => setSelectedMessageId(message.id)}
-        className={`w-full border-b border-[#E7ECF2] px-3 py-2.5 text-left transition-colors ${isSelected
+        className={`w-full border-b border-[#E7ECF2] px-3 py-2.5 text-left transition-colors ${
+          isSelected
             ? 'border-l-4 border-l-[#0F6CBD] bg-[#EAF3FF] pl-2'
             : message.is_read
               ? 'bg-white hover:bg-[#F8FAFD]'
               : 'bg-[#F8FBFF] hover:bg-[#EEF5FC]'
-          }`}
+        }`}
       >
         <div className='mb-0.5 flex items-start justify-between gap-2'>
           <div className='min-w-0 flex-1'>
             <p
-              className={`truncate text-[13px] leading-5 ${message.is_read ? 'font-medium' : 'font-semibold'
-                } text-[#16202A]`}
+              className={`truncate text-[13px] leading-5 ${
+                message.is_read ? 'font-medium' : 'font-semibold'
+              } text-[#16202A]`}
             >
               {message.sender || message.sender_email || '-'}
             </p>
@@ -988,12 +1014,12 @@ const Inbox = () => {
   };
 
   const today = new Date();
-  const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
-    2,
-    '0'
-  )}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayDateString = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-  const showInitialLoading = isFolderLoading || (!selectedFolder && isMessagesLoading);
+  const showInitialLoading =
+    isFolderLoading || (!selectedFolder && isMessagesLoading);
   const activeFilterCount = [
     filters.status !== 'all',
     filters.hasAttachments,
@@ -1024,7 +1050,9 @@ const Inbox = () => {
           <div className='flex min-w-0 items-center gap-2'>
             <DraftEmailIcon className='h-7 w-7 rounded-[2px] bg-[#0F6CBD] p-1 text-white' />
             <div className='min-w-0'>
-              <p className='truncate text-[14px] font-semibold text-[#253240]'>Mailbox</p>
+              <p className='truncate text-[14px] font-semibold text-[#253240]'>
+                Mailbox
+              </p>
             </div>
           </div>
           <div className='ml-4 flex items-center gap-2'>
@@ -1121,10 +1149,11 @@ const Inbox = () => {
                         status: option.key,
                       }))
                     }
-                    className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${filters.status === option.key
+                    className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                      filters.status === option.key
                         ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
                         : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
-                      }`}
+                    }`}
                   >
                     {option.label}
                   </button>
@@ -1205,10 +1234,11 @@ const Inbox = () => {
                     hasAttachments: !current.hasAttachments,
                   }))
                 }
-                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${filters.hasAttachments
+                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                  filters.hasAttachments
                     ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
                     : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
-                  }`}
+                }`}
               >
                 Has attachments
               </button>
@@ -1220,10 +1250,11 @@ const Inbox = () => {
                     highImportance: !current.highImportance,
                   }))
                 }
-                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${filters.highImportance
+                className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                  filters.highImportance
                     ? 'border-[#0F6CBD] bg-[#EAF3FF] text-[#0F6CBD]'
                     : 'border-[#D6DEE8] bg-white text-[#344054] hover:bg-[#F8FAFC]'
-                  }`}
+                }`}
               >
                 High importance
               </button>
@@ -1368,20 +1399,22 @@ const Inbox = () => {
                 };
                 setActiveDivider('folders');
               }}
-              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${isFolderPaneCollapsed
+              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${
+                isFolderPaneCollapsed
                   ? 'cursor-default bg-[#F7F9FC]'
                   : activeDivider === 'folders'
                     ? 'bg-[#DCEBFA]'
                     : 'bg-[#F3F6FA]'
-                }`}
+              }`}
             >
               <div
-                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${isFolderPaneCollapsed
+                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${
+                  isFolderPaneCollapsed
                     ? 'bg-[#E2E8F0]'
                     : activeDivider === 'folders'
                       ? 'bg-[#7DB2E8]'
                       : 'bg-[#D5DFEA] group-hover:bg-[#A9CDED]'
-                  }`}
+                }`}
               />
             </div>
 
@@ -1433,14 +1466,16 @@ const Inbox = () => {
                 };
                 setActiveDivider('messages');
               }}
-              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${activeDivider === 'messages' ? 'bg-[#DCEBFA]' : 'bg-[#F3F6FA]'
-                }`}
+              className={`group relative hidden cursor-col-resize before:absolute before:left-0 before:right-0 before:top-0 before:h-[56px] before:border-b before:border-[#E5EAF0] lg:block ${
+                activeDivider === 'messages' ? 'bg-[#DCEBFA]' : 'bg-[#F3F6FA]'
+              }`}
             >
               <div
-                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${activeDivider === 'messages'
+                className={`absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 rounded-full transition-colors ${
+                  activeDivider === 'messages'
                     ? 'bg-[#7DB2E8]'
                     : 'bg-[#D5DFEA] group-hover:bg-[#A9CDED]'
-                  }`}
+                }`}
               />
             </div>
 
@@ -1480,7 +1515,11 @@ const Inbox = () => {
                         <div className='mb-2 flex flex-wrap items-start justify-between gap-3'>
                           <div className='flex min-w-0 flex-1 items-start gap-3'>
                             <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#B8D8F7] text-[12px] font-semibold text-[#1D4F91]'>
-                              {(messageDetails.sender || messageDetails.sender_email || 'M')
+                              {(
+                                messageDetails.sender ||
+                                messageDetails.sender_email ||
+                                'M'
+                              )
                                 .split(' ')
                                 .filter(Boolean)
                                 .slice(0, 2)
@@ -1539,7 +1578,7 @@ const Inbox = () => {
                                   className='shrink-0 rounded-full bg-white px-2 py-[2px] text-[11px] font-medium text-[#16202A] disabled:opacity-50'
                                 >
                                   {attachmentActionId ===
-                                    `${attachment.id}-download`
+                                  `${attachment.id}-download`
                                     ? 'Downloading...'
                                     : 'Download'}
                                 </button>
@@ -1549,11 +1588,14 @@ const Inbox = () => {
                         ) : null}
 
                         <div className='min-h-[420px] w-full min-w-0 flex-1 rounded-[4px] bg-white'>
-                          {messageDetails.body.content_type?.toLowerCase() === 'html' ? (
+                          {messageDetails.body.content_type?.toLowerCase() ===
+                          'html' ? (
                             <div
                               className='h-full w-full overflow-auto whitespace-normal break-words text-[13px] leading-6 text-[#16202A] [&>*]:m-0 [&>*+*]:mt-3 [&_a]:break-all [&_a]:text-[#0F6CBD] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-[#CBD6E2] [&_blockquote]:pl-3 [&_blockquote]:italic [&_code]:rounded [&_code]:bg-[#F3F4F6] [&_code]:px-1 [&_code]:font-mono [&_img]:max-w-full [&_img]:rounded [&_li]:ml-5 [&_ol]:list-decimal [&_p]:whitespace-pre-wrap [&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-[#F8FAFC] [&_pre]:p-3 [&_pre]:font-mono [&_table]:block [&_table]:max-w-full [&_table]:overflow-auto [&_table]:border-collapse [&_table]:border [&_td]:border [&_td]:border-[#D6DEE8] [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-[#D6DEE8] [&_th]:bg-[#F8FAFC] [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc'
                               dangerouslySetInnerHTML={{
-                                __html: sanitizedHtmlMessageBody || '<p>No content available</p>',
+                                __html:
+                                  sanitizedHtmlMessageBody ||
+                                  '<p>No content available</p>',
                               }}
                             />
                           ) : (

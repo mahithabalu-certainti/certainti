@@ -13,6 +13,7 @@ import {
 interface JurisdictionSettingProps {
   formRef: React.RefObject<HTMLFormElement>;
   setIsFormSaving: React.Dispatch<React.SetStateAction<boolean>>;
+  disabled?: boolean;
 }
 
 const quillModules = {
@@ -59,6 +60,7 @@ const quillFormats = [
 const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
   formRef,
   setIsFormSaving,
+  disabled,
 }) => {
   const { successToast } = useToast();
   const { caseId } = useParams();
@@ -129,9 +131,10 @@ const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
                 onChange={(value) => setAssessmentMethodology(value)}
                 theme='snow'
                 placeholder='Enter Assessment Methodology'
-                className='rounded-[2px] bg-white'
+                className={`rounded-[2px] ${disabled ? 'bg-gray-100 cursor-default' : 'bg-white'}`}
                 modules={quillModules}
                 formats={quillFormats}
+                readOnly={disabled}
               />
             </div>
           </div>
