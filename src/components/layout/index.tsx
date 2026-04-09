@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState, useRef } from 'react';
+import ChatButton from '../chat/ChatButton';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Navbar, Sidebar } from '../';
 import { MAIN_ROUTE, ADMIN } from '../../routes';
@@ -172,6 +173,7 @@ export const AppLayout: React.FC = () => {
         </div>
         <Footer />
       </div>
+      <ChatButton />
     </div>
   );
 };

@@ -120,6 +120,8 @@ export const fetchMailboxMessages = async (params: {
   limit?: number;
   pageToken?: string | null;
   search?: string;
+  receivedFrom?: string;
+  receivedTo?: string;
 }): Promise<MailboxMessagesResponse> => {
   const { data } = await interactionServiceApi.get<{
     data: MailboxMessagesResponse;
@@ -131,6 +133,8 @@ export const fetchMailboxMessages = async (params: {
       limit: params.limit ?? 50,
       pageToken: params.pageToken || undefined,
       search: params.search || undefined,
+      received_from: params.receivedFrom || undefined,
+      received_to: params.receivedTo || undefined,
     },
   });
 
@@ -180,13 +184,14 @@ export const fetchInboxAttachmentById = async (
 ): Promise<InboxAttachmentDetails> => {
   const { data } = await interactionServiceApi.get<{
     data: InboxAttachmentDetails;
-  }>(`/api/interactions/mailbox/messages/attachments`, {
-    params: {
-      account_rid: accountRid,
-      messageId,
-      attachmentId,
-    },
-  });
+  }>(
+    `/api/interactions/mailbox/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    {
+      params: {
+        account_rid: accountRid,
+      },
+    }
+  );
 
   return data.data;
 };
@@ -224,21 +229,26 @@ export const useMailboxMessages = (params: {
   limit?: number;
   pageToken?: string | null;
   search?: string;
+  receivedFrom?: string;
+  receivedTo?: string;
 }) =>
   useQuery<MailboxMessagesResponse, AxiosError>({
+    // pageToken is intentionally excluded from the key so that paginating
+    // does not create a new cache entry — it refetches the same query in-place
+    // and the component accumulates results via the useEffect.
     queryKey: [
       'mailbox-messages',
       params.accountRid,
       params.folderId,
       params.folderPath,
-      params.limit,
-      params.pageToken,
       params.search,
+      params.pageToken,
+      params.receivedFrom,
+      params.receivedTo,
     ],
     queryFn: () => fetchMailboxMessages(params),
     enabled: Boolean(params.accountRid),
     retry: 0,
-    staleTime: 0,
     gcTime: 0,
   });
 
