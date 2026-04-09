@@ -220,6 +220,15 @@ export class ComputationService {
                      const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, computedFields);
                      (results as any).computed_fields = reorderedFields;
                     }
+                    else if(stateCode.state_code === "VA"){
+                     // VA has nested structure: computed_fields.computed_fields.virginia.{sections}
+                     const cfWrapper = (results as any).computed_fields;
+                     if (cfWrapper && cfWrapper.computed_fields && cfWrapper.computed_fields.virginia) {
+                         const virginiaFields = cfWrapper.computed_fields.virginia;
+                         const reorderedFields = reorderComputedFieldsForState(stateCode.state_code, virginiaFields);
+                         cfWrapper.computed_fields.virginia = reorderedFields;
+                     }
+                    }
                     else
                     {
                      const computedFields = (results as any).computed_fields.computed_fields;

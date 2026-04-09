@@ -581,19 +581,24 @@ export class RdCreditCalculatorForVA {
         ];
 
         return {
-            computed_fields: {
-                "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": formRDC_section1_fields,
-                "Section 2 – Alternative Simplified Credit Calculation": formRDC_section2_fields,
-                "Section 1 – Summary of Expenses": scheduleA_fields,
-                "Section 1 – VA Qualified Research and Development Expenses": scheduleB_sec1_fields,
-                "Section 2 – Determine the Fixed Base Percentage": scheduleB_sec2_fields,
-                "Section 3 – Determine the Virginia Base Amount": scheduleB_sec3_fields,
-                "Section 4 – Virginia Base Amount": scheduleB_sec4_fields,
-                "Section 1 – Virginia Qualified Research and Development Expenses": scheduleC_sec1_fields,
-                "Section 2 – Determination of How to Compute the Credit": scheduleC_sec2_fields,
-                "Section 3 – Average Qualified Research and Development Expenses Calculation": scheduleC_sec3_fields,
-                "Section 4 – Adjusted Expenses Calculation": scheduleC_sec4_fields,
-            },
+             
+                virginia: {
+                    "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": formRDC_section1_fields,
+                    "Section 2 – Alternative Simplified Credit Calculation": formRDC_section2_fields,
+                    "Section 1 – Summary of Expenses": scheduleA_fields,
+                },
+                computed_fields: {
+                    "Section 1 – VA Qualified Research and Development Expenses": scheduleB_sec1_fields,
+                    "Section 2 – Determine the Fixed Base Percentage": scheduleB_sec2_fields,
+                    "Section 3 – Determine the Virginia Base Amount": scheduleB_sec3_fields,
+                    "Section 4 – Virginia Base Amount": scheduleB_sec4_fields,
+                    "Section 1 – Virginia Qualified Research and Development Expenses": scheduleC_sec1_fields,
+                    "Section 2 – Determination of How to Compute the Credit": scheduleC_sec2_fields,
+                    "Section 3 – Average Qualified Research and Development Expenses Calculation": scheduleC_sec3_fields,
+                },
+                virginiasection4: {
+                    "Section 4 – Adjusted Expenses Calculation": scheduleC_sec4_fields,
+                },
         };
     }
 

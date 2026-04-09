@@ -691,11 +691,14 @@ CA: {
             // Array sections (dual-column) are passed through as-is — no field ordering entries needed.
             // Single-column sections (Schedule B and Schedule C sec 1–3) are ordered below.
 
+            // ── Schedule B Section 1 – VA Qualified Research and Development Expenses ──
             "Section 1 – VA Qualified Research and Development Expenses": [
                 { pattern: /^\[1a\] VA Qualified Research and Development Expenses in CY/, order: 1 },
                 { pattern: /^\[1b\] Short year filers only: Enter the number of months/, order: 2 },
                 { pattern: /^\[1c\] Short year filers only: Divide the number of months/, order: 3 },
             ],
+
+            // ── Schedule B Section 2 – Determine the Fixed Base Percentage ──
             "Section 2 – Determine the Fixed Base Percentage": [
                 { pattern: /^\[2a\] Expenses for the 3rd preceding taxable year/, order: 1 },
                 { pattern: /^\[2b\] Expenses for the 2nd preceding taxable year/, order: 2 },
@@ -709,6 +712,8 @@ CA: {
                 { pattern: /^\[2j\] Average Gross Receipts for Prior 3 Taxable Years/, order: 10 },
                 { pattern: /^\[2k\] Percentage of Virginia Qualified Research and Development Expenses/, order: 11 },
             ],
+
+            // ── Schedule B Section 3 – Determine the Virginia Base Amount ──
             "Section 3 – Determine the Virginia Base Amount": [
                 { pattern: /^\[3a\] Gross receipts for the 4th preceding taxable year/, order: 1 },
                 { pattern: /^\[3b\] Gross receipts for the 3rd preceding taxable year/, order: 2 },
@@ -718,17 +723,26 @@ CA: {
                 { pattern: /^\[3f\] Average Gross Receipts for Prior 4 Taxable Years/, order: 6 },
                 { pattern: /^\[3g\] Base Amount\. Calendar Year Filers/, order: 7 },
             ],
+
+            // ── Schedule B Section 4 – Virginia Base Amount ──
             "Section 4 – Virginia Base Amount": [
                 { pattern: /^\[4a\] Virginia Base Amount/, order: 1 },
             ],
+
+            // ── Schedule C Section 1 – Virginia Qualified Research and Development Expenses ──
             "Section 1 – Virginia Qualified Research and Development Expenses": [
-                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY/, order: 1 },
-                { pattern: /^\[1b\] Short year filers only: Enter the number of days/, order: 2 },
-                { pattern: /^\[1c\] Short year filers only: Divide the number of days/, order: 3 },
+                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column A/, order: 1 },
+                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column B/, order: 2 },
+                { pattern: /^\[1b\] Short year filers only: Enter the number of days/, order: 3 },
+                { pattern: /^\[1c\] Short year filers only: Divide the number of days/, order: 4 },
             ],
+
+            // ── Schedule C Section 2 – Determination of How to Compute the Credit ──
             "Section 2 – Determination of How to Compute the Credit": [
                 { pattern: /^\[2\] Were research and development expenses paid or incurred/, order: 1 },
             ],
+
+            // ── Schedule C Section 3 – Average Qualified Research and Development Expenses Calculation ──
             "Section 3 – Average Qualified Research and Development Expenses Calculation": [
                 { pattern: /^\[3a\] Expenses for the 3rd preceding taxable year/, order: 1 },
                 { pattern: /^\[3b\] Expenses for the 2nd preceding taxable year/, order: 2 },
