@@ -31,13 +31,6 @@ const LEVEL_LABELS: Record<ChatLevel, string> = {
   platform: 'Platform',
 };
 
-const LEVEL_COLORS: Record<ChatLevel, string> = {
-  project: 'bg-[#EAF3FF] text-[#0F6CBD] border border-[#B7D6F6]',
-  account: 'bg-[#EDF8ED] text-[#107C10] border border-[#B7DEB7]',
-  case: 'bg-[#F3ECFB] text-[#5C2E91] border border-[#D4C1F0]',
-  platform: 'bg-[#FDF0EF] text-[#C23934] border border-[#F2C8C5]',
-};
-
 const PLACEHOLDERS: Record<ChatLevel, string> = {
   project: 'Ask about this project: costs, resources, tasks, interactions, R&D status...',
   account: 'Ask about this account: projects, resources, cases, contacts, attachments, meetings...',
@@ -50,7 +43,6 @@ const SUGGESTIONS: Record<ChatLevel, string[]> = {
     'Give me a full project overview',
     'Who are the resources working on this project?',
     'Who is the point of contact for this project?',
-    'Is Nakul working on this project?',
     'What is the R&D assessment status?',
     'Show fiscal year R&D credit breakdown',
     'Show all interactions for this project',
