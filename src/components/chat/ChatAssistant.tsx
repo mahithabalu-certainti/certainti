@@ -43,7 +43,6 @@ const SUGGESTIONS: Record<ChatLevel, string[]> = {
     'Give me a full project overview',
     'Who are the resources working on this project?',
     'Who is the point of contact for this project?',
-    'Is Nakul working on this project?',
     'What is the R&D assessment status?',
     'Show fiscal year R&D credit breakdown',
     'Show all interactions for this project',
