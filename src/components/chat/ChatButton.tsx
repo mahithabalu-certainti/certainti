@@ -17,14 +17,54 @@ const DEFAULT_W = 400;
 const DEFAULT_H = 560;
 const SNAP_MARGIN = 16; // px from screen edge before snapping to full
 
-function detectProjectContext(pathname: string, search: string): ChatContext | null {
-  const match = pathname.match(/\/project\/details\/([^/?]+)/);
-  if (!match) return null;
-  const projectFiscalRid = decodeURIComponent(match[1]);
-  if (!projectFiscalRid) return null;
+type ContextSource = 'project' | 'case' | 'account' | 'platform';
+
+function detectContext(pathname: string, search: string): ChatContext | null {
   const params = new URLSearchParams(search);
   const accountRid = params.get('accountID') || undefined;
-  return { level: 'project', project_rid: projectFiscalRid, account_rid: accountRid };
+
+  // Project page: /project/details/:projectid
+  const projectMatch = pathname.match(/\/project\/details\/([^/?]+)/);
+  if (projectMatch) {
+    const projectFiscalRid = decodeURIComponent(projectMatch[1]);
+    if (projectFiscalRid) return { level: 'project', project_rid: projectFiscalRid, account_rid: accountRid };
+  }
+
+  // Case page: /case/details/:caseId
+  const caseMatch = pathname.match(/\/case\/details\/([^/?]+)/);
+  if (caseMatch) {
+    const caseRid = decodeURIComponent(caseMatch[1]);
+    if (caseRid) return { level: 'case', case_rid: caseRid, account_rid: accountRid };
+  }
+
+  // Account page: /account/details/:accountid
+  const accountMatch = pathname.match(/\/account\/details\/([^/?]+)/);
+  if (accountMatch) {
+    const accountId = decodeURIComponent(accountMatch[1]);
+    if (accountId) return { level: 'account', account_rid: accountId };
+  }
+
+  return null;
+}
+
+function detectContextSource(pathname: string): ContextSource {
+  if (/\/project\/details\/[^/?]+/.test(pathname)) return 'project';
+  if (/\/case\/details\/[^/?]+/.test(pathname)) return 'case';
+  if (/\/account\/details\/[^/?]+/.test(pathname)) return 'account';
+  return 'platform';
+}
+
+function getAllowedLevels(source: ContextSource): ChatLevel[] {
+  switch (source) {
+    case 'project':
+      return ['project', 'account', 'platform'];
+    case 'case':
+      return ['case', 'account', 'platform'];
+    case 'account':
+      return ['account', 'platform'];
+    default:
+      return ['platform'];
+  }
 }
 
 export default function ChatButton() {
@@ -47,22 +87,46 @@ export default function ChatButton() {
   }>({ type: null, startX: 0, startY: 0, startW: DEFAULT_W, startH: DEFAULT_H });
 
   const autoContext = useMemo(
-    () => detectProjectContext(location.pathname, location.search),
+    () => detectContext(location.pathname, location.search),
     [location.pathname, location.search]
+  );
+  const contextSource = useMemo(
+    () => detectContextSource(location.pathname),
+    [location.pathname]
+  );
+  const allowedLevels = useMemo(
+    () => getAllowedLevels(contextSource),
+    [contextSource]
   );
 
   const activeContext: ChatContext = useMemo(() => {
-    if (manualOverride && manualOverride.path === location.pathname) return manualOverride.context;
+    if (
+      manualOverride &&
+      manualOverride.path === location.pathname &&
+      allowedLevels.includes(manualOverride.context.level)
+    ) {
+      return manualOverride.context;
+    }
     return autoContext ?? { level: 'platform' };
-  }, [autoContext, manualOverride, location.pathname]);
+  }, [autoContext, manualOverride, location.pathname, allowedLevels]);
 
   const selectedLevel = activeContext.level;
   const currentOption = LEVEL_OPTIONS.find(o => o.value === selectedLevel)!;
+  const visibleLevelOptions = LEVEL_OPTIONS.filter(option => allowedLevels.includes(option.value));
 
   function applyLevel(level: ChatLevel) {
-    const newContext: ChatContext = level === 'project'
-      ? (autoContext ?? { level: 'project' })
-      : { level };
+    let newContext: ChatContext;
+
+    if (autoContext?.level === level) {
+      newContext = autoContext;
+    } else if (level === 'account') {
+      newContext = autoContext?.account_rid
+        ? { level: 'account', account_rid: autoContext.account_rid }
+        : { level: 'account' };
+    } else {
+      newContext = { level };
+    }
+
     setManualOverride({ context: newContext, path: location.pathname });
     setLevelPickerOpen(false);
   }
@@ -211,7 +275,7 @@ export default function ChatButton() {
                 </button>
                 {levelPickerOpen && (
                   <div className='absolute right-0 top-8 z-10 w-[150px] overflow-hidden rounded-[8px] border border-[#E5EAF0] bg-white shadow-lg'>
-                    {LEVEL_OPTIONS.map(opt => (
+                    {visibleLevelOptions.map(opt => (
                       <button
                         key={opt.value}
                         onClick={() => applyLevel(opt.value)}

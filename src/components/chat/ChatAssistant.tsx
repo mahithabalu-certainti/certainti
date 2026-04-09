@@ -40,7 +40,7 @@ const LEVEL_COLORS: Record<ChatLevel, string> = {
 
 const PLACEHOLDERS: Record<ChatLevel, string> = {
   project: 'Ask about this project: costs, resources, tasks, interactions, R&D status...',
-  account: 'Ask about this account: projects, costs, QRE summary...',
+  account: 'Ask about this account: projects, resources, cases, contacts, attachments, meetings...',
   case: 'Ask about this case: projects, QRE, credits, submission dates...',
   platform: 'Ask a platform-wide question: total projects, top accounts...',
 };
@@ -62,11 +62,18 @@ const SUGGESTIONS: Record<ChatLevel, string[]> = {
     'Give me an account summary',
     'How many projects does this account have?',
     'List all active projects',
+    'List resources for this account',
+    'Show cases for this account',
+    'Who are the key contacts for this account?',
+    'Show attachments for this account',
     'How many R&D qualified projects?',
   ],
   case: [
     'Summarise this case',
     'List projects in this case',
+    'Who is on the case team?',
+    'List resources working across this case',
+    'Show case milestones and timeline',
     'What is the total QRE for this case?',
     'What is the completion percentage?',
   ],
@@ -159,13 +166,13 @@ export default function ChatAssistant({ context }: ChatAssistantProps) {
       {
         id: 'welcome',
         role: 'assistant',
-        content: `Hi! I'm your **${LEVEL_LABELS[context.level]}-level** assistant${contextLabel ? ` for **${contextLabel}**` : ''}.\n\n${
+        content: `Hi! I'm **ORIN**, your **${LEVEL_LABELS[context.level]}-level** AI assistant${contextLabel ? ` for **${contextLabel}**` : ''}.\n\n${
   context.level === 'project'
     ? 'I can answer questions about:\n- **Resources** — who is working on this project, hours, cost, R&D %\n- **Point of contact** — project and technical POC details\n- **Person lookup** — "Is [name] working on this project?"\n- **R&D assessment** — qualification status, QRE, credits per fiscal year\n- **Interactions** — emails sent, recipients, response status\n- **Meetings** — scheduled meetings, participants, minutes\n- **Tasks** — task list, types, hours, cost\n- **Fiscal breakdown** — year-by-year costs and efforts'
     : context.level === 'account'
-    ? 'I can answer questions about this account\'s projects, financials, and R&D summary.'
+    ? 'I can answer questions about this account\'s projects, financial summary, resources, cases, key contacts, meetings, interactions, attachments, and notes.'
     : context.level === 'case'
-    ? 'I can answer questions about this R&D case including projects, QRE, and submission dates.'
+    ? 'I can answer questions about this R&D case including summary, projects, resources, tasks, team members, key contacts, milestones, interactions, workflow tasks, and history.'
     : 'I can answer platform-wide questions about accounts, projects, and R&D statistics.'
 }\n\nWhat would you like to know?`,
         timestamp: new Date(),
@@ -214,13 +221,18 @@ export default function ChatAssistant({ context }: ChatAssistantProps) {
   return (
     <div className='flex h-full flex-col bg-[#FDFEFF]'>
       {/* Header */}
-      <div className='flex flex-shrink-0 items-center gap-2 border-b border-[#E5EAF0] bg-[#FFFFFF] px-4 py-3'>
-        <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${LEVEL_COLORS[context.level]}`}>
-          <svg className='h-3 w-3' viewBox='0 0 24 24' fill='currentColor'>
-            <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/>
-          </svg>
-          {LEVEL_LABELS[context.level]} Level
-        </div>
+      <div className='flex flex-shrink-0 items-center gap-3 border-b border-[#E5EAF0] bg-[#FFFFFF] px-4 py-3'>
+        <span className='flex items-center gap-2'>
+          <div className='flex h-8 w-8 items-center justify-center rounded-full border border-[#CFE3FA] bg-[#EAF3FF]'>
+            <svg className='h-4 w-4 text-[#0F6CBD]' viewBox='0 0 24 24' fill='currentColor'>
+              <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/>
+            </svg>
+          </div>
+          <div className='flex flex-col'>
+            <span className='text-[13px] font-semibold text-[#0F6CBD]'>ORIN</span>
+            <span className='text-[10px] text-[#8A9BB0]'>{LEVEL_LABELS[context.level]} Level</span>
+          </div>
+        </span>
         {(context.project_name || context.account_name) && (
           <span className='truncate text-[12px] text-[#5E6B78]'>
             {context.project_name || context.account_name}
@@ -233,10 +245,13 @@ export default function ChatAssistant({ context }: ChatAssistantProps) {
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {msg.role === 'assistant' && (
-              <div className='mr-2 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#CFE3FA] bg-[#EAF3FF]'>
-                <svg className='h-4 w-4 text-[#0F6CBD]' viewBox='0 0 24 24' fill='currentColor'>
-                  <path d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/>
-                </svg>
+              <div className='mr-3 flex flex-col items-center gap-1'>
+                <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#CFE3FA] bg-[#EAF3FF]'>
+                  <svg className='h-4 w-4 text-[#0F6CBD]' viewBox='0 0 24 24' fill='currentColor'>
+                    <path d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/>
+                  </svg>
+                </div>
+                <span className='text-[10px] font-semibold text-[#0F6CBD]'>ORIN</span>
               </div>
             )}
             <div
