@@ -107,7 +107,6 @@ export class RdCreditCalculatorForLA {
 
         //---- Current year total LA QRE (Line 6)
         const currentYearQRE = new Decimal(wages)
-            .plus(new Decimal(supplies))
             .plus(new Decimal(contract).mul(config.sub_con_percent / 100));
          const qreSum = stateRdData?.prior3YearsQREs.map(item => ({
                     fiscalYear: item.fiscalYear,
@@ -122,8 +121,6 @@ export class RdCreditCalculatorForLA {
         
                 //----Line4a: Enter 3 years prior QRE for la State
                 const prev3_qre = new Decimal(qreSum[2]?.wagesContractSum || 0);
-                const prev4_qre = new Decimal(qreSum[3]?.wagesContractSum || 0);
-
         //---- Prior 3 years QRE (Lines 1, 2, 3) — oldest to newest
         //     prior3YearsQREs[0] = most recent prior year (e.g. 2024)
         //     prior3YearsQREs[1] = 2 years ago (e.g. 2023)
@@ -149,12 +146,12 @@ export class RdCreditCalculatorForLA {
         const line9 = line7.mul(creditRate / 100);
 
         return {
-            prior_year_oldest:   this.round2(prev4_qre),   // Line 1
-            prior_year_middle:   this.round2(prev3_qre),   // Line 2
-            prior_year_newest:   this.round2(prev2_qre),   // Line 3
+            prior_year_oldest:   this.round2(prev3_qre),   // Line 1
+            prior_year_middle:   this.round2(prev2_qre),   // Line 2
+            prior_year_newest:   this.round2(prev1_qre),   // Line 3
             three_year_average:  this.round2(line4),    // Line 4
             base_calculation:    this.round2(line5),    // Line 5
-            current_year_qre:    this.round2(prev1_qre), // Line 6
+            current_year_qre:    this.round2(currentYearQRE), // Line 6
             increase_in_rd:      this.round2(line7),    // Line 7
             credit_rate:         creditRate,             // Line 8
             la_research_credit:  this.round2(line9),    // Line 9

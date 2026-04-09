@@ -156,11 +156,16 @@ export class StateComputationService {
      * @param orgDb 
      * @param schemaName 
      */
-    async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
+    async findStateInputData(accountRid: string, caseRid: string, countryRid:string,regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
         const currentFiscalYear = fiscalYear
 
         const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb, currentFiscalYear); //current yer QREs
         logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
+        
+
+        const currentYearQREsFederal = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryRid, schemaName, orgDb, false); //current yer QREs
+        logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
+
 
         const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, regionRid, 4, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
         logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
@@ -169,7 +174,7 @@ export class StateComputationService {
 
         logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
 
-        const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
+        const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts,currentYearQREsFederal);
         return stateRDData;
     }
 
@@ -202,7 +207,7 @@ export class StateComputationService {
                     day: "numeric",
                     year: "numeric"
                 });
-                const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName, currentFiscalYear);
+                const stateRDData = await this.findStateInputData(accountRid, caseRid,config.country_rid, config.state_rid, orgDb, schemaName, currentFiscalYear);
                     logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
                 let result;
 
@@ -254,11 +259,12 @@ export class StateComputationService {
      * @param annualGrossReceipts 
      * @returns 
      */
-    async getStateRDData(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[]): Promise<StateRDData> {
+    async getStateRDData(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[],currentYearQREsFederal: QRE): Promise<StateRDData> {
         return {
             currentYearQREs,
             prior3YearsQREs,
-            annualGrossReceipts
+            annualGrossReceipts,
+            currentYearQREsFederal
         }
     }
 

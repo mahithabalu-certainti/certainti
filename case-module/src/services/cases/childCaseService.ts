@@ -526,7 +526,7 @@ async processDossierForm (accountNumber : string, caseRid : string, accountRid :
       urls: stateUrls
     },
     {
-      name: "Financial Calculations State",
+      name: "Financial Workings",
       url: stateFinancialCalcUrl ?? ''
     }
   ];
@@ -1339,10 +1339,18 @@ async fetchDossierPackage (data : any) : Promise<any> {
                 url : stringToJson[j].url === '' ? '' : await generateSasUrl(stringToJson[j].url)
               })
             }
+          } else if(stringToJson[j].name === 'Financial Workings') {
+            if(stringToJson[j].url) {
+              responsePackage.push({
+                name : 'Financial Calculations',
+                url : await generateSasUrl(stringToJson[j].url),
+                extension: '.xlsx'
+              })
+            }
           } else {
             responsePackage.push({
               name : '',
-              urls : stringToJson[j].urls.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
+              urls : stringToJson[j].urls?.length > 0 ? await Promise.all(stringToJson[j].urls.map(async (d: any) => {
                 return await generateSasUrl(d)
               })) : []
             })

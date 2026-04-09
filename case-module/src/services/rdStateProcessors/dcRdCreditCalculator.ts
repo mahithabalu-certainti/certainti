@@ -150,7 +150,7 @@ export class RdCreditCalculatorForDC {
         const line11 = Decimal.min(line9, line10);
         const line12 = line1.plus(line4).plus(line11);
         const rrcMultiplier = caseData.rrc_credit_280_c === "Yes" ? config.rrc_elect_280c_yes : config.rrc_elect_280c_no;
-        const line13 = line12.mul(rrcMultiplier);
+        const line13 = line12.mul(rrcMultiplier / 100);
 
         return {
             line1:          this.round2(line1),
@@ -177,7 +177,8 @@ export class RdCreditCalculatorForDC {
         caseData:Case,
         sectionA:any
     ) {
-        const line19 = new Decimal(config.asc_qre_credit_percentage_c1 / 100);
+        const line18  = new Decimal(0);
+        const line19 = line18.mul(config.asc_qre_credit_percentage_c1 / 100);
         const line20 = new Decimal(sectionA.line48);
         const prior3 = stateRdData.prior3YearsQREs ?? [];
         const line21 = new Decimal(prior3.reduce((s, y) => s + (y.qre ?? 0), 0));
@@ -197,7 +198,7 @@ export class RdCreditCalculatorForDC {
         }
 
         const line25 = line19.plus(line24);
-        const line26 = caseData.asc_credit_280_c ? line25.mul(config.asc_elect_280c_yes) : line25;
+        const line26 = caseData.asc_credit_280_c === "Yes" ? line25.mul(config.asc_elect_280c_yes / 100) : line25;
 
         return {
             line19:         this.round2(line19),
@@ -227,7 +228,7 @@ export class RdCreditCalculatorForDC {
     
             //---- Active method credit: Line 13 (RRC) or Line 26 (ASC)
             //const activeMethodCredit = config.use_asc ? sectionB._line26 : sectionA._line13;
-            const activeMethodCredit =  sectionA._line13;
+            const activeMethodCredit =  Decimal.max(sectionA._line13,sectionB._line26);
     
             //---- Line 27: Form 8932 payroll tax wages
             const line27 = new Decimal(cd.credit_shared_wages_dc ?? 0);
@@ -304,20 +305,20 @@ export class RdCreditCalculatorForDC {
         // const ascRateLabel = b.has_prior_qres
         //     ? `${b.asc_rate_used}% (prior QREs exist)`
         //     : `${b.asc_rate_used}% (no prior QREs — reduced rate on line 20)`;
-        const ascRateLine24 = b.has_prior_qres
-            ? `Multiply line 23 by 14% (0.14). If you skipped lines 22 and 23, multiply line 20 by 6% (0.06)`
-            : `Multiply line 20 by 6% (0.06) [lines 22 and 23 skipped — no prior QREs in one or more years]`;
+        const ascRateLine24 = `Multiply line 23 by ${config.asc_qre_credit_percentage_c2}% (${config.asc_qre_credit_percentage_c2 / 100}). If you skipped lines 22 and 23, multiply line 20 by ${config.asc_qre_credit_percentage_c3}% (${config.asc_qre_credit_percentage_c3 / 100})`
+         //   ? `Multiply line 23 by 14% (0.14). If you skipped lines 22 and 23, multiply line 20 by 6% (0.06)`
+         //   : `Multiply line 20 by 6% (0.06) [lines 22 and 23 skipped — no prior QREs in one or more years]`;
 
 
         return {
             computed_fields: {
-                "Section A — Regular Credit / RRC (Lines 1–13)": {
+                "Section A — Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.": {
                     "[1] Certain amounts paid or incurred to energy consortia (see instructions)":                                  a.line1,
                     "[2] Basic research payments to qualified organizations (see instructions)":                             a.line4,
                     "[3] Qualified organization base period amount":0,
                     "Subtract line 3 from line 2. If zero or less, enter -0- ":0,
-                    "[4] Note: Complete Section F before going to line 5.":                           a.line5,
-        
+                    "[4] Note: Complete Section F before going to line 5.":                          "" ,
+                    "[5] Total qualified research expenses (QREs). Enter amount from line 48":a.line5,
                     [`[6] Enter fixed-base percentage, but not more than ${config.rrc_fixed_base_percentage}% (${config.rrc_fixed_base_percentage / 100}). See instructions`]:  `${a.fixed_base_pct}%`,
                     "[7] Enter average annual gross receipts. See instructions":                     a.line7,
                     "[8] Multiply line 7 by the percentage on line 6":                    a.line8,
@@ -340,6 +341,7 @@ export class RdCreditCalculatorForDC {
                         0,
                     [`[19] Multiply line 18 by ${config.asc_qre_credit_percentage_c1}% (${config.asc_qre_credit_percentage_c2 / 100})`]:
                         b.line19,
+                    "Note: Complete Section F before going to line 20.":"",
                     "[20] Total qualified research expenses (QREs). Enter amount from line 48":
                         b.line20,
                     "[21] Enter your total QREs for the prior 3 tax years. If you had no QREs in any 1 of those years, skip lines 22 and 23":

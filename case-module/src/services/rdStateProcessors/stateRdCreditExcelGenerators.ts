@@ -1162,7 +1162,7 @@ export async function uploadCombinedWorkbook(
 ): Promise<string | null> {
     try {
         const buffer   = Buffer.from(await workbook.xlsx.writeBuffer());
-        const fileName = `RD_Credits_${caseRid}_${fiscalYear}.xlsx`;
+        const fileName = `Financial_Calculations.xlsx`;
 
         const mockFile: Express.Multer.File = {
             fieldname:    "file",
@@ -1458,7 +1458,8 @@ export function addStateSummarySheetToWorkbook(
         c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: WHITE } };
         c.font  = { bold: true, size: 10, color: { argb: NEAR_BLACK } };
         c.border = ALL_THIN;
-        c.alignment = { horizontal: "center", wrapText: true };
+        const noCenter = ["State Code", "State Name"];
+        c.alignment = { horizontal: (noCenter.includes(h) ? "left" : "center"), wrapText: true };
     });
 
     const stateRows = Object.entries((summaryData?.federal ?? summaryData) as Record<string, any>)
