@@ -116,13 +116,13 @@ const Setting: React.FC<SettingProps> = ({
             <JurisdictionConfig
               formRef={formRef}
               setIsFormSaving={setIsFormSaving}
-              // setIsSaveDisable={setIsSaveDisable}
+              disabled={isFinancialWorkingSignoff || isCaseClosed}
             />
           ) : (
             <JurisdictionSetting
               formRef={formRef}
               setIsFormSaving={setIsFormSaving}
-              // setIsSaveDisable={setIsSaveDisable}
+              disabled={isFinancialWorkingSignoff || isCaseClosed}
             />
           )}
         </>

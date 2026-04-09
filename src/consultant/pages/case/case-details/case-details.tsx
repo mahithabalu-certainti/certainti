@@ -1033,7 +1033,6 @@ export const CaseDetails = () => {
           />
         );
       case 'configuration':
-      case 'configuration':
         return (
           <Setting
             activityMenuItems={activityMenuItems}

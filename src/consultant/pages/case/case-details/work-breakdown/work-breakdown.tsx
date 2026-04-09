@@ -91,7 +91,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   isAmendmentView,
   isCaseClosed,
 }) => {
-  console.log(isCaseClosed, 'isCaseClosed-workbreakdown');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { caseId } = useParams<{

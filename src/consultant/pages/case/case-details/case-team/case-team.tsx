@@ -1769,7 +1769,11 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                     {col.name === 'action' &&
                                       showDeleteButton && (
                                         <Tooltip
-                                          title={'Remove team member'}
+                                          title={
+                                            isBtnDisabled
+                                              ? 'Remove team member'
+                                              : ''
+                                          }
                                           disableHoverListener={isBtnDisabled}
                                           arrow
                                           placement='top'
@@ -1790,7 +1794,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                               padding: 0,
                                               marginTop: '6px',
                                             }}
-                                            // aria-label='Remove team member' // prettier-ignore
+                                            aria-label='Remove team member' // prettier-ignore
                                             disabled={
                                               isBtnDisabled ||
                                               !isCaseTeamEditable ||
