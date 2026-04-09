@@ -187,6 +187,7 @@ export interface FieldDisabled {
   role?: boolean;
   checklistTemplate?: boolean;
   taskName?: boolean;
+  allDisabled?: boolean;
   [key: string]: boolean | undefined;
 }
 
@@ -269,6 +270,7 @@ export interface KanbanBoardProps {
   caseStartDate?: string | null;
   caseEndDate?: string | null;
   isExpanded?: boolean;
+  isCaseClosed?: boolean;
 }
 
 export interface TaskCardProps {
@@ -316,6 +318,7 @@ export interface KanbanColumnProps {
   caseId?: string;
   caseStartDate?: string | null;
   caseEndDate?: string | null;
+  isCaseClosed?: boolean;
 }
 
 export interface TaskDetailModalProps {
@@ -377,4 +380,5 @@ export interface TaskDetailModalProps {
   fieldDisabled?: FieldDisabled;
   caseStartDate?: string | null;
   caseEndDate?: string | null;
+  isCaseClosed?: boolean;
 }

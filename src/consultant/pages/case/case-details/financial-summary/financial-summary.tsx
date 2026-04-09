@@ -59,6 +59,7 @@ interface ProjectFinancialProps {
   setExportType: (type: ExportType) => void;
   accountId?: string;
   caseRid?: string;
+  caseClosed?: boolean;
 }
 
 const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({

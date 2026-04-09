@@ -76,6 +76,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   caseStartDate,
   caseEndDate,
   isExpanded,
+  isCaseClosed,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
   const [createModalState, setCreateModalState] = useState<{
@@ -350,6 +351,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
+  const effectiveIsCreateTaskDisabled = isCreateTaskDisabled || isCaseClosed;
+
   if (isLoading) {
     return <LoadingSkeleton />;
   }
@@ -379,7 +382,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     showTaskCount={showTaskCount}
                     showCommentCount={showCommentCount}
                     showProfileIndicator={showProfileIndicator}
-                    isCreateTaskDisabled={isCreateTaskDisabled}
+                    isCreateTaskDisabled={effectiveIsCreateTaskDisabled}
                     isCreateTaskHide={isCreateTaskHide}
                     onTaskClick={handleTaskClick}
                     isDragable={isDragable}
@@ -400,6 +403,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     caseId={caseId}
                     caseStartDate={caseStartDate}
                     caseEndDate={caseEndDate}
+                    isCaseClosed={isCaseClosed}
                   />
                 ))}
               </div>
@@ -423,7 +427,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   showTaskCount={showTaskCount}
                   showCommentCount={showCommentCount}
                   showProfileIndicator={showProfileIndicator}
-                  isCreateTaskDisabled={isCreateTaskDisabled}
+                  isCreateTaskDisabled={effectiveIsCreateTaskDisabled}
                   isCreateTaskHide={isCreateTaskHide}
                   onTaskClick={handleTaskClick}
                   isDragable={isDragable}
@@ -444,6 +448,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   caseId={caseId}
                   caseStartDate={caseStartDate}
                   caseEndDate={caseEndDate}
+                  isCaseClosed={isCaseClosed}
                 />
               ))}
             </div>
@@ -466,6 +471,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           roleOptions={roleOptions}
           fieldVisibility={fieldVisibility}
           fieldDisabled={{ ...fieldDisabled, status: true }}
+          isCaseClosed={isCaseClosed}
           accountId={accountId}
           caseId={caseId}
           caseStartDate={caseStartDate}

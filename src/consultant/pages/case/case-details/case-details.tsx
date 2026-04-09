@@ -835,32 +835,34 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
-  const activityMenuItems: ActivityDropdownItem[] = [
-    {
-      label: 'Create Task',
-      onClick: () => setActivityModalId('create-task'),
-      icon: TaskCreateIcon,
-      hide: !isActivityTaskCreateEnable,
-    },
-    {
-      label: 'Draft Email',
-      onClick: () => setActivityModalId('draft-email'),
-      icon: DraftEmailIcon,
-      hide: !isActivityEmailCreateEnable,
-    },
-    {
-      label: 'Schedule Meeting',
-      onClick: () => setActivityModalId('schedule-meeting'),
-      icon: MeetingIcon,
-      hide: !isActivityMeetingCreateEnable,
-    },
-    {
-      label: 'Log a call',
-      onClick: () => setActivityModalId('call-log'),
-      icon: CallLogIcon,
-      hide: !isActivityCallCreateEnable,
-    },
-  ];
+  const activityMenuItems: ActivityDropdownItem[] = isCaseClosed
+    ? []
+    : [
+        {
+          label: 'Create Task',
+          onClick: () => setActivityModalId('create-task'),
+          icon: TaskCreateIcon,
+          hide: !isActivityTaskCreateEnable,
+        },
+        {
+          label: 'Draft Email',
+          onClick: () => setActivityModalId('draft-email'),
+          icon: DraftEmailIcon,
+          hide: !isActivityEmailCreateEnable,
+        },
+        {
+          label: 'Schedule Meeting',
+          onClick: () => setActivityModalId('schedule-meeting'),
+          icon: MeetingIcon,
+          hide: !isActivityMeetingCreateEnable,
+        },
+        {
+          label: 'Log a call',
+          onClick: () => setActivityModalId('call-log'),
+          icon: CallLogIcon,
+          hide: !isActivityCallCreateEnable,
+        },
+      ];
 
   const handleSetCaseTaskParams = useCallback(
     (params: Record<string, unknown>) => {
@@ -943,6 +945,7 @@ export const CaseDetails = () => {
               isCaseTeamCreated={isCaseTeamCreated}
               refetchCaseDetails={refetchCaseDetails}
               isAmendmentView={isAmendmentView}
+              isCaseClosed={isCaseClosed}
             />
           </div>
         );
@@ -975,6 +978,7 @@ export const CaseDetails = () => {
               activityMenuItems={activityMenuItems}
               fiscalYear={fiscalYear}
               refetchCaseDetails={refetchCaseDetails}
+              isCaseClosed={isCaseClosed}
             />
           </div>
         );
@@ -1013,6 +1017,7 @@ export const CaseDetails = () => {
             setNotesParams={setNotesParams}
             caseDetails={caseData}
             activityMenuItems={activityMenuItems}
+            isCaseClosed={isCaseClosed}
           />
         );
       case 'attachments':
@@ -1028,7 +1033,14 @@ export const CaseDetails = () => {
           />
         );
       case 'configuration':
-        return <Setting activityMenuItems={activityMenuItems} />;
+      case 'configuration':
+        return (
+          <Setting
+            activityMenuItems={activityMenuItems}
+            isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+            isCaseClosed={isCaseClosed}
+          />
+        );
       case 'activities':
         return (
           <CaseActivities
@@ -1038,6 +1050,7 @@ export const CaseDetails = () => {
             setActivityParams={setActivityParams}
             isDetailLoading={isPending}
             activityMenuItems={activityMenuItems}
+            isCaseClosed={isCaseClosed}
           />
         );
       case 'checklist':
@@ -1048,6 +1061,7 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             caseDetails={caseData}
             activityMenuItems={activityMenuItems}
+            isCaseClosed={isCaseClosed}
           />
         );
       case 'interactions':
@@ -1062,6 +1076,7 @@ export const CaseDetails = () => {
             activityMenuItems={activityMenuItems}
             isCaseTeamCreated={!!isCaseTeamCreated}
             isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+            isCaseClosed={isCaseClosed}
           />
         );
       case 'four_part_assessment':

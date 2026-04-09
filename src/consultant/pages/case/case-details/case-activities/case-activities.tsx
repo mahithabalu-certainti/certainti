@@ -82,6 +82,7 @@ interface CaseActivitiesProps {
   >;
   isDetailLoading?: boolean;
   activityMenuItems: ActivityDropdownItem[];
+  isCaseClosed?: boolean;
 }
 
 const CaseActivities: React.FC<CaseActivitiesProps> = ({
@@ -91,6 +92,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   setActivityParams,
   isDetailLoading,
   activityMenuItems,
+  isCaseClosed,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -401,7 +403,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
       label: 'New',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || (tabParam === 'meeting' && !isEmailConfigured),
+        accountInActive ||
+        (tabParam === 'meeting' && !isEmailConfigured) ||
+        isCaseClosed,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !showCreateButton,

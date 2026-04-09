@@ -75,6 +75,7 @@ interface WorkBreakDownProps {
   isCaseTeamCreated?: boolean;
   refetchCaseDetails: () => void;
   isAmendmentView?: boolean;
+  isCaseClosed?: boolean;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -88,7 +89,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   isCaseTeamCreated,
   refetchCaseDetails,
   isAmendmentView,
+  isCaseClosed,
 }) => {
+  console.log(isCaseClosed, 'isCaseClosed-workbreakdown');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { caseId } = useParams<{
@@ -935,6 +938,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                     fieldVisibility: { fiscalYear: true },
                     caseStartDate,
                     caseEndDate,
+                    isCaseClosed,
                   };
 
                   return (
@@ -974,6 +978,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                           caseEndDate={caseEndDate}
                           isCaseTeamCreated={isCaseTeamCreated}
                           refetchCaseDetails={refetchCaseDetails}
+                          isCaseClosed={isCaseClosed}
                         />
                       )}
                     </>
@@ -1013,6 +1018,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                         fieldVisibility={{ fiscalYear: true }}
                         caseStartDate={caseStartDate}
                         caseEndDate={caseEndDate}
+                        isCaseClosed={isCaseClosed}
                       />
                     )}
                     {openTaskId && (
@@ -1039,6 +1045,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                         caseEndDate={caseEndDate}
                         isCaseTeamCreated={isCaseTeamCreated}
                         refetchCaseDetails={refetchCaseDetails}
+                        isCaseClosed={isCaseClosed}
                       />
                     )}
                   </>

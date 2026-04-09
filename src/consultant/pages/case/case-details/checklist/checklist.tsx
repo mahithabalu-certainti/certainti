@@ -72,6 +72,7 @@ interface ChecklistProps {
   accountInActive: boolean;
   caseDetails?: CaseDetails;
   activityMenuItems: ActivityDropdownItem[];
+  isCaseClosed?: boolean;
 }
 
 const Checklist: React.FC<ChecklistProps> = ({
@@ -80,6 +81,7 @@ const Checklist: React.FC<ChecklistProps> = ({
   accountInActive,
   caseDetails,
   activityMenuItems,
+  isCaseClosed,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -251,7 +253,7 @@ const Checklist: React.FC<ChecklistProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || isCaseClosed,
       onClick: handleCreate,
       sx: { width: '48px', minWidth: '48px' },
       hide: !isChecklistCreateEnable,
