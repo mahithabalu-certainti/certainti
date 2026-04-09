@@ -79,6 +79,7 @@ interface TaskDetailModalPropsExtended
   entityLevel?: 'account' | 'case' | 'project';
   attachTo?: string;
   refetchCaseDetails?: () => void;
+  isCaseClosed?: boolean;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -111,6 +112,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   entityLevel,
   attachTo,
   refetchCaseDetails,
+  isCaseClosed = false,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -763,19 +765,36 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       (typeof isCaseTeamCreated === 'boolean' ? !isCaseTeamCreated : false) ||
       isAnyFieldEmpty();
 
+    const allDisabled = isCaseClosed;
     return {
       ...fieldDisabled,
+      taskName: fieldDisabled.taskName || allDisabled,
+      assignee: fieldDisabled.assignee || allDisabled,
+      startDate: fieldDisabled.startDate || allDisabled,
+      endDate: fieldDisabled.endDate || allDisabled,
+      description: fieldDisabled.description || allDisabled,
+      tags: fieldDisabled.tags || allDisabled,
+      collaborators: fieldDisabled.collaborators || allDisabled,
+      comments: fieldDisabled.comments || allDisabled,
+      attachments: fieldDisabled.attachments || allDisabled,
       checklistTemplate:
         fieldDisabled.checklistTemplate ||
         hasCompletedItems ||
-        creatorOnlyFieldsDisabled,
-      priority: fieldDisabled.priority || creatorOnlyFieldsDisabled,
-      linkedType: fieldDisabled.linkedType || creatorOnlyFieldsDisabled,
-      linkTaskType: fieldDisabled.linkTaskType || creatorOnlyFieldsDisabled,
-      weightage: fieldDisabled.weightage || creatorOnlyFieldsDisabled,
-      category: fieldDisabled.category || creatorOnlyFieldsDisabled,
-      status: fieldDisabled.status || shouldDisableStatus,
-      checklist: fieldDisabled.checklist || creatorOnlyFieldsDisabled,
+        creatorOnlyFieldsDisabled ||
+        allDisabled,
+      priority:
+        fieldDisabled.priority || creatorOnlyFieldsDisabled || allDisabled,
+      linkedType:
+        fieldDisabled.linkedType || creatorOnlyFieldsDisabled || allDisabled,
+      linkTaskType:
+        fieldDisabled.linkTaskType || creatorOnlyFieldsDisabled || allDisabled,
+      weightage:
+        fieldDisabled.weightage || creatorOnlyFieldsDisabled || allDisabled,
+      category:
+        fieldDisabled.category || creatorOnlyFieldsDisabled || allDisabled,
+      status: fieldDisabled.status || shouldDisableStatus || allDisabled,
+      checklist:
+        fieldDisabled.checklist || creatorOnlyFieldsDisabled || allDisabled,
     };
   }, [
     editedTask,
@@ -784,6 +803,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     fieldDisabled,
     isCaseTeamCreated,
     fieldVisibility,
+    isCaseClosed,
   ]);
 
   if (!isAnimating || !taskId) return null;
@@ -1759,7 +1779,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               label='Save'
               onClick={handleSave}
               loading={isSaving}
-              disabled={!hasTaskChanged() || isSaving}
+              disabled={!hasTaskChanged() || isSaving || isCaseClosed}
               sx={{ padding: '6px 12px' }}
             />
             <button
@@ -1790,7 +1810,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     }
                   }}
                   onKeyPress={(e) => e.key === 'Enter' && handleSave()}
-                  disabled={fieldDisabled.taskName}
+                  disabled={enhancedFieldDisabled.taskName}
                   className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8`}
                   autoFocus
                 />
@@ -1812,7 +1832,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 name='assignee'
                 value={getAssigneeForSelect()}
                 onChange={handleAssigneeChange}
-                disabled={fieldDisabled.assignee}
+                disabled={enhancedFieldDisabled.assignee}
                 width='240px'
                 sx={{
                   '&.Mui-disabled': {
@@ -1943,7 +1963,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Start Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
-                    disabled={fieldDisabled.startDate}
+                    disabled={enhancedFieldDisabled.startDate}
                     minDate={minDate}
                     maxDate={maxDate}
                     value={
@@ -2023,7 +2043,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Due Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
-                    disabled={fieldDisabled.endDate}
+                    disabled={enhancedFieldDisabled.endDate}
                     minDate={
                       editedTask?.startDate
                         ? dayjs(editedTask.startDate).add(1, 'day')

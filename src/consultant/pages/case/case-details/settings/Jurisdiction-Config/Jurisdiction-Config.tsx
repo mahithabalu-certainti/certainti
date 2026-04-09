@@ -18,6 +18,7 @@ interface JurisdictionConfigProps {
   formRef: React.RefObject<HTMLFormElement>;
   setIsFormSaving: React.Dispatch<React.SetStateAction<boolean>>;
   // setIsSaveDisable: React.Dispatch<React.SetStateAction<boolean>>;
+  disabled?: boolean;
 }
 
 type FormValueType = string | number | boolean | object | string[] | null;
@@ -32,6 +33,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   formRef,
   setIsFormSaving,
   // setIsSaveDisable,
+  disabled,
 }) => {
   const { successToast } = useToast();
   const [stateRequried, setStateRequried] = useState<boolean>(false);
@@ -163,7 +165,8 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
             data={jurisdictionConfigFormFields(
               // permissionMap,
               memoizedState,
-              stateRequried
+              stateRequried,
+              disabled
             )}
             formRef={formRef}
             outData={handleFormSubmit}

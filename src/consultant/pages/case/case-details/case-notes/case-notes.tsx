@@ -71,6 +71,7 @@ interface NotesProps {
   accountInActive: boolean;
   caseDetails?: CaseDetails;
   activityMenuItems: ActivityDropdownItem[];
+  isCaseClosed: boolean;
 }
 
 const CaseNotes: React.FC<NotesProps> = ({
@@ -79,6 +80,7 @@ const CaseNotes: React.FC<NotesProps> = ({
   accountInActive,
   caseDetails,
   activityMenuItems,
+  isCaseClosed,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -282,7 +284,7 @@ const CaseNotes: React.FC<NotesProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || isCaseClosed,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !isNoteCreateEnable,

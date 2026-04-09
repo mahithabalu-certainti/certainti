@@ -146,6 +146,7 @@ export const createCheckboxField = (
     required?: boolean;
     checkboxOptions: SelectOption[];
     defaultValue?: string;
+    disabled?: boolean;
     onChange?: boolean;
     resetDependsFields?: string[];
   }
@@ -156,6 +157,7 @@ export const createCheckboxField = (
   required: options.required ?? false,
   options: options.checkboxOptions,
   defaultValue: options.defaultValue,
+  disabled: options.disabled,
   onChange: options.onChange,
   resetDependsFields: options.resetDependsFields,
 });

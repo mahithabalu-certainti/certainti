@@ -109,6 +109,7 @@ interface InteractionsProps {
   activityMenuItems: ActivityDropdownItem[];
   isCaseTeamCreated?: boolean;
   isFinancialWorkingSignoff?: boolean;
+  isCaseClosed?: boolean;
 }
 
 const CaseInteractions: React.FC<InteractionsProps> = ({
@@ -122,6 +123,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   activityMenuItems,
   isCaseTeamCreated,
   isFinancialWorkingSignoff,
+  isCaseClosed,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -494,7 +496,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive || isFinancialWorkingSignoff,
+      disabled: accountInActive || isFinancialWorkingSignoff || isCaseClosed,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !createInteractionsEnable || viewResponseHistory,
@@ -507,6 +509,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
         accountInActive ||
         !isSendInteraction ||
         !isCaseTeamCreated ||
+        isCaseClosed ||
         isFinancialWorkingSignoff,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
@@ -519,6 +522,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
         accountInActive ||
         interactionList.length === 0 ||
         !isSendInteraction ||
+        isCaseClosed ||
         isFinancialWorkingSignoff,
       onClick: () => setReInitiateModalOpen(true),
       sx: { width: '160px', minWidth: '160px' },
@@ -528,7 +532,10 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       label: 'Reminder',
       variant: 'outlined' as const,
       disabled:
-        accountInActive || interactionList.length === 0 || !isSendInteraction,
+        accountInActive ||
+        interactionList.length === 0 ||
+        !isSendInteraction ||
+        isCaseClosed,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
@@ -968,6 +975,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
                 // projectDetails={projectDetails}
                 isSendInteraction={isSendInteraction}
                 isFinancialWorkingSignoff={isFinancialWorkingSignoff}
+                isCaseClosed={isCaseClosed}
               />
             ) : viewInteractionHistory ? (
               <InteractionHistory

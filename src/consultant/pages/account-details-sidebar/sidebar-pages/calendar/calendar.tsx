@@ -341,7 +341,9 @@ const Calendar = () => {
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [anchorDate, setAnchorDate] = useState(() => startOfDay(new Date()));
   const [searchText, setSearchText] = useState('');
-  const deferredSearch = useDeferredValue(sanitizeSearchText(searchText).slice(0, 200));
+  const deferredSearch = useDeferredValue(
+    sanitizeSearchText(searchText).slice(0, 200)
+  );
   const [selectedEventId, setSelectedEventId] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [splitPercent, setSplitPercent] = useState(50);
@@ -536,7 +538,7 @@ const Calendar = () => {
                 {isMetadataLoading
                   ? 'Loading calendar owner...'
                   : metadata?.calendar_owner_email ||
-                  'Connected Microsoft 365 calendar'}
+                    'Connected Microsoft 365 calendar'}
               </p>
             </div>
 
@@ -547,10 +549,11 @@ const Calendar = () => {
                     key={mode}
                     type='button'
                     onClick={() => setRangeMode(mode)}
-                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${rangeMode === mode
+                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
+                      rangeMode === mode
                         ? 'bg-[#0F6CBD] text-white'
                         : 'text-[#323130] hover:bg-[#F3F2F1]'
-                      }`}
+                    }`}
                   >
                     {mode}
                   </button>
@@ -677,10 +680,11 @@ const Calendar = () => {
                                 onClick={() =>
                                   setSelectedEventId(event.event_id)
                                 }
-                                className={`flex w-full flex-col rounded-lg border px-2.5 py-2 text-left transition-all ${isSelected
+                                className={`flex w-full flex-col rounded-lg border px-2.5 py-2 text-left transition-all ${
+                                  isSelected
                                     ? 'border-[#B7D7F0] bg-[#F6FAFD] shadow-[0_4px_12px_rgba(15,108,189,0.08)]'
                                     : 'border-[#E1DFDD] bg-white hover:border-[#D6E6F5] hover:bg-[#FCFCFC]'
-                                  }`}
+                                }`}
                               >
                                 <div className='flex flex-wrap items-start justify-between gap-1.5'>
                                   <div className='min-w-0 flex-1'>
@@ -704,11 +708,12 @@ const Calendar = () => {
                                           : `${formatTime(event.start)} - ${formatTime(event.end)}`}
                                       </span>
                                       {event.location_display_name ? (
-                                        <span className='line-clamp-1'>{event.location_display_name}</span>
+                                        <span className='line-clamp-1'>
+                                          {event.location_display_name}
+                                        </span>
                                       ) : null}
                                     </div>
                                   </div>
-
                                 </div>
                               </button>
                             );
@@ -808,7 +813,6 @@ const Calendar = () => {
                           {formatDateTime(eventDetail.end)}
                         </p>
                       </div>
-
 
                       {eventDetail.location_display_name ? (
                         <div className='col-span-2 rounded-lg bg-white px-3 py-2'>

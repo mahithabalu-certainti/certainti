@@ -82,12 +82,14 @@ interface CaseTeamProps {
   activityMenuItems: ActivityDropdownItem[];
   fiscalYear: number;
   refetchCaseDetails: () => void;
+  isCaseClosed: boolean;
 }
 
 const CaseTeam: React.FC<CaseTeamProps> = ({
   activityMenuItems,
   fiscalYear,
   refetchCaseDetails,
+  isCaseClosed,
 }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
@@ -724,7 +726,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
       variant: 'contained' as const,
       onClick: handleSave,
       hide: !isCaseTeamEditable,
-      disabled: !isFormChanged || isLoading,
+      disabled: !isFormChanged || isLoading || isCaseClosed,
       loading: isLoading,
     },
   ];
@@ -947,7 +949,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                           disabled={
                                             isDisabled ||
                                             !permissionMap.role_rid?.edit ||
-                                            !!member.rid
+                                            !!member.rid ||
+                                            isCaseClosed
                                           }
                                           size='small'
                                           fullWidth
@@ -1068,7 +1071,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                           disabled={
                                             isDisabled ||
                                             !permissionMap.user_rid?.edit ||
-                                            !!member.rid
+                                            !!member.rid ||
+                                            isCaseClosed
                                           }
                                           size='small'
                                           fullWidth
@@ -1241,7 +1245,9 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             );
                                           }}
                                           disabled={
-                                            isDisabled || !isCaseTeamEditable
+                                            isDisabled ||
+                                            !isCaseTeamEditable ||
+                                            isCaseClosed
                                           }
                                           size='small'
                                           sx={{
@@ -1266,7 +1272,9 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             handleStatusChange(e, member, index)
                                           }
                                           disabled={
-                                            isDisabled || !isCaseTeamEditable
+                                            isDisabled ||
+                                            !isCaseTeamEditable ||
+                                            isCaseClosed
                                           }
                                           size='small'
                                           fullWidth
@@ -1412,7 +1420,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             disabled={
                                               isDisabled ||
                                               !permissionMap.effective_startdate
-                                                ?.edit
+                                                ?.edit ||
+                                              isCaseClosed
                                             }
                                             sx={{
                                               width: '100%',
@@ -1601,7 +1610,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             disabled={
                                               isDisabled ||
                                               !permissionMap.effective_enddate
-                                                ?.edit
+                                                ?.edit ||
+                                              isCaseClosed
                                             }
                                             sx={{
                                               width: '100%',
@@ -1759,7 +1769,11 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                     {col.name === 'action' &&
                                       showDeleteButton && (
                                         <Tooltip
-                                          title={'Remove team member'}
+                                          title={
+                                            isBtnDisabled
+                                              ? 'Remove team member'
+                                              : ''
+                                          }
                                           disableHoverListener={isBtnDisabled}
                                           arrow
                                           placement='top'
@@ -1784,7 +1798,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             disabled={
                                               isBtnDisabled ||
                                               !isCaseTeamEditable ||
-                                              !isDeleteButtonEnabled
+                                              !isDeleteButtonEnabled ||
+                                              isCaseClosed
                                             }
                                           >
                                             <React.Suspense fallback={null}>
@@ -1842,7 +1857,10 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                     type='button'
                     onClick={handleAddTeamMember}
                     disabled={
-                      formLoading || !isCaseTeamEditable || !isAddButtonEnabled
+                      formLoading ||
+                      !isCaseTeamEditable ||
+                      !isAddButtonEnabled ||
+                      isCaseClosed
                     }
                   >
                     <span>

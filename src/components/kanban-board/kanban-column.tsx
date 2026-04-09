@@ -49,6 +49,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   onOpenCreateTask,
   onCreateModalOpen,
   index,
+  isCaseClosed,
 }) => {
   const { setNodeRef } = useDroppable({
     id: column.rid,
@@ -138,9 +139,9 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             }
             onCreateModalOpen?.();
           }}
-          disabled={isCreateTaskDisabled}
+          disabled={isCreateTaskDisabled || isCaseClosed}
           className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-colors duration-200 ${
-            isCreateTaskDisabled
+            isCreateTaskDisabled || isCaseClosed
               ? 'border-slate-300 text-slate-400 cursor-not-allowed'
               : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600 cursor-pointer'
           }`}

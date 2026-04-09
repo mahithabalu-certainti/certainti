@@ -27,9 +27,15 @@ const SettingsTabs: OverviewTabs[] = [
 
 interface SettingProps {
   activityMenuItems: ActivityDropdownItem[];
+  isFinancialWorkingSignoff?: boolean;
+  isCaseClosed?: boolean;
 }
 
-const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
+const Setting: React.FC<SettingProps> = ({
+  activityMenuItems,
+  isFinancialWorkingSignoff,
+  isCaseClosed,
+}) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   // const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
@@ -40,13 +46,14 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
   const isTimeLineView = searchParams.get('timelineview') === 'true';
   const isJurisdictionConfigView =
     searchParams.get('subMenu') === 'jurisdiction_configuration';
+
   const headerButtons = [
     {
       label: 'Save',
       variant: 'contained' as const,
       onClick: () => handleSubmit(),
       hide: false,
-      disabled: false,
+      disabled: isFinancialWorkingSignoff || isCaseClosed,
       loading: isFormSaving,
     },
   ];
@@ -109,13 +116,13 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
             <JurisdictionConfig
               formRef={formRef}
               setIsFormSaving={setIsFormSaving}
-              // setIsSaveDisable={setIsSaveDisable}
+              disabled={isFinancialWorkingSignoff || isCaseClosed}
             />
           ) : (
             <JurisdictionSetting
               formRef={formRef}
               setIsFormSaving={setIsFormSaving}
-              // setIsSaveDisable={setIsSaveDisable}
+              disabled={isFinancialWorkingSignoff || isCaseClosed}
             />
           )}
         </>

@@ -13,7 +13,7 @@ import {
   generateColorFromName,
 } from './helper';
 import TaskFieldsSection from './task-fields-section';
-import type { UserOption } from './types';
+import type { UserOption, FieldVisibility, FieldDisabled } from './types';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
 import {
   useGetTaskConnectorTypes,
@@ -61,36 +61,9 @@ interface TaskCreateModalProps {
   collaboratorData?: Array<{ rid: string; name: string; email?: string }>;
   availableUsers?: UserOption[];
   roleOptions?: RoleOption[];
-  fieldVisibility?: {
-    assignee?: boolean;
-    startDate?: boolean;
-    endDate?: boolean;
-    status?: boolean;
-    priority?: boolean;
-    tags?: boolean;
-    checklist?: boolean;
-    description?: boolean;
-    collaborators?: boolean;
-    fiscalYear?: boolean;
-    checklistTemplate?: boolean;
-    linkedType?: boolean;
-    linkTaskType?: boolean;
-    weightage?: boolean;
-    category?: boolean;
-    taskName?: boolean;
-  };
-  fieldDisabled?: {
-    assignee?: boolean;
-    startDate?: boolean;
-    endDate?: boolean;
-    status?: boolean;
-    priority?: boolean;
-    tags?: boolean;
-    checklist?: boolean;
-    description?: boolean;
-    collaborators?: boolean;
-    taskName?: boolean;
-  };
+  fieldVisibility?: FieldVisibility;
+  fieldDisabled?: FieldDisabled;
+  isCaseClosed?: boolean;
   accountId?: string;
   caseId?: string;
   caseStartDate?: string | null;
@@ -112,6 +85,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   fieldVisibility = {},
   fieldDisabled = {},
+  isCaseClosed = false,
   accountId,
   caseId,
   caseStartDate,
@@ -550,7 +524,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       setErrors((prev) => ({ ...prev, taskTitle: '' }));
                     }
                   }}
-                  disabled={fieldDisabled.taskName}
+                  disabled={fieldDisabled.taskName || isCaseClosed}
                   placeholder='Enter task name'
                   className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8 ${fieldDisabled.taskName ? 'bg-transparent' : ''}`}
                   autoFocus
@@ -585,7 +559,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   </label>
                   <div className='relative'>
                     <DatePicker
-                      disabled={fieldDisabled.startDate}
+                      disabled={fieldDisabled.startDate || isCaseClosed}
                       value={startDate}
                       onChange={handleStartDateChange}
                       format='YYYY-MMM-DD'
@@ -664,7 +638,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   </label>
                   <div className='relative'>
                     <DatePicker
-                      disabled={fieldDisabled.endDate}
+                      disabled={fieldDisabled.endDate || isCaseClosed}
                       value={endDate}
                       onChange={handleEndDateChange}
                       minDate={getMinEndDate()}
@@ -756,7 +730,22 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
               <TaskFieldsSection
                 fieldVisibility={fieldVisibility}
-                fieldDisabled={fieldDisabled}
+                fieldDisabled={{
+                  ...fieldDisabled,
+                  ...(isCaseClosed && {
+                    assignee: true,
+                    status: true,
+                    priority: true,
+                    tags: true,
+                    checklist: true,
+                    description: true,
+                    collaborators: true,
+                    role: true,
+                    checklistTemplate: true,
+                    taskName: true,
+                    allDisabled: true,
+                  }),
+                }}
                 editedTask={null}
                 statusData={(statusData || []).map((s) => ({
                   id: s.id,
@@ -809,7 +798,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 onAssigneeChange={(userId: string) => {
                   setSelectedAssignee(userId);
                 }}
-                onChecklistChange={(value) => {
+                onChecklistChange={(value: string) => {
                   setSelectedChecklist(value);
                   const checklistItem = checklistData?.find(
                     (c) => c.name === value
@@ -819,7 +808,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
                   }
                 }}
-                onLinkedTypeChange={(value) => {
+                onLinkedTypeChange={(value: string) => {
                   setLinkedType(value);
                   const connectorItem = connectorTypesData?.find(
                     (c) => c.name === value
@@ -833,7 +822,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     }
                   }
                 }}
-                onLinkTaskTypesChange={(values) => {
+                onLinkTaskTypesChange={(values: string[]) => {
                   setLinkTaskTypes(values);
                   const rids = values
                     .map((value) => {
@@ -852,14 +841,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     }
                   }
                 }}
-                onWeightageChange={(value) => {
+                onWeightageChange={(value: string) => {
                   setWeightage(value);
                   const weightageItem = weightageData?.find(
                     (w) => w.name === value
                   );
                   setWeightageRid(weightageItem?.id || '');
                 }}
-                onCategoryChange={(value) => {
+                onCategoryChange={(value: string) => {
                   setCategory(value);
                   const categoryItem = categoryData?.find(
                     (c: { id: string; name: string }) => c.name === value
@@ -910,23 +899,37 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         </div>
 
         <div className='flex-none flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-white z-50 shadow-sm'>
-          <TextButton
-            label='Cancel'
-            onClick={handleClose}
-            disabled={isSubmitting}
-          />
-          <TextButton
-            label={isSubmitting ? 'Creating...' : 'Create Task'}
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            sx={{
-              px: 1,
-              py: 1,
-              '&:hover': {
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              },
-            }}
-          />
+          <div className='flex justify-end items-center gap-3'>
+            <TextButton
+              label='Cancel'
+              onClick={handleClose}
+              disabled={isSubmitting}
+              sx={{
+                width: '100px',
+                height: '32px',
+                borderColor: '#CBD6E2',
+                color: '#2D3E4F',
+                '&:hover': {
+                  borderColor: '#2D3E4F',
+                  backgroundColor: '#F8FAFC',
+                },
+              }}
+            />
+            <TextButton
+              label={isSubmitting ? 'Creating...' : 'Create Task'}
+              onClick={handleSubmit}
+              disabled={isSubmitting || isCaseClosed}
+              sx={{
+                width: '120px',
+                height: '32px',
+                backgroundColor: '#3B82F6',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#2563EB',
+                },
+              }}
+            />
+          </div>
         </div>
       </div>
 

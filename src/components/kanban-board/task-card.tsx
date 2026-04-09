@@ -38,8 +38,6 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     disabled: !isDragable && !isDragablebetweenBoards,
   });
 
-  console.log(taskData);
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
