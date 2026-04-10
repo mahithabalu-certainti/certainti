@@ -1602,15 +1602,15 @@ jobs:
           MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
           MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
 
-          DEV_MAIN_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-host" --query value -o tsv)
-          DEV_MAIN_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-user" --query value -o tsv)
-          DEV_MAIN_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-password" --query value -o tsv)
-          DEV_MAIN_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-name" --query value -o tsv)
+          DEV_MAIN_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-endpoint" --query value -o tsv)
+          DEV_MAIN_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-admin-username" --query value -o tsv)
+          DEV_MAIN_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-admin-password" --query value -o tsv)
+          DEV_MAIN_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-database-name" --query value -o tsv)
 
-          DEV_ORG_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-host" --query value -o tsv)
-          DEV_ORG_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-user" --query value -o tsv)
-          DEV_ORG_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-password" --query value -o tsv)
-          DEV_ORG_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-name" --query value -o tsv)
+          DEV_ORG_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-endpoint" --query value -o tsv)
+          DEV_ORG_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-admin-username" --query value -o tsv)
+          DEV_ORG_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-admin-password" --query value -o tsv)
+          DEV_ORG_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-database-name" --query value -o tsv)
 
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
@@ -1627,7 +1627,7 @@ jobs:
           DEV_MAIN_DB_USER=$DEV_MAIN_DB_USER
           DEV_MAIN_DB_PASSWORD=$DEV_MAIN_DB_PASSWORD
           DEV_MAIN_DB_MAINTENANCE="postgres"
-          
+
           DEV_ORG_DB_NAME=$DEV_ORG_DB_NAME
           DEV_ORG_DB_HOST=$DEV_ORG_DB_HOST
           DEV_ORG_DB_USER=$DEV_ORG_DB_USER
