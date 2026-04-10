@@ -15,7 +15,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus, interactionAssessmentSourceType } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
@@ -95,10 +95,20 @@ class InteractionSchemaService {
 
         const statusList = await this.getStatus();
         const mapStatus = new Map(statusList.map((s) => [s.status_name, s.rid]));
-        interactionData.interaction_status_rid = interactionData.is_primary
-          ? mapStatus.get('Active')!
-          : mapStatus.get('In-Active')!;
-        logMessage(`[createInteractions] interaction_status_rid set to "${interactionData.is_primary ? 'Active' : 'In-Active'}" (rid: ${interactionData.interaction_status_rid})`);
+        if (interactionData.interaction_assessment_source_rid === interactionAssessmentSourceType.RD) {
+          interactionData.interaction_status_rid = interactionData.is_primary
+            ? mapStatus.get('Active')!
+            : mapStatus.get('In-Active')!;
+        } else {
+          interactionData.interaction_status_rid = mapStatus.get('Active')!;
+        }
+
+        logMessage(
+          `[createInteractions] interaction_status_rid set to "${interactionData.interaction_assessment_source_rid === interactionAssessmentSourceType.RD
+            ? (interactionData.is_primary ? 'Active' : 'In-Active')
+            : 'Active (FPA)'
+          }" (rid: ${interactionData.interaction_status_rid})`
+        );
       }
 
       const interaction = await Interaction.create(interactionData, {
