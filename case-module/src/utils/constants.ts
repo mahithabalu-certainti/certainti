@@ -2225,6 +2225,14 @@ fetchRegularFieldValue(
   },
   getPlatformCaseSetting () {
     return `SELECT assessment_methodology FROM ${MAIN_SCHEMA_NAME}.organization_licenses`
+  },
+  getClassficationIds () {
+    const getClassfication = validProjectClassificationForFinancialCalculationsKentucky;
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.project_classification
+    WHERE
+    classification_name IN (${getClassfication.map((d) => `'${d}'`).join(',')})
+    `
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
@@ -2689,3 +2697,36 @@ export const filterColumnsDossierFormTypes : any = {
   document_name: `string`,
   r_number: `string`
 }
+
+export const validProjectClassificationForFinancialCalculationsKentucky = [
+  "Biodiesel and Renewable Diesel",
+  "Cellulosic Ethanol",
+  "Certified Rehabilitation",
+  "Clean Coal Incentive",
+  "Coal Conversion",
+  "Coal Incentive",
+  "Decontamination",
+  "Distilled Spirits",
+  "Economic Development",
+  "Education Opportunity Account Program",
+  "Employer GED Incentive",
+  "Employers Unemployment",
+  "Endow Kentucky",
+  "Energy Efficiency Products",
+  "ENERGY STAR Home or ENERGY STAR Manufactured Home",
+  "Environmental Stewardship",
+  "Ethanol",
+  "Film Industry",
+  "Food Donation",
+  "Inventory",
+  "Kentucky Investment Fund",
+  "New Markets Development Program",
+  "Qualified Research Facility",
+  "Railroad Expansion",
+  "Railroad Maintenance and Improvement",
+  "Recycling or Composting Equipment",
+  "Renewable Chemical Production",
+  "Voluntary Environmental Remediation",
+  "Semi conductor Supply Chain",
+  "Green Chip"
+];

@@ -10,6 +10,7 @@ import { kafkaProducerService } from "../../kafka/producerService";
 import FederalComputationService from "./federalComputation";
 import Decimal from "decimal.js";
 import { fetchEmployeeCountForCase, fetchFederalQREAndBaseForRI } from "../../utils/rdFinancialWorkingQueries";
+import { TaskTypeResponse } from "../../utils/types";
 enum ConfigType {
     NONE = "NONE",
     FEDERAL_ONLY = "FEDERAL_ONLY",
@@ -156,10 +157,10 @@ export class StateComputationService {
      * @param orgDb 
      * @param schemaName 
      */
-    async findStateInputData(accountRid: string, caseRid: string, countryRid:string,regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
+    async findStateInputData(accountRid: string, caseRid: string, countryRid:string,regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number, isKentuckyState : boolean, classificationForKentucky : string[]) {
         const currentFiscalYear = fiscalYear
 
-        const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb, currentFiscalYear); //current yer QREs
+        const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb, currentFiscalYear, isKentuckyState, classificationForKentucky); //current yer QREs
         logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
         
 
@@ -193,10 +194,17 @@ export class StateComputationService {
         const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
         let currentFiscalYear = caseDetails.fiscal_year;
+        let isKentuckyState : boolean = false;
+        let classificationForKentucky : string[] = [];
 
         for (const config of configStateLevel) {
             try {
                 const stateComputation = stateCalculators[config.state_code];
+                if(config.state_code === 'KY') {
+                    isKentuckyState = true
+                    const classificationIds = await mainDb.query<TaskTypeResponse>(rawQueries.getClassficationIds(), {type : QueryTypes.SELECT});
+                    classificationForKentucky = classificationIds.map((d) => d.rid);
+                }
                 const extractConfig = this.extractConfigJson(config.config_json);
                 logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                 if (stateComputation) {
@@ -207,8 +215,10 @@ export class StateComputationService {
                     day: "numeric",
                     year: "numeric"
                 });
-                const stateRDData = await this.findStateInputData(accountRid, caseRid,config.country_rid, config.state_rid, orgDb, schemaName, currentFiscalYear);
-                    logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
+                const stateRDData = await this.findStateInputData(accountRid, caseRid,config.country_rid, config.state_rid, orgDb, schemaName, currentFiscalYear, isKentuckyState, classificationForKentucky);
+                logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
+                isKentuckyState = false
+                classificationForKentucky = []
                 let result;
 
                 if (config.state_code === "ON") {
