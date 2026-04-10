@@ -67,7 +67,7 @@ import {
   interactionReminderMailTemplate,
   interactionResponseReceivedTemplate,
 } from "../../utils/mailTemplate";
-import { sendEmailWithAttachment } from "../emailService";
+import { sanitizeEmailAddress, sendEmailWithAttachment } from "../emailService";
 import ExcelJS from "exceljs";
 import axios from "axios";
 import { Kafka, Producer } from "kafkajs";
@@ -3958,172 +3958,340 @@ export class InteractionService {
     }
   }
 
-   async sendEmailInBatch(schedulerRecord?: SchedulerExecutions) {
-    const mainDb = await this.getMainDb();
-    let fetchEmailInfo: any = await mainDb.query(rawQueries.fetchEmailInfo);
-    logMessage(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
+  //  async sendEmailInBatch(schedulerRecord?: SchedulerExecutions) {
+  //   const mainDb = await this.getMainDb();
+  //   let fetchEmailInfo: any = await mainDb.query(rawQueries.fetchEmailInfo);
+  //   logMessage(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
 
-    try {
-      // Create scheduler task record if scheduler record is provided
-      if (schedulerRecord) {
-        const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(
+  //   try {
+  //     // Create scheduler task record if scheduler record is provided
+  //     if (schedulerRecord) {
+  //       const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(
+  //         schedulerRecord.rid,
+  //         'SendEmail'
+  //       );
+  //       if (isRecordExists == null) {
+  //         await this.interactionSchemaService.createSchedulerTaskRecords(
+  //           schedulerRecord.rid,
+  //           'SendEmail'
+  //         );
+  //       }
+  //     }
+
+  //     for (let data of fetchEmailInfo[0]) {
+  //       let email_info: {
+  //         email: string;
+  //         name: string | null;
+  //         ccEmails?: string[] | [];
+  //       } = {
+  //         email: data.email,
+  //         name: data.name,
+  //         ccEmails: [],
+  //       };
+  //       let accountNumber = data.account_rnumber;
+  //       let interaction_rid = data.interaction_rid;
+  //       let is_interaction_followup = data.is_interaction_followup;
+  //       let userId = data.user_rid;
+  //       let project_fiscal_rid = data.project_fiscal_rid;
+  //       let accountRid = data.account_rid;
+  //       let interactionLevel = data.interaction_level;
+  //       let createdBy = data.user_rid;
+
+  //       // If emailInfo.email is empty, fetch POC email
+  //       let sendEmailInfo = email_info;
+
+  //         logMessage(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
+  //         if(interactionLevel === 'Account')
+  //         {
+  //            sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid,email_info,is_interaction_followup,data.interaction_rid);
+  //         }
+  //         else
+  //         {
+  //             sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid,email_info,is_interaction_followup);
+  //          if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
+  //         logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+  //         continue;
+  //       }
+  //           }
+          
+
+  //       if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
+  //         logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+  //         continue;
+  //       }
+  //        logMessage(`[SEND] Sending email to ${sendEmailInfo.email} for interaction ${interaction_rid}.`);
+
+  //       const [interactionItems, interactionInfo] = await Promise.all([
+  //         this.interactionSchemaService.fetchInteractionQuestionsById(
+  //           accountNumber,
+  //           interaction_rid
+  //         ),
+  //         this.interactionSchemaService.fetchInteractionInfo(
+  //           interaction_rid,
+  //           accountNumber
+  //         ),
+  //       ]);
+  //       const interactionLink = await this.generateInteractionLink(
+  //         interaction_rid,
+  //         interactionInfo.accountInfo.account_rid,
+  //         project_fiscal_rid,
+  //         interactionLevel
+  //       );
+  //       const senderEmailInfo = await this.getSenderEmailInfo(
+  //         interactionInfo.accountInfo.parent_account_rid,
+  //         interactionInfo.accountInfo.account_rid
+  //       );
+  //       const excelBuffer = await this.generateExcelBuffer(
+  //         interaction_rid,
+  //         interactionItems,
+  //         interactionInfo
+  //       );
+  //       const excelAttachment = {
+  //         filename: `interaction_${interaction_rid}.xlsx`,
+  //         content: Buffer.from(excelBuffer).toString("base64"),
+  //         contentType:
+  //           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //       };
+  //       // Send email
+  //       const emailResponse = await this.sendEmailWithAttachment(
+  //         sendEmailInfo,
+  //         interactionInfo.projectInfo,
+  //         interactionInfo.accountInfo,
+  //         excelAttachment,
+  //         interactionLink,
+  //         senderEmailInfo!,
+  //         interaction_rid,
+  //         is_interaction_followup,
+  //         interactionLevel,
+  //         false,
+  //         createdBy,
+  //         accountNumber,
+  //         data,
+  //         interactionInfo.interactionInfo
+  //       );
+  //       if (emailResponse) {
+  //         logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
+  //         if(!is_interaction_followup)
+  //         {
+  //           await this.interactionSchemaService.updateInteractionInfo(
+  //             accountNumber,
+  //             interaction_rid,
+  //             statusAction.SENT,
+  //             userId,
+  //             sendEmailInfo,
+  //             interactionLink
+  //           );
+  //         } else {
+  //           await this.interactionSchemaService.updateInteractionInfoForReminder(
+  //             accountNumber,
+  //             interaction_rid,
+  //             project_fiscal_rid,
+  //             statusAction.SENT,
+  //             userId,
+  //             sendEmailInfo,
+  //             interactionLink
+  //           );
+  //         }
+  //         await this.interactionSchemaService.updateEmailSendFlag(
+  //           interaction_rid
+  //         );
+  //       } else {
+  //         //need to add logic for sending toPS team
+  //         logMessage(`[FAIL] Email failed to send for interaction ${interaction_rid}. Needs manual intervention.`);
+  //       }
+  //     }
+  //     logMessage(`[BATCH EMAIL] Finished processing batch.`);
+
+  //     // Update task record to success if scheduler record is provided
+  //     if (schedulerRecord) {
+  //       await this.interactionSchemaService.updateSchedulerTaskRecords(
+  //         schedulerRecord.rid,
+  //         'SendEmail',
+  //         schedulerStatus.Success,
+  //         ''
+  //       );
+  //     }
+  //   } catch (error: any) {
+  //     logMessage(`[ERROR] Error in sendEmailInBatch: ${error}`);
+  //     if (schedulerRecord) {
+  //       await this.interactionSchemaService.updateSchedulerTaskRecords(
+  //         schedulerRecord.rid,
+  //         'SendEmail',
+  //         schedulerStatus.Failed,
+  //         error.message
+  //       );
+  //     }
+  //     throw error;
+  //   }
+  // }
+  async sendEmailInBatch(schedulerRecord?: SchedulerExecutions) {
+  const mainDb = await this.getMainDb();
+  const fetchEmailInfo: any = await mainDb.query(rawQueries.fetchEmailInfo);
+  logMessage(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
+
+  // Track results for observability
+  const results = { success: 0, skipped: 0, failed: 0 };
+
+  try {
+    if (schedulerRecord) {
+      const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(
+        schedulerRecord.rid,
+        'SendEmail'
+      );
+      if (isRecordExists == null) {
+        await this.interactionSchemaService.createSchedulerTaskRecords(
           schedulerRecord.rid,
           'SendEmail'
         );
-        if (isRecordExists == null) {
-          await this.interactionSchemaService.createSchedulerTaskRecords(
-            schedulerRecord.rid,
-            'SendEmail'
-          );
-        }
       }
-
-      for (let data of fetchEmailInfo[0]) {
-        let email_info: {
-          email: string;
-          name: string | null;
-          ccEmails?: string[] | [];
-        } = {
-          email: data.email,
-          name: data.name,
-          ccEmails: [],
-        };
-        let accountNumber = data.account_rnumber;
-        let interaction_rid = data.interaction_rid;
-        let is_interaction_followup = data.is_interaction_followup;
-        let userId = data.user_rid;
-        let project_fiscal_rid = data.project_fiscal_rid;
-        let accountRid = data.account_rid;
-        let interactionLevel = data.interaction_level;
-        let createdBy = data.user_rid;
-
-        // If emailInfo.email is empty, fetch POC email
-        let sendEmailInfo = email_info;
-
-          logMessage(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
-          if(interactionLevel === 'Account')
-          {
-             sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid,email_info,is_interaction_followup,data.interaction_rid);
-          }
-          else
-          {
-              sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid,email_info,is_interaction_followup);
-           if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
-          logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
-          continue;
-        }
-            }
-          
-
-        if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
-          logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
-          continue;
-        }
-         logMessage(`[SEND] Sending email to ${sendEmailInfo.email} for interaction ${interaction_rid}.`);
-
-        const [interactionItems, interactionInfo] = await Promise.all([
-          this.interactionSchemaService.fetchInteractionQuestionsById(
-            accountNumber,
-            interaction_rid
-          ),
-          this.interactionSchemaService.fetchInteractionInfo(
-            interaction_rid,
-            accountNumber
-          ),
-        ]);
-        const interactionLink = await this.generateInteractionLink(
-          interaction_rid,
-          interactionInfo.accountInfo.account_rid,
-          project_fiscal_rid,
-          interactionLevel
-        );
-        const senderEmailInfo = await this.getSenderEmailInfo(
-          interactionInfo.accountInfo.parent_account_rid,
-          interactionInfo.accountInfo.account_rid
-        );
-        const excelBuffer = await this.generateExcelBuffer(
-          interaction_rid,
-          interactionItems,
-          interactionInfo
-        );
-        const excelAttachment = {
-          filename: `interaction_${interaction_rid}.xlsx`,
-          content: Buffer.from(excelBuffer).toString("base64"),
-          contentType:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        };
-        // Send email
-        const emailResponse = await this.sendEmailWithAttachment(
-          sendEmailInfo,
-          interactionInfo.projectInfo,
-          interactionInfo.accountInfo,
-          excelAttachment,
-          interactionLink,
-          senderEmailInfo!,
-          interaction_rid,
-          is_interaction_followup,
-          interactionLevel,
-          false,
-          createdBy,
-          accountNumber,
-          data,
-          interactionInfo.interactionInfo
-        );
-        if (emailResponse) {
-          logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
-          if(!is_interaction_followup)
-          {
-            await this.interactionSchemaService.updateInteractionInfo(
-              accountNumber,
-              interaction_rid,
-              statusAction.SENT,
-              userId,
-              sendEmailInfo,
-              interactionLink
-            );
-          } else {
-            await this.interactionSchemaService.updateInteractionInfoForReminder(
-              accountNumber,
-              interaction_rid,
-              project_fiscal_rid,
-              statusAction.SENT,
-              userId,
-              sendEmailInfo,
-              interactionLink
-            );
-          }
-          await this.interactionSchemaService.updateEmailSendFlag(
-            interaction_rid
-          );
-        } else {
-          //need to add logic for sending toPS team
-          logMessage(`[FAIL] Email failed to send for interaction ${interaction_rid}. Needs manual intervention.`);
-        }
-      }
-      logMessage(`[BATCH EMAIL] Finished processing batch.`);
-
-      // Update task record to success if scheduler record is provided
-      if (schedulerRecord) {
-        await this.interactionSchemaService.updateSchedulerTaskRecords(
-          schedulerRecord.rid,
-          'SendEmail',
-          schedulerStatus.Success,
-          ''
-        );
-      }
-    } catch (error: any) {
-      logMessage(`[ERROR] Error in sendEmailInBatch: ${error}`);
-      if (schedulerRecord) {
-        await this.interactionSchemaService.updateSchedulerTaskRecords(
-          schedulerRecord.rid,
-          'SendEmail',
-          schedulerStatus.Failed,
-          error.message
-        );
-      }
-      throw error;
     }
+
+    for (const data of fetchEmailInfo[0]) {
+      const interaction_rid = data.interaction_rid;
+
+      try {
+        // ✅ Per-iteration try/catch — one failure won't kill the batch
+        const emailResult = await this.processSingleEmail(data);
+
+        if (emailResult === 'skipped') {
+          results.skipped++;
+        } else if (emailResult === 'success') {
+          results.success++;
+        } else {
+          results.failed++;
+        }
+      } catch (iterationError: any) {
+        results.failed++;
+        logMessage(`[ERROR] Unhandled error for interaction ${interaction_rid}: ${iterationError?.message ?? iterationError}`);
+        // Continue to next email instead of crashing the batch
+      }
+    }
+
+    logMessage(`[BATCH EMAIL] Done. Success: ${results.success}, Skipped: ${results.skipped}, Failed: ${results.failed}`);
+
+    if (schedulerRecord) {
+      await this.interactionSchemaService.updateSchedulerTaskRecords(
+        schedulerRecord.rid,
+        'SendEmail',
+        schedulerStatus.Success,
+        JSON.stringify(results)
+      );
+    }
+  } catch (error: any) {
+    logMessage(`[ERROR] Fatal error in sendEmailInBatch: ${error}`);
+    if (schedulerRecord) {
+      await this.interactionSchemaService.updateSchedulerTaskRecords(
+        schedulerRecord.rid,
+        'SendEmail',
+        schedulerStatus.Failed,
+        error.message
+      );
+    }
+    throw error;
   }
+}
+
+// ✅ Extracted per-email logic into its own method
+  private async processSingleEmail(data: any): Promise<'success' | 'skipped' | 'failed'> {
+    const {
+      email, name, account_rnumber: accountNumber,
+      interaction_rid, is_interaction_followup,
+      user_rid: userId, project_fiscal_rid,
+      account_rid: accountRid, interaction_level: interactionLevel,
+    } = data;
+
+    let email_info = { email, name, ccEmails: [] as string[] };
+
+    // ✅ Resolve recipient email based on interaction level
+    let sendEmailInfo = interactionLevel === 'Account'
+      ? await this.interactionSchemaService.fetchEmailInfoForAccount(
+          accountNumber, accountRid, email_info, is_interaction_followup, interaction_rid
+        )
+      : await this.interactionSchemaService.fetchEmailInfo(
+          accountNumber, interaction_rid, project_fiscal_rid, accountRid, email_info, is_interaction_followup
+        );
+
+    const resolvedEmail = sanitizeEmailAddress(sendEmailInfo?.email ?? '');
+    if (!resolvedEmail) {
+      logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+      return 'skipped';
+    }
+
+    if (sendEmailInfo.ccEmails?.length) {
+      sendEmailInfo.ccEmails = sendEmailInfo.ccEmails
+        .map(cc => sanitizeEmailAddress(cc))
+        .filter(cc => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cc));
+    }
+
+    sendEmailInfo = { ...sendEmailInfo, email: resolvedEmail };
+
+    logMessage(`[SEND] Sending to: "${resolvedEmail}", CC: ${JSON.stringify(sendEmailInfo.ccEmails)} for interaction ${interaction_rid}`);
+
+    const [interactionItems, interactionInfo] = await Promise.all([
+      this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber, interaction_rid),
+      this.interactionSchemaService.fetchInteractionInfo(interaction_rid, accountNumber),
+    ]);
+
+    const [interactionLink, senderEmailInfo, excelBuffer] = await Promise.all([
+      this.generateInteractionLink(
+        interaction_rid,
+        interactionInfo.accountInfo.account_rid,
+        project_fiscal_rid,
+        interactionLevel
+      ),
+      this.getSenderEmailInfo(
+        interactionInfo.accountInfo.parent_account_rid,
+        interactionInfo.accountInfo.account_rid
+      ),
+      this.generateExcelBuffer(interaction_rid, interactionItems, interactionInfo),
+    ]);
+
+    const excelAttachment = {
+      filename: `interaction_${interaction_rid}.xlsx`,
+      content: Buffer.from(excelBuffer).toString('base64'),
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    };
+
+
+    const emailResponse = await this.sendEmailWithAttachment(
+      sendEmailInfo,
+      interactionInfo.projectInfo,
+      interactionInfo.accountInfo,
+      excelAttachment,
+      interactionLink,
+      senderEmailInfo!,
+      interaction_rid,
+      is_interaction_followup,
+      interactionLevel,
+      false,
+      userId,
+      accountNumber,
+      data,
+      interactionInfo.interactionInfo
+    );
+
+    if (!emailResponse) {
+      logMessage(`[FAIL] Email failed for interaction ${interaction_rid}.`);
+      return 'failed';
+    }
+
+    logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
+
+    // ✅ Post-send updates
+    if (!is_interaction_followup) {
+      await this.interactionSchemaService.updateInteractionInfo(
+        accountNumber, interaction_rid, statusAction.SENT, userId, sendEmailInfo, interactionLink
+      );
+    } else {
+      await this.interactionSchemaService.updateInteractionInfoForReminder(
+        accountNumber, interaction_rid, project_fiscal_rid, statusAction.SENT, userId, sendEmailInfo, interactionLink
+      );
+    }
+
+    await this.interactionSchemaService.updateEmailSendFlag(interaction_rid);
+    return 'success';
+  }
+
   async fetchStatusIdsForReminder() {
     const mainDb = await this.getMainDb();
     const result: any = await mainDb.query(fetchStatusIdsForReminderList());
