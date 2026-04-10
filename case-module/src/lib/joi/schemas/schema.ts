@@ -144,6 +144,10 @@ const createCaseSchema = Joi.object({
   basic_research_payments_dc: positiveDecimal18_2,
   qualified_org_baseamount_dc: positiveDecimal18_2,
   lease_costs_of_computers_dc: positiveDecimal18_2,
+  credit_shared_wages_dc :positiveDecimal18_2,
+  pass_through_research_credit_dc :positiveDecimal18_2,
+  amount_allocated_beneficiaries_dc :positiveDecimal18_2,
+  
  basic_research_payments_ia: positiveDecimal18_2,
    qualified_org_baseamount_ia: positiveDecimal18_2,
   non_qualifying_ia_wages: positiveDecimal18_2,
@@ -297,13 +301,16 @@ const updateCaseSchema = Joi.object({
   fiduciary_beneficiary_credit_wi: positiveDecimal18_2,
   orphan_drug_qualified_expenses_wi: positiveDecimal18_2,
   credit_offset_tax_wi: positiveDecimal18_2,
-  credit_carry_forward_py_wi: positiveDecimal18_2,
+  credit_carry_forward_py_wi: positiveDecimal18_2, 
 
   // District of Columbia
   energy_consortia_amount_dc: positiveDecimal18_2,
   basic_research_payments_dc: positiveDecimal18_2,
   qualified_org_baseamount_dc: positiveDecimal18_2,
   lease_costs_of_computers_dc: positiveDecimal18_2,
+  credit_shared_wages_dc :positiveDecimal18_2,
+  pass_through_research_credit_dc :positiveDecimal18_2,
+  amount_allocated_beneficiaries_dc :positiveDecimal18_2
 });
 
 const caseClosedListSchema = Joi.object({
