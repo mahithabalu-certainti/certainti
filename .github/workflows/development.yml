@@ -1605,25 +1605,28 @@ jobs:
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5014
-          NODE_ENV=DEVELOPMENT
-          APP_ENV=DEVELOPMENT
+          NODE_ENV=DEV
+          APP_ENV=DEV
 
-          KEY_VAULT_URI=$KEY_VAULT_URI
+          KEY_VAULT_URI="https://developmentthinkrd365kv.vault.azure.net/"
 
           TRD365_AI_DEV_ENDPOINT="https://development-thinkrd365-api-management.azure-api.net/eventStreamService/api/aiAssessment/updateResponse%22"
-          TRD365_AI_DEV_JWT_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXBwaWQiOiJjNTc4MWZlNS02MmM4LTQyMGMtYWVlNC0wMTkyOTY5MTEyNmUiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vMzI4ZTk2ZmQtNTU4Yi00ZGQ5LThhYzYtY2NhODczNDE3MGVjL3YyLjAiLCJhdWQiOiJjNTc4MWZlNS02MmM4LTQyMGMtYWVlNC0wMTkyOTY5MTEyNmUiLCJpYXQiOjE3NTY0NjkxMjQsIm5iZiI6MTc1NjQ2OTA5NCwiZXhwIjoxNzg4MDA1MTI0fQ.hAMN_dUhAGE_8V7bXmRsWh79mkRbo66QlPTVNWZ-CbnDMaKgfusb9HCDKQTQbRB-c7Oh88dxuMbPWtORvGpchp_VaDl7rjJD1qucsPtXa0KKGb0goLo6ZvsZQjSPyEprhMUMEO8A12PZsL79Un4_Be1LJ3drSGfevehaBwxNrNF8__YX4rKl3xwvzP32FPQvoxLne1Km8aN9ggQyzu_MEeMLPWGtoN5Fw7T22Dl23uXjLo-5Kvro3FIeoSlpljy33BBm30jm-LTd2h6A-T-EqXqLWO7Gnp56gkQsFi-fGTC5QECzxZSNgbIOdbRCGkcsnGEtD5r9JJW-iSwqg99rOQ"
+          AZURE_TENANT_ID="b6734060-665c-4b7b-94e2-716458c1d933"
+          AZURE_CLIENT_ID="0d6c589d-aead-4576-9ff7-30b719c00046"
+          AZURE_CLIENT_SECRET="3Sw8Q~8hP7QTX64ko~jj76KT4vePLznIfJTgUaA3"
 
-          DEV_MAIN_DB_NAME=main-database-name
-          DEV_MAIN_DB_HOST=main-db-endpoint
-          DEV_MAIN_DB_USER=main-db-admin-username
-          DEV_MAIN_DB_PASSWORD=main-db-admin-password
-          DEV_MAIN_DB_MAINTENANCE="postgres
+          # Database Configuration - Will be retrieved from Key Vault
+          DEV_MAIN_DB_NAME="thinkrd365_main"
+          DEV_MAIN_DB_HOST="development-thinkrd365-psqlserver-centralus-main.postgres.database.azure.com"
+          DEV_MAIN_DB_USER="readonly_user"
+          DEV_MAIN_DB_PASSWORD="Ec*HvXp@3QWtjN_g"
+          DEV_MAIN_DB_MAINTENANCE="postgres"
 
-          DEV_ORG_DB_NAME=org-database-name
-          DEV_ORG_DB_HOST=org-db-endpoint
-          DEV_ORG_DB_USER=org-db-admin-username
-          DEV_ORG_DB_PASSWORD=org-db-admin-password
-          DEV_ORG_DB_MAINTENANCE="postgres
+          DEV_ORG_DB_NAME="thinkrd365_org"
+          DEV_ORG_DB_HOST="development-thinkrd365-psqlserver-centralus-org.postgres.database.azure.com"
+          DEV_ORG_DB_USER="readonly_user"
+          DEV_ORG_DB_PASSWORD="Qk&TpWx*7AZdyL_m"
+          DEV_ORG_DB_MAINTENANCE="postgres"
 
           AZURE_OPENAI_API_ENDPOINT_URL="https://pdfscraper.openai.azure.com/"
           AZURE_OPENAI_API_KEY="4X21jzrPJ98o9nZSZRO27qMAAyKTHLoDbbNRcdEvK3IjCZduxjIqJQQJ99BCACYeBjFXJ3w3AAABACOGPdEg"
@@ -1631,6 +1634,12 @@ jobs:
           AZURE_OPENAI_API_VERSION="2024-08-01-preview"
           FPA_CHAT_PROMPT_TEMPERATURE=0.2
           FPA_CHAT_PROMPT_MAX_TOKENS=900
+
+          # API Base URLs - AZURE API MANAGEMENT
+          CHAT_ACCOUNT_API_BASE_URL="https://development-thinkrd365-api-management.azure-api.net/accountService/api"
+          CHAT_ENTITY_API_BASE_URL="https://development-thinkrd365-api-management.azure-api.net/entityService/api"
+          CHAT_REPORT_API_BASE_URL="https://development-thinkrd365-api-management.azure-api.net/reportService/api"
+          CHAT_FORMEXTRACTION_API_BASE_URL="https://development-thinkrd365-api-management.azure-api.net/formextractionService/api"
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
