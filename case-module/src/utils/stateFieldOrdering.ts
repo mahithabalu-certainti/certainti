@@ -1136,12 +1136,12 @@ CA: {
     },
     DC: {
         sectionOrder: [
-            "Section A — Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.",
+            "Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.",
             "Section B—Alternative Simplified Credit. Skip this section if you are completing Section A.",
             "Section C—Current Year Credit"
         ],
         sectionFieldOrders: {
-            "Section A — Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.": [
+            "Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.": [
                 { pattern: /^\[1\] Certain amounts paid or incurred to energy consortia/, order: 1 },
                 { pattern: /^\[2\] Basic research payments to qualified organizations/, order: 2 },
                 { pattern: /^\[3\] Qualified organization base period amount/, order: 3 },
