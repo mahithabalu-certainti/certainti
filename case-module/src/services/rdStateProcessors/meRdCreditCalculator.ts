@@ -97,15 +97,16 @@ export class RdCreditCalculatorForME {
     // -------------------------------------------------------------------------
     private partA(config: ConfigJson, caseDetails: Case) {
         const cd = caseDetails as any;
-        const maineBasicResearchPayments = new Decimal(cd.me_federal_basic_research_payments ?? 0); // 6765 Section A line 2 / Section B line 15 (Maine portion)
-        const maineBasePeriodAmounts     = new Decimal(cd.me_federal_base_period_amounts     ?? 0); // 6765 Section A line 3 / Section B line 16 (Maine portion)
+        const federalBasicResearchPayments = cd.basic_research_payments_usa;
+         const federalQualifiedOrg = cd.qualified_org_baseamount_usa;
+         const federalBasicResearch = new Decimal(federalBasicResearchPayments.minus(federalQualifiedOrg))
+        const meBaseperiodAmount = cd.basic_research_payments_me
+        const basicResearchPayments = Decimal.max(federalBasicResearch.minus(meBaseperiodAmount), 0);
 
-        const basicResearchPayments = Decimal.max(maineBasicResearchPayments.minus(maineBasePeriodAmounts), 0);
         const basicResearchCredit   = basicResearchPayments.mul(config.basic_research_credit_rate / 100);
 
         return {
-            maineBasicResearchPayments: this.round2(maineBasicResearchPayments),
-            maineBasePeriodAmounts:     this.round2(maineBasePeriodAmounts),
+    
             basicResearchPayments:      this.round2(basicResearchPayments),
             basicResearchCredit:        this.round2(basicResearchCredit),
         };
@@ -217,11 +218,7 @@ export class RdCreditCalculatorForME {
         return {
             computed_fields: {
                 "Maine - Credit Calculations": {
-                    "[1a] Maine portion of federal basic research payments (Form 6765, Section A, line 2 or Section B, line 15)":
-                        partA.maineBasicResearchPayments,
 
-                    "[1b] Maine portion of federal base period amounts (Form 6765, Section A, line 3 or Section B, line 16)":
-                        partA.maineBasePeriodAmounts,
 
                     "[1] Basic research payments in excess of the federal base spent for research conducted in Maine (Form 6765, Section A, line 13 or Section B, line 26). Line 1a minus Line 1b, not less than 0":
                         partA.basicResearchPayments,

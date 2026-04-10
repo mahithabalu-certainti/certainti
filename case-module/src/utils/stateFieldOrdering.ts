@@ -933,10 +933,10 @@ CA: {
     },
     NE: {
         sectionOrder: [
-            "NoTitle"
+            "yesSplit"
         ],
         sectionFieldOrders: {
-            "NoTitle": [
+            "yesSplit": [
                 { pattern: /^\[2\] Enter total amount of federal research credit allowed/, order: 1 },
                 { pattern: "[3] Nebraska property factor (attach schedule showing calculations)", order: 2 },
                 { pattern: "[3a] Off-campus, but in Nebraska.", order: 3 },
