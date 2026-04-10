@@ -56,5 +56,5 @@ export const stateCalculators: any = {
     "NH": new RdCreditCalculatorForNH(),
     "ME": new RdCreditCalculatorForME(),
     "NE": new RdCreditCalculatorForNE(),
-    "NY": new RdCreditCalculatorForNY
+    "NY": new RdCreditCalculatorForNY()
 };
