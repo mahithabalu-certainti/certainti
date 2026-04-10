@@ -1340,16 +1340,16 @@ export class RdFormHelperService {
     // ── 11. Serialize and upload ───────────────────────────────────────────
     const filledBytes = await finalDoc.save();
     const pdfBuf = Buffer.from(filledBytes);
-    const localDir = path.resolve(__dirname, "../../../output/pdfs");
-    if (!fs.existsSync(localDir)) {
-      fs.mkdirSync(localDir, { recursive: true });
-    }
-    const localPath = path.join(
-      localDir,
-      `ireland_credit_${caseRid}_${Date.now()}.pdf`,
-    );
-    fs.writeFileSync(localPath, pdfBuf);
-    logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
+    // const localDir = path.resolve(__dirname, "../../../output/pdfs");
+    // if (!fs.existsSync(localDir)) {
+    //   fs.mkdirSync(localDir, { recursive: true });
+    // }
+    // const localPath = path.join(
+    //   localDir,
+    //   `ireland_credit_${caseRid}_${Date.now()}.pdf`,
+    // );
+    // fs.writeFileSync(localPath, pdfBuf);
+  //  logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
 
     const blobName = `cases/${caseRid}/rdForms/t661_${caseRid}_${Date.now()}.pdf`;
     const blobUrl = await uploadBufferToAzureBlob(
