@@ -1533,7 +1533,7 @@ jobs:
     needs:
       - changes
     if: ${{ needs.changes.outputs.chat-assistance-module == 'true' }}
-    name: Build and Deploy Report Module
+    name: Build and Deploy Chat Assistance Module
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -1601,7 +1601,17 @@ jobs:
           MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
           MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
           MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
-                    
+
+          DEV_MAIN_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-host" --query value -o tsv)
+          DEV_MAIN_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-user" --query value -o tsv)
+          DEV_MAIN_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-password" --query value -o tsv)
+          DEV_MAIN_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-name" --query value -o tsv)
+
+          DEV_ORG_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-host" --query value -o tsv)
+          DEV_ORG_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-user" --query value -o tsv)
+          DEV_ORG_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-password" --query value -o tsv)
+          DEV_ORG_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-name" --query value -o tsv)
+
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5014
@@ -1612,16 +1622,16 @@ jobs:
 
           TRD365_AI_DEV_ENDPOINT="https://development-thinkrd365-api-management.azure-api.net/eventStreamService/api/aiAssessment/updateResponse%22"
           
-          DEV_MAIN_DB_NAME=main-database-name
-          DEV_MAIN_DB_HOST=main-db-endpoint
-          DEV_MAIN_DB_USER=main-db-admin-username
-          DEV_MAIN_DB_PASSWORD=main-db-admin-password
+          DEV_MAIN_DB_NAME=$DEV_MAIN_DB_NAME
+          DEV_MAIN_DB_HOST=$DEV_MAIN_DB_HOST
+          DEV_MAIN_DB_USER=$DEV_MAIN_DB_USER
+          DEV_MAIN_DB_PASSWORD=$DEV_MAIN_DB_PASSWORD
           DEV_MAIN_DB_MAINTENANCE="postgres"
-
-          DEV_ORG_DB_NAME=org-database-name
-          DEV_ORG_DB_HOST=org-db-endpoint
-          DEV_ORG_DB_USER=org-db-admin-username
-          DEV_ORG_DB_PASSWORD=org-db-admin-password
+          
+          DEV_ORG_DB_NAME=$DEV_ORG_DB_NAME
+          DEV_ORG_DB_HOST=$DEV_ORG_DB_HOST
+          DEV_ORG_DB_USER=$DEV_ORG_DB_USER
+          DEV_ORG_DB_PASSWORD=$DEV_ORG_DB_PASSWORD
           DEV_ORG_DB_MAINTENANCE="postgres"
 
           AZURE_OPENAI_API_ENDPOINT_URL="https://pdfscraper.openai.azure.com/"
