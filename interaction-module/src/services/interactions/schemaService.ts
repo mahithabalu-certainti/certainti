@@ -2862,6 +2862,16 @@ class InteractionSchemaService {
         rawQueries.fetchResponseSourceByType(responseData.response_source)
       );
       responseData.response_source_rid = responseSourceIDs[0]?.rid ?? null;
+      logMessage(
+        `[updateInteractionResponse] Start interaction_rid=${responseData.interaction_rid}, accountNumber=${accountNumber}, userId=${userId}, response_source=${responseData.response_source}, questions_count=${Array.isArray(responseData.questions) ? responseData.questions.length : 0}, attachments_count=${Array.isArray(responseData.attachments) ? responseData.attachments.length : 0}`
+      );
+      if (Array.isArray(responseData.questions)) {
+        responseData.questions.forEach((question, index) => {
+          logMessage(
+            `[updateInteractionResponse] Incoming question[${index}] item_rid=${question?.rid}, response=${question?.response}`
+          );
+        });
+      }
       if (
         responseData.response_source === "Email Reply" ||
         responseData.response_source === "Email"
@@ -2951,11 +2961,17 @@ class InteractionSchemaService {
             },
             transaction,
           });
+          logMessage(
+            `[updateInteractionResponse] Lookup result item_rid=${question?.rid}, history_exists=${Boolean(existing)}, interaction_status_match=${Boolean(isExisting)}, existing_response=${existing?.interaction_response}`
+          );
 
           let created = null;
 
           if (existing && isExisting) {
             // Update existing response
+            logMessage(
+              `[updateInteractionResponse] Updating response history rid=${existing.rid}, item_rid=${question?.rid}, previous_response=${existing.interaction_response}, new_response=${question?.response}`
+            );
             await existing.update({
               interaction_response: question.response,
               response_by: resonseBy,
@@ -2966,6 +2982,9 @@ class InteractionSchemaService {
               modified_datetime: new Date(),
             }, { transaction });
           } else {
+            logMessage(
+              `[updateInteractionResponse] Creating response history item_rid=${question?.rid}, interaction_version=${interactionVersion}, response=${question?.response}`
+            );
             created = await InteractionResponseHistory.create(
               {
                 interaction_rid: responseData.interaction_rid,
@@ -3064,6 +3083,9 @@ class InteractionSchemaService {
           },
         });
       }
+      logMessage(
+        `[updateInteractionResponse] Completed interaction_rid=${responseData.interaction_rid}, interactionVersion=${interactionVersion}, responseCreated=${responseCreated}, status=${status}`
+      );
       return {
         interactionVersion,
         isAutoTriggerEnabled,
