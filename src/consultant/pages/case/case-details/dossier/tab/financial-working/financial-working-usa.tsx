@@ -942,6 +942,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               These keys are skipped by the computedFields loop below (which resolves
               to rawComputedFields.computed_fields when that nested key is present). */}
           {(rawComputedFields as any)?.virginia &&
+            (rawComputedFields as any).virginia !== null &&
             typeof (rawComputedFields as any).virginia === 'object' &&
             !Array.isArray((rawComputedFields as any).virginia) && (
               <div className='mb-2'>
@@ -1068,6 +1069,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
           })}
 
           {(rawComputedFields as any)?.virginiasection4 &&
+            (rawComputedFields as any).virginiasection4 !== null &&
             typeof (rawComputedFields as any).virginiasection4 === 'object' &&
             !Array.isArray((rawComputedFields as any).virginiasection4) && (
               <div className='mb-2'>
