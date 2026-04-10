@@ -117,6 +117,7 @@ type ProjectFiscalDetails {
     comments : String
     project_description : String
     is_assesed : Boolean
+    is_qualified : Boolean
     total_fte : String
     total_effort : String
     total_cost : String
@@ -156,6 +157,7 @@ type projectNewResponse {
     project_description: String
     assessment_status: String
     is_assesed: Boolean
+    is_qualified: Boolean
     total_fte: String
     total_subcon: String
     total_effort: String
@@ -234,6 +236,7 @@ input updateInlineProject {
     assessment_status : String,
     comments : String,
     is_assesed : Boolean,
+    is_qualified : Boolean,
     total_cost_nonlabor : String,
     total_cost_subcon : String,
     total_cost_fte : String,
