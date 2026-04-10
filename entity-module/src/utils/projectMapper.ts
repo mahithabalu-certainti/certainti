@@ -184,6 +184,7 @@ export class ProjectMapper {
       interaction_cc_list: null,
       assessment_status: data.assessment_status || null,
       is_assesed: data.is_assesed ?? false,
+      is_qualified: true,
       claim_status: null,
 
       comments: data.comments || null,

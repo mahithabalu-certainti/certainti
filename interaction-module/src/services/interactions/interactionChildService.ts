@@ -91,9 +91,9 @@ export class InteractionChildService {
           let colRef = `a.${field}`;
           if (field === "project_code") colRef = `p.project_code`;
           if (field === "account_name") colRef = `ad.account_name`;
-          if (field === "four_part_assessment") colRef = "CASE WHEN a.four_part_assessment_error_message IS NOT NULL AND a.four_part_assessment_error_message::text != 'null' THEN 'Failed' WHEN a.is_four_part_assessment_processed = true THEN 'Completed' ELSE 'Pending' END";
-          if (field === "project_summary") colRef = "CASE WHEN a.technical_summary_error_message IS NOT NULL AND a.technical_summary_error_message::text != 'null' THEN 'Failed' WHEN a.is_tech_summary_processed = true THEN 'Completed' ELSE 'Pending' END";
-          if (field === "qre_summary") colRef = "CASE WHEN a.qre_error_message IS NOT NULL AND a.qre_error_message::text != 'null' THEN 'Failed' WHEN a.is_qre_processed = true THEN 'Completed' ELSE 'Pending' END";
+          if (field === "four_part_assessment") colRef = "CASE WHEN i.is_primary = true THEN 'Not Applicable' WHEN a.four_part_assessment_error_message IS NOT NULL AND a.four_part_assessment_error_message::text != 'null' THEN 'Failed' WHEN a.is_four_part_assessment_processed = true THEN 'Completed' ELSE 'Pending' END";
+          if (field === "project_summary") colRef = "CASE WHEN i.is_primary = true THEN 'Not Applicable' WHEN a.technical_summary_error_message IS NOT NULL AND a.technical_summary_error_message::text != 'null' THEN 'Failed' WHEN a.is_tech_summary_processed = true THEN 'Completed' ELSE 'Pending' END";
+          if (field === "qre_summary") colRef = "CASE WHEN i.is_primary = true THEN 'Not Applicable' WHEN a.qre_error_message IS NOT NULL AND a.qre_error_message::text != 'null' THEN 'Failed' WHEN a.is_qre_processed = true THEN 'Completed' ELSE 'Pending' END";
           if (field === "interaction_status") colRef = "CASE WHEN a.interaction_question_error_message IS NOT NULL AND a.interaction_question_error_message::text != 'null' THEN 'Failed' WHEN a.is_interaction_question_processed = true THEN 'Completed' ELSE 'Pending' END";
 
           const booleanFields = [
