@@ -125,7 +125,9 @@ export async function processNewJerseyForm(
   accountNumber: string,
   templateBlobUrl: string,
   orgDb: Sequelize,
-  stateRid: String
+  stateRid: String,
+   stateCode:string,
+  countryCode: string
 ): Promise<string> {
   logMessage(`[NJ 306] Starting form generation for case: ${caseRid}`);
 
@@ -232,16 +234,18 @@ export async function processNewJerseyForm(
   };
 
   // 5. Generate and upload
-  return _generatePdf(data, caseRid, accountNumber, templateBlobUrl);
+  return generatePdf(data, caseRid, accountNumber, templateBlobUrl,stateCode,countryCode);
 }
 
 // --- PDF generator (private) -------------------------------------------------
 
-async function _generatePdf(
+async function generatePdf(
   data: NJForm306Data,
   caseRid: string,
   accountNumber: string,
   templateBlobUrl: string,
+   stateCode:string,
+  countryCode: string
 ): Promise<string> {
   const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 
@@ -381,8 +385,11 @@ async function _generatePdf(
 
   // --- Serialize and upload ---------------------------------------------------
   const pdfBuffer = Buffer.from(await pdfDoc.save());
-  const outBlob   = `cases/${caseRid}/rdForms/nj_form306_${caseRid}_${Date.now()}.pdf`;
-  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outBlob, accountNumber);
+  const outputFileName = `rd_form_${countryCode}${stateCode}.pdf`;
+  const outputBlobName = `cases/${caseRid}/rdForms/${outputFileName}`;
+
+
+  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outputBlobName, accountNumber);
 
   logMessage(`[NJ 306] Filled PDF uploaded: ${blobUrl}`);
   return blobUrl;

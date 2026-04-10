@@ -119,6 +119,8 @@ export async function processWisconsinForm(
   templateBlobUrl: string,
   orgDb: Sequelize,
   stateRid: string,
+   stateCode: string,
+  countryCode: string
 ): Promise<string> {
   logMessage(`[WI SCH-R] Starting form generation for case: ${caseRid}`);
 
@@ -211,16 +213,18 @@ export async function processWisconsinForm(
     line23_totalNonrefundable: num(cf["[23] Add lines 18, 21, and 22. This is the total nonrefundable portion of the credit. Include Schedule CF if the credit was not used in full"]),
   };
 
-  return _generatePdf(data, caseRid, accountNumber, templateBlobUrl);
+  return generatePdf(data, caseRid, accountNumber, templateBlobUrl,stateCode,countryCode);
 }
 
 // --- PDF generator (private) -------------------------------------------------
 
-async function _generatePdf(
+async function generatePdf(
   data: WIScheduleRData,
   caseRid: string,
   accountNumber: string,
   templateBlobUrl: string,
+   stateCode: string,
+  countryCode: string
 ): Promise<string> {
   const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 
@@ -373,8 +377,9 @@ async function _generatePdf(
 
   // --- Serialize and upload ------------------------------------------------
   const pdfBuffer = Buffer.from(await pdfDoc.save());
-  const outBlob   = `cases/${caseRid}/rdForms/wi_schedule_r_${caseRid}_${Date.now()}.pdf`;
-  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outBlob, accountNumber);
+  const outputFileName = `rd_form_${countryCode}${stateCode}.pdf`;
+  const outputBlobName = `cases/${caseRid}/rdForms/${outputFileName}`;
+  const blobUrl   = await uploadBufferToAzureBlob(pdfBuffer, outputBlobName, accountNumber);
 
   logMessage(`[WI SCH-R] Filled PDF uploaded: ${blobUrl}`);
   return blobUrl;

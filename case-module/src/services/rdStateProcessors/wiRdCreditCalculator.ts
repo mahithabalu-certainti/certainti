@@ -267,18 +267,30 @@ export class RdCreditCalculatorForWI {
     ) {
         const cd = caseData as any;
 
-        //---- Line 16a/16b: Fiduciary allocation (hardcoded 0)
-        const line16a = new Decimal(caseData.fiduciary_beneficiary_credit_wi ?? 0);
-        const line16b = credit._line16.minus(line16a);   // same as line16 for non-fiduciaries
+        //---- isFiduciary: drives line 16a/16b and which base is used for lines 17-19
+        const isFiduciary = !!(caseData.is_fiduciary_wi ?? false);
 
-        //---- Line 17: Max refundable portion = line16 × 25%
-        const line17 = line16b.mul(config.qre_credit_percentage_c2  / 100);
+        //---- Line 16a: Credit allocated to beneficiaries (fiduciary only)
+        const line16a = isFiduciary
+            ? new Decimal(caseData.fiduciary_beneficiary_credit_wi ?? 0)
+            : new Decimal(0);
+
+        //---- Line 16b: line16 − line16a (fiduciary only; equals line16 otherwise)
+        const line16b = isFiduciary
+            ? credit._line16.minus(line16a)
+            : new Decimal(0);
+
+        // Base for lines 17-19: line16b when fiduciary, line16 otherwise
+        const base = isFiduciary ? line16b : credit._line16;
+
+        //---- Line 17: Max refundable portion = base × 25%
+        const line17 = base.mul(config.qre_credit_percentage_c2 / 100);
 
         //---- Line 18: Credit used to offset tax (caseData input)
         const line18 = new Decimal(cd.credit_offset_tax_wi ?? 0);
 
-        //---- Line 19: line16 − line18
-        const line19 = Decimal.max(credit._line16.minus(line18), 0);
+        //---- Line 19: base − line18
+        const line19 = Decimal.max(base.minus(line18), 0);
 
         //---- Line 20: Actual refundable = min(line17, line19)
         const line20 = Decimal.min(line17, line19);
@@ -293,31 +305,24 @@ export class RdCreditCalculatorForWI {
         const line23 = line18.plus(line21).plus(line22);
 
         return {
-            line17: this.round2(line17),
-            line18: this.round2(line18),
-            line19: this.round2(line19),
-            line20: this.round2(line20),   // refundable portion
-            line21: this.round2(line21),   // nonrefundable portion
-            line22: this.round2(line22),
-            line23: this.round2(line23),   // total nonrefundable
+            isFiduciary,
+            line16a: this.round2(line16a),
+            line16b: this.round2(line16b),
+            line17:  this.round2(line17),
+            line18:  this.round2(line18),
+            line19:  this.round2(line19),
+            line20:  this.round2(line20),   // refundable portion
+            line21:  this.round2(line21),   // nonrefundable portion
+            line22:  this.round2(line22),
+            line23:  this.round2(line23),   // total nonrefundable
         };
     }
 
     // ── Rate resolver ──────────────────────────────────────────────────────
     private resolveRate(config: ConfigJson, hasPriorQREs: boolean): number {
-        if (hasPriorQREs) {
-            switch (config.activity_type) {
-                case "combustion_engine":  return config.rate_combustion_percentage;
-                case "energy_efficient":   return config.rate_energy_percentage;
-                default:                   return config.rate_standard_percentage;
-            }
-        } else {
-            switch (config.activity_type) {
-                case "combustion_engine":  return config.rate_combustion_no_prior_percentage;
-                case "energy_efficient":   return config.rate_energy_no_prior_percentage;
-                default:                   return config.rate_standard_no_prior_percentage;
-            }
-        }
+        return hasPriorQREs
+            ? config.rate_standard_percentage
+            : config.rate_standard_no_prior_percentage;
     }
 
     // ── Input params ───────────────────────────────────────────────────────
@@ -422,9 +427,9 @@ export class RdCreditCalculatorForWI {
                     "[16] Total research credits (add lines 14 and 15d). Form 3 and 5S filers stop here .":
                         credit.line16,
                     "[16a] Fiduciaries - Fill in the amount of credit allocated to beneficiaries":
-                        0,
+                        split.line16a,
                     "[16b] Fiduciaries - Subtract line 16a from line 16 .":
-                        0,
+                        split.line16b,
                     "[17] Multiply line 16 (line 16b for fiduciary) by .25 (25%)":
                         split.line17,
                     "[18] Amount of credit from line 16 (line 16b for fiduciary) used to offset tax":

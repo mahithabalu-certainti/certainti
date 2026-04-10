@@ -25,6 +25,7 @@ export interface RdCreditCountryCalcAttributes {
     final_credit_approved?: number | null;
     rd_form_url ? : string | null
     form_error_message? : string | null
+    country_export_data? : string | null
 }
 
 export interface RdCreditCountryCalcCreationAttributes
@@ -58,6 +59,7 @@ export class RdCreditCountryCalculations
     declare final_credit_approved?: number | null;
     declare rd_form_url? : string | null
     declare form_error_message? : string | null
+    declare country_export_data? : string | null
 
     static initialize(sequelize: Sequelize, schemaName: string) {
         return RdCreditCountryCalculations.init(
@@ -151,6 +153,10 @@ export class RdCreditCountryCalculations
                 },
                 form_error_message : {
                     type : DataTypes.STRING(500),
+                    allowNull : true
+                },
+                country_export_data : {
+                    type : DataTypes.TEXT,
                     allowNull : true
                 }
             },

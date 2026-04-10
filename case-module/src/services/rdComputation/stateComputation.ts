@@ -216,14 +216,28 @@ export class StateComputationService {
                     const caseClosed = caseDetails.status_rid == getCompletedTaskStatus?.rid;
                     result = await stateComputation.compute(caseRid, accountRid, schemaName, extractConfig, caseDetails, caseClosed);
                 } else {
-                    if (config.state_code === "LA") {
+                    if (config.state_code === "LA" || config.state_code === "NM") {
                         const employeeCounts: any[] = await orgDb.query(fetchEmployeeCountForCase(schemaName), {
                             replacements: { case_rid: caseRid },
                             type: QueryTypes.SELECT
                         });
-                        const laStateCount = employeeCounts.find((r: any) => r.state_rid === config.state_rid);
-                        caseDetails.employee_count = laStateCount ? Number(laStateCount.employee_count) : 0;
-                        logMessage(`[LA] Employee count resolved from DB: ${caseDetails.la_employee_count}`);
+                        const stateCount = employeeCounts.find((r: any) => r.state_rid === config.state_rid);
+                        caseDetails.employee_count = stateCount ? Number(stateCount.employee_count) : 0;
+                        logMessage(`[${config.state_code}] Employee count resolved from DB: ${caseDetails.employee_count}`);
+
+                        if (config.state_code === "NM" && caseDetails.employee_count > 25) {
+                            logMessage(`[NM] Skipping computation — employee count (${caseDetails.employee_count}) exceeds 25.`);
+                            await orgDb.query(rawQueries.updateStateFormError(schemaName), {
+                                replacements: {
+                                    errorMessage: `NM credit not applicable: employee count (${caseDetails.employee_count}) exceeds the maximum of 25 employees.`,
+                                    caseRid,
+                                    countryRid: config.country_rid,
+                                    stateRid:   config.state_rid
+                                },
+                                type: QueryTypes.UPDATE
+                            });
+                            continue;
+                        }
                     }
                     if (config.state_code === "RI") {
                         const [federalRow]: any = await orgDb.query(fetchFederalQREAndBaseForRI(schemaName), {
@@ -241,9 +255,9 @@ export class StateComputationService {
 
                 await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                     fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, config.state_rid, config.state_code,
-                    result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig,caseDetails.employee_count ?? 0,result
+                    result.inputFields, result.computedFields, result.finalCredit, result?.totalQRE ?? null, stateRDData, extractConfig,caseDetails.employee_count ?? 0,result,
+                    result.computedFields.base64Result ?? null
                 );
-
                 }
             } catch (err) {
                 logMessage(`Error processing state ${config.state_code}: ${err}`);

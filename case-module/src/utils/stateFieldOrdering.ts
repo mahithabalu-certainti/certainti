@@ -688,37 +688,17 @@ CA: {
             "Section 4 – Adjusted Expenses Calculation"
         ],
         sectionFieldOrders: {
-            "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": [
-                { pattern: /^\[1\] Virginia Qualified Research and Development Expenses\. Enter amount paid/, order: 1 },
-                { pattern: /^\[1\] Virginia Qualified Research and Development Expenses\. Column B/, order: 2 },
-                { pattern: /^\[2\] College and University Expenses Percentage/, order: 3 },
-                { pattern: /^\[3\] Virginia Base Amount for the Taxable Year/, order: 4 },
-                { pattern: /^\[3\] College and University Base Amount/, order: 5 },
-                { pattern: /^\[4\] Adjusted Expenses Amount\. Subtract Line 3 from Line 1\. Column A/, order: 6 },
-                { pattern: /^\[4\] Adjusted Expenses Amount\. Subtract Line 3 from Line 1\. Column B/, order: 7 },
-                { pattern: /^\[5\] Total Eligible Research Expenses/, order: 8 },
-                { pattern: /^\[5\] Eligible College and University Research Expenses/, order: 9 },
-                { pattern: /^\[6\] Credit Computation\. Multiply Line 5, Column A/, order: 10 },
-                { pattern: /^\[6\] Credit Computation\. Multiply Line 5, Column B/, order: 11 },
-                { pattern: /^\[7\] Credit Requested/, order: 12 },
-            ],
-            "Section 2 – Alternative Simplified Credit Calculation": [
-                { pattern: /^\[1\] Total Adjusted Calendar Year Qualified Research and Development Expenses\. Enter the amount/, order: 1 },
-                { pattern: /^\[1\] Total Adjusted Calendar Year Qualified Research and Development Expenses\. Column B/, order: 2 },
-            ],
-            "Section 1 – Summary of Expenses": [
-                { pattern: /^\[1\] Contract Research Expenses\. Column A/, order: 1 },
-                { pattern: /^\[1\] Contract Research Expenses\. Column B/, order: 2 },
-                { pattern: /^\[2\] Supply Expenses\. Column A/, order: 3 },
-                { pattern: /^\[2\] Supply Expenses\. Column B/, order: 4 },
-                { pattern: /^\[3\] Wages\. Column A/, order: 5 },
-                { pattern: /^\[3\] Wages\. Column B/, order: 6 },
-                { pattern: /^\[4\] Total Qualified Expenses\. Column A/, order: 7 },
-                { pattern: /^\[4\] Total Qualified Expenses\. Column B/, order: 8 },
-            ],
+            // Array sections (dual-column) are passed through as-is — no field ordering entries needed.
+            // Single-column sections (Schedule B and Schedule C sec 1–3) are ordered below.
+
+            // ── Schedule B Section 1 – VA Qualified Research and Development Expenses ──
             "Section 1 – VA Qualified Research and Development Expenses": [
                 { pattern: /^\[1a\] VA Qualified Research and Development Expenses in CY/, order: 1 },
+                { pattern: /^\[1b\] Short year filers only: Enter the number of months/, order: 2 },
+                { pattern: /^\[1c\] Short year filers only: Divide the number of months/, order: 3 },
             ],
+
+            // ── Schedule B Section 2 – Determine the Fixed Base Percentage ──
             "Section 2 – Determine the Fixed Base Percentage": [
                 { pattern: /^\[2a\] Expenses for the 3rd preceding taxable year/, order: 1 },
                 { pattern: /^\[2b\] Expenses for the 2nd preceding taxable year/, order: 2 },
@@ -732,6 +712,8 @@ CA: {
                 { pattern: /^\[2j\] Average Gross Receipts for Prior 3 Taxable Years/, order: 10 },
                 { pattern: /^\[2k\] Percentage of Virginia Qualified Research and Development Expenses/, order: 11 },
             ],
+
+            // ── Schedule B Section 3 – Determine the Virginia Base Amount ──
             "Section 3 – Determine the Virginia Base Amount": [
                 { pattern: /^\[3a\] Gross receipts for the 4th preceding taxable year/, order: 1 },
                 { pattern: /^\[3b\] Gross receipts for the 3rd preceding taxable year/, order: 2 },
@@ -741,33 +723,32 @@ CA: {
                 { pattern: /^\[3f\] Average Gross Receipts for Prior 4 Taxable Years/, order: 6 },
                 { pattern: /^\[3g\] Base Amount\. Calendar Year Filers/, order: 7 },
             ],
+
+            // ── Schedule B Section 4 – Virginia Base Amount ──
             "Section 4 – Virginia Base Amount": [
                 { pattern: /^\[4a\] Virginia Base Amount/, order: 1 },
             ],
+
+            // ── Schedule C Section 1 – Virginia Qualified Research and Development Expenses ──
             "Section 1 – Virginia Qualified Research and Development Expenses": [
                 { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column A/, order: 1 },
                 { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column B/, order: 2 },
+                { pattern: /^\[1b\] Short year filers only: Enter the number of days/, order: 3 },
+                { pattern: /^\[1c\] Short year filers only: Divide the number of days/, order: 4 },
             ],
+
+            // ── Schedule C Section 2 – Determination of How to Compute the Credit ──
             "Section 2 – Determination of How to Compute the Credit": [
                 { pattern: /^\[2\] Were research and development expenses paid or incurred/, order: 1 },
             ],
+
+            // ── Schedule C Section 3 – Average Qualified Research and Development Expenses Calculation ──
             "Section 3 – Average Qualified Research and Development Expenses Calculation": [
                 { pattern: /^\[3a\] Expenses for the 3rd preceding taxable year/, order: 1 },
                 { pattern: /^\[3b\] Expenses for the 2nd preceding taxable year/, order: 2 },
                 { pattern: /^\[3c\] Expenses for the preceding taxable year/, order: 3 },
                 { pattern: /^\[3d\] Total expenses from preceding 3 taxable years/, order: 4 },
                 { pattern: /^\[3e\] Average qualified research and development expenses/, order: 5 },
-            ],
-            "Section 4 – Adjusted Expenses Calculation": [
-                { pattern: /^\[4a\] Enter the current year expenses\. Column A must include/, order: 1 },
-                { pattern: /^\[4a\] Enter the current year expenses\. Column B/, order: 2 },
-                { pattern: /^\[4b\] If expenses were incurred in connection with a Virginia college/, order: 3 },
-                { pattern: /^\[4c\] Column A/, order: 4 },
-                { pattern: /^\[4c\] Column B/, order: 5 },
-                { pattern: /^\[4d\] Multiply the amount\(s\) on Line 4c by .+\. Column A/, order: 6 },
-                { pattern: /^\[4d\] Multiply the amount\(s\) on Line 4c by .+\. Column B/, order: 7 },
-                { pattern: /^\[4e\] Subtract Line 4d from Line 4a.+Column A/, order: 8 },
-                { pattern: /^\[4e\] Subtract Line 4d from Line 4a.+Column B/, order: 9 },
             ],
         },
         BOLD: []
@@ -850,10 +831,13 @@ CA: {
     },
     LA: {
         sectionOrder: [
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765"
+            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765",
+            "LQRE-6765 (Less than 50 Employees)",
+            "EXPENDITURES (50\u00B799 EMPLOYEES)",
+            "CREDIT FOR INCREASING R&D EXPENDITURES (100 OR MORE EMPLOYEES)",
         ],
         sectionFieldOrders: {
-            "RESEARCH & DEVELOPMENT TAX CREDIT CALCULATION - 6765": [
+            "LQRE-6765 (Less than 50 Employees)": [
                 { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
                 { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
                 { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
@@ -862,8 +846,30 @@ CA: {
                 { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
                 { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
                 { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
-                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 }
-            ]
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 },
+            ],
+            "EXPENDITURES (50\u00B799 EMPLOYEES)": [
+                { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
+                { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
+                { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
+                { pattern: "[4] 3 Previous Years Average", order: 4 },
+                { pattern: /^\[5\] Base Calculation \(\d+(\.\d+)?% x Line 4\)$/, order: 5 },
+                { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
+                { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
+                { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 },
+            ],
+            "CREDIT FOR INCREASING R&D EXPENDITURES (100 OR MORE EMPLOYEES)": [
+                { pattern: /^\[1\] \d{4} LA Research & Development Expenditures$/, order: 1 },
+                { pattern: /^\[2\] \d{4} LA Research & Development Expenditures$/, order: 2 },
+                { pattern: /^\[3\] \d{4} LA Research & Development Expenditures$/, order: 3 },
+                { pattern: "[4] 3 Previous Years Average", order: 4 },
+                { pattern: /^\[5\] Base Calculation \(\d+(\.\d+)?% x Line 4\)$/, order: 5 },
+                { pattern: /^\[6\] \d{4} LA Research & Development Expenditures$/, order: 6 },
+                { pattern: "[7] Increase in LA R&D Expenditures (Line 6 minus Line 5)", order: 7 },
+                { pattern: /^\[8\] Credit Percentage \([\d.]+ % with .+ LA employees\)$/, order: 8 },
+                { pattern: "[9] Louisiana Research Credit (Line 7 times Line 8)", order: 9 },
+            ],
         },
         BOLD: []
     },
@@ -927,50 +933,51 @@ CA: {
     },
     NE: {
         sectionOrder: [
-            "Method 1 — Property and Payroll Factor Apportionment (Lines 2–9)",
-            "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)",
-            "Final Credit and Usage Allocation (Lines 21–25)"
+            "NoTitle"
         ],
         sectionFieldOrders: {
-            "Method 1 — Property and Payroll Factor Apportionment (Lines 2–9)": [
-                { pattern: "[2] Federal research credit (Form 6765, line 38 or 40)", order: 1 },
-                { pattern: "[3a] Nebraska property factor — off-campus (%)", order: 2 },
-                { pattern: "[3b] Nebraska property factor — on-campus (%)", order: 3 },
-                { pattern: "[4a] Nebraska payroll factor — off-campus (%)", order: 4 },
-                { pattern: "[4b] Nebraska payroll factor — on-campus (%)", order: 5 },
-                { pattern: "[5a] Add lines 3a and 4a (off-campus)", order: 6 },
-                { pattern: "[5b] Add lines 3b and 4b (on-campus)", order: 7 },
-                { pattern: "[6a] Average off-campus factor (line 5a ÷ 2)", order: 8 },
-                { pattern: "[6b] Average on-campus factor (line 5b ÷ 2)", order: 9 },
-                { pattern: "[7a] Federal credit apportioned off-campus (line 2 × line 6a)", order: 10 },
-                { pattern: "[7b] Federal credit apportioned on-campus (line 2 × line 6b)", order: 11 },
-                { pattern: /^\[8a\] Regular research tax credit \(line 7a × \d+(\.\d+)?%\) — off-campus$/, order: 12 },
-                { pattern: /^\[8b\] Enhanced research tax credit \(line 7b × \d+(\.\d+)?%\) — on-campus$/, order: 13 },
-                { pattern: "[9] Method 1 total (line 8a + line 8b)", order: 14 }
-            ],
-            "Method 2 — NE QRE / Total US QRE Ratio (Lines 10–20)": [
-                { pattern: "[10] Total NE qualified R&D expenses", order: 1 },
-                { pattern: "[11] NE expenses — off-campus portion", order: 2 },
-                { pattern: "[12] NE expenses — on-campus portion (line 10 minus line 11)", order: 3 },
-                { pattern: "[13] Total US QREs from Federal Form 6765 (line 9 or line 28)", order: 4 },
-                { pattern: "[14] Off-campus NE ratio (line 11 ÷ line 13)", order: 5 },
-                { pattern: "[15] On-campus NE ratio (line 12 ÷ line 13)", order: 6 },
-                { pattern: "[16] Federal credit × off-campus ratio (line 2 × line 14)", order: 7 },
-                { pattern: "[17] Federal credit × on-campus ratio (line 2 × line 15)", order: 8 },
-                { pattern: /^\[18\] Regular research tax credit \(line 16 × \d+(\.\d+)?%\) — off-campus$/, order: 9 },
-                { pattern: /^\[19\] Enhanced research tax credit \(line 17 × \d+(\.\d+)?%\) — on-campus$/, order: 10 },
-                { pattern: "[20] Method 2 total (line 18 + line 19)", order: 11 }
-            ],
-            "Final Credit and Usage Allocation (Lines 21–25)": [
-                { pattern: "[21] Nebraska R&D credit — larger of line 9 or line 20", order: 1 },
-                { pattern: /^\[21\] Winning method:/, order: 2 },
-                { pattern: "[22] Credit used on Nebraska income tax return (refundable — Form 3800N line 18)", order: 3 },
-                { pattern: "[23] Credit used for refund of state sales/use taxes", order: 4 },
-                { pattern: "[24] Credit distributed to partners, shareholders, or beneficiaries (nonrefundable)", order: 5 },
-                { pattern: "[25] Total credit usage (lines 22 + 23 + 24, must not exceed line 21)", order: 6 }
+            "NoTitle": [
+                { pattern: /^\[2\] Enter total amount of federal research credit allowed/, order: 1 },
+                { pattern: "[3] Nebraska property factor (attach schedule showing calculations)", order: 2 },
+                { pattern: "[3a] Off-campus, but in Nebraska.", order: 3 },
+                { pattern: /^\[3b\] On-campus in Nebraska\./, order: 4 },
+                { pattern: "[4] Nebraska payroll factor (attach schedule showing calculations)", order: 5 },
+                { pattern: "[4a] Off-campus, but in Nebraska.", order: 6 },
+                { pattern: "[4b] On-campus in Nebraska.", order: 7 },
+                { pattern: "[5a] Add lines 3a and 4a (off-campus).", order: 8 },
+                { pattern: "[5b] Add lines 3b and 4b (on-campus).", order: 9 },
+                { pattern: "[6] Average property and payroll factors", order: 10 },
+                { pattern: "[6a] Off-campus (line 5a ÷ 2).", order: 11 },
+                { pattern: "[6b] On-campus (line 5b ÷ 2).", order: 12 },
+                { pattern: "[7a] Multiply line 2 x line 6a (off-campus) .", order: 13 },
+                { pattern: "[7b] Multiply line 2 x line 6b (on-campus).", order: 14 },
+                { pattern: "[8a] Regular research tax credit (line 7a x 15%) (off-campus).", order: 15 },
+                { pattern: "[8b] Enhanced research tax credit (line 7b x 35%) (on-campus).", order: 16 },
+                { pattern: "[9] Total research tax credit (line 8a plus line 8b) .", order: 17 },
+                { pattern: "[10] Enter amount of all qualified expenses for R&D activities in Nebraska.", order: 18 },
+                { pattern: /^\[11\] Enter amount of expenses on line 10 which were not performed/, order: 19 },
+                { pattern: /^\[12\] Enter amount of expenses on line 10 which were performed/, order: 20 },
+                { pattern: /^\[13\] Enter total amount of qualified expenses for R&D activities in all states/, order: 21 },
+                { pattern: "[14] Divide line 11 by line 13 (off-campus).", order: 22 },
+                { pattern: "[15] Divide line 12 by line 13 (on-campus).", order: 23 },
+                { pattern: "[16] Multiply line 2 x line 14 (off-campus).", order: 24 },
+                { pattern: "[17] Multiply line 2 x line 15 (on-campus).", order: 25 },
+                { pattern: /^\[18\] Regular research tax credit \(line 16 × \d+(\.\d+)?%\) — off-campus$/, order: 26 },
+                { pattern: /^\[19\] Enhanced research tax credit \(line 17 × \d+(\.\d+)?%\) — on-campus$/, order: 27 },
+                { pattern: "[20] Total research tax credit (line 18 plus line 19.", order: 28 },
+                { pattern: "[21] Enter the larger of line 9 or line 20.", order: 29 },
+                { pattern: /^\[22\] Amount of credit \(refundable to the entity/, order: 30 },
+                { pattern: /^\[23\] Amount of credit from line 21 used for refunds/, order: 31 },
+                { pattern: /^\[24\] Amount of credit from line 21 \(nonrefundable\) distributed/, order: 32 },
+                { pattern: "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21", order: 33 }
             ]
         },
-        BOLD: []
+        BOLD: [
+            "[9] Total research tax credit (line 8a plus line 8b) .",
+            "[20] Total research tax credit (line 18 plus line 19.",
+            "[21] Enter the larger of line 9 or line 20.",
+            "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21"
+        ]
     },
     NH: {
         sectionOrder: [
@@ -987,10 +994,10 @@ CA: {
     },
     RI: {
         sectionOrder: [
-            "RI Schedule RC — R&D Expense Credit"
+            "Complete address(es) of Rhode Island location(s) where Research & Development Expenses were Incurred"
         ],
         sectionFieldOrders: {
-            "RI Schedule RC — R&D Expense Credit": [
+            "Complete address(es) of Rhode Island location(s) where Research & Development Expenses were Incurred": [
                 { pattern: "[1] Federal Qualified Research Expenses from Federal Form 6765, line 9 or line 20", order: 1 },
                 { pattern: "[2] Federal Base Amount from Federal Form 6765, line 9 or 23", order: 2 },
                 { pattern: "[3] Federal Excess Expenses. Subtract line 2 from line 1", order: 3 },
@@ -1214,6 +1221,27 @@ CA: {
                 { pattern: /^\[26\]\s*Electing reduced credit under 280C$/, order: 8 },
                 { pattern: /^Multiply line 20 by/, order: 9 }
             ]
+        },
+        BOLD: []
+    },
+
+    KY: {
+        sectionOrder: [
+            "PART I—Computation of Allowable Tax Credit",
+            "PART II—Current Year Credit",
+        ],
+        sectionFieldOrders: {
+            "PART I—Computation of Allowable Tax Credit": [
+                { pattern: "[1] Cost of construction (attach schedule)", order: 1 },
+                { pattern: "[2] Cost of equipment (attach schedule)", order: 2 },
+                { pattern: "[3] Total qualified costs (add lines 1 and 2)", order: 3 },
+                { pattern: /^\[4\] Allowable tax credit \(enter \d+(\.\d+)?% of line 3\)$/, order: 4 },
+            ],
+            "PART II—Current Year Credit": [
+                { pattern: "[1] LLET Credit—Enter on Schedule TCS, Part II, Column E", order: 1 },
+                { pattern: "[2] Corporation Income Tax Credit—Enter on Schedule TCS, Part II, Column F", order: 2 },
+                { pattern: "[3] Individual Income Tax Credit—Enter on Form 740, 740-NP, or 741", order: 3 },
+            ],
         },
         BOLD: []
     }

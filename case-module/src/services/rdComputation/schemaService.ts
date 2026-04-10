@@ -418,7 +418,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any, finalCredit: number, result: any,config : JSON) {
+    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any, finalCredit: number, result: any,config : JSON, country_export_data? : string) {
         const { RdCreditCountryCalculations, Case } = await this.caseModelService.getModels(accountNumber);
         const [calculationEntry] = await RdCreditCountryCalculations.upsert(
             {
@@ -435,7 +435,8 @@ class RDCreditSchemaService {
                 total_wages: result?.totalFTE,
                 total_supplies: result?.totalSubCon,
                 total_subcontract: result?.totalSubCon,
-                config_json: config
+                config_json: config,
+                country_export_data : country_export_data
             },
             {
                 returning: true
@@ -483,7 +484,7 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string,state_code:string, input_params: any, computed_fields: any, final_credit: number, total_qre: number, stateRdData: any,config:any, resource_count:any,result?: any,) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string,state_code:string, input_params: any, computed_fields: any, final_credit: number, total_qre: number, stateRdData: any,config:any, resource_count:any,result?: any, state_export_data? : string) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         const [calculationEntry] = await RdCreditStateCalculations.upsert(
             {
@@ -503,7 +504,8 @@ class RDCreditSchemaService {
                 total_supplies: result?.totalSupplies,
                 total_subcontract: result?.totalContract,
                 config_json: config,
-                total_resources:resource_count
+                total_resources:resource_count,
+                state_export_data : state_export_data
                 
             },
             {

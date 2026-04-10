@@ -61,7 +61,7 @@ export const fetchRdFormUrlForState = (schemaName : string, caseRid : string) =>
   return query;
 }
 
-export const fetchStateCalcDataForDossier = (schemaName: string, caseRid: string) => {
+export const fetchStateCalcDataForDossierForUS = (schemaName: string, caseRid: string) => {
   return `
   SELECT
     rs.state_rid,
@@ -84,6 +84,32 @@ export const fetchStateCodesByRids = (stateRids: string[]) => {
 export const fetchCountryCalcDataForDossier = (schemaName: string, caseRid: string) => {
   return `
   SELECT
+    rs.country_rid,
+    rs.country_export_data
+  FROM
+    ${schemaName}.rd_credit_country_calculations rs
+  WHERE
+    rs.case_rid = '${caseRid}'
+    AND rs.country_export_data IS NOT NULL
+  `
+}
+
+export const fetchStateCalcDataForDossierForOther = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
+    rs.state_rid,
+    rs.state_export_data
+  FROM
+    ${schemaName}.rd_credit_state_calculations rs
+  WHERE
+    rs.case_rid = '${caseRid}'
+    AND rs.state_export_data IS NOT NULL
+  `
+}
+
+export const fetchCountryCalcDataForDossierForUSA = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
     rc.input_params,
     rc.computed_fields
   FROM
@@ -93,5 +119,18 @@ export const fetchCountryCalcDataForDossier = (schemaName: string, caseRid: stri
     AND rc.input_params IS NOT NULL
     AND rc.computed_fields IS NOT NULL
   LIMIT 1
+  `
+}
+
+export const fetchCountryRidForCode = (schemaName: string, caseRid: string) => {
+  return `
+  SELECT
+    rs.country_rid
+  FROM
+    ${schemaName}.rd_credit_country_calculations rs
+  WHERE
+    rs.case_rid = '${caseRid}'
+    AND rs.input_params IS NOT NULL
+    AND rs.computed_fields IS NOT NULL
   `
 }
