@@ -12,6 +12,7 @@ import {
 import {
   fetchProjectCostDetailsBasedOnCasesForRdforms,
   fetchTotalResourcesForCase,
+  fetchFourPartAssessmentForCase,
 } from "../../utils/rdFinancialWorkingQueries";
 import axios from "axios";
 import RdFormMapperSchemaService from "./schemaService";
@@ -849,8 +850,32 @@ export class RdFormHelperService {
     // DB shape: { computedFields: { Total, Projects, Title }, finalCredit }
     const inner = computedFields?.computedFields ?? computedFields;
     const totals = inner?.Total ?? {};
-    const projects = (inner?.Projects ?? []) as any[];
+    const rawProjects = (inner?.Projects ?? []) as any[];
     const titleObj = inner?.Title ?? {};
+
+    // Enrich projects with four-part assessment narrative fields
+    const assessmentRows: any[] = await orgDb.query(
+      fetchFourPartAssessmentForCase(schemaName, caseRid),
+      { type: QueryTypes.SELECT },
+    );
+    const assessmentByCode = new Map<string, any>();
+    const assessmentByName = new Map<string, any>();
+    assessmentRows.forEach((row: any) => {
+      if (row.project_code) assessmentByCode.set(row.project_code.trim().toLowerCase(), row);
+      if (row.project_name) assessmentByName.set(row.project_name.trim().toLowerCase(), row);
+    });
+    const projects = rawProjects.map((proj: any) => {
+      const code = (proj["Project Code"] || "").trim().toLowerCase();
+      const name = (proj["Project Name"] || "").trim().toLowerCase();
+      const assessment = assessmentByCode.get(code) || assessmentByName.get(name);
+      if (!assessment) return proj;
+      return {
+        ...proj,
+        "Uncertainty": assessment.technological_uncertainty_rationale || "",
+        "Work Performed": assessment.process_of_experimentation_rationale || "",
+        "Advancements": assessment.technological_in_nature_rationale || "",
+      };
+    });
     const finalCredit = (computedFields?.finalCredit ??
       inner?.finalCredit ??
       0) as number;
@@ -1210,7 +1235,7 @@ export class RdFormHelperService {
         405.8, 420.0, 434.4, 448.8, 463.2, 477.6, 492.0, 506.4, 520.8, 535.2,
         549.6, 564.0, 578.4, 592.8, 607.2, 621.6, 640.3,
       ];
-      const LINES_246 = [640.3, 658.6, 672.7, 687.1, 701.5, 715.9];
+      const LINES_246 = [640.3, 658.6, 672.7, 687.1, 701.5, 729.9];
 
       const stampLines = (lineList: number[], text: string, fontSize = 7) => {
         if (!text?.trim()) return;
@@ -1324,7 +1349,7 @@ export class RdFormHelperService {
     //   `ireland_credit_${caseRid}_${Date.now()}.pdf`,
     // );
     // fs.writeFileSync(localPath, pdfBuf);
-    // logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
+  //  logMessage(`Ireland PDF stored locally for testing: ${localPath}`);
 
     const blobName = `cases/${caseRid}/rdForms/t661_${caseRid}_${Date.now()}.pdf`;
     const blobUrl = await uploadBufferToAzureBlob(

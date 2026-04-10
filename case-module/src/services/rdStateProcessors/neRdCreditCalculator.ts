@@ -285,7 +285,7 @@ export class RdCreditCalculatorForNE {
     ) {
         return {
             computed_fields: {
-                "NoTitle": {
+                "yesSplit": {
                     "[2] Enter total amount of federal research credit allowed for this tax year from Federal Form 6765, line 38 or line 40. (Attach Federal Form 6765.) Do not include any amounts which were distributed on Federal Form 6765, line 39 (see instructions)":
                         m1.federalCredit,
                     "[3] Nebraska property factor (attach schedule showing calculations)": "",

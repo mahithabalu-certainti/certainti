@@ -321,14 +321,14 @@ export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: str
     const query = `
     WITH fetch_project_ids AS (
     SELECT project_fiscal_rid, rid, project_code, project_name ,qre_final
-    FROM ${schemaName}.case_projects 
+    FROM ${schemaName}.case_projects
     WHERE
     case_rid = '${caseRid}'
     AND
     account_rid = '${accountRid}'
     ),
     calculate_cost AS (
-    SELECT 
+    SELECT
     cp.project_code, cp.project_name, cp.rid, cp.qre_final
     FROM
     ${schemaName}.project_fiscal cp
@@ -341,7 +341,7 @@ export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: str
     cp.project_code, cp.project_name, cp.rid, cp.qre_final
     ORDER BY cp.project_name ASC
     )
-    SELECT 
+    SELECT
     array_agg(jsonb_build_object(
     'project_code', project_code,
     'project_name', project_name,
@@ -352,6 +352,24 @@ export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: str
     `;
     return query;
   }
+
+export const fetchFourPartAssessmentForCase = (schemaName: string, caseRid: string) => {
+    return `
+    SELECT
+      pf.project_code,
+      pf.project_name,
+      fpa.technological_uncertainty_rationale,
+      fpa.process_of_experimentation_rationale,
+      fpa.technological_in_nature_rationale,
+      fpa.permitted_purpose_rationale
+    FROM ${schemaName}.case_projects cp
+    JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    LEFT JOIN ${schemaName}.four_part_assessment fpa ON fpa.project_fiscal_rid = pf.rid
+    WHERE cp.case_rid = '${caseRid}'
+    AND pf.is_qualified = true
+    AND fpa.project_fiscal_rid IS NOT NULL
+    `;
+}
 
 export const fetchTotalResourcesForCase = (caseRid: string, accountRid: string, schemaName: string) => {
     const query = `

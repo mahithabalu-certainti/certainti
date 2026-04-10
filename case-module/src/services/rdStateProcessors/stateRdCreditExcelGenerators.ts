@@ -1731,12 +1731,15 @@ export function addStateSummarySheetToWorkbook(
         cols.forEach((val, i) => {
             const c = ws.getCell(dataRow, i + 1);
             const isCurrency = i >= 4;
+            const isLeftAlign = i <= 1;
             c.value  = val as ExcelJS.CellValue;
             c.border = ALL_THIN;
             c.font   = { size: 10 };
             if (isCurrency) {
                 c.numFmt = CURRENCY_FMT;
                 c.alignment = { horizontal: "right" };
+            } else if (isLeftAlign) {
+                c.alignment = { horizontal: "left" };
             } else {
                 c.alignment = { horizontal: "center" };
             }
@@ -1755,6 +1758,8 @@ export function addStateSummarySheetToWorkbook(
         if (i >= 4) {
             c.numFmt = CURRENCY_FMT;
             c.alignment = { horizontal: "right" };
+        } else if (i <= 1) {
+            c.alignment = { horizontal: "left" };
         } else {
             c.alignment = { horizontal: "center" };
         }
