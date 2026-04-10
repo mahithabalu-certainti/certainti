@@ -30,6 +30,8 @@ import { processMassachusettsForm } from "./maFormGenerator";
 import { processNewJerseyForm } from "./njFormGenerator";
 import { processSouthCarolinaForm } from "./scFormGenerator";
 import { processWisconsinForm } from "./wiFormGenerator";
+import { processConnecticutForm } from "./ctFormGenerator";
+import { processNewMexicoForm } from "./nmFormGenerator";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -514,11 +516,32 @@ export class RdFormMapperService {
            
           }
 
-          if (resolvedStateCode === "WI") {
-              filledFormUrl= await processWisconsinForm(
-                caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb, state,resolvedStateCode,countryCode
-              );
-}
+          // if (resolvedStateCode === "WI") {
+          //     filledFormUrl= await processWisconsinForm(
+          //       caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb, state,resolvedStateCode,countryCode
+          //     );
+          // }
+           if (resolvedStateCode === "WI") {
+            filledFormUrl = await processWisconsinForm(
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,
+              state, resolvedStateCode, countryCode,
+            );
+          }
+ 
+          // ── Connecticut CT-1120 RDC ───────────────────────────────────────
+          if (resolvedStateCode === "CT") {
+            filledFormUrl = await processConnecticutForm(
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,state,
+              resolvedStateCode, countryCode,
+            );
+          }
+
+            if (resolvedStateCode === "NM") {
+            filledFormUrl = await processNewMexicoForm(
+              caseRid, schemaName, accountNumber, formInfo.browse_file, orgDb,
+              state,resolvedStateCode, countryCode,
+            );
+          }
           // filledFormUrl = await this.generatePDFNonFillable(
           //   enhancedMapperConfig,
           //   accountRid,
