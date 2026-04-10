@@ -148,6 +148,12 @@ interface CaseAttributes {
   rural_basic_rd_credit_nm?:number;
   additional_tech_jobs_rd_credit_nm?:number;
   rural_additional_tech_jobs_rd_credit_nm?:number;
+  basic_research_payments_me?:number;
+  
+
+
+
+
 }
 
 export interface CaseCreationAttributes
@@ -286,6 +292,7 @@ export class Case
   public credit_carry_forward_py_il?: number;
   public income_tax_amount_il?: number;
   public other_state_tax_credit_il?: number;
+  public basic_research_payments_me?:number;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -417,6 +424,7 @@ export class Case
         lease_costs_of_computers_vt: {type : DataTypes.DECIMAL, allowNull : true},
 
         credit_carry_forward_py_me: {type : DataTypes.DECIMAL, allowNull : true},
+        basic_research_payments_me: {type : DataTypes.DECIMAL, allowNull : true},
 
         lease_costs_of_computers_mn: { type: DataTypes.DECIMAL, allowNull: true },
         credit_tax_limit_mn: { type: DataTypes.DECIMAL, allowNull: true },
