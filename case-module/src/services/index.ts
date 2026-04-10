@@ -20,7 +20,7 @@ import { RdFormMapperService } from "./rdFormMapper/rdFormMapperService";
 class Services {
   private logger: Logger;
   caseService: IChildCaseService;
-  caseManagementService: ICaseManagementService
+  caseManagementService: ICaseManagementService;
   jurisdictionService: JurisdictionService;
   historicalSubmissionService: HistoricalSubmissionService;
   projectResourceService: ProjectResourceService;

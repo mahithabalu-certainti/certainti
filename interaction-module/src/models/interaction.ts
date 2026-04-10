@@ -154,7 +154,7 @@ export class Interaction
         transaction_id: { type: DataTypes.STRING, allowNull: true },
         four_part_assessment_rid : { type : DataTypes.STRING, allowNull : true},
         interaction_status_rid : { type : DataTypes.STRING, allowNull : true},
-        is_primary: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false }
+        is_primary: { type: DataTypes.BOOLEAN, allowNull: true }
       },
       {
         sequelize,

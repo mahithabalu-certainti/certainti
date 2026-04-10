@@ -86,6 +86,20 @@ class InteractionSchemaService {
         if (interactionData.interaction_source_rid) {
           whereClause.interaction_source_rid = interactionData.interaction_source_rid;
         }
+
+        // Serialize concurrent is_primary determination for the same project+source group
+        // to prevent two transactions from both seeing existingCount===0 and creating
+        // multiple is_primary=true rows. The advisory lock is released automatically
+        // when the surrounding transaction commits or rolls back.
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.interactionModelService.getSequelize();
+        }
+        const lockKey = `is_primary_${interactionData.project_fiscal_rid}_${interactionData.interaction_source_rid || ''}_${interactionData.interaction_assessment_source_rid || ''}`;
+        await this.orgDbSequelize.query(
+          'SELECT pg_advisory_xact_lock(hashtext(:lockKey))',
+          { replacements: { lockKey }, transaction, type: 'SELECT' }
+        );
+
         const existingCount = await Interaction.count({
           where: whereClause,
           transaction,
@@ -93,9 +107,13 @@ class InteractionSchemaService {
         interactionData.is_primary = existingCount === 0;
         logMessage(`[createInteractions] is_primary=${interactionData.is_primary} for project_fiscal_rid=${interactionData.project_fiscal_rid}, source_rid=${interactionData.interaction_source_rid}, assessment_source_rid=${interactionData.interaction_assessment_source_rid}, existingCount=${existingCount}`);
 
-        const statusList = await this.getStatus();
+        const [statusList, rdAssessmentSourceRid] = await Promise.all([
+          this.getStatus(),
+          this.getInteractionAssessmentSourceByType(interactionAssessmentSourceType.RD),
+        ]);
         const mapStatus = new Map(statusList.map((s) => [s.status_name, s.rid]));
-        if (interactionData.interaction_assessment_source_rid === interactionAssessmentSourceType.RD) {
+        const isRdAssessment = interactionData.interaction_assessment_source_rid === rdAssessmentSourceRid;
+        if (isRdAssessment) {
           interactionData.interaction_status_rid = interactionData.is_primary
             ? mapStatus.get('Active')!
             : mapStatus.get('In-Active')!;
@@ -104,7 +122,7 @@ class InteractionSchemaService {
         }
 
         logMessage(
-          `[createInteractions] interaction_status_rid set to "${interactionData.interaction_assessment_source_rid === interactionAssessmentSourceType.RD
+          `[createInteractions] interaction_status_rid set to "${isRdAssessment
             ? (interactionData.is_primary ? 'Active' : 'In-Active')
             : 'Active (FPA)'
           }" (rid: ${interactionData.interaction_status_rid})`

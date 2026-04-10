@@ -358,7 +358,8 @@ export const rawQueries = {
       FROM ${schemaName}.ai_assessment_audit a
       LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
       LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
-      LEFT JOIN ${schemaName}.interactions i ON i.transaction_id = a.transaction_id
+      LEFT JOIN (SELECT DISTINCT ON (transaction_id) * FROM ${schemaName}.interactions 
+      ORDER BY transaction_id, created_at DESC) i ON i.transaction_id = a.transaction_id
       ${whereString}
       ORDER BY ${dbSortBy} ${dbSortOrder}
       LIMIT :limit OFFSET :offset
@@ -366,11 +367,14 @@ export const rawQueries = {
   },
   fetchAiAssessmentAuditCount(schemaName: string, whereString: string) {
     return `
-      SELECT COUNT(*) as "totalCount"
+      SELECT COUNT(DISTINCT a.rid) as "totalCount"
       FROM ${schemaName}.ai_assessment_audit a
       LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
       LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
-      LEFT JOIN ${schemaName}.interactions i ON i.transaction_id = a.transaction_id
+      LEFT JOIN (
+        SELECT DISTINCT transaction_id
+        FROM ${schemaName}.interactions
+      ) i ON i.transaction_id = a.transaction_id
       ${whereString}
     `;
   },
