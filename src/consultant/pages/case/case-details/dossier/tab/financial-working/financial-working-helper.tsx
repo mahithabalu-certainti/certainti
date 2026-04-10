@@ -181,17 +181,16 @@ export const renderTableSection = (
                 : formatCurrency(value as string | number | null | undefined);
 
           const shouldLeftAlign =
-            leftAlignColumnIndices.includes(index) ||
-            (typeof value === 'string' &&
-              value.trim() !== '' &&
-              isNaN(Number(value)) &&
-              !value.endsWith('%'));
+            typeof value === 'string' &&
+            value.trim() !== '' &&
+            isNaN(Number(value)) &&
+            !value.endsWith('%');
 
           return (
             <div
-              className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} ${shouldLeftAlign ? 'text-left' : 'flex justify-end text-right'}`}
+              className={`w-full ${isBold ? 'font-bold text-[#1A2733]' : 'text-[#425A76] font-medium'} ${shouldLeftAlign ? 'text-left' : 'flex justify-end text-right'} ${leftAlignColumnIndices ? 'flex  text-right font-medium' : ''}`}
             >
-              {formattedValue}
+              {leftAlignColumnIndices ? value : formattedValue}
             </div>
           );
         },

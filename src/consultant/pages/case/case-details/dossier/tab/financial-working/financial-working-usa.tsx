@@ -452,7 +452,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
     );
   };
 
-  const renderIllinoisTable = (illinoisData: any[]) => {
+  const renderIllinoisTable = (illinoisData: any[], key: string) => {
     if (!Array.isArray(illinoisData) || illinoisData.length === 0) return null;
 
     // Build header objects
@@ -461,7 +461,7 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       { id: 'Description', label: '', width: '25%' }, // Adjusted width for the description
       ...illinoisData.map((col) => ({
         id: col['Column Name'] || '',
-        label: col['Column Name'] || '',
+        label: key === 'newMexico' ? '' : col['Column Name'] || '',
         subLabel: col['SubColumn Name'] || '',
       })),
     ];
@@ -500,6 +500,76 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
       formatValue,
       '450px',
       [1] // Left align columns at index 0 (Prefix) and 1 (Description)
+    );
+  };
+
+  const renderVirginiaTable = (virginiaData: Record<string, any[]>) => {
+    if (
+      !virginiaData ||
+      typeof virginiaData !== 'object' ||
+      Array.isArray(virginiaData)
+    )
+      return null;
+
+    const sections = Object.entries(virginiaData);
+    if (sections.length === 0) return null;
+
+    return (
+      <div className='w-full'>
+        {sections.map(([sectionName, sectionData]) => {
+          if (!Array.isArray(sectionData) || sectionData.length === 0)
+            return null;
+
+          // Build header objects — sectionName goes into Description column label
+          // so it appears inside the table header row (not as a separate div above)
+          const table_headers = [
+            { id: 'Prefix', label: '', width: '10%' },
+            { id: 'Description', label: sectionName, width: '300px' },
+            ...sectionData.map((col) => ({
+              id: col['Column Name'] || '',
+              label: col['Column Name'] || '',
+              subLabel: col['SubColumn Name'] || '',
+            })),
+          ];
+
+          // Identify row keys (excluding header meta keys)
+          const metaKeys = ['Column Name', 'SubColumn Name'];
+          const rowKeysSet = new Set<string>();
+          sectionData.forEach((colObj) => {
+            Object.keys(colObj).forEach((key) => {
+              if (!metaKeys.includes(key)) {
+                rowKeysSet.add(key);
+              }
+            });
+          });
+
+          // Create rows with prefix and label split
+          const table_rows = Array.from(rowKeysSet).map((rowKey) => {
+            const { prefix, label } = extractPrefix(rowKey);
+            const rowItem: any = {
+              Prefix: prefix,
+              Description: label,
+            };
+            sectionData.forEach((colObj) => {
+              const colId = colObj['Column Name'] || '';
+              rowItem[colId] = colObj[rowKey];
+            });
+            return rowItem;
+          });
+
+          return (
+            <div key={sectionName} className='mb-1'>
+              {renderTableSection(
+                { table_headers, table_rows },
+                boldRows,
+                formatValue,
+                '450px',
+                [1]
+              )}
+            </div>
+          );
+        })}
+      </div>
     );
   };
 
@@ -865,8 +935,27 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               }
               return null;
             })}
-
           {/* Dynamic Computed Fields Section */}
+
+          {/* Virginia-specific: render virginia + virginiasection4 directly from
+              rawComputedFields when they exist as siblings to a nested computed_fields.
+              These keys are skipped by the computedFields loop below (which resolves
+              to rawComputedFields.computed_fields when that nested key is present). */}
+          {(rawComputedFields as any)?.virginia &&
+            (rawComputedFields as any).virginia !== null &&
+            typeof (rawComputedFields as any).virginia === 'object' &&
+            !Array.isArray((rawComputedFields as any).virginia) && (
+              <div className='mb-2'>
+                {renderCard(
+                  'NoTitle',
+                  renderVirginiaTable(
+                    (rawComputedFields as any).virginia as Record<string, any[]>
+                  ),
+                  false
+                )}
+              </div>
+            )}
+
           {Object.entries(computedFields).map(([key, value]) => {
             if (
               key === 'computed_fields' ||
@@ -901,17 +990,37 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
             }
 
             // Special handling for "illinois"
-            if (key === 'illinois' && Array.isArray(value)) {
+            if (
+              (key === 'illinois' || key === 'newMexico') &&
+              Array.isArray(value)
+            ) {
               return (
                 <div key={key} className='mb-2'>
                   {renderCard(
                     'NoTitle', // Empty title for Illinois table
-                    renderIllinoisTable(value),
+                    renderIllinoisTable(value, key),
                     false
                   )}
                 </div>
               );
             }
+
+            // Special handling for "virginia"
+            // if (
+            //   (key === 'virginia' || key === 'virginiasection4') &&
+            //   typeof value === 'object' &&
+            //   value !== null
+            // ) {
+            //   return (
+            //     <div key={key} className='mb-2'>
+            //       {renderCard(
+            //         'NoTitle',
+            //         renderVirginiaTable(value as Record<string, any[]>),
+            //         false
+            //       )}
+            //     </div>
+            //   );
+            // }
 
             // Special handling for "federal"
             if (
@@ -958,6 +1067,24 @@ const FinancialWorkingUSA: React.FC<FinancialWorkingUSAProps> = ({
               </div>
             );
           })}
+
+          {(rawComputedFields as any)?.virginiasection4 &&
+            (rawComputedFields as any).virginiasection4 !== null &&
+            typeof (rawComputedFields as any).virginiasection4 === 'object' &&
+            !Array.isArray((rawComputedFields as any).virginiasection4) && (
+              <div className='mb-2'>
+                {renderCard(
+                  'NoTitle',
+                  renderVirginiaTable(
+                    (rawComputedFields as any).virginiasection4 as Record<
+                      string,
+                      any[]
+                    >
+                  ),
+                  false
+                )}
+              </div>
+            )}
 
           {/* Top-level final_credit summary if present */}
           {(data?.data as any)?.final_credit !== undefined && (
