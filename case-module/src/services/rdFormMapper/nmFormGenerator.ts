@@ -212,7 +212,7 @@ export async function processNewMexicoForm(
     line2_ruralArea: Boolean(caseRow.nm_rural_area ?? false),
 
     // Line 3: Total Qualified Expenditures (informational — from column A)
-    line3_qualifiedExpenditures: findKey(colA, "[4] Basic Technology"),
+    line3_qualifiedExpenditures: findKey(colA, ""),
 
     // Lines 4–7: Credit amounts from column B
     line4_basicCredit:

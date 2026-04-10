@@ -409,4 +409,24 @@ export const fetchEmployeeCountForCase = (schemaName: string) =>
         `
 }
 
+export const fetchNYProjectQREsByClassification = (schemaName: string) =>
+{
+    return `
+          SELECT
+              pf.project_classification_rid,
+              CAST(SUM((pfr.total_cost_fte_from_prj_res  * pf.rd_percent_final) / 100) AS DECIMAL(18,2)) AS wages,
+              CAST(SUM((pfr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final) / 100) AS DECIMAL(18,2)) AS supplies,
+              CAST(SUM((pfr.total_cost_subcon_from_prj_res   * pf.rd_percent_final) / 100) AS DECIMAL(18,2)) AS contract
+          FROM ${schemaName}.cases cs
+          JOIN ${schemaName}.case_projects cp  ON cp.case_rid = cs.rid
+          JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+          JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
+          WHERE cs.rid = :case_rid
+              AND cs.fiscal_year = :fiscal_year
+              AND pfr.region_rid = :region_rid
+              AND pf.is_qualified = true
+          GROUP BY pf.project_classification_rid
+        `
+}
+
   
