@@ -202,7 +202,7 @@ export class StateComputationService {
                 const stateComputation = stateCalculators[config.state_code];
                 if(config.state_code === 'KY') {
                     isKentuckyState = true
-                    const classificationIds = await mainDb.query<TaskTypeResponse>(rawQueries.getClassficationIds(), {type : QueryTypes.SELECT});
+                    const classificationIds = await mainDb.query<TaskTypeResponse>(rawQueries.getClassficationIds(config.state_rid), {type : QueryTypes.SELECT});
                     classificationForKentucky = classificationIds.map((d) => d.rid);
                 }
                 const extractConfig = this.extractConfigJson(config.config_json);
