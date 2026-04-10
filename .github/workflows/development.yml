@@ -1611,21 +1611,17 @@ jobs:
           KEY_VAULT_URI="https://developmentthinkrd365kv.vault.azure.net/"
 
           TRD365_AI_DEV_ENDPOINT="https://development-thinkrd365-api-management.azure-api.net/eventStreamService/api/aiAssessment/updateResponse%22"
-          AZURE_TENANT_ID="b6734060-665c-4b7b-94e2-716458c1d933"
-          AZURE_CLIENT_ID="0d6c589d-aead-4576-9ff7-30b719c00046"
-          AZURE_CLIENT_SECRET="3Sw8Q~8hP7QTX64ko~jj76KT4vePLznIfJTgUaA3"
-
-          # Database Configuration - Will be retrieved from Key Vault
-          DEV_MAIN_DB_NAME="thinkrd365_main"
-          DEV_MAIN_DB_HOST="development-thinkrd365-psqlserver-centralus-main.postgres.database.azure.com"
-          DEV_MAIN_DB_USER="readonly_user"
-          DEV_MAIN_DB_PASSWORD="Ec*HvXp@3QWtjN_g"
+          
+          DEV_MAIN_DB_NAME=main-database-name
+          DEV_MAIN_DB_HOST=main-db-endpoint
+          DEV_MAIN_DB_USER=main-db-admin-username
+          DEV_MAIN_DB_PASSWORD=main-db-admin-password
           DEV_MAIN_DB_MAINTENANCE="postgres"
 
-          DEV_ORG_DB_NAME="thinkrd365_org"
-          DEV_ORG_DB_HOST="development-thinkrd365-psqlserver-centralus-org.postgres.database.azure.com"
-          DEV_ORG_DB_USER="readonly_user"
-          DEV_ORG_DB_PASSWORD="Qk&TpWx*7AZdyL_m"
+          DEV_ORG_DB_NAME=org-database-name
+          DEV_ORG_DB_HOST=org-db-endpoint
+          DEV_ORG_DB_USER=org-db-admin-username
+          DEV_ORG_DB_PASSWORD=org-db-admin-password
           DEV_ORG_DB_MAINTENANCE="postgres"
 
           AZURE_OPENAI_API_ENDPOINT_URL="https://pdfscraper.openai.azure.com/"
@@ -1640,6 +1636,7 @@ jobs:
           CHAT_ENTITY_API_BASE_URL="https://development-thinkrd365-api-management.azure-api.net/entityService/api"
           CHAT_REPORT_API_BASE_URL="https://development-thinkrd365-api-management.azure-api.net/reportService/api"
           CHAT_FORMEXTRACTION_API_BASE_URL="https://development-thinkrd365-api-management.azure-api.net/formextractionService/api"
+
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
