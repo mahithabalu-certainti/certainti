@@ -2230,6 +2230,13 @@ fetchRegularFieldValue(
   },
   getPlatformCaseSetting () {
     return `SELECT assessment_methodology FROM ${MAIN_SCHEMA_NAME}.organization_licenses`
+  },
+  getClassficationIds (stateRid : string) {
+    return `
+    SELECT classification_rid AS rid FROM ${MAIN_SCHEMA_NAME}.classification_geography_map
+    WHERE
+    state_rid = '${stateRid}'
+    `
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
