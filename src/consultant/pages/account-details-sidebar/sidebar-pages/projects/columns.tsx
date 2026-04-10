@@ -36,6 +36,11 @@ const IsAssessedOptions: { label: string; value: string }[] = [
   { label: 'No', value: 'false' },
 ];
 
+const IsQualifiedOptions: { label: string; value: string }[] = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' },
+];
+
 export const getProjectColumns = (
   onClick: (row: Project) => void,
   memoizedProjectTypes: ListOption[],
@@ -248,6 +253,37 @@ export const getProjectColumns = (
       type: 'select',
       required: true,
       options: IsAssessedOptions,
+    },
+    conditionallyEdit: [
+      {
+        key: 'is_rd_claim_qualified' as keyof Project,
+        matchValue: false,
+      },
+    ],
+  },
+  {
+    id: 'is_qualified',
+    sortId: 'is_qualified',
+    editId: 'is_qualified',
+    label: 'Is Qualified?',
+    sortable: true,
+    editable:
+      permissionMap?.['is_qualified']?.read &&
+      permissionMap?.['is_qualified']?.edit &&
+      !accountInActive,
+    width: 120,
+    hide:
+      !permissionMap?.['is_qualified']?.read &&
+      !permissionMap?.['is_qualified']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return <span>{row.is_qualified ? 'Yes' : 'No'}</span>;
+    },
+    field: {
+      type: 'select',
+      required: true,
+      options: IsQualifiedOptions,
     },
     conditionallyEdit: [
       {

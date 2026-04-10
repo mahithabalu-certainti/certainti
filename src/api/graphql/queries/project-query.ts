@@ -162,7 +162,8 @@ export const UPDATE_PROJECT = gql`
           total_cost_subcon
           total_cost_nonlabor
           project_type_name
-          is_assesed
+          is_assesed,
+          is_qualified
         }
       }
     }
