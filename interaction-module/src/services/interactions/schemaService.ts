@@ -92,6 +92,13 @@ class InteractionSchemaService {
         });
         interactionData.is_primary = existingCount === 0;
         logMessage(`[createInteractions] is_primary=${interactionData.is_primary} for project_fiscal_rid=${interactionData.project_fiscal_rid}, source_rid=${interactionData.interaction_source_rid}, assessment_source_rid=${interactionData.interaction_assessment_source_rid}, existingCount=${existingCount}`);
+
+        const statusList = await this.getStatus();
+        const mapStatus = new Map(statusList.map((s) => [s.status_name, s.rid]));
+        interactionData.interaction_status_rid = interactionData.is_primary
+          ? mapStatus.get('Active')!
+          : mapStatus.get('In-Active')!;
+        logMessage(`[createInteractions] interaction_status_rid set to "${interactionData.is_primary ? 'Active' : 'In-Active'}" (rid: ${interactionData.interaction_status_rid})`);
       }
 
       const interaction = await Interaction.create(interactionData, {
