@@ -206,43 +206,88 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, values, state]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const enforcedValuesRef = React.useRef<Record<string, any>>({});
+
   useEffect(() => {
     // updated default value into constuctFormData
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
-        if (field.assignDefaultValue && field.defaultValue) {
+        const fieldName = field.name;
+        const currentDefault = field.defaultValue;
+        const lastEnforced = enforcedValuesRef.current[fieldName];
+        if (field.reassignDefaultOnChange) {
           if (field.clearValue) {
             const { key, matchedValue } = field.clearValue;
             if (constructFormData[key] === matchedValue) {
-              setConstructFormData((prev) => ({
-                ...prev,
-                [field.name]: field.defaultValue || '',
-              }));
+              if (currentDefault !== lastEnforced) {
+                setConstructFormData((prev) => ({
+                  ...prev,
+                  [fieldName]: currentDefault || '',
+                }));
+                enforcedValuesRef.current[fieldName] = currentDefault;
+              }
+            } else {
+              // Condition not met; clear enforced tracking to allow re-enforcement when condition is met again
+              enforcedValuesRef.current[fieldName] = undefined;
             }
           } else if (
             field.defaultValue &&
             field.assignDefaultValue &&
             !field.clearValue
           ) {
-            setConstructFormData((prev) => ({
-              ...prev,
-              [field.name]: field.defaultValue || '',
-            }));
+            // Only update if the default value itself changed in props (e.g. parent case changed)
+            if (currentDefault !== lastEnforced) {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [fieldName]: currentDefault || '',
+              }));
+              enforcedValuesRef.current[fieldName] = currentDefault;
+            }
           } else {
+            if (lastEnforced !== undefined) {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [fieldName]: '',
+              }));
+              enforcedValuesRef.current[fieldName] = undefined;
+            }
+          }
+        } else {
+          if (field.assignDefaultValue && field.defaultValue) {
+            if (field.clearValue) {
+              const { key, matchedValue } = field.clearValue;
+              if (constructFormData[key] === matchedValue) {
+                setConstructFormData((prev) => ({
+                  ...prev,
+                  [field.name]: field.defaultValue || '',
+                }));
+              }
+            } else if (
+              field.defaultValue &&
+              field.assignDefaultValue &&
+              !field.clearValue
+            ) {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [field.name]: field.defaultValue || '',
+              }));
+            } else {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [field.name]: '',
+              }));
+            }
+          } else if (
+            field.assignDefaultValue &&
+            !field.defaultValue &&
+            !field.clearValue
+          ) {
             setConstructFormData((prev) => ({
               ...prev,
               [field.name]: '',
             }));
           }
-        } else if (
-          field.assignDefaultValue &&
-          !field.defaultValue &&
-          !field.clearValue
-        ) {
-          setConstructFormData((prev) => ({
-            ...prev,
-            [field.name]: '',
-          }));
         }
       });
     });
@@ -466,6 +511,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             .map((f) => f.trim())
             .forEach((f) => {
               newData[f] = '';
+
+              // Sync the enforced default ref so the useEffect doesn't immediately put the old default back
+              const targetField = formData
+                ?.flatMap((s) => s.fields)
+                .find((fl) => fl.name === f);
+              if (targetField) {
+                enforcedValuesRef.current[f] = targetField.defaultValue;
+              }
 
               // Also clear errors for these fields
               setFormData((prevFormData) => {
@@ -958,11 +1011,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value === f.clearValue.matchedValue
             ) {
               newData[f.name] = '';
+              enforcedValuesRef.current[f.name] = f.defaultValue;
               updatedField.error = '';
             }
             // clear selected date when other field change
             if (f.clearDate === field.name) {
               newData[f.name] = '';
+              enforcedValuesRef.current[f.name] = f.defaultValue;
               updatedField.error = '';
             }
             // Handle name/email error clearing when Include In Communications is No
@@ -3946,7 +4001,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               {/* Accordion section header — clickable with chevron toggle */}
               {isAccordion && section.sectionName ? (
                 <h4
-                  className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'} ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'} cursor-pointer select-none flex items-center justify-between`}
+                  className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-semibold text-[13px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'} ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'} cursor-pointer select-none flex items-center justify-between`}
                   onClick={() =>
                     toggleAccordionSection(accordionGroup, section.sectionName)
                   }
@@ -3974,12 +4029,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               {isAccordion ? (
                 <div
                   style={{
-                    maxHeight: isAccordionOpen ? '2000px' : '0px',
-                    overflow: 'hidden',
-                    transition: 'max-height 0.35s ease-in-out',
+                    display: 'grid',
+                    gridTemplateRows: isAccordionOpen ? '1fr' : '0fr',
+                    transition:
+                      'grid-template-rows 0.35s ease-in-out, opacity 0.35s ease-in-out',
+                    opacity: isAccordionOpen ? 1 : 0,
                   }}
                 >
-                  {loadDefaultSections(section, true, i)}
+                  <div className='overflow-hidden'>
+                    {loadDefaultSections(section, true, i)}
+                  </div>
                 </div>
               ) : (
                 <>

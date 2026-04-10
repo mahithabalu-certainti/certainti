@@ -12,6 +12,7 @@ import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
 import {
+  CaseDetails,
   CaseFormFields,
   CaseFormPayload,
   ColorCode,
@@ -92,13 +93,16 @@ export const CreateCases: React.FC = () => {
     useState<string>('');
   const [selectedCountryCode, setSelectedCountryCode] = useState<string>('');
   const [selectedCountryRid, setSelectedCountryRid] = useState<string>('');
+  const [selectedCountryName, setSelectedCountryName] = useState<string>('');
   const [selectedAccountRid, setSelectedAccountRid] = useState<string>('');
   const [isAmendmentType, setIsAmendmentType] = useState<boolean>(false);
   const [hasParentCase, setHasParentCase] = useState<boolean>(false);
+  const [parentCaseId, setParentCaseId] = useState<string>('');
   const [parentCaseFiscalYear, setParentCaseFiscalYear] = useState<string>('');
   const [isCaseClosed, setIsCaseClosed] = useState<boolean>(false);
   const [calculatedStatutoryDate, setCalculatedStatutoryDate] =
     useState<string>('');
+  const [parentDetails, setParentDetails] = useState<CaseDetails | null>(null);
   const [dateConstraints, setDateConstraints] = useState<{
     planned_min: string;
     planned_max: string;
@@ -141,6 +145,12 @@ export const CreateCases: React.FC = () => {
   const countryName = searchParams.get('country_name');
 
   const { data: caseData, isLoading } = useCaseDetails(caseId || '', accountId);
+
+  // Fetch parent case details when a parent case RID is selected in amendment create mode
+  const { data: parentCaseData } = useCaseDetails(
+    parentCaseId,
+    accountId || selectedAccountRid
+  );
 
   const updateCase = useUpdateCaseDetails();
   const createCase = useCreateCase();
@@ -286,6 +296,24 @@ export const CreateCases: React.FC = () => {
       }));
     }
   }, [selectedFiscalYear]);
+
+  useEffect(() => {
+    if (
+      !isEditView &&
+      isAmendmentType &&
+      hasParentCase &&
+      parentCaseId &&
+      parentCaseData
+    ) {
+      setParentDetails(parentCaseData);
+    }
+  }, [
+    isEditView,
+    isAmendmentType,
+    hasParentCase,
+    parentCaseId,
+    parentCaseData,
+  ]);
 
   const caseOwnersOptions = useMemo(() => {
     return (
@@ -512,6 +540,10 @@ export const CreateCases: React.FC = () => {
       setSelectedCountryCode(countryCode);
       setSelectedCountryRid(countryRid);
       setSelectedAccountRid(selectedRid);
+      const selectedCountry = countryOptions.find(
+        (option) => String(option.value) === String(countryRid)
+      );
+      setSelectedCountryName(selectedCountry?.label || '');
 
       // Update case name prefix
       const newPrefix = generateCaseNamePrefix(
@@ -522,6 +554,8 @@ export const CreateCases: React.FC = () => {
       setCaseNamePrefix(newPrefix);
       setCalculatedStatutoryDate('');
       setHasParentCase(false);
+      setParentDetails(null);
+      setParentCaseId('');
     }
 
     if (fieldName === 'fiscal_year') {
@@ -543,6 +577,9 @@ export const CreateCases: React.FC = () => {
       const accName = accountName || selectedAccountName;
       const country = countryCode || selectedCountryCode;
       if (fieldValue) {
+        if (!isEditView) {
+          setParentCaseId(fieldValue as string);
+        }
         const selectedParentCase = closedCaseList?.data?.data?.cases?.find(
           (option) => String(option.rid) === String(fieldValue)
         );
@@ -556,7 +593,9 @@ export const CreateCases: React.FC = () => {
         setCaseNamePrefix(
           generateCaseNamePrefix(accName, country, selectedFiscalYear)
         );
+        setParentCaseId('');
       }
+      setParentDetails(null);
     }
 
     if (fieldName === 'filing_type') {
@@ -568,6 +607,9 @@ export const CreateCases: React.FC = () => {
         selectedFilingType?.label.toLowerCase() === 'amendment'
       );
       setAmendmentCaseInfo([]);
+      setParentDetails(null);
+      setParentCaseId('');
+      setHasParentCase(false);
     }
   };
 
@@ -719,7 +761,8 @@ export const CreateCases: React.FC = () => {
     if (isEditView) {
       updateCase.mutate(payload);
     } else {
-      createCase.mutate(payload);
+      // createCase.mutate(payload);
+      console.log(payload);
     }
   };
 
@@ -754,12 +797,13 @@ export const CreateCases: React.FC = () => {
       : calculatedStatutoryDate,
     caseStatusOptions,
     isAustralianCountry,
-    countryName ?? undefined,
+    countryName || selectedCountryName || undefined,
     isAmendmentType,
     closedCaseList.isLoading,
     isCaseClosed,
     hasParentCase,
-    parentCaseFiscalYear
+    parentCaseFiscalYear,
+    parentDetails
   );
 
   const formLoading =

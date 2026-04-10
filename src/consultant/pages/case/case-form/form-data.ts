@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  CaseDetails,
   FinancialWorkingCountries,
   FormType,
   ParentChildSelectOption,
@@ -50,9 +51,83 @@ export const CaseFormData = (
   isParentCaseLoading?: boolean,
   isCaseClosed?: boolean,
   hasParentCase?: boolean,
-  parentCaseFiscalYear?: string
+  parentCaseFiscalYear?: string,
+  parentDetails?: CaseDetails | null
 ): FormType[] => {
   const isCreateAndAmendmentType = !isEditView && isAmendmentType;
+  const isParentCaseDetailAvailable = isCreateAndAmendmentType && hasParentCase;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const resetFields = [
+    'heat_light_power',
+    'employers_pension_contribution',
+    'material_software_cost',
+    'sub_contracts',
+    'cloud_software',
+    'unpaid_amounts_paid',
+    'unpaid_amounts',
+    'aggregated_turnover',
+    'total_expenses',
+    'taxable_income',
+    'export_sales_revenue',
+    'other_uk',
+    'other_irl',
+    'other_can',
+    'other_on',
+    'current_year_gross_receipts',
+    'qualified_computer_rental_time_expenses',
+    'lease_costs_of_computers_az',
+    'lease_costs_of_computers_ca',
+    'tax_liability_ct',
+    'basic_research_payments_dc',
+    'energy_consortia_amount_dc',
+    'qualified_org_baseamount_dc',
+    'lease_costs_of_computers_dc',
+    'tax_liability_ga',
+    'credit_carry_forward_py_ga',
+    'other_credits_total_ga',
+    'lease_costs_of_computers_id',
+    'basic_research_payments_id',
+    'lease_costs_of_computers_il',
+    'illinois_rd_credit_partnership_corp',
+    'illinois_research_payments_corp_only',
+    'basic_research_payments_ia',
+    'qualified_org_baseamount_ia',
+    'non_qualifying_wages_ia',
+    'non_qualifying_contract_expenses_ia',
+    'cost_of_supplies_ia',
+    'rac_share_ia',
+    'supplement_rac_ia',
+    'passthrough_supplement_rac_ia',
+    'tax_liability_ks',
+    'machinery_equipments_ks',
+    'llet_credit_ky',
+    'corporation_tax_credit_ky',
+    'individual_tax_credit_ky',
+    'basic_research_payments_ma',
+    'credit_carry_forward_py_me',
+    'nonprofit_development_contributions_mn',
+    'basic_research_amount_mn',
+    'credit_carry_over_mn',
+    'credit_tax_limit_mn',
+    'lease_costs_of_computers_mn',
+    'off_campus_research_expenses_ne',
+    'payroll_factor_on_campus_ne',
+    'payroll_factor_off_campus_ne',
+    'property_factor_on_campus_ne',
+    'property_factor_off_campus_ne',
+    'credit_distributed_ne',
+    'credit_tax_refunds_ne',
+    'lease_costs_of_computers_nj',
+    'tax_liability_sc',
+    'credit_carry_forward_py_sc',
+    'other_credits_total_sc',
+    'credit_carry_forward_py_tx',
+    'basic_research_payments_vt',
+    'energy_consortia_amount_vt',
+    'qualified_org_baseamount_vt',
+    'lease_costs_of_computers_vt',
+  ];
+
   return useMemo(
     () => [
       {
@@ -67,7 +142,7 @@ export const CaseFormData = (
             hide: !globalType,
             expandedAll: true,
             disabled: isEditView || isCaseClosed,
-            resetDependsFields: ['parent_case_rid'],
+            resetDependsFields: ['parent_case_rid', ...resetFields],
           }),
           createTextField('account_name', 'Account Name', {
             required: false,
@@ -97,7 +172,7 @@ export const CaseFormData = (
               isEditView &&
               !permissionMap?.['filing_type_rid']?.edit &&
               !permissionMap?.['filing_type_rid']?.read,
-            resetDependsFields: ['parent_case_rid'],
+            resetDependsFields: ['parent_case_rid', ...resetFields],
           }),
           createSelectField('parent_case_rid', 'Parent Case', {
             options: parentCaseOptions || [],
@@ -111,31 +186,7 @@ export const CaseFormData = (
             disabled: isEditView || isCaseClosed,
             isLoading: isParentCaseLoading,
             onChange: true,
-            resetDependsFields: [
-              'heat_light_power',
-              'total_nonlabor_cost',
-              'tax_liability',
-              'employers_pension_contribution',
-              'material_software_cost',
-              'sub_contracts',
-              'cloud_software',
-              'unpaid_amounts_paid',
-              'unpaid_amounts',
-              'aggregated_turnover',
-              'total_expenses',
-              'taxable_income',
-              'export_sales_revenue',
-              'lease_costs_of_computers',
-              'illinois_rd_credit_partnership_corp',
-              'illinois_research_payments_corp_only',
-              'basic_research_payments',
-              'qualified_computer_rental_time_expenses',
-              'current_year_gross_receipts',
-              'credit_carry_forward_py',
-              'other_credits_total',
-              'other',
-              'description',
-            ],
+            resetDependsFields: [...resetFields, 'description'],
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
@@ -325,6 +376,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.heat_light_power || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -354,6 +410,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.employers_pension_contribution || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -381,6 +442,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.material_software_cost || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -405,6 +471,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.sub_contracts || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -428,6 +499,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.cloud_software || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -451,6 +527,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.unpaid_amounts_paid || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -476,6 +557,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.unpaid_amounts || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -501,6 +587,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.aggregated_turnover || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -524,6 +615,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.total_expenses || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -547,6 +643,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.taxable_income || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -570,6 +671,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.export_sales_revenue || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -593,6 +699,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.other_uk || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -616,6 +727,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.other_irl || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -675,6 +791,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.other_can || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -708,6 +829,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.other_on || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -742,6 +868,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.current_year_gross_receipts || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -763,6 +894,13 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(
+                    parentDetails?.qualified_computer_rental_time_expenses || ''
+                  )
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -785,10 +923,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'lease_costs_of_computers_az',
-            'Lease Costs of Computers - AZ',
+            'Lease Costs of Computers',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers - AZ',
+              placeholder: 'Enter Lease Costs of Computers',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -797,6 +935,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_az || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -817,10 +960,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'lease_costs_of_computers_ca',
-            'Lease Costs of Computers - CA',
+            'Lease Costs of Computers',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers - CA',
+              placeholder: 'Enter Lease Costs of Computers',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -829,6 +972,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_ca || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -847,9 +995,9 @@ export const CaseFormData = (
         accordionGroup: 'case_additional_info',
         hide: CountryName !== FinancialWorkingCountries.US,
         fields: [
-          createTextField('tax_liability_ct', 'Tax Liability - CT', {
+          createTextField('tax_liability_ct', 'Tax Liability', {
             required: false,
-            placeholder: 'Enter Tax Liability - CT',
+            placeholder: 'Enter Tax Liability',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
@@ -858,6 +1006,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.tax_liability_ct || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -889,6 +1042,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.basic_research_payments_dc || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -911,6 +1069,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.energy_consortia_amount_dc || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -933,6 +1096,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.qualified_org_baseamount_dc || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -943,18 +1111,23 @@ export const CaseFormData = (
           ),
           createTextField(
             'lease_costs_of_computers_dc',
-            'Lease Costs of Computers - DC',
+            'Lease Costs of Computers',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers - DC',
+              placeholder: 'Enter Lease Costs of Computers',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
                 tooltipMessage:
-                  'Lease Costs of Computers - DC in District of Columbia.',
+                  'Lease Costs of Computers in District of Columbia.',
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_dc || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -973,9 +1146,9 @@ export const CaseFormData = (
         accordionGroup: 'case_additional_info',
         hide: CountryName !== FinancialWorkingCountries.US,
         fields: [
-          createTextField('tax_liability_ga', 'Tax Liability - GA', {
+          createTextField('tax_liability_ga', 'Tax Liability', {
             required: false,
-            placeholder: 'Enter Tax Liability - GA',
+            placeholder: 'Enter Tax Liability',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
@@ -984,6 +1157,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.tax_liability_ga || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -993,10 +1171,10 @@ export const CaseFormData = (
           }),
           createTextField(
             'credit_carry_forward_py_ga',
-            'Credit Carry Forward from PY - GA',
+            'Credit Carry Forward from PY',
             {
               required: false,
-              placeholder: 'Enter Credit Carry Forward from PY - GA',
+              placeholder: 'Enter Credit Carry Forward from PY',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1005,6 +1183,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.credit_carry_forward_py_ga || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1013,28 +1196,29 @@ export const CaseFormData = (
                   permissionMap?.['credit_carry_forward_py']?.read),
             }
           ),
-          createTextField(
-            'other_credits_total_ga',
-            'Other Credits Total - GA',
-            {
-              required: false,
-              placeholder: 'Enter Other Credits Total - GA',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Total additional Georgia credits applied against tax liability - Georgia.',
-              },
-              regexErrorMessage:
-                'Numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['other_credits_total']?.edit &&
-                  permissionMap?.['other_credits_total']?.read),
-            }
-          ),
+          createTextField('other_credits_total_ga', 'Other Credits Total', {
+            required: false,
+            placeholder: 'Enter Other Credits Total',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Total additional Georgia credits applied against tax liability - Georgia.',
+            },
+            regexErrorMessage:
+              'Numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.other_credits_total_ga || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other_credits_total']?.edit &&
+                permissionMap?.['other_credits_total']?.read),
+          }),
         ],
       },
 
@@ -1047,10 +1231,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'lease_costs_of_computers_id',
-            'Lease Costs of Computers - ID',
+            'Lease Costs of Computers',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers - ID',
+              placeholder: 'Enter Lease Costs of Computers',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1059,6 +1243,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_id || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1069,10 +1258,10 @@ export const CaseFormData = (
           ),
           createTextField(
             'basic_research_payments_id',
-            'Basic Research Payments - ID',
+            'Basic Research Payments',
             {
               required: false,
-              placeholder: 'Enter Basic Research Payments - ID',
+              placeholder: 'Enter Basic Research Payments',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1081,6 +1270,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.basic_research_payments_id || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1101,10 +1295,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'lease_costs_of_computers_il',
-            'Lease Costs of Computers - IL',
+            'Lease Costs of Computers',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers - IL',
+              placeholder: 'Enter Lease Costs of Computers',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1113,6 +1307,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_il || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1135,6 +1334,13 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(
+                    parentDetails?.illinois_rd_credit_partnership_corp || ''
+                  )
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1158,6 +1364,13 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(
+                    parentDetails?.illinois_research_payments_corp_only || ''
+                  )
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1192,6 +1405,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.basic_research_payments_ia || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1213,6 +1431,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.qualified_org_baseamount_ia || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1231,6 +1454,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.non_qualifying_wages_ia || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1252,6 +1480,13 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(
+                    parentDetails?.non_qualifying_contract_expenses_ia || ''
+                  )
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1271,6 +1506,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.cost_of_supplies_ia || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1288,6 +1528,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.rac_share_ia || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1305,6 +1550,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.supplement_rac_ia || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1326,6 +1576,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.passthrough_supplement_rac_ia || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1355,6 +1610,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.tax_liability_ks || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1372,6 +1632,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.machinery_equipments_ks || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1400,6 +1665,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.llet_credit_ky || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1420,6 +1690,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.corporation_tax_credit_ky || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1438,6 +1713,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.individual_tax_credit_ky || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1457,10 +1737,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'basic_research_payments_ma',
-            'Basic Research Payments - MA',
+            'Basic Research Payments',
             {
               required: false,
-              placeholder: 'Enter Basic Research Payments - MA',
+              placeholder: 'Enter Basic Research Payments',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1469,6 +1749,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.basic_research_payments_ma || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1489,10 +1774,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'credit_carry_forward_py_me',
-            'Credit Carry Forward from PY - ME',
+            'Credit Carry Forward from PY',
             {
               required: false,
-              placeholder: 'Enter Credit Carry Forward from PY - ME',
+              placeholder: 'Enter Credit Carry Forward from PY',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1501,6 +1786,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.credit_carry_forward_py_me || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1533,6 +1823,13 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(
+                    parentDetails?.nonprofit_development_contributions_mn || ''
+                  )
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1553,6 +1850,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.basic_research_amount_mn || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1570,6 +1872,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.credit_carry_over_mn || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1587,6 +1894,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.credit_tax_limit_mn || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1607,6 +1919,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_mn || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1637,6 +1954,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.off_campus_research_expenses_ne || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1659,6 +1981,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.payroll_factor_on_campus_ne || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1681,6 +2008,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.payroll_factor_off_campus_ne || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1703,6 +2035,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.property_factor_on_campus_ne || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1725,6 +2062,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.property_factor_off_campus_ne || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1747,6 +2089,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.credit_distributed_ne || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1769,6 +2116,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.credit_tax_refunds_ne || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1789,10 +2141,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'lease_costs_of_computers_nj',
-            'Lease Costs of Computers - NJ',
+            'Lease Costs of Computers',
             {
               required: false,
-              placeholder: 'Enter Lease Costs of Computers - NJ',
+              placeholder: 'Enter Lease Costs of Computers',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1801,6 +2153,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_nj || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1819,9 +2176,9 @@ export const CaseFormData = (
         accordionGroup: 'case_additional_info',
         hide: CountryName !== FinancialWorkingCountries.US,
         fields: [
-          createTextField('tax_liability_sc', 'Tax Liability - SC', {
+          createTextField('tax_liability_sc', 'Tax Liability', {
             required: false,
-            placeholder: 'Enter Tax Liability - SC',
+            placeholder: 'Enter Tax Liability',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             labelTooltip: {
               showTooltip: true,
@@ -1830,6 +2187,11 @@ export const CaseFormData = (
             },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.tax_liability_sc || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
             disabled:
               isCaseClosed ||
               (isCreateAndAmendmentType && hasParentCase) ||
@@ -1839,10 +2201,10 @@ export const CaseFormData = (
           }),
           createTextField(
             'credit_carry_forward_py_sc',
-            'Credit Carry Forward from PY - SC',
+            'Credit Carry Forward from PY',
             {
               required: false,
-              placeholder: 'Enter Credit Carry Forward from PY - SC',
+              placeholder: 'Enter Credit Carry Forward from PY',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1851,6 +2213,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.credit_carry_forward_py_sc || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1859,28 +2226,29 @@ export const CaseFormData = (
                   permissionMap?.['credit_carry_forward_py']?.read),
             }
           ),
-          createTextField(
-            'other_credits_total_sc',
-            'Other Credits Total - SC',
-            {
-              required: false,
-              placeholder: 'Enter Other Credits Total - SC',
-              regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-              labelTooltip: {
-                showTooltip: true,
-                tooltipMessage:
-                  'Total additional South Carolina credits applied against tax liability - South Carolina.',
-              },
-              regexErrorMessage:
-                'Numbers allowed, up to 16 digits and 2 decimal places',
-              disabled:
-                isCaseClosed ||
-                (isCreateAndAmendmentType && hasParentCase) ||
-                (isEditView &&
-                  !permissionMap?.['other_credits_total']?.edit &&
-                  permissionMap?.['other_credits_total']?.read),
-            }
-          ),
+          createTextField('other_credits_total_sc', 'Other Credits Total', {
+            required: false,
+            placeholder: 'Enter Other Credits Total',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage:
+                'Total additional South Carolina credits applied against tax liability - South Carolina.',
+            },
+            regexErrorMessage:
+              'Numbers allowed, up to 16 digits and 2 decimal places',
+            defaultValue: isParentCaseDetailAvailable
+              ? String(parentDetails?.other_credits_total_sc || '')
+              : '',
+            assignDefaultValue: isParentCaseDetailAvailable,
+            reassignDefaultOnChange: true,
+            disabled:
+              isCaseClosed ||
+              (isCreateAndAmendmentType && hasParentCase) ||
+              (isEditView &&
+                !permissionMap?.['other_credits_total']?.edit &&
+                permissionMap?.['other_credits_total']?.read),
+          }),
         ],
       },
 
@@ -1893,10 +2261,10 @@ export const CaseFormData = (
         fields: [
           createTextField(
             'credit_carry_forward_py_tx',
-            'Credit Carry Forward from PY - TX',
+            'Credit Carry Forward from PY',
             {
               required: false,
-              placeholder: 'Enter Credit Carry Forward from PY - TX',
+              placeholder: 'Enter Credit Carry Forward from PY',
               regex: REGEX_PATTERNS.EFFORTS_NUMBER,
               labelTooltip: {
                 showTooltip: true,
@@ -1905,6 +2273,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.credit_carry_forward_py_tx || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1948,6 +2321,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.basic_research_payments_vt || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1969,6 +2347,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.energy_consortia_amount_vt || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -1991,6 +2374,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.qualified_org_baseamount_vt || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -2013,6 +2401,11 @@ export const CaseFormData = (
               },
               regexErrorMessage:
                 'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              defaultValue: isParentCaseDetailAvailable
+                ? String(parentDetails?.lease_costs_of_computers_vt || '')
+                : '',
+              assignDefaultValue: isParentCaseDetailAvailable,
+              reassignDefaultOnChange: true,
               disabled:
                 isCaseClosed ||
                 (isCreateAndAmendmentType && hasParentCase) ||
@@ -2127,6 +2520,9 @@ export const CaseFormData = (
       isCreateAndAmendmentType,
       hasParentCase,
       parentCaseFiscalYear,
+      parentDetails,
+      isParentCaseDetailAvailable,
+      resetFields,
     ]
   );
 };
