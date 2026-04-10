@@ -14,7 +14,9 @@ COPY . .
  
 # Compile TypeScript
 RUN npm run build
+
  
+
 # ============================================
 # Stage 2: Runtime Stage
 # ============================================
