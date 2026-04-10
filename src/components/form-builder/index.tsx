@@ -206,8 +206,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, values, state]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const enforcedValuesRef = React.useRef<Record<string, any>>({});
+  const enforcedValuesRef = React.useRef<
+    Record<string, FieldTypes | undefined>
+  >({});
 
   useEffect(() => {
     // updated default value into constuctFormData

@@ -761,8 +761,7 @@ export const CreateCases: React.FC = () => {
     if (isEditView) {
       updateCase.mutate(payload);
     } else {
-      // createCase.mutate(payload);
-      console.log(payload);
+      createCase.mutate(payload);
     }
   };
 
