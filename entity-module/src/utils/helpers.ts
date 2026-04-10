@@ -507,6 +507,14 @@ export const setPrjFiscalData = (dbData: any, requestData: any) => {
     let data = `is_assesed = ${newPrjFisData.is_assesed}`;
     newPrjFisArray.push(data);
   }
+  if (requestData.is_qualified != undefined) {
+    newPrjFisData.is_qualified =
+      requestData.is_qualified !== dbData.is_qualified
+        ? requestData.is_qualified
+        : dbData.is_qualified;
+    let data = `is_qualified = ${newPrjFisData.is_qualified}`;
+    newPrjFisArray.push(data);
+  }
   let data = `modified_by = '${requestData.userId}'`;
   newPrjFisArray.push(data);
   let datas = `modified_datetime = NOW()`;

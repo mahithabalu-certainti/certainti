@@ -14,6 +14,17 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
   const archive = archiver("zip", { zlib: { level: 9 } });
   const stream = new PassThrough();
 
+  // Folder mapping based on file name
+  const getFolderForFile = (fileName: string): string | null => {
+    if (fileName === "Technical Summary") return "Technical Summary";
+    if (fileName === "Qualified Projects") return "Qualified Projects";
+    if (fileName === "Resource Summary") return "Resource Summary";
+    if (fileName === "Financial Workings") return "Financial Workings";
+    if (fileName === "RD Form Federal" || fileName === "RD Form State" || fileName.startsWith("RD Form-")) return "RD Forms";
+    if (fileName === "Project Documents") return "Project Documents";
+    return null
+  };
+
   return new Promise(async (resolve, reject) => {
     stream.on("data", chunk => buffers.push(chunk));
     stream.on("end", () => resolve(Buffer.concat(buffers)));
@@ -25,45 +36,51 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
     try {
       for (const file of files) {
         let ext = file.extension ?? ".pdf";
+        const folder = getFolderForFile(file.name);
+        if (!folder) continue;
+
         if ("buffer" in file) {
-          if(file.name === 'Technical Summary') {
-              archive.append(file.buffer, {
-              name: `Technical Summary-${file.project_code}${ext}`,
+          if (file.name === "Technical Summary") {
+            archive.append(file.buffer, {
+              name: `${folder}/Technical Summary-${file.project_code}${ext}`,
             });
           } else {
             archive.append(file.buffer, {
-              name: `${file.name}${ext}`,
+              name: `${folder}/${file.name}${ext}`,
             });
           }
         }
         else if ("url" in file) {
-          if(file.url !== '') {
+          if (file.url !== "") {
             const response = await axios.get(file.url, {
-            responseType: "stream",
-            timeout: 30_000,
-          });
+              responseType: "stream",
+              timeout: 30_000,
+            });
 
-          archive.append(response.data, {
-            name: `${file.name}${ext}`,
-          });
+            archive.append(response.data, {
+              name: `${folder}/${file.name}${ext}`,
+            });
           }
         }
         else if ("urls" in file) {
           let index = 1;
-          if(file.urls.length > 0) {
+          if (file.urls.length > 0) {
             for (const url of file.urls) {
-            let splittedName = url.split('/').pop() as string;
-            let finalizedName = splittedName.split('_').slice(2,4).join('_');
-              if(finalizedName !== '') {
-                  const response = await axios.get(url, {
-                    responseType: "stream",
-                    timeout: 30_000,
-                  });
-                  archive.append(response.data, {
-                    name: `RD Form-${finalizedName}${ext}`,
-                  });
+              let splittedName = url.split("/").pop() as string;
+              let finalizedName = splittedName.split("_").slice(2, 4).join("_");
+
+              if (finalizedName !== "") {
+                const response = await axios.get(url, {
+                  responseType: "stream",
+                  timeout: 30_000,
+                });
+
+                // RD Form derived names go under RD Forms folder
+                archive.append(response.data, {
+                  name: `RD Forms/RD Form-${finalizedName}${ext}`,
+                });
               } else {
-                if(file.name === 'Financial Workings') {
+                if (file.name === "Financial Workings") {
                   const response = await axios.get(url, {
                     responseType: "arraybuffer",
                     timeout: 30_000,
@@ -72,11 +89,24 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
                   if (!response.data || response.data.byteLength === 0) {
                     throw new Error(`Empty response from URL: ${url}`);
                   }
+
                   ext = ".xlsx";
                   const buffer = Buffer.from(new Uint8Array(response.data));
-                  archive.append(buffer, { name: `Financial Workings${ext}` });
-                  }
+                  archive.append(buffer, {
+                    name: `${folder}/Financial Workings${ext}`,
+                  });
+                } else {
+                  // Fallback for other URL-based files (e.g. Project Documents)
+                  const response = await axios.get(url, {
+                    responseType: "stream",
+                    timeout: 30_000,
+                  });
+
+                  archive.append(response.data, {
+                    name: `${folder}/${file.name}-${index}${ext}`,
+                  });
                 }
+              }
               index++;
             }
           }

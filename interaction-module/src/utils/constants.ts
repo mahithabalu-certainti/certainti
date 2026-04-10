@@ -137,7 +137,8 @@ export const filtersColumns: Record<string, string> =
   template_name: "template_name",
   interaction_assessment_source_rid: "interaction_assessment_source_rid",
   interaction_batch_id: "interaction_batch_id",
-  four_part_r_number: "four_part_r_number"
+  four_part_r_number: "four_part_r_number",
+  is_primary: "is_primary"
 }
 
 export const templatefiltersColumns: Record<string, string> =
@@ -185,7 +186,8 @@ export const filterTypes: Record<string, any> =
   modified_user_name: "string",
   interaction_assessment_source_rid: "string",
   interaction_batch_id: "string",
-  four_part_r_number: "string"
+  four_part_r_number: "string",
+  is_primary: "boolean"
 }
 
 export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {
@@ -331,16 +333,19 @@ export const rawQueries = {
         p.currency_rid,
         ad.account_name,
         CASE 
+          WHEN i.is_primary = true THEN 'Not Applicable'
           WHEN a.four_part_assessment_error_message IS NOT NULL AND a.four_part_assessment_error_message::text != 'null' THEN 'Failed'
           WHEN a.is_four_part_assessment_processed = true THEN 'Completed'
           ELSE 'Pending'
         END as four_part_assessment,
         CASE 
+          WHEN i.is_primary = true THEN 'Not Applicable'
           WHEN a.technical_summary_error_message IS NOT NULL AND a.technical_summary_error_message::text != 'null' THEN 'Failed'
           WHEN a.is_tech_summary_processed = true THEN 'Completed'
           ELSE 'Pending'
         END as project_summary,
         CASE 
+          WHEN i.is_primary = true THEN 'Not Applicable'
           WHEN a.qre_error_message IS NOT NULL AND a.qre_error_message::text != 'null' THEN 'Failed'
           WHEN a.is_qre_processed = true THEN 'Completed'
           ELSE 'Pending'
@@ -353,6 +358,8 @@ export const rawQueries = {
       FROM ${schemaName}.ai_assessment_audit a
       LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
       LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
+      LEFT JOIN (SELECT DISTINCT ON (transaction_id) * FROM ${schemaName}.interactions 
+      ORDER BY transaction_id, created_at DESC) i ON i.transaction_id = a.transaction_id
       ${whereString}
       ORDER BY ${dbSortBy} ${dbSortOrder}
       LIMIT :limit OFFSET :offset
@@ -360,10 +367,14 @@ export const rawQueries = {
   },
   fetchAiAssessmentAuditCount(schemaName: string, whereString: string) {
     return `
-      SELECT COUNT(*) as "totalCount"
+      SELECT COUNT(DISTINCT a.rid) as "totalCount"
       FROM ${schemaName}.ai_assessment_audit a
       LEFT JOIN ${schemaName}.project_fiscal p ON a.project_fiscal_rid = p.rid
       LEFT JOIN ${schemaName}.account_details ad ON a.account_rid = ad.account_rid
+      LEFT JOIN (
+        SELECT DISTINCT transaction_id
+        FROM ${schemaName}.interactions
+      ) i ON i.transaction_id = a.transaction_id
       ${whereString}
     `;
   },

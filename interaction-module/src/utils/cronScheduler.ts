@@ -37,24 +37,58 @@ export const schedulerForTriggerAi = async () => {
     return task;
 }
 
+// export const schdulerForSendEmailInfo = async () => {
+//     const schdulerExpression = await getSecret(process.env.SCHEDULER_EMAIL as string) || `*/30 * * * * *`;
+//     logMessage(`Scheduler Expression for Send Email: ${schdulerExpression}`);
+//     const scheduler = cron.schedule(schdulerExpression, async () => {
+//         logMessage(`Send Email Scheduler starts at: ${new Date().toISOString()}`);
+//         try {
+//             const schedulerRecord = await interactionSchemaService.createSchedulerRecordsForSendEmail()
+//             if (schedulerRecord) {
+//                 logMessage(`Found scheduler record for Send Email: ${schedulerRecord.rid}`);
+//                 await interactionService.sendEmailInBatch(schedulerRecord)
+//                 await interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, 'success')
+//             } else {
+//                 logMessage(`Skipped at: ${new Date().toISOString()} — Send Email execution already running in database`);
+//             }
+//         } catch (error) {
+//             logMessage(`Error in scheduled task: ${error}`);
+//         }
+//         logMessage(`Send Email Scheduler finished at: ${new Date().toISOString()}`);
+//     })
+//     return scheduler
+// }
 export const schdulerForSendEmailInfo = async () => {
-    const schdulerExpression = await getSecret(process.env.SCHEDULER_EMAIL as string) || `*/30 * * * * *`;
-    logMessage(`Scheduler Expression for Send Email: ${schdulerExpression}`);
-    const scheduler = cron.schedule(schdulerExpression, async () => {
-        logMessage(`Send Email Scheduler starts at: ${new Date().toISOString()}`);
-        try {
-            const schedulerRecord = await interactionSchemaService.createSchedulerRecordsForSendEmail()
-            if (schedulerRecord) {
-                logMessage(`Found scheduler record for Send Email: ${schedulerRecord.rid}`);
-                await interactionService.sendEmailInBatch(schedulerRecord)
-                await interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, 'success')
-            } else {
-                logMessage(`Skipped at: ${new Date().toISOString()} — Send Email execution already running in database`);
-            }
-        } catch (error) {
-            logMessage(`Error in scheduled task: ${error}`);
-        }
-        logMessage(`Send Email Scheduler finished at: ${new Date().toISOString()}`);
-    })
-    return scheduler
-}
+  const schdulerExpression = await getSecret(process.env.SCHEDULER_EMAIL as string) || `*/30 * * * * *`;
+  logMessage(`Scheduler Expression for Send Email: ${schdulerExpression}`);
+
+  let isRunning = false; // ✅ In-process lock to prevent overlap
+
+  const scheduler = cron.schedule(schdulerExpression, async () => {
+    if (isRunning) {
+      logMessage(`[SKIP] Send Email scheduler already running. Skipping tick.`);
+      return;
+    }
+
+    isRunning = true;
+    logMessage(`Send Email Scheduler starts at: ${new Date().toISOString()}`);
+
+    try {
+      const schedulerRecord = await interactionSchemaService.createSchedulerRecordsForSendEmail();
+      if (schedulerRecord) {
+        logMessage(`Found scheduler record: ${schedulerRecord.rid}`);
+        await interactionService.sendEmailInBatch(schedulerRecord);
+        await interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, 'success');
+      } else {
+        logMessage(`[SKIP] Send Email already running in DB.`);
+      }
+    } catch (error) {
+      logMessage(`[ERROR] Scheduled task failed: ${error}`);
+    } finally {
+      isRunning = false; // ✅ Always release lock
+      logMessage(`Send Email Scheduler finished at: ${new Date().toISOString()}`);
+    }
+  });
+
+  return scheduler;
+};
