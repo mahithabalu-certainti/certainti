@@ -181,7 +181,7 @@ export class RdCreditCalculatorForNE {
         const line10         = currentYearQre;
         const line11         = neQreOffcampus;
         const line12         = line10.minus(line11);
-        const line13         = new Decimal(cd.us_total_qre_federal ?? 0);
+        const line13         = new Decimal(cd.ri_federal_qre ?? 0);
         const line14         = line13.gt(0) ? line11.div(line13) : new Decimal(0);
         const line15         = line13.gt(0) ? line12.div(line13) : new Decimal(0);
         const line16         = line2.mul(line14);
