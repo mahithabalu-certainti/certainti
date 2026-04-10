@@ -1235,7 +1235,7 @@ export class RdFormHelperService {
         405.8, 420.0, 434.4, 448.8, 463.2, 477.6, 492.0, 506.4, 520.8, 535.2,
         549.6, 564.0, 578.4, 592.8, 607.2, 621.6, 640.3,
       ];
-      const LINES_246 = [640.3, 658.6, 672.7, 687.1, 701.5, 719.9];
+      const LINES_246 = [640.3, 658.6, 672.7, 687.1, 701.5, 728.9];
 
       const stampLines = (lineList: number[], text: string, fontSize = 7) => {
         if (!text?.trim()) return;
