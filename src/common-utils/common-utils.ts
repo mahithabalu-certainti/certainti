@@ -50,6 +50,8 @@ export const createTextField = (
     anyOneRequired?: boolean;
     hide?: boolean;
     defaultValue?: string;
+    assignDefaultValue?: boolean;
+    reassignDefaultOnChange?: boolean;
     prefixValue?: string;
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
@@ -88,6 +90,8 @@ export const createTextField = (
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
+  assignDefaultValue: options.assignDefaultValue,
+  reassignDefaultOnChange: options.reassignDefaultOnChange,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
   allowNegative: options.allowNegative,

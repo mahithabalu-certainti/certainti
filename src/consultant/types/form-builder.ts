@@ -75,6 +75,7 @@ export interface FormTypeFields {
   dateFormat?: string;
   views?: ('day' | 'month' | 'year')[];
   maxLength?: number;
+  reassignDefaultOnChange?: boolean;
 }
 
 export type InputType =
@@ -186,6 +187,7 @@ export interface FieldType {
   dateFormat?: string;
   views?: ('day' | 'month' | 'year')[];
   maxLength?: number;
+  reassignDefaultOnChange?: boolean;
 }
 
 export type AllowedCountry =
