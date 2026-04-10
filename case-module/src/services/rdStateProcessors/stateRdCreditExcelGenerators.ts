@@ -53,6 +53,7 @@ interface StateLayout {
     qreTableStartCol?: number;  // Starting column for the side-by-side QRE table (e.g. 8 = col H)
     dualColumnSectionHeader?: string; // Section header row rendered above dual-column headers (default: IL's label; "" = skip)
     mixedColumns?: boolean;     // VA-style: some sections are dual-column arrays, others are single-value objects
+    nyStyle?: boolean;          // NY-style: description rows + 3-tier QRE/credit pairs with note column
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -252,6 +253,19 @@ const LAYOUT: Record<string, StateLayout> = {
         sheetLabel: "Virginia - Credit Calculations",
         dualColumn: { colAIndex: 11, colBIndex: 12, headerFill: "FFBFBFBF" },
         mixedColumns: true,
+    },
+
+    // NY — Excelsior R&D Credit
+    //   Col 1 (null): no line number
+    //   Cols 2–5 merged (80+20+20+20 = 140): description label
+    //   Col 6 (22): "Based on project category" note (QRE rows only)
+    //   Col 7 (14): numeric value
+    NY: {
+        valueCol: 7, labelCol: 2, lineNumCol: null, labelMergeEndCol: 5,
+        colWidths: { 2: 80, 3: 20, 4: 20, 5: 20, 6: 22, 7: 14 },
+        fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
+        sheetLabel: "New York - Credit Calculations",
+        nyStyle: true,
     },
 
     // GA — complex table structure; computedFields has NO computed_fields wrapper
@@ -551,6 +565,96 @@ function renderIL(ws: ExcelJS.Worksheet, sections: unknown, layout: StateLayout,
 
 const NM_ACCT_FMT = '_(* #,##0.00_);_(* \\(#,##0.00\\);_(* "-"??_);_(@_)';
 const NM_QRE_FILL = SECTION_HEADER_FILL;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NY — Excelsior R&D Credit renderer
+//
+// Each section contains:
+//   description rows  → value === ""   → rendered full-width (no value cell)
+//   QRE rows          → key contains "Current year Qualified"
+//                       → label stripped of parenthetical, note col = "Based on project category"
+//   Credit rows       → key contains "Credit -"
+//                       → label stripped of parenthetical, value in currency format
+//
+// Columns:
+//   2–5 merged  : label text
+//   6           : note ("Based on project category" for QRE rows)
+//   7           : numeric value
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NY_NOTE_COL  = 6;   // "Based on project category" column
+const NY_VALUE_COL = 7;   // numeric value column
+
+function renderNY(ws: ExcelJS.Worksheet, sections: Record<string, any>, layout: StateLayout) {
+    const { fontSize, labelCol, labelMergeEndCol } = layout;
+
+    let row = layout.dataStartRow;
+
+    for (const [sectionKey, sectionData] of Object.entries(sections)) {
+        if (typeof sectionData !== "object" || sectionData === null || Array.isArray(sectionData)) continue;
+
+        // ── Section header ──────────────────────────────────────────────────
+        try { ws.mergeCells(row, labelCol, row, NY_VALUE_COL); } catch (_) {}
+        const sh = ws.getCell(row, labelCol);
+        sh.value     = sectionKey;
+        sh.font      = { bold: true, size: fontSize, color: { argb: NEAR_BLACK } };
+        sh.alignment = { horizontal: "left", wrapText: true };
+        sh.border    = ALL_THIN;
+        row++;
+
+        for (const [lineKey, rawValue] of Object.entries(sectionData)) {
+            const isDescription = rawValue === "" || rawValue === null || rawValue === undefined;
+            const isQRERow      = lineKey.includes("Current year Qualified");
+
+            // Strip trailing parenthetical "(…)" from the display label
+            const displayLabel = lineKey.replace(/\s*\([^)]*\)\s*$/, "").trim();
+
+            if (isDescription) {
+                // Full-width text row (no value)
+                try { ws.mergeCells(row, labelCol, row, NY_VALUE_COL); } catch (_) {}
+                const c = ws.getCell(row, labelCol);
+                c.value     = displayLabel;
+                c.font      = { size: fontSize };
+                c.alignment = { horizontal: "left", wrapText: true };
+                ws.getRow(row).height = 30;
+                row++;
+                continue;
+            }
+
+            // Label cell (cols 2–5 merged)
+            if (labelMergeEndCol > labelCol) {
+                try { ws.mergeCells(row, labelCol, row, labelMergeEndCol); } catch (_) {}
+            }
+            const labelCell = ws.getCell(row, labelCol);
+            labelCell.value     = displayLabel;
+            labelCell.font      = { size: fontSize, color: { argb: NEAR_BLACK } };
+            labelCell.alignment = { horizontal: "left", wrapText: true };
+            labelCell.border    = ALL_THIN;
+
+            // Note cell (col 6) — only for QRE rows
+            const noteCell = ws.getCell(row, NY_NOTE_COL);
+            if (isQRERow) {
+                noteCell.value     = "Based on project category";
+                noteCell.font      = { size: fontSize, italic: true };
+                noteCell.alignment = { horizontal: "left", wrapText: true };
+            }
+            noteCell.border = ALL_THIN;
+
+            // Value cell (col 7)
+            const valCell = ws.getCell(row, NY_VALUE_COL);
+            valCell.border    = ALL_THIN;
+            valCell.font      = { size: fontSize };
+            valCell.alignment = { horizontal: "right" };
+            if (rawValue !== null && rawValue !== undefined) {
+                valCell.value  = rawValue as ExcelJS.CellValue;
+                valCell.numFmt = CURRENCY_FMT;
+            }
+
+            row++;
+        }
+        row++; // blank spacer between sections
+    }
+}
 
 function renderNM(ws: ExcelJS.Worksheet, sections: any, layout: StateLayout, fyYear: number) {
     const { fontSize } = layout;
@@ -1100,6 +1204,12 @@ export async function generateStateSheet(
         if (layout.hasQRETable && layout.qreTableStartCol) {
             renderNMQRETable(ws, computeResult.inputFields, layout);
         }
+        return workbook;
+    }
+
+    // ── NY: Excelsior R&D Credit ────────────────────────────────────────────
+    if (layout.nyStyle) {
+        renderNY(ws, sections as Record<string, any>, layout);
         return workbook;
     }
 

@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import { StateRDData } from "../rdComputation/rdCreditTypes";
+import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 import { Case } from "../../models/caseModel";
 
 /**
@@ -134,12 +134,13 @@ export class RdCreditCalculatorForWI {
         const qreResult      = this.computeQRE(config, stateRdData, caseData);
         const creditResult   = this.computeCredit(config, qreResult,caseData);
         const splitResult    = this.computeSplit(creditResult, caseData,config);
-        const inputFields    = this.buildInputParams(stateRdData, caseData, {
-            country:         this.country,
-            creditType:      this.creditType,
-            currency:        this.currency,
-            fiscalYearEnded: fiscalYear,
-        });
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
+            country: this.country,
+            creditType: this.creditType,
+            currency: this.currency,
+            fiscalYearEnded : fiscalYear,
+            currentYear : year
+        },config);
         const computedFields = this.buildComputedFields(qreResult, creditResult, splitResult, config);
 
         return {
@@ -326,26 +327,38 @@ export class RdCreditCalculatorForWI {
     }
 
     // ── Input params ───────────────────────────────────────────────────────
-    private buildInputParams(stateRdData: StateRDData, caseData: Case, metadata: any = {}) {
-        const { wages = 0, supplies = 0, contract = 0 } = stateRdData.currentYearQREs;
-        const qreSummary: Record<string, any> = { wages, supplies, contract };
-
-        (stateRdData.prior3YearsQREs ?? []).forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre ?? 0;
-        });
-
-        return {
-            metadata: {
-                country:             metadata.country    || "US",
-                credit_type:         metadata.creditType || "STATE_RD_WI",
-                currency:            metadata.currency   || "USD",
-                "Fiscal Year Ended": metadata.fiscalYearEnded,
-                "Description":       "Research Tax Credit",
-                stateDetails:        "Wisconsin - Credit Calculations",
-            },
-            qreSummary,
-        };
-    }
+       async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {},config : ConfigJson ) {
+           
+                   let storeData : any[] = []
+                   let currentYearContract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent/100) || 0;
+                   storeData.push({
+                       year : metadata.currentYear,
+                       wages: this.round2(currentYearQREs.wages),
+                       contract: this.round2(currentYearContract),
+                       sum: this.round2(new Decimal(currentYearQREs.wages || 0).plus(currentYearContract)) || 0
+                   })
+            
+                   prior3YearsQREs.forEach((item) => {
+                       storeData.push({
+                           year : item.fiscalYear,
+                           wages: item.wages,
+                           contract: item.contract,
+                           sum: this.round2(new Decimal(item.wages || 0).plus(Number(item.contract || 0))) || 0
+                       })
+                   });
+           
+                   return {
+                       metadata: {
+                           country: metadata.country || "US",
+                           credit_type: metadata.creditType || "STATE_RD_WI",
+                           currency: metadata.currency || "USD",
+                           "Fiscal Year Ended" : metadata.fiscalYearEnded,
+                           "Description": "Research Tax Credit",
+                           stateDetails : "Wisconsin - Credit Calculations"
+                       },
+                       "Current & Prior years information" : storeData
+                   };
+               }
 
     // ── Computed fields — exact Excel label text (Wisconsin Schedule R) ───
     private buildComputedFields(

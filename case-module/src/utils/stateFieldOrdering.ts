@@ -972,12 +972,7 @@ CA: {
                 { pattern: "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21", order: 33 }
             ]
         },
-        BOLD: [
-            "[9] Total research tax credit (line 8a plus line 8b) .",
-            "[20] Total research tax credit (line 18 plus line 19.",
-            "[21] Enter the larger of line 9 or line 20.",
-            "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21"
-        ]
+        BOLD: []
     },
     NH: {
         sectionOrder: [
@@ -1244,7 +1239,31 @@ CA: {
             ],
         },
         BOLD: []
-    }
+    },
+
+    NY: {
+        sectionOrder: [
+            "Excelsior Research and Development Tax Credit:",
+        ],
+        sectionFieldOrders: {
+            "Excelsior Research and Development Tax Credit:": [
+                { pattern: "A credit of 50% of the portion of the Federal Research and Development tax credit that relates to expenditures in NYS up to credit up to 6% of research expenditures attributable to activities conducted in NYS.", order: 1 },
+                { pattern: "For a qualified semiconductor supply chain project, a credit of 50% of the portion of the Federal Research and Development tax credit that relates to expenditures in NYS up to 7% of research expenditures attributable to activities conducted in NYS.", order: 2 },
+                { pattern: "For a qualified green project or green CHIPS project, a credit of 50% of the portion of the Federal Research and Development tax credit that relates to expenditures in NYS up to 8% of research expenditures attributable to activities conducted in NYS.", order: 3 },
+                { pattern: "Current year Qualified R&D credit expenses in NY(Job Creation)", order: 4 },
+                { pattern: "Credit - 6% of qualified expenses(Job Creation)", order: 5 },
+                { pattern: "Current year Qualified R&D credit expenses in NY(Semiconductor supply chain project)", order: 6 },
+                { pattern: /^Credit - \d+(\.\d+)?% of qualified expenses\(Semiconductor supply chain project\)$/, order: 7 },
+                { pattern: "Current year Qualified R&D credit expenses in NY(Green project or Green chips project)", order: 8 },
+                { pattern: /^Credit - \d+(\.\d+)?% of qualified expenses\(Green project or Green chips project\)$/, order: 9 },
+            ],
+        },
+        BOLD: [
+            "Current year Qualified R&D credit expenses in NY(Job Creation)",
+            "Current year Qualified R&D credit expenses in NY(Semiconductor supply chain project)",
+            "Current year Qualified R&D credit expenses in NY(Green project or Green chips project)",
+        ],
+    },
 
     // TODO: Add configurations for other states (GA, etc.)
 };
