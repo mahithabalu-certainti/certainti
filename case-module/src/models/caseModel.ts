@@ -104,7 +104,7 @@ interface CaseAttributes {
   basic_research_payments_dc? :number;
   qualified_org_baseamount_dc? :number;
   lease_costs_of_computers_dc?:number;
-   credit_shared_wages_dc?:number;
+  credit_shared_wages_dc?:number;
   pass_through_research_credit_dc?:number;
   amount_allocated_beneficiaries_dc?:number;
 
@@ -148,11 +148,6 @@ interface CaseAttributes {
   rural_basic_rd_credit_nm?:number;
   additional_tech_jobs_rd_credit_nm?:number;
   rural_additional_tech_jobs_rd_credit_nm?:number;
-  
-
-
-
-
 }
 
 export interface CaseCreationAttributes
