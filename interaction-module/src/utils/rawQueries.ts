@@ -161,6 +161,8 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY fpr.r_number ${sortBy}`
   else if (sort === filtersColumns.interaction_batch_id)
     sortValue = `ORDER BY i.interaction_batch_id ${sortBy}`
+  else if (sort === filtersColumns.is_primary)
+    sortValue = `ORDER BY i.is_primary ${sortBy} NULLS LAST`
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -194,6 +196,7 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
             pf.project_code,pf.project_name, fpr.r_number AS four_part_r_number, i.interaction_batch_id,
             i.interaction_assessment_source_rid, i.four_part_assessment_rid,
+            i.is_primary,
             CASE 
                 WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
                 ELSE pf.fiscal_year
@@ -292,7 +295,8 @@ export const fetchInteractionForProjectLevelQuery = (
         'four_part_r_number', i.four_part_r_number,
         'interaction_assessment_source_rid', i.interaction_assessment_source_rid,
         'four_part_assessment_rid', i.four_part_assessment_rid,
-        'interaction_status_rid', i.interaction_status_rid
+        'interaction_status_rid', i.interaction_status_rid,
+        'is_primary', i.is_primary
         ${aggregatedQuery}
         ) ) AS interactions
 
@@ -702,6 +706,36 @@ const filterForInteractions = (
             const datetimeCondition = buildDatetimeFilterCondition(condition, values, filteredColumns!);
             if (datetimeCondition) {
               filteredQueryArray.push(datetimeCondition);
+            }
+            break;
+          }
+          case "boolean": {
+            if (condition === ALPHANUMERIC_CONDITIONS.equals) {
+              if (values === null || values === undefined) {
+                filteredQueryArray.push(`i.${filteredColumns} IS NULL`);
+              } else {
+                filteredQueryArray.push(`i.${filteredColumns} = ${values}`);
+              }
+            } else if (condition === ALPHANUMERIC_CONDITIONS.notEquals) {
+              if (values === null || values === undefined) {
+                filteredQueryArray.push(`i.${filteredColumns} IS NOT NULL`);
+              } else {
+                filteredQueryArray.push(`(i.${filteredColumns} != ${values} OR i.${filteredColumns} IS NULL)`);
+              }
+            } else if (condition === ALPHANUMERIC_CONDITIONS.in) {
+              const valArr: (boolean | null)[] = Array.isArray(values) ? values : [values];
+              const nonNullVals = valArr.filter((v) => v !== null && v !== undefined);
+              const hasNull = valArr.some((v) => v === null || v === undefined);
+              const parts: string[] = [];
+              if (nonNullVals.length > 0) {
+                parts.push(`i.${filteredColumns} IN (${nonNullVals.join(", ")})`);
+              }
+              if (hasNull) {
+                parts.push(`i.${filteredColumns} IS NULL`);
+              }
+              if (parts.length > 0) {
+                filteredQueryArray.push(`(${parts.join(" OR ")})`);
+              }
             }
             break;
           }

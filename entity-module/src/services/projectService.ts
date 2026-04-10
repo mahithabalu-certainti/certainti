@@ -2300,7 +2300,8 @@ export class ProjectService {
       "assessment_status",
       "qre_final",
       "rd_percent_final",
-      "is_assesed"
+      "is_assesed",
+      "is_qualified"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -2448,7 +2449,7 @@ export class ProjectService {
       "fiscal_year",
       "ProjectFiscal.project_type_rid",
     ];
-    const booleanFields = ["is_rd_qualified", "is_assesed"];
+    const booleanFields = ["is_rd_qualified", "is_assesed", "is_qualified"];
 
     const filterFields = this.getFilterFields(isAllProject, isParent);
 
@@ -2763,6 +2764,7 @@ export class ProjectService {
       { clientField: "modified_datetime", dbField: "modified_datetime" },
       { clientField: "assessment_status", dbField: "assessment_status" },
       { clientField: "is_assesed", dbField: "is_assesed" },
+      { clientField: "is_qualified", dbField: "is_qualified" },
     ];
 
     return projectFilterFields;
