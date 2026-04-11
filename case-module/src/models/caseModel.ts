@@ -149,6 +149,10 @@ interface CaseAttributes {
   additional_tech_jobs_rd_credit_nm?:number;
   rural_additional_tech_jobs_rd_credit_nm?:number;
   basic_research_payments_me?:number;
+
+  contract_research_expense_university_va?:number;
+  supply_expense_university_va?:number;
+  wages_expense_university_va?:number
 }
 
 export interface CaseCreationAttributes
@@ -288,6 +292,9 @@ export class Case
   public income_tax_amount_il?: number;
   public other_state_tax_credit_il?: number;
   public basic_research_payments_me?:number;
+  public contract_research_expense_university_va?:number;
+  public supply_expense_university_va?:number;
+  public wages_expense_university_va?:number
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -438,7 +445,12 @@ export class Case
          rural_additional_tech_jobs_rd_credit_nm: { type: DataTypes.DECIMAL, allowNull: true },
           credit_carry_forward_py_il: { type: DataTypes.DECIMAL, allowNull: true },
          income_tax_amount_il: { type: DataTypes.DECIMAL, allowNull: true },
-         other_state_tax_credit_il: { type: DataTypes.DECIMAL, allowNull: true }
+         other_state_tax_credit_il: { type: DataTypes.DECIMAL, allowNull: true },
+         contract_research_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
+         supply_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
+         wages_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
+
+         
       },
       {
         sequelize,
