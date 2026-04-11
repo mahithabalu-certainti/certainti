@@ -97,10 +97,10 @@ export class RdCreditCalculatorForME {
     // -------------------------------------------------------------------------
     private partA(config: ConfigJson, caseDetails: Case) {
         const cd = caseDetails as any;
-        const federalBasicResearchPayments = cd.basic_research_payments_usa;
-         const federalQualifiedOrg = cd.qualified_org_baseamount_usa;
-         const federalBasicResearch = new Decimal(federalBasicResearchPayments.minus(federalQualifiedOrg))
-        const meBaseperiodAmount = cd.basic_research_payments_me
+        const federalBasicResearchPayments = new Decimal(cd.basic_research_payments_usa ?? 0);
+        const federalQualifiedOrg = new Decimal(cd.qualified_org_baseamount_usa ?? 0);
+        const federalBasicResearch = federalBasicResearchPayments.minus(federalQualifiedOrg);
+        const meBaseperiodAmount = new Decimal(cd.basic_research_payments_me ?? 0);
         const basicResearchPayments = Decimal.max(federalBasicResearch.minus(meBaseperiodAmount), 0);
 
         const basicResearchCredit   = basicResearchPayments.mul(config.basic_research_credit_rate / 100);

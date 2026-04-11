@@ -156,6 +156,16 @@ const createCaseSchema = Joi.object({
   rac_share_ia: positiveDecimal18_2,
   supplemental_rac_ia: positiveDecimal18_2,
   pass_through_supplemental_rac_ia: positiveDecimal18_2,
+   rural_basic_rd_credit_nm:positiveDecimal18_2,
+  additional_tech_jobs_rd_credit_nm:positiveDecimal18_2,
+  rural_additional_tech_jobs_rd_credit_nm:positiveDecimal18_2,
+  basic_research_payments_me:positiveDecimal18_2,
+
+  contract_research_expense_university_va:positiveDecimal18_2,
+  supply_expense_university_va:positiveDecimal18_2,
+  wages_expense_university_va:positiveDecimal18_2,
+  fein_amounta_wi:positiveDecimal18_2,
+  fein_amountb_wi:positiveDecimal18_2,
   amendment_case_info: Joi.array()
     .items(
       Joi.object({
@@ -302,6 +312,8 @@ const updateCaseSchema = Joi.object({
   orphan_drug_qualified_expenses_wi: positiveDecimal18_2,
   credit_offset_tax_wi: positiveDecimal18_2,
   credit_carry_forward_py_wi: positiveDecimal18_2, 
+    fein_amounta_wi:positiveDecimal18_2,
+  fein_amountb_wi:positiveDecimal18_2,
 
   // District of Columbia
   energy_consortia_amount_dc: positiveDecimal18_2,
@@ -310,7 +322,15 @@ const updateCaseSchema = Joi.object({
   lease_costs_of_computers_dc: positiveDecimal18_2,
   credit_shared_wages_dc :positiveDecimal18_2,
   pass_through_research_credit_dc :positiveDecimal18_2,
-  amount_allocated_beneficiaries_dc :positiveDecimal18_2
+  amount_allocated_beneficiaries_dc :positiveDecimal18_2,
+    rural_basic_rd_credit_nm:positiveDecimal18_2,
+  additional_tech_jobs_rd_credit_nm:positiveDecimal18_2,
+  rural_additional_tech_jobs_rd_credit_nm:positiveDecimal18_2,
+  basic_research_payments_me:positiveDecimal18_2,
+
+  contract_research_expense_university_va:positiveDecimal18_2,
+  supply_expense_university_va:positiveDecimal18_2,
+  wages_expense_university_va:positiveDecimal18_2,
 });
 
 const caseClosedListSchema = Joi.object({

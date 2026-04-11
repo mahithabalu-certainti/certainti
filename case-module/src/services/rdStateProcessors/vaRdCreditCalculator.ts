@@ -16,6 +16,8 @@ export interface ConfigJson {
     qre_credit_percentage_c1: number;      // 50%
     qre_credit_percentage_c2: number;            // 50%
     sub_con_percent: number;                // 65%
+     asc_qre_credit_percentage_all: number;      // 50%
+    asc_qre_credit_percentage_college: number;  
 }
 
 export class RdCreditCalculatorForVA {
@@ -31,7 +33,7 @@ export class RdCreditCalculatorForVA {
         logMessage(`Computing VA Credit with config: ${JSON.stringify(config)}`);
 
         // Schedule A — Summary of Expenses
-        const scheduleA = this.scheduleA_SummaryOfExpenses(stateRdData.currentYearQREs, config);
+        const scheduleA = this.scheduleA_SummaryOfExpenses(stateRdData.currentYearQREs, config,caseData);
 
         // Schedule B — Base Amount Determination (for Primary Credit)
         const scheduleB = this.scheduleB_BaseAmountDetermination(
@@ -44,7 +46,7 @@ export class RdCreditCalculatorForVA {
         const primaryCredit = this.formRDC_Section1_PrimaryCreditCalculation(scheduleA, scheduleB, config);
 
         // Schedule C — ASC Calculation
-        const scheduleC = this.scheduleC_AscCalculation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
+        const scheduleC = this.scheduleC_AscCalculation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config,caseData);
 
         // Form RDC Section 2 — Alternative Simplified Credit
         const ascCredit = this.formRDC_Section2_AlternativeSimplifiedCredit(scheduleC, config);
@@ -79,7 +81,7 @@ export class RdCreditCalculatorForVA {
      * Schedule A – Summary of Expenses
      * Lines 1-4: Contract + Supplies + Wages = Total (Column A & Column B)
      */
-    scheduleA_SummaryOfExpenses(currentYearQREs: QRE, config: ConfigJson) {
+    scheduleA_SummaryOfExpenses(currentYearQREs: QRE, config: ConfigJson,caseData:Case) {
         // Column A — All Virginia Expenses
         const contract_col_a = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100);
         const supplies_col_a = new Decimal(currentYearQREs.supplies || 0);
@@ -87,9 +89,9 @@ export class RdCreditCalculatorForVA {
         const total_col_a = contract_col_a.plus(supplies_col_a).plus(wages_col_a);
 
         // Column B — College & University Expenses (placeholder — will be populated from case fields)
-        const contract_col_b = new Decimal(0);
-        const supplies_col_b = new Decimal(0);
-        const wages_col_b = new Decimal(0);
+        const contract_col_b = new Decimal(caseData?.contract_research_expense_university_va ?? 0);
+        const supplies_col_b = new Decimal(caseData?.supply_expense_university_va ?? 0);
+        const wages_col_b = new Decimal(caseData?.wages_expense_university_va ?? 0);
         const total_col_b = contract_col_b.plus(supplies_col_b).plus(wages_col_b);
 
         return {
@@ -172,7 +174,7 @@ export class RdCreditCalculatorForVA {
 
         return {
             // Section 1
-            prior_year_qrd_expenses: this.round2(line_1a),
+            prior_year_qre_expenses: this.round2(line_1a),
             short_year_months: 0,
             short_year_ratio: 0,
             // Section 2
@@ -280,14 +282,18 @@ export class RdCreditCalculatorForVA {
      * Section 3 — Average Qualified R&D Expenses Calculation (prior 3 years)
      * Section 4 — Adjusted Expenses Calculation (Col A & Col B)
      */
-    scheduleC_AscCalculation(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson) {
+    scheduleC_AscCalculation(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson,caseData:Case) {
 
         // --- Section 1: Current year VA QRD expenses ---
         const line_1a_col_a = new Decimal(currentYearQREs.wages || 0)
             .plus(new Decimal(currentYearQREs.supplies || 0))
             .plus(new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent / 100));
 
-        const line_1a_col_b = new Decimal(0); // College & University — placeholder
+        //const line_1a_col_b = new Decimal(0); // College & University — placeholder
+          const contract_col_b = new Decimal(caseData?.contract_research_expense_university_va ?? 0);
+        const supplies_col_b = new Decimal(caseData?.supply_expense_university_va ?? 0);
+        const wages_col_b = new Decimal(caseData?.wages_expense_university_va ?? 0);
+         const line_1a_col_b = contract_col_b.plus(supplies_col_b).plus(wages_col_b);
 
         // --- Section 2: Had prior 3 years expenses? ---
         const hasPrior3Years = prior3YearsQREs.length >= 3 && prior3YearsQREs.every(y => (y.qre || 0) > 0);
@@ -381,8 +387,8 @@ export class RdCreditCalculatorForVA {
         const eligible_col_b = Decimal.min(new Decimal(config.eligible_expense_threshold), expenses_col_b);
 
         // Credit
-        const credit_col_a = eligible_col_a.mul(config.qre_credit_percentage_all / 100);
-        const credit_col_b = eligible_col_b.mul(config.qre_credit_percentage_college / 100);
+        const credit_col_a = eligible_col_a.mul(config.asc_qre_credit_percentage_all / 100);
+        const credit_col_b = eligible_col_b.mul(config.asc_qre_credit_percentage_college / 100);
 
         // Capped
         const capped_col_a = Decimal.min(credit_col_a, new Decimal(config.qre_credit_limit_all));
@@ -500,7 +506,7 @@ export class RdCreditCalculatorForVA {
 
         // ── Section 1 – VA Qualified Research and Development Expenses ──
         const scheduleB_sec1_fields = {
-            "[1a] VA Qualified Research and Development Expenses in CY. For FY filers, this will include a portion of 2 taxable years.": scheduleB.prior_year_qrd_expenses,
+            "[1a] VA Qualified Research and Development Expenses in CY. For FY filers, this will include a portion of 2 taxable years.": scheduleB.prior_year_qre_expenses,
             "[1b] Short year filers only: Enter the number of months included in the short year.": scheduleB.short_year_months,
             "[1c] Short year filers only: Divide the number of months in Line 1b by 12.": scheduleB.short_year_ratio,
         };
@@ -539,7 +545,7 @@ export class RdCreditCalculatorForVA {
         // ── Section 1 – Virginia Qualified Research and Development Expenses ──
         const scheduleC_sec1_fields = {
             "[1a] Virginia Qualified Research and Development Expenses in CY. Column A.": scheduleC.current_year_expenses_col_a,
-            "[1a] Virginia Qualified Research and Development Expenses in CY. Column B.": scheduleC.current_year_expenses_col_b,
+         //   "[1a] Virginia Qualified Research and Development Expenses in CY. Column B.": scheduleC.current_year_expenses_col_b,
             "[1b] Short year filers only: Enter the number of days included in the short year.": scheduleC.short_year_days,
             "[1c] Short year filers only: Divide the number of days in Line 1b by 365 (366 if a leap year).": scheduleC.short_year_ratio,
         };
@@ -581,11 +587,11 @@ export class RdCreditCalculatorForVA {
         ];
 
         return {
-             
+
                 virginia: {
+                    "Section 1 – Summary of Expenses": scheduleA_fields,
                     "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": formRDC_section1_fields,
                     "Section 2 – Alternative Simplified Credit Calculation": formRDC_section2_fields,
-                    "Section 1 – Summary of Expenses": scheduleA_fields,
                 },
                 computed_fields: {
                     "Section 1 – VA Qualified Research and Development Expenses": scheduleB_sec1_fields,
