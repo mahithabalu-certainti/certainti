@@ -116,6 +116,8 @@ interface CaseAttributes {
   orphan_drug_qualified_expenses_wi?: number;
   credit_offset_tax_wi?:number;
   credit_carry_forward_py_wi?: number;
+  fein_amounta_wi?:number;
+   fein_amountb_wi?:number;
 
   credit_carry_forward_py_me?: number;
 
@@ -297,7 +299,9 @@ export class Case
   public basic_research_payments_me?:number;
   public contract_research_expense_university_va?:number;
   public supply_expense_university_va?:number;
-  public wages_expense_university_va?:number
+  public wages_expense_university_va?:number;
+  public fein_amounta_wi?:number;
+  public fein_amountb_wi?:number;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -452,6 +456,9 @@ export class Case
          contract_research_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
          supply_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
          wages_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
+          fein_amounta_wi: { type: DataTypes.DECIMAL, allowNull: true },
+         fein_amountb_wi: { type: DataTypes.DECIMAL, allowNull: true },
+         
 
          
       },

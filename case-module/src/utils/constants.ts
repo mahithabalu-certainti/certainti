@@ -1192,7 +1192,8 @@ export const rawQueries = {
     rural_basic_rd_credit_nm, additional_tech_jobs_rd_credit_nm, rural_additional_tech_jobs_rd_credit_nm,
     credit_carry_forward_py_il, income_tax_amount_il,
     lease_costs_of_computers_usa, energy_consortia_amount_usa, basic_research_payments_usa, 
-    qualified_org_baseamount_usa,contract_research_expense_university_va,supply_expense_university_va,wages_expense_university_va
+    qualified_org_baseamount_usa,contract_research_expense_university_va,supply_expense_university_va,wages_expense_university_va,
+    fein_amounta_wi,fein_amountb_wi
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;

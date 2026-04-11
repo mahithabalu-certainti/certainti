@@ -164,6 +164,8 @@ const createCaseSchema = Joi.object({
   contract_research_expense_university_va:positiveDecimal18_2,
   supply_expense_university_va:positiveDecimal18_2,
   wages_expense_university_va:positiveDecimal18_2,
+  fein_amounta_wi:positiveDecimal18_2,
+  fein_amountb_wi:positiveDecimal18_2,
   amendment_case_info: Joi.array()
     .items(
       Joi.object({
@@ -310,6 +312,8 @@ const updateCaseSchema = Joi.object({
   orphan_drug_qualified_expenses_wi: positiveDecimal18_2,
   credit_offset_tax_wi: positiveDecimal18_2,
   credit_carry_forward_py_wi: positiveDecimal18_2, 
+    fein_amounta_wi:positiveDecimal18_2,
+  fein_amountb_wi:positiveDecimal18_2,
 
   // District of Columbia
   energy_consortia_amount_dc: positiveDecimal18_2,
