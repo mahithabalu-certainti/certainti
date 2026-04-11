@@ -149,8 +149,10 @@ interface CaseAttributes {
   additional_tech_jobs_rd_credit_nm?:number;
   rural_additional_tech_jobs_rd_credit_nm?:number;
   basic_research_payments_me?:number;
-  
 
+  contract_research_expense_university_va?:number;
+  supply_expense_university_va?:number;
+  wages_expense_university_va?:number
 
 
 
