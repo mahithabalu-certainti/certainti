@@ -20,7 +20,8 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
     if (fileName === "Qualified Projects") return "Qualified Projects";
     if (fileName === "Resource Summary") return "Resource Summary";
     if (fileName === "Financial Workings") return "Financial Workings";
-    if (fileName === "RD Form Federal" || fileName === "RD Form State" || fileName.startsWith("RD Form-")) return "RD Forms";
+    if (fileName.startsWith("RD Form-")) return "RD Forms/Federal";
+    if (fileName === "") return "RD Forms/State"; 
     if (fileName === "Project Documents") return "Project Documents";
     return null
   };
@@ -63,11 +64,12 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
           }
         }
         else if ("urls" in file) {
+          if (!folder) continue;
+
           let index = 1;
           if (file.urls.length > 0) {
             for (const url of file.urls) {
-              let splittedName = url.split("/").pop() as string;
-              let finalizedName = splittedName.split("_").slice(2, 4).join("_");
+              let finalizedName = extractStateFileName(url);
 
               if (finalizedName !== "") {
                 const response = await axios.get(url, {
@@ -75,9 +77,8 @@ export async function createZipFile(files: ZipFile[]): Promise<Buffer> {
                   timeout: 30_000,
                 });
 
-                // RD Form derived names go under RD Forms folder
                 archive.append(response.data, {
-                  name: `RD Forms/RD Form-${finalizedName}${ext}`,
+                  name: `${folder}/RD Form-${finalizedName}${ext}`,
                 });
               } else {
                 if (file.name === "Financial Workings") {
@@ -182,4 +183,22 @@ export async function uploadZipBufferToAzureBlob(
     size: sizeInMB,
   };
 }
+
+const extractStateFileName = (url: string): string => {
+  const rawFileName = url.split("/").pop()?.split("?")[0] ?? "";
+  const nameWithoutExt = rawFileName.replace(".pdf", "");
+
+  const parts = nameWithoutExt.split("_");
+  const isTimestampedFormat = parts.length >= 4 && /^\d+$/.test(parts[parts.length - 1]!);
+
+  if (isTimestampedFormat) {
+    return parts.slice(2, parts.length - 1).join("_");
+  } else {
+    const combined = parts.slice(2).join("_");
+    if (combined.length > 3 && !combined.includes("_")) {
+      return `${combined.slice(0, 3)}_${combined.slice(3)}`;
+    }
+    return combined;
+  }
+};
 
