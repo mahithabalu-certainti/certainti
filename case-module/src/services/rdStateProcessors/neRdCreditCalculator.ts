@@ -184,8 +184,8 @@ export class RdCreditCalculatorForNE {
         const line13         = new Decimal(cd.ri_federal_qre ?? 0);
         const line14         = line13.gt(0) ? line11.div(line13) : new Decimal(0);
         const line15         = line13.gt(0) ? line12.div(line13) : new Decimal(0);
-        const line16         = line2.mul(line14);
-        const line17         = line2.mul(line15);
+        const line16         = line2.mul(this.round2(line14));
+        const line17         = line2.mul(this.round2(line15));
         const line18         = line16.mul(config.off_campus_research_tax_percentage / 100);
         const line19         = line17.mul(config.on_campus_research_tax_percentage  / 100);
         const line20         = line18.plus(line19);

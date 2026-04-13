@@ -243,8 +243,8 @@ export class RdCreditCalculatorForWI {
 
 
         //---- Lines 15a–15d: Pass-through credits (default 0)
-        const line15a = new Decimal(0);
-        const line15b = new Decimal(0);
+        const line15a = new Decimal(caseDetails.fein_amounta_wi ?? 0);
+        const line15b = new Decimal(caseDetails.fein_amountb_wi ?? 0);
         const line15c = new Decimal(caseDetails.additional_pass_through_credits_wi ?? 0);
         const line15d = line15a.plus(line15b).plus(line15c);
 
@@ -285,7 +285,7 @@ export class RdCreditCalculatorForWI {
         const base = isFiduciary ? line16b : credit._line16;
 
         //---- Line 17: Max refundable portion = base × 25%
-        const line17 = base.mul(config.qre_credit_percentage_c2 / 100);
+        const line17 =  isFiduciary ? base.mul(config.qre_credit_percentage_c2 / 100) : 0;
 
         //---- Line 18: Credit used to offset tax (caseData input)
         const line18 = new Decimal(cd.credit_offset_tax_wi ?? 0);

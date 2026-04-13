@@ -2563,7 +2563,8 @@ export class InteractionService {
               interaction_assessment_source_rid: d.interaction_assessment_source_rid,
               interaction_assessment_source_name: interactionAssessmentMap.get(d.interaction_assessment_source_rid) ?? null,
               interaction_status_rid: d.interaction_status_rid,
-              interaction_status_name: intStatusMap.get(d.interaction_status_rid) ?? null
+              interaction_status_name: intStatusMap.get(d.interaction_status_rid) ?? null,
+              is_primary: d.is_primary ?? null
             };
           });
       const applyFilters = (
@@ -3683,10 +3684,6 @@ export class InteractionService {
           let batchId: string;
           fourPartPayload = four_part_assessment;
           let dynamicQuestions: any[];
-          let intStatusRid: string = '';
-
-          const findStatus = await this.interactionSchemaService.getStatus();
-          logMessage(`getStatus result count: ${findStatus?.length}, values: ${JSON.stringify(findStatus)}`);
 
           if (type === 'four_part_assessment') {
             logMessage(`Branch: four_part_assessment — fetching FPA RID for transaction_id: ${transaction_id}`);
@@ -3732,21 +3729,6 @@ export class InteractionService {
             logMessage(`WARNING — dynamicQuestions is empty or not an array. No questions will be attached to interaction. type: ${type}, transaction_id: ${transaction_id}`);
           }
 
-          if (findStatus.length > 0) {
-            const mapStatus = new Map(findStatus.map((d) => [d.status_name, d.rid]));
-            logMessage(`Status map keys: ${JSON.stringify([...mapStatus.keys()])}`);
-            intStatusRid = interactionAssessmentSource === interactionAssessmentSourceType.RD
-              ? mapStatus.get('In-Active')!
-              : mapStatus.get('Active')!;
-            logMessage(`intStatusRid resolved: ${intStatusRid} for source: ${interactionAssessmentSource}`);
-
-            if (!intStatusRid) {
-              logMessage(`WARNING — intStatusRid is undefined/null. Expected status key "${interactionAssessmentSource === interactionAssessmentSourceType.RD ? 'In-Active' : 'Active'}" not found in map.`);
-            }
-          } else {
-            logMessage(`WARNING — findStatus is empty; intStatusRid will remain empty string`);
-          }
-
           let interactionData: ICreateInteraction = {
             account_rid: company_id,
             project_fiscal_rid: project_id,
@@ -3762,7 +3744,6 @@ export class InteractionService {
             transaction_id: transaction_id,
             four_part_assessment_rid: fourPartAssessmentRid,
             interaction_batch_id: batchId,
-            interaction_status_rid: intStatusRid
           };
 
           logMessage(`interactionData to be created: ${JSON.stringify(interactionData)}`);

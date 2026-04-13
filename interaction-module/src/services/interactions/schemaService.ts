@@ -15,7 +15,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, entityTypes, eventNames, eventTypes, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus, interactionAssessmentSourceType } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
@@ -70,6 +70,65 @@ class InteractionSchemaService {
       interactionData.interaction_level_rid = interactionLevel!;
       interactionData.recipient_name = interactionData.email_info?.name || null
       interactionData.recipient_email = interactionData.email_info?.email || null
+
+      // Account-level interactions store is_primary as null; project-level is true/false.
+      // For project-level, is_primary is true only for the first interaction of the same
+      // source type (Manual vs Auto/RD-Assessment) within the project.
+      // Manual and RD Assessment are tracked independently even though they share the same
+      // interaction_assessment_source_rid ("RD Assessment"), because they differ in interaction_source_rid.
+      if (intLevel === 'Account') {
+        interactionData.is_primary = null;
+      } else {
+        const whereClause: any = { project_fiscal_rid: interactionData.project_fiscal_rid };
+        if (interactionData.interaction_assessment_source_rid) {
+          whereClause.interaction_assessment_source_rid = interactionData.interaction_assessment_source_rid;
+        }
+        if (interactionData.interaction_source_rid) {
+          whereClause.interaction_source_rid = interactionData.interaction_source_rid;
+        }
+
+        // Serialize concurrent is_primary determination for the same project+source group
+        // to prevent two transactions from both seeing existingCount===0 and creating
+        // multiple is_primary=true rows. The advisory lock is released automatically
+        // when the surrounding transaction commits or rolls back.
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.interactionModelService.getSequelize();
+        }
+        const lockKey = `is_primary_${interactionData.project_fiscal_rid}_${interactionData.interaction_source_rid || ''}_${interactionData.interaction_assessment_source_rid || ''}`;
+        await this.orgDbSequelize.query(
+          'SELECT pg_advisory_xact_lock(hashtext(:lockKey))',
+          { replacements: { lockKey }, transaction, type: 'SELECT' }
+        );
+
+        const existingCount = await Interaction.count({
+          where: whereClause,
+          transaction,
+        });
+        interactionData.is_primary = existingCount === 0;
+        logMessage(`[createInteractions] is_primary=${interactionData.is_primary} for project_fiscal_rid=${interactionData.project_fiscal_rid}, source_rid=${interactionData.interaction_source_rid}, assessment_source_rid=${interactionData.interaction_assessment_source_rid}, existingCount=${existingCount}`);
+
+        const [statusList, rdAssessmentSourceRid] = await Promise.all([
+          this.getStatus(),
+          this.getInteractionAssessmentSourceByType(interactionAssessmentSourceType.RD),
+        ]);
+        const mapStatus = new Map(statusList.map((s) => [s.status_name, s.rid]));
+        const isRdAssessment = interactionData.interaction_assessment_source_rid === rdAssessmentSourceRid;
+        if (isRdAssessment) {
+          interactionData.interaction_status_rid = interactionData.is_primary
+            ? mapStatus.get('Active')!
+            : mapStatus.get('In-Active')!;
+        } else {
+          interactionData.interaction_status_rid = mapStatus.get('Active')!;
+        }
+
+        logMessage(
+          `[createInteractions] interaction_status_rid set to "${isRdAssessment
+            ? (interactionData.is_primary ? 'Active' : 'In-Active')
+            : 'Active (FPA)'
+          }" (rid: ${interactionData.interaction_status_rid})`
+        );
+      }
+
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
@@ -2803,6 +2862,16 @@ class InteractionSchemaService {
         rawQueries.fetchResponseSourceByType(responseData.response_source)
       );
       responseData.response_source_rid = responseSourceIDs[0]?.rid ?? null;
+      logMessage(
+        `[updateInteractionResponse] Start interaction_rid=${responseData.interaction_rid}, accountNumber=${accountNumber}, userId=${userId}, response_source=${responseData.response_source}, questions_count=${Array.isArray(responseData.questions) ? responseData.questions.length : 0}, attachments_count=${Array.isArray(responseData.attachments) ? responseData.attachments.length : 0}`
+      );
+      if (Array.isArray(responseData.questions)) {
+        responseData.questions.forEach((question, index) => {
+          logMessage(
+            `[updateInteractionResponse] Incoming question[${index}] item_rid=${question?.rid}, response=${question?.response}`
+          );
+        });
+      }
       if (
         responseData.response_source === "Email Reply" ||
         responseData.response_source === "Email"
@@ -2892,11 +2961,17 @@ class InteractionSchemaService {
             },
             transaction,
           });
+          logMessage(
+            `[updateInteractionResponse] Lookup result item_rid=${question?.rid}, history_exists=${Boolean(existing)}, interaction_status_match=${Boolean(isExisting)}, existing_response=${existing?.interaction_response}`
+          );
 
           let created = null;
 
           if (existing && isExisting) {
             // Update existing response
+            logMessage(
+              `[updateInteractionResponse] Updating response history rid=${existing.rid}, item_rid=${question?.rid}, previous_response=${existing.interaction_response}, new_response=${question?.response}`
+            );
             await existing.update({
               interaction_response: question.response,
               response_by: resonseBy,
@@ -2907,6 +2982,9 @@ class InteractionSchemaService {
               modified_datetime: new Date(),
             }, { transaction });
           } else {
+            logMessage(
+              `[updateInteractionResponse] Creating response history item_rid=${question?.rid}, interaction_version=${interactionVersion}, response=${question?.response}`
+            );
             created = await InteractionResponseHistory.create(
               {
                 interaction_rid: responseData.interaction_rid,
@@ -3005,6 +3083,9 @@ class InteractionSchemaService {
           },
         });
       }
+      logMessage(
+        `[updateInteractionResponse] Completed interaction_rid=${responseData.interaction_rid}, interactionVersion=${interactionVersion}, responseCreated=${responseCreated}, status=${status}`
+      );
       return {
         interactionVersion,
         isAutoTriggerEnabled,

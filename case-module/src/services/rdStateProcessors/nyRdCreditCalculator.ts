@@ -218,8 +218,8 @@ export class RdCreditCalculatorForNY {
                        "",
                     "For a qualified green project or green CHIPS project, a credit of 50% of the portion of the Federal Research and Development tax credit that relates to expenditures in NYS up to 8% of research expenditures attributable to activities conducted in NYS.":
                        "",
-                    "Current year Qualified R&D credit expenses in NY(Job Creation)": byType.standard.qre,
-                    [`Credit -  ${config.standard_rate_percentage}% of qualified expenses(Job Creation)`]: byType.standard.credit,
+                    "Current year Qualified R&D credit expenses in NY(Job Creation)": 0,
+                    [`Credit -  ${config.standard_rate_percentage}% of qualified expenses(Job Creation)`]: 0,
                     "Current year Qualified R&D credit expenses in NY(Semiconductor supply chain project)": byType.semiconductor.qre,
                     [`Credit - ${config.semiconductor_rate_percentage}% of qualified expenses(Semiconductor supply chain project)`]: byType.semiconductor.credit,
                     "Current year Qualified R&D credit expenses in NY(Green project or Green chips project)": byType.green.qre,
