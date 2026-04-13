@@ -98,8 +98,8 @@ export const getRdAssessmentStatusTableColumns = (
   {
     id: 'interaction_status',
     sortId: 'interaction_status',
-    label: 'Interaction Status',
-    width: 170,
+    label: 'Interaction Generation Status',
+    width: 210,
     sortable: true,
     hide:
       !rdAssessmentPermissionMap?.['interaction_status']?.edit &&

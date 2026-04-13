@@ -139,6 +139,16 @@ export const projectFilterFields = (
       !projectPermissionMap?.['is_assessed']?.edit,
   },
   {
+    name: 'Is Qualified',
+    value: 'is_qualified',
+    type: 'enum',
+    options: qualifiedOptions,
+    operatorOption: fiscalOptions,
+    hide:
+      !projectPermissionMap?.['is_qualified']?.read &&
+      !projectPermissionMap?.['is_qualified']?.edit,
+  },
+  {
     name: 'Project Classification',
     value: 'classification_name',
     type: 'enum',

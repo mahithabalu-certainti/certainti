@@ -575,7 +575,7 @@ const Projects: React.FC<ProjectsProps> = ({
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         const key = item.editId || item.columnId;
-        if (key === 'is_assesed') {
+        if (key === 'is_assesed' || key === 'is_qualified') {
           acc[key] = item.value === 'true';
         } else {
           acc[key] = item.value;
