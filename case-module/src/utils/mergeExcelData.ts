@@ -63,6 +63,11 @@ export async function mergeExcelsToSingleFile(
         }
       });
     });
+    if (sourceSheet.model?.merges) {
+      sourceSheet.model.merges.forEach((mergeRange: string) => {
+        newSheet.mergeCells(mergeRange);
+      });
+    }
   };
 
   // ─── Load both workbooks ───
