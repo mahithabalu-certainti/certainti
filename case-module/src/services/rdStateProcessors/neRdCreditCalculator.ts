@@ -181,11 +181,11 @@ export class RdCreditCalculatorForNE {
         const line10         = currentYearQre;
         const line11         = neQreOffcampus;
         const line12         = line10.minus(line11);
-        const line13         = new Decimal(cd.us_total_qre_federal ?? 0);
+        const line13         = new Decimal(cd.ri_federal_qre ?? 0);
         const line14         = line13.gt(0) ? line11.div(line13) : new Decimal(0);
         const line15         = line13.gt(0) ? line12.div(line13) : new Decimal(0);
-        const line16         = line2.mul(line14);
-        const line17         = line2.mul(line15);
+        const line16         = line2.mul(this.round2(line14));
+        const line17         = line2.mul(this.round2(line15));
         const line18         = line16.mul(config.off_campus_research_tax_percentage / 100);
         const line19         = line17.mul(config.on_campus_research_tax_percentage  / 100);
         const line20         = line18.plus(line19);
@@ -285,7 +285,7 @@ export class RdCreditCalculatorForNE {
     ) {
         return {
             computed_fields: {
-                "NoTitle": {
+                "yesSplit": {
                     "[2] Enter total amount of federal research credit allowed for this tax year from Federal Form 6765, line 38 or line 40. (Attach Federal Form 6765.) Do not include any amounts which were distributed on Federal Form 6765, line 39 (see instructions)":
                         m1.federalCredit,
                     "[3] Nebraska property factor (attach schedule showing calculations)": "",

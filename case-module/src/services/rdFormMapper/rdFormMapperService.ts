@@ -32,6 +32,7 @@ import { processSouthCarolinaForm } from "./scFormGenerator";
 import { processWisconsinForm } from "./wiFormGenerator";
 import { processConnecticutForm } from "./ctFormGenerator";
 import { processNewMexicoForm } from "./nmFormGenerator";
+import { processAustraliaForm } from "./ausFormGenerator";
 const PDFDocument = require("pdfkit");
 
 enum ConfigType {
@@ -176,6 +177,50 @@ export class RdFormMapperService {
         schemaName,
         accountNumber,
         formInfo.browse_file,
+      );
+      await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
+        caseRid,
+        countryRid,
+        filledFormUrl,
+        orgDb,
+        accountNumber,
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: "Federal form processed successfully",
+        data: filledFormUrl,
+      };
+    }
+   else if (countryNameNorm === "australia" || countryNameNorm === "aus") {
+      const formInfo = await this.rdFormMapperSchemaService.getFederalForms(
+        accountRid,
+        countryRid,
+        mainDb,
+        effectiveStart,
+        effectiveEnd,
+      );
+      if (!formInfo?.browse_file) {
+        await this.rdFormMapperSchemaService.updateFederalFormError(
+          caseRid,
+          countryRid,
+          orgDb,
+          accountNumber,
+          "No valid RD form data available to process",
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "Federal form processed successfully",
+          data: '',
+        };
+      }
+      const filledFormUrl = await processAustraliaForm(
+        caseRid,
+        schemaName,
+        accountNumber,
+        formInfo.browse_file,
+        orgDb,
+        stateCode,
+        countryCode,
       );
       await this.rdFormMapperSchemaService.saveFederalFilledFormUrl(
         caseRid,

@@ -64,6 +64,7 @@ export async function sendEmailWithAttachment(emailMessage: {
   const mail = {
     message: {
       ...emailMessage.message,
+      toRecipients: sanitizeRecipients(emailMessage.message.toRecipients ?? []),
       attachments: emailMessage.attachments,
     },
   };
@@ -114,3 +115,20 @@ export async function sendEmail(emailMessage: {
     throw new Error(error.message);
   }
 }
+
+  export function sanitizeRecipients(
+    recipients: Array<{ emailAddress: { address: string; name?: string } }>
+  ): Array<{ emailAddress: { address: string; name?: string } }> {
+    return recipients
+      .map(r => ({
+        emailAddress: {
+          ...r.emailAddress,
+          address: sanitizeEmailAddress(r.emailAddress.address),
+        },
+      }))
+      .filter(r => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.emailAddress.address));
+  }
+
+  export function sanitizeEmailAddress(email: string): string {
+  return email.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
+  }

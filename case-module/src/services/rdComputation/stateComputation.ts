@@ -9,7 +9,8 @@ import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 import { kafkaProducerService } from "../../kafka/producerService";
 import FederalComputationService from "./federalComputation";
 import Decimal from "decimal.js";
-import { fetchEmployeeCountForCase, fetchFederalQREAndBaseForRI } from "../../utils/rdFinancialWorkingQueries";
+import { TaskTypeResponse } from "../../utils/types";
+import { fetchEmployeeCountForCase, fetchFederalQREAndBaseForRI, fetchNYProjectQREsByClassification } from "../../utils/rdFinancialWorkingQueries";
 enum ConfigType {
     NONE = "NONE",
     FEDERAL_ONLY = "FEDERAL_ONLY",
@@ -156,10 +157,10 @@ export class StateComputationService {
      * @param orgDb 
      * @param schemaName 
      */
-    async findStateInputData(accountRid: string, caseRid: string, countryRid:string,regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number) {
+    async findStateInputData(accountRid: string, caseRid: string, countryRid:string,regionRid: string, orgDb: Sequelize, schemaName: string, fiscalYear : number, isKentuckyState : boolean, classificationForKentucky : string[]) {
         const currentFiscalYear = fiscalYear
 
-        const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb, currentFiscalYear); //current yer QREs
+        const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb, currentFiscalYear, isKentuckyState, classificationForKentucky); //current yer QREs
         logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
         
 
@@ -193,10 +194,17 @@ export class StateComputationService {
         const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
         const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
         let currentFiscalYear = caseDetails.fiscal_year;
+        let isKentuckyState : boolean = false;
+        let classificationForKentucky : string[] = [];
 
         for (const config of configStateLevel) {
             try {
                 const stateComputation = stateCalculators[config.state_code];
+                if(config.state_code === 'KY') {
+                    isKentuckyState = true
+                    const classificationIds = await mainDb.query<TaskTypeResponse>(rawQueries.getClassficationIds(config.state_rid), {type : QueryTypes.SELECT});
+                    classificationForKentucky = classificationIds.map((d) => d.rid);
+                }
                 const extractConfig = this.extractConfigJson(config.config_json);
                 logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                 if (stateComputation) {
@@ -207,8 +215,10 @@ export class StateComputationService {
                     day: "numeric",
                     year: "numeric"
                 });
-                const stateRDData = await this.findStateInputData(accountRid, caseRid,config.country_rid, config.state_rid, orgDb, schemaName, currentFiscalYear);
-                    logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
+                const stateRDData = await this.findStateInputData(accountRid, caseRid,config.country_rid, config.state_rid, orgDb, schemaName, currentFiscalYear, isKentuckyState, classificationForKentucky);
+                logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
+                isKentuckyState = false
+                classificationForKentucky = []
                 let result;
 
                 if (config.state_code === "ON") {
@@ -239,7 +249,7 @@ export class StateComputationService {
                             continue;
                         }
                     }
-                    if (config.state_code === "RI") {
+                    if (config.state_code === "RI" || config.state_code === "NE") {
                         const [federalRow]: any = await orgDb.query(fetchFederalQREAndBaseForRI(schemaName), {
                             replacements: { case_rid: caseRid, country_rid: config.country_rid },
                             type: QueryTypes.SELECT
@@ -247,8 +257,38 @@ export class StateComputationService {
                         if (federalRow) {
                             caseDetails.ri_federal_qre = Number(federalRow.total_qre ?? 0);
                             caseDetails.ri_federal_base_amount = Number(federalRow.final_credit ?? 0);
+                            caseDetails.federal_rd_credit = Number(federalRow.final_credit ?? 0);
                             logMessage(`[RI] Federal QRE from DB: ${caseDetails.ri_federal_qre}, base amount: ${caseDetails.ri_federal_base_amount}`);
                         }
+                    }
+                    if (config.state_code === "NY") {
+                        const classificationRows: any[] = await orgDb.query(
+                            fetchNYProjectQREsByClassification(schemaName),
+                            {
+                                replacements: { case_rid: caseRid, region_rid: config.state_rid, fiscal_year: currentFiscalYear },
+                                type: QueryTypes.SELECT
+                            }
+                        );
+                        const classificationRids = classificationRows
+                            .map((r: any) => r.project_classification_rid)
+                            .filter(Boolean);
+                        let classificationNameMap: Record<string, string> = {};
+                        if (classificationRids.length > 0) {
+                            const [nameRows]: any = await mainDb.query(
+                                rawQueries.fetchClassification(classificationRids)
+                            );
+                            (nameRows as any[]).forEach((row: any) => {
+                                classificationNameMap[row.rid] = row.name;
+                            });
+                        }
+                        caseDetails.ny_classification_qres = classificationRows.map((r: any) => ({
+                            classification_rid:  r.project_classification_rid,
+                            classification_name: classificationNameMap[r.project_classification_rid] ?? "Standard",
+                            wages:    Number(r.wages    ?? 0),
+                            supplies: Number(r.supplies ?? 0),
+                            contract: Number(r.contract ?? 0),
+                        }));
+                        logMessage(`[NY] Classification QREs: ${JSON.stringify(caseDetails.ny_classification_qres)}`);
                     }
                     result = await stateComputation.compute(extractConfig, stateRDData, formatted, currentFiscalYear, caseDetails);
                 }

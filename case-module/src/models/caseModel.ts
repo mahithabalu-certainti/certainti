@@ -104,7 +104,7 @@ interface CaseAttributes {
   basic_research_payments_dc? :number;
   qualified_org_baseamount_dc? :number;
   lease_costs_of_computers_dc?:number;
-   credit_shared_wages_dc?:number;
+  credit_shared_wages_dc?:number;
   pass_through_research_credit_dc?:number;
   amount_allocated_beneficiaries_dc?:number;
 
@@ -116,8 +116,14 @@ interface CaseAttributes {
   orphan_drug_qualified_expenses_wi?: number;
   credit_offset_tax_wi?:number;
   credit_carry_forward_py_wi?: number;
+  fein_amounta_wi?:number;
+   fein_amountb_wi?:number;
 
   credit_carry_forward_py_me?: number;
+
+  credit_carry_forward_py_il?: number;
+  income_tax_amount_il?: number;
+ other_state_tax_credit_il?: number;
 
   lease_costs_of_computers_mn?:number;
   credit_tax_limit_mn?:number;
@@ -144,8 +150,11 @@ interface CaseAttributes {
   rural_basic_rd_credit_nm?:number;
   additional_tech_jobs_rd_credit_nm?:number;
   rural_additional_tech_jobs_rd_credit_nm?:number;
-  
+  basic_research_payments_me?:number;
 
+  contract_research_expense_university_va?:number;
+  supply_expense_university_va?:number;
+  wages_expense_university_va?:number
 
 
 
@@ -284,6 +293,15 @@ export class Case
   public rural_basic_rd_credit_nm?: number;
   public additional_tech_jobs_rd_credit_nm?: number;
   public rural_additional_tech_jobs_rd_credit_nm?: number;
+  public credit_carry_forward_py_il?: number;
+  public income_tax_amount_il?: number;
+  public other_state_tax_credit_il?: number;
+  public basic_research_payments_me?:number;
+  public contract_research_expense_university_va?:number;
+  public supply_expense_university_va?:number;
+  public wages_expense_university_va?:number;
+  public fein_amounta_wi?:number;
+  public fein_amountb_wi?:number;
   static initialize(
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
@@ -415,6 +433,7 @@ export class Case
         lease_costs_of_computers_vt: {type : DataTypes.DECIMAL, allowNull : true},
 
         credit_carry_forward_py_me: {type : DataTypes.DECIMAL, allowNull : true},
+        basic_research_payments_me: {type : DataTypes.DECIMAL, allowNull : true},
 
         lease_costs_of_computers_mn: { type: DataTypes.DECIMAL, allowNull: true },
         credit_tax_limit_mn: { type: DataTypes.DECIMAL, allowNull: true },
@@ -431,6 +450,17 @@ export class Case
          rural_basic_rd_credit_nm: { type: DataTypes.DECIMAL, allowNull: true },
          additional_tech_jobs_rd_credit_nm: { type: DataTypes.DECIMAL, allowNull: true },
          rural_additional_tech_jobs_rd_credit_nm: { type: DataTypes.DECIMAL, allowNull: true },
+          credit_carry_forward_py_il: { type: DataTypes.DECIMAL, allowNull: true },
+         income_tax_amount_il: { type: DataTypes.DECIMAL, allowNull: true },
+         other_state_tax_credit_il: { type: DataTypes.DECIMAL, allowNull: true },
+         contract_research_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
+         supply_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
+         wages_expense_university_va: { type: DataTypes.DECIMAL, allowNull: true },
+          fein_amounta_wi: { type: DataTypes.DECIMAL, allowNull: true },
+         fein_amountb_wi: { type: DataTypes.DECIMAL, allowNull: true },
+         
+
+         
       },
       {
         sequelize,

@@ -36,7 +36,7 @@ export interface ConfigJson {
     basic_research_credit_rate: number;
     /** Credit rate applied to excess QRE — default 5 (i.e. 5%) */
     qre_credit_percentage: number;
-    tax_liablity_threshold_amount: number;
+    tax_liability_threshold_amount: number;
     tax_liablity_threshold_percentage: number;
     /** Percentage of contract research expenses included — default 65 (i.e. 65%) */
     sub_con_percent: number;
@@ -97,15 +97,16 @@ export class RdCreditCalculatorForME {
     // -------------------------------------------------------------------------
     private partA(config: ConfigJson, caseDetails: Case) {
         const cd = caseDetails as any;
-        const maineBasicResearchPayments = new Decimal(cd.me_federal_basic_research_payments ?? 0); // 6765 Section A line 2 / Section B line 15 (Maine portion)
-        const maineBasePeriodAmounts     = new Decimal(cd.me_federal_base_period_amounts     ?? 0); // 6765 Section A line 3 / Section B line 16 (Maine portion)
+        const federalBasicResearchPayments = new Decimal(cd.basic_research_payments_usa ?? 0);
+        const federalQualifiedOrg = new Decimal(cd.qualified_org_baseamount_usa ?? 0);
+        const federalBasicResearch = federalBasicResearchPayments.minus(federalQualifiedOrg);
+        const meBaseperiodAmount = new Decimal(cd.basic_research_payments_me ?? 0);
+        const basicResearchPayments = Decimal.max(federalBasicResearch.minus(meBaseperiodAmount), 0);
 
-        const basicResearchPayments = Decimal.max(maineBasicResearchPayments.minus(maineBasePeriodAmounts), 0);
         const basicResearchCredit   = basicResearchPayments.mul(config.basic_research_credit_rate / 100);
 
         return {
-            maineBasicResearchPayments: this.round2(maineBasicResearchPayments),
-            maineBasePeriodAmounts:     this.round2(maineBasePeriodAmounts),
+    
             basicResearchPayments:      this.round2(basicResearchPayments),
             basicResearchCredit:        this.round2(basicResearchCredit),
         };
@@ -217,11 +218,7 @@ export class RdCreditCalculatorForME {
         return {
             computed_fields: {
                 "Maine - Credit Calculations": {
-                    "[1a] Maine portion of federal basic research payments (Form 6765, Section A, line 2 or Section B, line 15)":
-                        partA.maineBasicResearchPayments,
 
-                    "[1b] Maine portion of federal base period amounts (Form 6765, Section A, line 3 or Section B, line 16)":
-                        partA.maineBasePeriodAmounts,
 
                     "[1] Basic research payments in excess of the federal base spent for research conducted in Maine (Form 6765, Section A, line 13 or Section B, line 26). Line 1a minus Line 1b, not less than 0":
                         partA.basicResearchPayments,
@@ -248,7 +245,7 @@ export class RdCreditCalculatorForME {
                     "[7] Carryforward from previous years. See instructions":
                         partB.unusedCredit,
 
-                    [`[8] Total available credit (line 2 plus lines 6 and 7). Corporations: if amount is greater than ${config.tax_liablity_threshold_amount}, see instructions. Enter allowable credit amount on Form 1040ME, Schedule A, line 16; Form 1040C-ME, Schedule A, line 6; Form 1041ME, Schedule A, line 10; or Form 1120ME, Schedule C, line 1f`]:
+                    [`[8] Total available credit (line 2 plus lines 6 and 7). Corporations: if amount is greater than ${config.tax_liability_threshold_amount}, see instructions. Enter allowable credit amount on Form 1040ME, Schedule A, line 16; Form 1040C-ME, Schedule A, line 6; Form 1041ME, Schedule A, line 10; or Form 1120ME, Schedule C, line 1f`]:
                         totalCredit,
                 },
             },

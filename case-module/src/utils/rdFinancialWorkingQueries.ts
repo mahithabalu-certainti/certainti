@@ -321,14 +321,14 @@ export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: str
     const query = `
     WITH fetch_project_ids AS (
     SELECT project_fiscal_rid, rid, project_code, project_name ,qre_final
-    FROM ${schemaName}.case_projects 
+    FROM ${schemaName}.case_projects
     WHERE
     case_rid = '${caseRid}'
     AND
     account_rid = '${accountRid}'
     ),
     calculate_cost AS (
-    SELECT 
+    SELECT
     cp.project_code, cp.project_name, cp.rid, cp.qre_final
     FROM
     ${schemaName}.project_fiscal cp
@@ -341,7 +341,7 @@ export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: str
     cp.project_code, cp.project_name, cp.rid, cp.qre_final
     ORDER BY cp.project_name ASC
     )
-    SELECT 
+    SELECT
     array_agg(jsonb_build_object(
     'project_code', project_code,
     'project_name', project_name,
@@ -352,6 +352,24 @@ export const fetchProjectCostDetailsBasedOnCasesForRdforms = async (caseRid: str
     `;
     return query;
   }
+
+export const fetchFourPartAssessmentForCase = (schemaName: string, caseRid: string) => {
+    return `
+    SELECT
+      pf.project_code,
+      pf.project_name,
+      fpa.technological_uncertainty_rationale,
+      fpa.process_of_experimentation_rationale,
+      fpa.technological_in_nature_rationale,
+      fpa.permitted_purpose_rationale
+    FROM ${schemaName}.case_projects cp
+    JOIN ${schemaName}.project_fiscal pf ON pf.rid = cp.project_fiscal_rid
+    LEFT JOIN ${schemaName}.four_part_assessment fpa ON fpa.project_fiscal_rid = pf.rid
+    WHERE cp.case_rid = '${caseRid}'
+    AND pf.is_qualified = true
+    AND fpa.project_fiscal_rid IS NOT NULL
+    `;
+}
 
 export const fetchTotalResourcesForCase = (caseRid: string, accountRid: string, schemaName: string) => {
     const query = `
@@ -406,6 +424,26 @@ export const fetchEmployeeCountForCase = (schemaName: string) =>
               AND pr.rid IS NOT NULL
               AND pf.is_qualified = true
           GROUP BY pfr.region_rid
+        `
+}
+
+export const fetchNYProjectQREsByClassification = (schemaName: string) =>
+{
+    return `
+          SELECT
+              pf.project_classification_rid,
+              CAST(SUM((pfr.total_cost_fte_from_prj_res  * pf.rd_percent_final) / 100) AS DECIMAL(18,2)) AS wages,
+              CAST(SUM((pfr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final) / 100) AS DECIMAL(18,2)) AS supplies,
+              CAST(SUM((pfr.total_cost_subcon_from_prj_res   * pf.rd_percent_final) / 100) AS DECIMAL(18,2)) AS contract
+          FROM ${schemaName}.cases cs
+          JOIN ${schemaName}.case_projects cp  ON cp.case_rid = cs.rid
+          JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+          JOIN ${schemaName}.project_fiscal_region pfr ON pfr.project_fiscal_rid = pf.rid
+          WHERE cs.rid = :case_rid
+              AND cs.fiscal_year = :fiscal_year
+              AND pfr.region_rid = :region_rid
+              AND pf.is_qualified = true
+          GROUP BY pf.project_classification_rid
         `
 }
 

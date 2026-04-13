@@ -73,44 +73,78 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize, currentFiscalYear: any): Promise<QRE> {
+    async getCurrentYearQREsForState(caseRid: string, regionRid: string, schemaName: string, orgDbSequelize: Sequelize, currentFiscalYear: any, isKentuckyState : boolean, classificationForKentucky : string[]): Promise<QRE> {
         try {
+            let query : string = '';
+            let data: any;
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
             }
-
-            const [data]: any[] = await this.orgDbSequelize.query(
+            if(isKentuckyState && classificationForKentucky.length > 0) {
+                query = `
+                SELECT 
+                    CAST(SUM((cpr.total_cost_fte_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
+                    CAST(SUM((cpr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2))  AS total_supplies,
+                    CAST(SUM((cpr.total_cost_subcon_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
+                    cs.tax_liability_sc as business_tax_liability_sc, 
+                    cs.tax_liability_ct as business_tax_liability_ct,
+                    cs.tax_liability_ga as business_tax_liability_ga
+                FROM ${schemaName}.cases cs
+                JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
+                JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+                JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid
+                WHERE 
+                cs.rid = :caseRid AND cs.fiscal_year = :currentFiscalYear 
+                AND cpr.region_rid = :regionRid 
+                AND pf.is_qualified = true
+                ${classificationForKentucky.length > 0 ? 'AND cp.project_classification_rid IN (:classificationForKentucky)' : 'AND 1=0'}
+                GROUP BY 
+                cs.tax_liability_sc,
+                cs.tax_liability_ct,
+                cs.tax_liability_ga
                 `
-                    SELECT 
-                        CAST(SUM((cpr.total_cost_fte_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
-                        CAST(SUM((cpr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2))  AS total_supplies,
-                        CAST(SUM((cpr.total_cost_subcon_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
-                        cs.tax_liability_sc as business_tax_liability_sc, 
-                        cs.tax_liability_ct as business_tax_liability_ct,
-                        cs.tax_liability_ga as business_tax_liability_ga
-                    FROM ${schemaName}.cases cs
-                    JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
-                    JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
-                    JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid
-                    WHERE cs.rid = :caseRid AND cs.fiscal_year = :currentFiscalYear AND cpr.region_rid = :regionRid AND pf.is_qualified = true
-                    GROUP BY 
-                    cs.tax_liability_sc,
-                    cs.tax_liability_ct,
-                    cs.tax_liability_ga
-                `,
+                data = await this.orgDbSequelize.query(query,
                 {
-                    replacements: { caseRid, regionRid, currentFiscalYear },
-                    type: QueryTypes.SELECT,
+                    replacements: { caseRid, regionRid, currentFiscalYear,  classificationForKentucky}
+                })
+            } else {
+                query = 
+                `
+                SELECT 
+                    CAST(SUM((cpr.total_cost_fte_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_wages,
+                    CAST(SUM((cpr.total_cost_nonlabor_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2))  AS total_supplies,
+                    CAST(SUM((cpr.total_cost_subcon_from_prj_res * pf.rd_percent_final)/100) AS DECIMAL(18,2)) AS total_contract,
+                    cs.tax_liability_sc as business_tax_liability_sc, 
+                    cs.tax_liability_ct as business_tax_liability_ct,
+                    cs.tax_liability_ga as business_tax_liability_ga
+                FROM ${schemaName}.cases cs
+                JOIN ${schemaName}.case_projects cp on cp.case_rid = cs.rid
+                JOIN ${schemaName}.project_fiscal pf ON cp.project_fiscal_rid = pf.rid
+                JOIN ${schemaName}.project_fiscal_region cpr ON cpr.project_fiscal_rid = pf.rid
+                WHERE 
+                cs.rid = :caseRid 
+                AND cs.fiscal_year = :currentFiscalYear 
+                AND cpr.region_rid = :regionRid 
+                AND pf.is_qualified = true
+                GROUP BY 
+                cs.tax_liability_sc,
+                cs.tax_liability_ct,
+                cs.tax_liability_ga
+                `
+                data = await this.orgDbSequelize.query(query,
+                {
+                    replacements: { caseRid, regionRid, currentFiscalYear }
                 }
             );
+            }
 
             return {
-                wages: Number(data?.total_wages || 0),
-                supplies: Number(data?.total_supplies || 0),
-                contract: Number(data?.total_contract || 0),
-                business_tax_liability_sc: Number(data?.business_tax_liability_sc || 0),
-                business_tax_liability_ct: Number(data?.business_tax_liability_ct || 0),
-                business_tax_liability_ga: Number(data?.business_tax_liability_ga || 0)
+                wages: Number(data[0][0]?.total_wages || 0),
+                supplies: Number(data[0][0]?.total_supplies || 0),
+                contract: Number(data[0][0]?.total_contract || 0),
+                business_tax_liability_sc: Number(data[0][0]?.business_tax_liability_sc || 0),
+                business_tax_liability_ct: Number(data[0][0]?.business_tax_liability_ct || 0),
+                business_tax_liability_ga: Number(data[0][0]?.business_tax_liability_ga || 0)
             };
         } catch (err) {
             logMessage(`Error fetching account: ${err}`);
@@ -432,9 +466,9 @@ class RDCreditSchemaService {
                 prev_year1_qre: result.prev1yearQRE,
                 prev_year2_qre: result.prev2yearQRE,
                 prev_year3_qre: result.prev3yearQRE,
-                total_wages: result?.totalFTE,
-                total_supplies: result?.totalSubCon,
-                total_subcontract: result?.totalSubCon,
+                total_wages: result?.totalWages,
+                total_supplies: result?.totalSupplies,
+                total_subcontract: result?.totalContract,
                 config_json: config,
                 country_export_data : country_export_data
             },

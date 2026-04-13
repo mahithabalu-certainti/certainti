@@ -41,11 +41,16 @@ export class WebHookService {
       let receivedEmail = null;
       let messageId = null;
 
+      logMessage(`[Webhook Handler] Received ${notifications?.length ?? 0} notification(s)`);
+
       for (const notification of notifications) {
         const subscriptionId = notification.subscriptionId;
         messageId = notification.resourceData?.id;
 
+        logMessage(`[Webhook Handler] Processing notification subscriptionId=${subscriptionId}, messageId=${messageId}`);
+
         if (!messageId) {
+          logMessage(`[Webhook Handler] Skipping notification — messageId missing for subscriptionId=${subscriptionId}`);
           continue;
         }
 
@@ -68,6 +73,7 @@ export class WebHookService {
         } = await this.fetchCredentialsBySubscriptionId(subscriptionId);
 
         receivedEmail = email;
+        logMessage(`[Webhook Handler] Credentials fetched subscriptionId=${subscriptionId}, email=${email}, subscription_created=${subscription_created}`);
 
         if (subscription_created && email) {
           const decryptedSecret = await decryptClientSecret(client_secret);
@@ -76,7 +82,9 @@ export class WebHookService {
             client_id,
             decryptedSecret
           );
+          logMessage(`[Webhook Handler] Graph client created for email=${email}`);
         } else {
+          logMessage(`[Webhook Handler] Invalid graph credentials subscriptionId=${subscriptionId}, email=${email}, subscription_created=${subscription_created}`);
           return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -193,9 +201,15 @@ export class WebHookService {
         }
       }
 
+      logMessage(
+        `[Webhook Handler] CSV parsed interactionId=${interactionId}, accountNumber=${accountNumber}, projectId=${projectId}, projectName=${projectName}, projectCode=${projectCode}, raw_answers_count=${answers.length}`
+      );
+
       if(answers && answers.length > 0){
         answers = answers.filter((val) => val.response.trim() != "" && val.response != null)
       }
+
+      logMessage(`[Webhook Handler] Answers after empty-response filter count=${answers.length}`);
 
       if (!this.graphClient) {
         await this.logWebhookEmailEvent({
@@ -240,6 +254,7 @@ export class WebHookService {
         await this.interactionSchemaService.fetchValidAccountNumberByNumber(
           accountNumber
         );
+      logMessage(`[Webhook Handler] Account validation accountNumber=${accountNumber}, resolved=${accountNumberByUser ?? "NOT FOUND"}`);
       if (!accountNumberByUser) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
@@ -292,7 +307,7 @@ export class WebHookService {
         await this.interactionSchemaService.fetchValidAccountNumberByNumber(
           accountNumberById
         );
-
+      logMessage(`[Webhook Handler] Account ID validation accountNumberById=${accountNumberById}, resolved=${validAccountNumber ?? "NOT FOUND"}`);
       if (!validAccountNumber) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
@@ -317,11 +332,13 @@ export class WebHookService {
         };
       }
 
+      logMessage(`[Webhook Handler] Fetching interaction interactionId=${interactionId}, validAccountNumber=${validAccountNumber}`);
       const interaction = await this.fetchInteractionById(
         validAccountNumber,
         interactionId,
         finalResult.interactionId
       );
+      logMessage(`[Webhook Handler] Interaction fetch result rid=${interaction?.rid ?? "NOT FOUND"}, recipient_email=${interaction?.recipient_email ?? "-"}`);
       if (!interaction) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
@@ -346,6 +363,7 @@ export class WebHookService {
         };
       }
 
+      logMessage(`[Webhook Handler] Validating project data interactionLevel=${finalResult.interactionLevel}, projectId=${projectId}, projectName=${projectName}, projectCode=${projectCode}`);
       const projectData = await this.validateProjectData(
         validAccountNumber,
         finalResult.interactionLevel,
@@ -355,6 +373,7 @@ export class WebHookService {
           projectCode,
         }
       );
+      logMessage(`[Webhook Handler] Project validation result=${projectData === null ? "PASSED" : projectData}`);
       if (projectData !== null) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
@@ -383,6 +402,7 @@ export class WebHookService {
         validAccountNumber,
         interaction.rid
       );
+      logMessage(`[Webhook Handler] Interaction items fetched interaction_rid=${interaction.rid}, items_count=${Array.isArray(interactionItem) ? interactionItem.length : 0}`);
 
       const unmatchedSeqNums: string[] = [];
       const unmatchedQuestion: string[] = [];
@@ -400,6 +420,7 @@ export class WebHookService {
 
         if (matchingItem) {
           answer.rid = matchingItem.rid;
+          logMessage(`[Webhook Handler] Matched by seq_num questionSeqId=${questionSeqNum}, item_rid=${matchingItem.rid}`);
         } else {
           unmatchedSeqNums.push(questionSeqNum);
           this.logger.warn(
@@ -409,6 +430,7 @@ export class WebHookService {
 
         if (matchingQuestion) {
           answer.rid = matchingQuestion.rid;
+          logMessage(`[Webhook Handler] Matched by question text questionSeqId=${questionSeqNum}, item_rid=${matchingQuestion.rid}, response=${answer.response}`);
         } else {
           unmatchedQuestion.push(questionSeqNum);
           this.logger.warn(
@@ -416,6 +438,8 @@ export class WebHookService {
           );
         }
       }
+
+      logMessage(`[Webhook Handler] Question matching complete matched=${answers.length - unmatchedSeqNums.length}, unmatched_seq_nums=${unmatchedSeqNums.length}, unmatched_questions=${unmatchedQuestion.length}`);
 
       if (unmatchedSeqNums.length > 0) {
         await this.logWebhookEmailEvent({
@@ -484,6 +508,7 @@ export class WebHookService {
         updateResponeObj,
         interaction.recipient_email || ""
       );
+      logMessage(`[Webhook Handler] Flow complete interaction_rid=${interaction.rid}, accountNumber=${validAccountNumber}`);
 
       await this.logWebhookEmailEvent({
         schemaName: mailProcessedResults.accountNumber,

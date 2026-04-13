@@ -2407,9 +2407,10 @@ class ProjectIngestionService {
       project_code: "project_code",
       rd_percent_final: "rd_percent_final",
       is_assesed: "is_assesed",
+      is_qualified: "is_qualified",
     };
 
-    const childOnlyFilters = ["fiscal_year", "project_code", "rd_percent_final", "qre_final", "is_assesed"];
+    const childOnlyFilters = ["fiscal_year", "project_code", "rd_percent_final", "qre_final", "is_assesed", "is_qualified"];
     let isChildOnlyFilter: boolean = false;
 
     const parentFilters: Record<string, any> = {};
@@ -2603,7 +2604,7 @@ class ProjectIngestionService {
                 ]);
               }
               else {
-                if (field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final' && field !== 'is_assesed') {
+                if (field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final' && field !== 'is_assesed' && field !== 'is_qualified') {
                   fullOrder.push([
                     Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
                   ]);
@@ -2896,9 +2897,10 @@ class ProjectIngestionService {
       project_code: "project_code",
       rd_percent_final: "rd_percent_final",
       is_assesed: "is_assesed",
+      is_qualified: "is_qualified",
     };
 
-    const childOnlyFilters = ["fiscal_year", "project_code", "is_assesed"];
+    const childOnlyFilters = ["fiscal_year", "project_code", "is_assesed", "is_qualified"];
     let isChildOnlyFilter: boolean = false;
 
     const parentFilters: Record<string, any> = {};

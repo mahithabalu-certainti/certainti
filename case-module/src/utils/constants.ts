@@ -249,6 +249,11 @@ export const FORM_TYPE = {
   "Non-Fillable": "non-fillable",
 };
 
+export const NY_PROJECT_CLASSIFICATION = {
+  SEMICONDUCTOR: "Semiconductor Supply Chain",
+  GREEN:         "Green Chip",
+} as const;
+
 export const R_NUMBER_PREFIX = {
   ACCOUNT_FISCAL_REGION: "ACFR",
   ACCOUNT_FISCAL: "ACF",
@@ -1178,12 +1183,17 @@ export const rawQueries = {
     basic_research_payments_ia, qualified_org_baseamount_ia, non_qualifying_wages_ia, non_qualifying_contract_expenses_ia, cost_of_supplies_ia, rac_share_ia, supplement_rac_ia, passthrough_supplement_rac_ia,
     tax_liability_ks, machinery_equipments_ks,
     llet_credit_ky, corporation_tax_credit_ky, individual_tax_credit_ky,
-    energy_consortia_amount_dc, basic_research_payments_dc, qualified_org_baseamount_dc, lease_costs_of_computers_dc,
-    energy_consortia_amount_vt, basic_research_payments_vt, qualified_org_baseamount_vt, lease_costs_of_computers_vt,
+    energy_consortia_amount_dc, basic_research_payments_dc, qualified_org_baseamount_dc, lease_costs_of_computers_dc, credit_shared_wages_dc, pass_through_research_credit_dc, amount_allocated_beneficiaries_dc,
+    energy_consortia_amount_vt, basic_research_payments_vt, qualified_org_baseamount_vt, lease_costs_of_computers_vt, credit_shared_wages_vt, pass_through_research_credit_vt, amount_allocated_beneficiaries_vt,
     credit_carry_forward_py_me,
-    lease_costs_of_computers_mn, nonprofit_development_contributions, credit_tax_limit_mn, credit_carry_over_mn,
+    qualified_computer_rental_time_expenses_wi, research_supplies_expenses_wi, additional_pass_through_credits_wi, is_fiduciary_wi, fiduciary_beneficiary_credit_wi, orphan_drug_qualified_expenses_wi, credit_offset_tax_wi, credit_carry_forward_py_wi,
+    lease_costs_of_computers_mn, nonprofit_development_contributions_mn, credit_tax_limit_mn, credit_carry_over_mn, basic_research_amount_mn,
     property_factor_off_campus_ne, property_factor_on_campus_ne, payroll_factor_off_campus_ne, payroll_factor_on_campus_ne, off_campus_research_expenses_ne, credit_tax_refunds_ne, credit_distributed_ne,
-    lease_costs_of_computers_usa, energy_consortia_amount_usa, basic_research_payments_usa, qualified_org_baseamount_usa
+    rural_basic_rd_credit_nm, additional_tech_jobs_rd_credit_nm, rural_additional_tech_jobs_rd_credit_nm,
+    credit_carry_forward_py_il, income_tax_amount_il,
+    lease_costs_of_computers_usa, energy_consortia_amount_usa, basic_research_payments_usa, 
+    qualified_org_baseamount_usa,contract_research_expense_university_va,supply_expense_university_va,wages_expense_university_va,
+    fein_amounta_wi,fein_amountb_wi
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
@@ -2225,6 +2235,13 @@ fetchRegularFieldValue(
   },
   getPlatformCaseSetting () {
     return `SELECT assessment_methodology FROM ${MAIN_SCHEMA_NAME}.organization_licenses`
+  },
+  getClassficationIds (stateRid : string) {
+    return `
+    SELECT classification_rid AS rid FROM ${MAIN_SCHEMA_NAME}.classification_geography_map
+    WHERE
+    state_rid = '${stateRid}'
+    `
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

@@ -688,8 +688,49 @@ CA: {
             "Section 4 – Adjusted Expenses Calculation"
         ],
         sectionFieldOrders: {
-            // Array sections (dual-column) are passed through as-is — no field ordering entries needed.
-            // Single-column sections (Schedule B and Schedule C sec 1–3) are ordered below.
+          
+
+            // ── Form RDC Section 1 – Primary Credit Calculation (array/dual-column) ──
+            "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.": [
+                { pattern: "Column Name", order: 0 },
+                { pattern: "SubColumn Name", order: 1 },
+                { pattern: /^\[1\] Virginia Qualified/, order: 2 },
+                { pattern: /^\[2\] College and University Expenses Percentage/, order: 3 },
+                { pattern: /^\[3\] Virginia Base Amount for the Taxable Year|^\[3\] College and University Base Amount/, order: 4 },
+                { pattern: /^\[4\] Adjusted Expenses Amount/, order: 5 },
+                { pattern: /^\[5\] /, order: 6 },
+                { pattern: /^\[6\] Credit Computation/, order: 7 },
+                { pattern: /^\[7\] Credit Requested/, order: 8 },
+            ],
+
+            // ── Form RDC Section 2 – Alternative Simplified Credit Calculation (array/dual-column) ──
+            "Section 2 – Alternative Simplified Credit Calculation": [
+                { pattern: "Column Name", order: 0 },
+                { pattern: "SubColumn Name", order: 1 },
+                { pattern: /^\[1\] Total Adjusted Calendar Year/, order: 2 },
+                { pattern: /^\[2\] Credit Computation/, order: 3 },
+                { pattern: /^\[3\] Credit Requested/, order: 4 },
+            ],
+              // ── Schedule A Section 1 – Summary of Expenses (array/dual-column) ──
+            "Section 1 – Summary of Expenses": [
+                { pattern: "Column Name", order: 0 },
+                { pattern: "SubColumn Name", order: 1 },
+                { pattern: /^\[1\] Contract Research Expenses/, order: 2 },
+                { pattern: /^\[2\] Supply Expenses/, order: 3 },
+                { pattern: /^\[3\] Wages/, order: 4 },
+                { pattern: /^\[4\] Total Qualified Expenses/, order: 5 },
+            ],
+
+            // ── Schedule C Section 4 – Adjusted Expenses Calculation (array/dual-column) ──
+            "Section 4 – Adjusted Expenses Calculation": [
+                { pattern: "Column Name", order: 0 },
+                { pattern: "SubColumn Name", order: 1 },
+                { pattern: /^\[4a\]/, order: 2 },
+                { pattern: /^\[4b\]/, order: 3 },
+                { pattern: /^\[4c\]/, order: 4 },
+                { pattern: /^\[4d\]/, order: 5 },
+                { pattern: /^\[4e\]/, order: 6 },
+            ],
 
             // ── Schedule B Section 1 – VA Qualified Research and Development Expenses ──
             "Section 1 – VA Qualified Research and Development Expenses": [
@@ -730,11 +771,11 @@ CA: {
             ],
 
             // ── Schedule C Section 1 – Virginia Qualified Research and Development Expenses ──
+            // [1a] key now embeds the fiscal year (e.g. "CY. 2024") — pattern matches up to the period
             "Section 1 – Virginia Qualified Research and Development Expenses": [
-                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column A/, order: 1 },
-                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\. Column B/, order: 2 },
-                { pattern: /^\[1b\] Short year filers only: Enter the number of days/, order: 3 },
-                { pattern: /^\[1c\] Short year filers only: Divide the number of days/, order: 4 },
+                { pattern: /^\[1a\] Virginia Qualified Research and Development Expenses in CY\./, order: 1 },
+                { pattern: /^\[1b\] Short year filers only: Enter the number of days/, order: 2 },
+                { pattern: /^\[1c\] Short year filers only: Divide the number of days/, order: 3 },
             ],
 
             // ── Schedule C Section 2 – Determination of How to Compute the Credit ──
@@ -759,7 +800,7 @@ CA: {
             "PART III — Calculation of Tax Credit Based on Percentage of Research Occurring within Iowa"
         ],
         sectionFieldOrders: {
-            "PART II — U.S. Qualified Research Expenses (Lines 5–16)": [
+            "PART II — U.S. QualiConfigType.STATE_ONLYfied Research Expenses (Lines 5–16)": [
                 { pattern: /^\[2\] Certain amounts paid or incurred to energy consortia/, order: 1 },
                 { pattern: /^\[3\] Basic research payments to qualified organizations/, order: 2 },
                 { pattern: /^\[4\] Qualified organization base period amount/, order: 3 },
@@ -933,10 +974,10 @@ CA: {
     },
     NE: {
         sectionOrder: [
-            "NoTitle"
+            "yesSplit"
         ],
         sectionFieldOrders: {
-            "NoTitle": [
+            "yesSplit": [
                 { pattern: /^\[2\] Enter total amount of federal research credit allowed/, order: 1 },
                 { pattern: "[3] Nebraska property factor (attach schedule showing calculations)", order: 2 },
                 { pattern: "[3a] Off-campus, but in Nebraska.", order: 3 },
@@ -972,12 +1013,7 @@ CA: {
                 { pattern: "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21", order: 33 }
             ]
         },
-        BOLD: [
-            "[9] Total research tax credit (line 8a plus line 8b) .",
-            "[20] Total research tax credit (line 18 plus line 19.",
-            "[21] Enter the larger of line 9 or line 20.",
-            "[25] Total credit usage (line 22 + line 23 + line 24). Total cannot exceed line 21"
-        ]
+        BOLD: []
     },
     NH: {
         sectionOrder: [
@@ -1141,12 +1177,12 @@ CA: {
     },
     DC: {
         sectionOrder: [
-            "Section A — Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.",
+            "Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.",
             "Section B—Alternative Simplified Credit. Skip this section if you are completing Section A.",
             "Section C—Current Year Credit"
         ],
         sectionFieldOrders: {
-            "Section A — Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.": [
+            "Section A—Regular Credit. Skip this section and go to Section B if you are electing or previously elected (and are not revoking) the alternative simplified credit.": [
                 { pattern: /^\[1\] Certain amounts paid or incurred to energy consortia/, order: 1 },
                 { pattern: /^\[2\] Basic research payments to qualified organizations/, order: 2 },
                 { pattern: /^\[3\] Qualified organization base period amount/, order: 3 },
@@ -1244,7 +1280,50 @@ CA: {
             ],
         },
         BOLD: []
-    }
+    },
+
+    NY: {
+        sectionOrder: [
+            "Excelsior Research and Development Tax Credit:",
+        ],
+        sectionFieldOrders: {
+            "Excelsior Research and Development Tax Credit:": [
+                { pattern: "A credit of 50% of the portion of the Federal Research and Development tax credit that relates to expenditures in NYS up to credit up to 6% of research expenditures attributable to activities conducted in NYS.", order: 1 },
+                { pattern: "For a qualified semiconductor supply chain project, a credit of 50% of the portion of the Federal Research and Development tax credit that relates to expenditures in NYS up to 7% of research expenditures attributable to activities conducted in NYS.", order: 2 },
+                { pattern: "For a qualified green project or green CHIPS project, a credit of 50% of the portion of the Federal Research and Development tax credit that relates to expenditures in NYS up to 8% of research expenditures attributable to activities conducted in NYS.", order: 3 },
+                { pattern: "Current year Qualified R&D credit expenses in NY(Job Creation)", order: 4 },
+                { pattern: "Credit - 6% of qualified expenses(Job Creation)", order: 5 },
+                { pattern: "Current year Qualified R&D credit expenses in NY(Semiconductor supply chain project)", order: 6 },
+                { pattern: /^Credit - \d+(\.\d+)?% of qualified expenses\(Semiconductor supply chain project\)$/, order: 7 },
+                { pattern: "Current year Qualified R&D credit expenses in NY(Green project or Green chips project)", order: 8 },
+                { pattern: /^Credit - \d+(\.\d+)?% of qualified expenses\(Green project or Green chips project\)$/, order: 9 },
+            ],
+        },
+        BOLD: [
+            "Current year Qualified R&D credit expenses in NY(Job Creation)",
+            "Current year Qualified R&D credit expenses in NY(Semiconductor supply chain project)",
+            "Current year Qualified R&D credit expenses in NY(Green project or Green chips project)",
+        ],
+    },
+
+    NM: {
+        sectionOrder: [
+            "newMexico"
+        ],
+        sectionFieldOrders: {
+            "newMexico": [
+                { pattern: "Column Name",     order: 0 },
+                { pattern: "SubColumn Name",  order: 1 },
+                { pattern: "[3] Qualified Expenditures", order: 2 },
+                { pattern: /^\[4\] Basic Technology Jobs and Research and Development Tax Credit\./, order: 3 },
+                { pattern: /^\[5\] Rural Area Basic Technology Jobs and Research and Development Tax Credit\./, order: 4 },
+                { pattern: /^\[6\] Additional Technology Jobs and Research and Development Tax Credit\./, order: 5 },
+                { pattern: /^\[7\] Rural Area Additional Technology Jobs and Research and Development Tax Credit\./, order: 6 },
+                { pattern: "[9] Total Technology Jobs and Research and Development Tax Credit. Add lines 4,5, 6, and 7,enter total here", order: 7 },
+            ]
+        },
+        BOLD: []
+    },
 
     // TODO: Add configurations for other states (GA, etc.)
 };
@@ -1260,6 +1339,84 @@ export function reorderComputedFieldsForState(stateCode: string, computedFields:
 
     if (!config) {
         logMessage(`No field ordering configuration found for state: ${stateCode}`);
+        return computedFields;
+    }
+
+    // Handle VA's nested multi-schedule structure: { virginia: {...}, computed_fields: {...}, virginiasection4: {...} }
+    // Returns a FLAT merged dict so renderVA receives { sectionKey → array|object } directly.
+    if (stateCode === "VA" && computedFields.virginia) {
+        const result: any = {};
+
+        // ── virginia: Schedule A + Form RDC Sections 1 & 2 (all array/dual-column) ──
+        const virginiaOrder = [
+           
+            "Section 1 – Primary Credit Calculation Round to the nearest whole dollar.",
+            "Section 2 – Alternative Simplified Credit Calculation",
+             "Section 1 – Summary of Expenses",
+        ];
+        virginiaOrder.forEach(sectionKey => {
+            const sectionData = computedFields.virginia[sectionKey];
+            if (!sectionData) return;
+            const fieldPatterns = config.sectionFieldOrders[sectionKey];
+            if (Array.isArray(sectionData) && fieldPatterns) {
+                result[sectionKey] = sectionData.map(
+                    (colObj: any) => reorderSectionFields(colObj, fieldPatterns)
+                );
+            } else {
+                result[sectionKey] = sectionData;
+            }
+        });
+
+        // ── computed_fields: Schedule B Sections 1–4 + Schedule C Sections 1–3 (all single-column) ──
+        if (computedFields.computed_fields) {
+            const scheduleBCOrder = [
+                "Section 1 – VA Qualified Research and Development Expenses",
+                "Section 2 – Determine the Fixed Base Percentage",
+                "Section 3 – Determine the Virginia Base Amount",
+                "Section 4 – Virginia Base Amount",
+                "Section 1 – Virginia Qualified Research and Development Expenses",
+                "Section 2 – Determination of How to Compute the Credit",
+                "Section 3 – Average Qualified Research and Development Expenses Calculation",
+            ];
+            scheduleBCOrder.forEach(sectionKey => {
+                const sectionData = computedFields.computed_fields[sectionKey];
+                if (!sectionData) return;
+                const fieldPatterns = config.sectionFieldOrders[sectionKey];
+                if (fieldPatterns) {
+                    result[sectionKey] = reorderSectionFields(sectionData, fieldPatterns);
+                } else {
+                    result[sectionKey] = sectionData;
+                }
+            });
+        }
+
+        // ── virginiasection4: Schedule C Section 4 (array/dual-column) ──
+        if (computedFields.virginiasection4) {
+            const secKey = "Section 4 – Adjusted Expenses Calculation";
+            const sectionData = computedFields.virginiasection4[secKey];
+            const sec4Patterns = config.sectionFieldOrders[secKey];
+            if (sectionData && Array.isArray(sectionData) && sec4Patterns) {
+                result[secKey] = sectionData.map(
+                    (colObj: any) => reorderSectionFields(colObj, sec4Patterns)
+                );
+            } else if (sectionData) {
+                result[secKey] = sectionData;
+            }
+        }
+
+        return result;
+    }
+
+    // Handle NM's array structure: { newMexico: [...] }
+    if (stateCode === "NM" && computedFields.newMexico) {
+        const fieldPatterns = config.sectionFieldOrders["newMexico"];
+        if (Array.isArray(computedFields.newMexico) && fieldPatterns) {
+            return {
+                newMexico: computedFields.newMexico.map(
+                    (colObj: any) => reorderSectionFields(colObj, fieldPatterns)
+                ),
+            };
+        }
         return computedFields;
     }
 
