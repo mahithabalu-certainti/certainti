@@ -227,7 +227,7 @@ export class RdCreditCalculatorForIA {
         const line23 = line21.minus(line22);
 
         //---- Lines 24–25: Iowa supplies × 60% (Iowa-specific rule)
-        const line24 = new Decimal(cd.cost_of_supplies_ia ?? 0);
+        const line24 = new Decimal(supplies ?? 0);
         const line25 = line24.mul(suppliesInclusion);   // 60%, not 65%
 
         //---- Lines 26–28: Iowa contract expenses
@@ -250,10 +250,10 @@ export class RdCreditCalculatorForIA {
             : new Decimal(0);
 
         //---- Line 32: Iowa allocable expenses = line 16 × line 31
-        const line32 = p2._line16.mul(line31);
+        const line32 = p2._line16.mul(this.round2(line31));
 
         //---- Line 33: line 32 × credit rate
-        const line33 = line32.mul(creditRate);
+        const line33 = line32.mul(config.qre_credit_percentage_c3 / 100);
 
         //---- Line 34: Iowa RAC = line 20 + line 33  ← FINAL CREDIT (single entity)
         const line34 = line20.plus(line33);
@@ -295,8 +295,8 @@ export class RdCreditCalculatorForIA {
             controlled_group_share:      this.round2(line35),
             supplement_rac:this.round2(line36),
             passthrough_rac:             this.round2(line37),
-            credit_rate_used:            config.qre_credit_percentage_c2,
-            supplies_inclusion_used:     config.qre_credit_percentage_c3,
+            credit_rate_used:            config.qre_credit_percentage_c3,
+            supplies_inclusion_used:     config.qre_credit_percentage_c2,
         };
     }
 

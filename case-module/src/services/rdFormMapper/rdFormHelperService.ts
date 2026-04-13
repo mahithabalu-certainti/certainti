@@ -2084,6 +2084,18 @@ export class RdFormHelperService {
         safeSet(prefixKey, value ?? 0);
         safeSet(prefixKey.replace(/\s+/g, ""), value ?? 0);
       }
+
+      // Also index up to the first ". " (period + space) sentence boundary.
+      // Handles labels like "31 Iowa share of research. Divide line 25 by line 26, enter percentage
+      // to the nearest hundredth of a percent" where the #label regex stops at the comma,
+      // capturing "31 Iowa share of research. Divide line 25 by line 26". Storing the
+      // pre-period prefix ("31 Iowa share of research") ensures resolveRef's upToPeriodKey
+      // lookup still hits even when the full label doesn't match.
+      const upToPeriod = rawKey.split(/\.\s+/)[0]?.trim();
+      if (upToPeriod && upToPeriod !== rawKey && upToPeriod !== upToComma) {
+        safeSet(upToPeriod, value ?? 0);
+        safeSet(upToPeriod.replace(/\s+/g, ""), value ?? 0);
+      }
     };
 
     enhancedConfigs.forEach((item) => {
@@ -2150,7 +2162,7 @@ export class RdFormHelperService {
                   item.value = dynamicValue;
                   logMessage(
                     `Direct bare-RID resolution (no #) for field ${
-                      item.field_label || item.field_id
+                      item.field_label ?? item.field_id ?? item.label ?? "(unknown)"
                     }: ${bareRid} -> ${dynamicValue}`,
                   );
                 }
@@ -2220,7 +2232,7 @@ export class RdFormHelperService {
               },
             );
           logMessage(
-            `Resolved DB value for field ${item.field_label || item.field_id}: ${dynamicValue}`,
+            `Resolved DB value for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${dynamicValue}`,
           );
 
           if (dynamicValue !== null && dynamicValue !== undefined) {
@@ -2241,7 +2253,7 @@ export class RdFormHelperService {
               if (item.value_field_id) addToValueMap(String(item.value_field_id), dynamicValue);
               item.value = dynamicValue;
               logMessage(
-                `Direct RID resolution for field ${item.field_label || item.field_id}: ${rawKey} -> ${dynamicValue}`,
+                `Direct RID resolution for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${rawKey} -> ${dynamicValue}`,
               );
             }
           }
@@ -2278,7 +2290,7 @@ export class RdFormHelperService {
 
         if (resolvedExpr !== item.value) {
           logMessage(
-            `sum() pre-resolved for field ${item.field_label || item.field_id}: "${item.value}" → "${resolvedExpr}"`,
+            `sum() pre-resolved for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: "${item.value}" → "${resolvedExpr}"`,
           );
           item.value = resolvedExpr;
           passUpdated = true;
@@ -2318,7 +2330,7 @@ export class RdFormHelperService {
         const normalizedExpression = this.normalizeExpressionSyntax(expression);
 
         logMessage(
-          `Evaluating expression for field value ${item.field_label || item.field_id}: ${expression}`,
+          `Evaluating expression for field value ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${expression}`,
         );
 
         // Defensive: Track resolved values for debugging and type safety
@@ -2367,11 +2379,16 @@ export class RdFormHelperService {
           // Build a progressively broader set of lookup keys:
           // 1. exact normalised label
           // 2. whitespace-collapsed version
-          // 3. indexes stripped (e.g. label[0] → label)
+          // 3. indexes stripped (e.g. label[0] -> label)
           // 4. last path segment
           // 5. up to first comma (handles labels truncated by the comma stop rule in the # regex)
-          // 6. leading line-number prefix (e.g. "17a" from "17a. Regular credit...")
+          // 6. up to first ". " sentence boundary (handles labels like "31 Iowa share of research.
+          //    Divide line 25 by line 26, enter percentage to the nearest hundredth of a percent"
+          //    where the #label regex stops at the comma, leaving a key like
+          //    "31 Iowa share of research. Divide line 25 by line 26" that won't match the full label)
+          // 7. leading line-number prefix (e.g. "17a" from "17a. Regular credit...")
           const upToCommaKey = normalizedKey?.split(",")?.[0]?.trim() || "";
+          const upToPeriodKey = normalizedKey?.split(/\.\s+/)?.[0]?.trim() || "";
           const linePrefixMatch = normalizedKey?.match(/^(\d+[a-z]?\b)/i);
           const lookupKeys = [
             normalizedKey,
@@ -2380,6 +2397,10 @@ export class RdFormHelperService {
             this.normalizeFieldRef(normalizedKey),
             ...(upToCommaKey && upToCommaKey !== normalizedKey
               ? [upToCommaKey, upToCommaKey.replace(/\s+/g, "")]
+              : []),
+            // period-split key: "31 Iowa share of research" from "31 Iowa share of research. Divide..."
+            ...(upToPeriodKey && upToPeriodKey !== normalizedKey && upToPeriodKey !== upToCommaKey
+              ? [upToPeriodKey, upToPeriodKey.replace(/\s+/g, "")]
               : []),
             ...(linePrefixMatch
               ? [linePrefixMatch[1], linePrefixMatch[1]?.toLowerCase()]
@@ -2402,7 +2423,7 @@ export class RdFormHelperService {
               const num = this.tryParseNumber(rawValue);
               evalCache.set(normalizedKey, rawValue);
               logMessage(
-                `Expression reference resolved for field ${item.field_label || item.field_id}: ${normalizedKey} -> ${JSON.stringify(rawValue)}`,
+                `Expression reference resolved for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${normalizedKey} -> ${JSON.stringify(rawValue)}`,
               );
               // For non-numeric values (e.g. "Goldman Sachs" from DB), return a JSON-quoted
               // string instead of "0" so string comparisons in compound expressions work correctly.
@@ -2416,7 +2437,7 @@ export class RdFormHelperService {
           // safeEval returns null, and the multi-pass loop retries on the next pass
           // once all dependencies have been resolved.
           logMessage(
-            `Missing expression reference for field ${item.field_label || item.field_id}: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(lookupKeys)}`,
+            `Missing expression reference for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${normalizedKey} - not found in valueMap. Tried keys: ${JSON.stringify(lookupKeys)}`,
           );
           evalCache.set(normalizedKey, null);
           return "NaN" + suffix;
@@ -2501,11 +2522,20 @@ export class RdFormHelperService {
         // #label was partially captured (the comma stop-rule left a prose tail).
         // e.g. ", enter the result here, and see instructions for the schedule to attach * 0.9116"
         //   becomes "* 0.9116"
-        // Only strips text between a comma and an arithmetic operator so no numeric data is lost.
+        // e.g. "9780000 * 0.01, enter percentage to the nearest hundredth of a percent"
+        //   becomes "9780000 * 0.01"
+        // Case A: prose between a comma and an arithmetic operator (mid-expression)
         replaced = replaced.replace(
           /,\s*[^+\-*/()#\d,][^+\-*/()*]*(?=[+\-*/])/g,
           " ",
         );
+        // Case B: prose tail at end-of-expression after a comma (no following operator)
+        // Handles labels like "...Divide line 25 by line 26, enter percentage to the nearest
+        // hundredth of a percent" where the prose follows the last resolved numeric value.
+        replaced = replaced.replace(
+          /,\s*[^+\-*/()#\d,][^+\-*/()]*$/g,
+          "",
+        ).trim();
 
         // Strip comma-formatted number tails left by dollar-amount labels (e.g. "$2,000,000").
         // When "#Line25...or$2,000,000,whicheverisless" is resolved, the regex captures only
@@ -2522,6 +2552,9 @@ export class RdFormHelperService {
         // parentheses, decimals, spaces, Math.min/max calls, ternary operators, and NaN.
         // A-Za-z is NOT broadly permitted to prevent identifier injection.
         // Strip known safe function names before character validation
+        logMessage(
+          `Pre-validation expression for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${replaced}`,
+        );
         const validationTarget = replaced
           .replace(/Math\.(min|max)\(/g, "(")
           .replace(/\bString\(/g, "(")
@@ -2536,12 +2569,12 @@ export class RdFormHelperService {
           if (!hadExpressionMarkers) {
             // Plain string value — not an expression, leave value unchanged
             logMessage(
-              `Preserving plain text value for field ${item.field_label || item.field_id}: ${expression}`,
+              `Preserving plain text value for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${expression}`,
             );
             return;
           }
           logMessage(
-            `Blocked invalid expression for field ${item.field_label || item.field_id}: ${expression}`,
+            `Blocked invalid expression for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${expression}`,
           );
           item.value = null;
           return;
@@ -2576,20 +2609,20 @@ export class RdFormHelperService {
             // Clamp negative results to 0, with a warning log
             if (computed < 0) {
               logMessage(
-                `Warning: Negative computed value (${computed}) clamped to 0 for field ${item.field_label || item.field_id}. Expression: ${expression}`,
+                `Warning: Negative computed value (${computed}) clamped to 0 for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}. Expression: ${expression}`,
               );
             }
             const finalValue = this.roundToTwoDecimals(Math.max(0, computed));
 
             logMessage(
-              `Resolved values for field ${item.field_label || item.field_id}: ${expression} => ${replaced}`,
+              `Resolved values for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${expression} => ${replaced}`,
             );
 
             item.value = finalValue;
             passUpdated = true;
 
             logMessage(
-              `Final computed value for field ${item.field_label || item.field_id}: ${finalValue}`,
+              `Final computed value for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${finalValue}`,
             );
 
             if (item.value_field_id) {
@@ -2609,17 +2642,17 @@ export class RdFormHelperService {
             }
 
             logMessage(
-              `Computed expression for field ${item.field_label || item.field_id}: ${expression} = ${finalValue}`,
+              `Computed expression for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${expression} = ${finalValue}`,
             );
           } else {
             logMessage(
-              `Could not compute expression for field ${item.field_label || item.field_id}: ${expression} (resolved=${replaced})`,
+              `Could not compute expression for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${expression} (resolved=${replaced})`,
             );
             item.value = "";
           }
         } catch (error) {
           logMessage(
-            `Error computing expression for field ${item.field_label || item.field_id}: ${expression} (resolved=${replaced}) - ${error}`,
+            `Error computing expression for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${expression} (resolved=${replaced}) - ${error}`,
           );
           item.value = "";
         }
@@ -2638,10 +2671,10 @@ export class RdFormHelperService {
       if (!looksLikeExpression(item.value)) return;
 
       logMessage(
-        `Clearing unresolved expression for field ${item.field_label || item.field_id}: ${item.value}`,
+        `Clearing unresolved expression for field ${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}: ${item.value}`,
       );
       logMessage(
-        `Field "${item.field_label || item.field_id}" could not be resolved after ${maxExpressionPasses} passes. Setting value to null.`,
+        `Field "${item.field_label ?? item.field_id ?? item.label ?? "(unknown)"}" could not be resolved after ${maxExpressionPasses} passes. Setting value to null.`,
       );
       item.value = null;
     });

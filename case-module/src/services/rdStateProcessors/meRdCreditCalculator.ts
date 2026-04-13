@@ -36,7 +36,7 @@ export interface ConfigJson {
     basic_research_credit_rate: number;
     /** Credit rate applied to excess QRE — default 5 (i.e. 5%) */
     qre_credit_percentage: number;
-    tax_liablity_threshold_amount: number;
+    tax_liability_threshold_amount: number;
     tax_liablity_threshold_percentage: number;
     /** Percentage of contract research expenses included — default 65 (i.e. 65%) */
     sub_con_percent: number;
@@ -245,7 +245,7 @@ export class RdCreditCalculatorForME {
                     "[7] Carryforward from previous years. See instructions":
                         partB.unusedCredit,
 
-                    [`[8] Total available credit (line 2 plus lines 6 and 7). Corporations: if amount is greater than ${config.tax_liablity_threshold_amount}, see instructions. Enter allowable credit amount on Form 1040ME, Schedule A, line 16; Form 1040C-ME, Schedule A, line 6; Form 1041ME, Schedule A, line 10; or Form 1120ME, Schedule C, line 1f`]:
+                    [`[8] Total available credit (line 2 plus lines 6 and 7). Corporations: if amount is greater than ${config.tax_liability_threshold_amount}, see instructions. Enter allowable credit amount on Form 1040ME, Schedule A, line 16; Form 1040C-ME, Schedule A, line 6; Form 1041ME, Schedule A, line 10; or Form 1120ME, Schedule C, line 1f`]:
                         totalCredit,
                 },
             },

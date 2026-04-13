@@ -102,7 +102,7 @@ const LAYOUT: Record<string, StateLayout> = {
         colWidths: { 1:8, 2:80, 13:12.625, 14:11.375, 17:8, 18:14.125, 19:17.375, 20:11.25 },
         fontSize: 10, headerStyle: "bold-text", dataStartRow: 8,
         sheetLabel: "New Mexico - Credit Calculations",
-        dualValue: { qreCol: 3, creditCol: 4 },
+        dualValue: { qreCol: 13, creditCol: 14 },
         hasQRETable: true, qreTableStartCol: 17,
     },
 
@@ -558,7 +558,7 @@ function renderIL(ws: ExcelJS.Worksheet, sections: unknown, layout: StateLayout,
 //           A = line number, B:L merged = description, M = QRE, N = credit
 //   Row 13: A=9, B13:M13 merged = total description, N = total credit (bold)
 //
-// Input:  sections = { illinois: [colQREobj, colCreditObj] }
+// Input:  sections = { newMexico: [colQREobj, colCreditObj] }
 //         colQREObj    keys "[N] description" → QRE amount
 //         colCreditObj keys "[N] description" → credit amount / total
 // ─────────────────────────────────────────────────────────────────────────────
@@ -660,10 +660,10 @@ function renderNM(ws: ExcelJS.Worksheet, sections: any, layout: StateLayout, fyY
     const { fontSize } = layout;
     const dv = layout.dualValue!;
 
-    // illinois array: [0] = QRE column values, [1] = Credit column values
+    // newMexico array: [0] = QRE column values, [1] = Credit column values
     const arr: Record<string, unknown>[] = Array.isArray(sections)
         ? sections
-        : ((sections as any)?.illinois ?? []);
+        : ((sections as any)?.newMexico ?? []);
     const colQRE    = (arr[0] ?? {}) as Record<string, unknown>;
     const colCredit = (arr[1] ?? {}) as Record<string, unknown>;
 
@@ -1170,7 +1170,11 @@ export async function generateStateSheet(
 
     // GA does not wrap its output in a computed_fields key — fall back to computedFields itself
     const rawCF      = computeResult.computedFields as any;
-    const rawSections = rawCF.computed_fields ?? rawCF;
+    // VA (mixedColumns) has a nested { virginia, computed_fields, virginiasection4 } structure;
+    // pass the full rawCF so reorderComputedFieldsForState can flatten all three sub-objects.
+    const rawSections = (layout.mixedColumns && rawCF.virginia)
+        ? rawCF
+        : (rawCF.computed_fields ?? rawCF);
     // Apply state-specific field/section ordering (skip IL whose sections is an array)
     const sections = Array.isArray(rawSections)
         ? rawSections
