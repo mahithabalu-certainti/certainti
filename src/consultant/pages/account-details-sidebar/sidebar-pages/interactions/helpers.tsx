@@ -75,6 +75,20 @@ export const getInteractionFilterFields = (
     //     !permissionMap?.['is_primary']?.read,
     // },
     {
+      name: 'Primary',
+      value: 'is_primary',
+      type: 'enum',
+      options: [
+        { option: 'Yes', value: 'true' },
+        { option: 'No', value: 'false' },
+        { option: 'Not Applicable', value: 'null' },
+      ],
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['is_primary']?.edit &&
+        !permissionMap?.['is_primary']?.read,
+    },
+    {
       name: 'Batch ID',
       value: 'interaction_batch_id',
       type: 'text',
@@ -298,6 +312,19 @@ export const getInteractionModelFilterFields = (
     //     !permissionMap?.['is_primary']?.edit &&
     //     !permissionMap?.['is_primary']?.read,
     // },
+    {
+      name: 'Primary',
+      value: 'is_primary',
+      type: 'enum',
+      options: [
+        { option: 'Yes', value: 'true' },
+        { option: 'No', value: 'false' },
+      ],
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['is_primary']?.edit &&
+        !permissionMap?.['is_primary']?.read,
+    },
     {
       name: 'Batch ID',
       value: 'interaction_batch_id',
