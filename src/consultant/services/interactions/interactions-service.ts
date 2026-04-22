@@ -170,6 +170,7 @@ export const fetchInteractionList = async (
     getInteractionListUrl(),
     params
   );
+
   return {
     interactions: data.data.interactions,
     count: data.data.totalCount,
@@ -218,6 +219,112 @@ export const useInteractionList = (
       params.fiscal_year !== undefined &&
       params.fiscal_year !== null &&
       !!shouldFetchList,
+  });
+};
+
+const normalizeStatusName = (value: string): string =>
+  value.trim().toLowerCase().replace(/\s+/g, ' ');
+
+const fetchProjectsCountByStatus = async (
+  params: Omit<InteractionListURLParams, 'page' | 'limit'>,
+  statuses: string[]
+): Promise<number> => {
+  const pageSize = 200;
+  const maxPages = 50;
+  let totalRecords = 0;
+  const uniqueProjectIds = new Set<string>();
+  const statusSet = new Set(
+    statuses.map((status) => normalizeStatusName(status)).filter(Boolean)
+  );
+
+  for (let currentPage = 1; currentPage <= maxPages; currentPage += 1) {
+    const response = await fetchInteractionList({
+      ...params,
+      page: currentPage,
+      limit: pageSize,
+    });
+
+    const interactions = Array.isArray(response.interactions)
+      ? response.interactions
+      : [];
+    totalRecords = Math.max(totalRecords, Number(response.count) || 0);
+
+    interactions.forEach((interaction) => {
+      const statusName = normalizeStatusName(String(interaction.status_name || ''));
+      if (statusSet.size > 0 && !statusSet.has(statusName)) {
+        return;
+      }
+
+      const projectId =
+        interaction.project_fiscal_rid ||
+        interaction.project_rid ||
+        interaction.project_code ||
+        '';
+      if (projectId) {
+        uniqueProjectIds.add(projectId);
+      }
+    });
+
+    if (interactions.length === 0) {
+      break;
+    }
+
+    const hasMore =
+      totalRecords > 0
+        ? currentPage * pageSize < totalRecords
+        : interactions.length === pageSize;
+    if (!hasMore) {
+      break;
+    }
+  }
+
+  return uniqueProjectIds.size;
+};
+
+export const useCaseSentProjectsCount = (
+  params: Omit<InteractionListURLParams, 'page' | 'limit'>,
+  shouldFetchCount: boolean
+): UseQueryResult<number, Error> => {
+  return useQuery<number, Error>({
+    queryKey: ['case-sent-projects-count', params],
+    queryFn: () => fetchProjectsCountByStatus(params, ['sent']),
+    retry: 0,
+    gcTime: 0,
+    enabled:
+      !!params.account_rid &&
+      !!params.case_rid &&
+      params.fiscal_year !== undefined &&
+      params.fiscal_year !== null &&
+      !!shouldFetchCount,
+  });
+};
+
+export const useAccountSentProjectsCount = (
+  params: Omit<InteractionListURLParams, 'page' | 'limit'>,
+  shouldFetchCount: boolean
+): UseQueryResult<number, Error> => {
+  return useAccountProjectsCountByStatus(params, shouldFetchCount, ['sent']);
+};
+
+export const useAccountProjectsCountByStatus = (
+  params: Omit<InteractionListURLParams, 'page' | 'limit'>,
+  shouldFetchCount: boolean,
+  statuses: string[]
+): UseQueryResult<number, Error> => {
+  const normalizedStatuses = statuses
+    .map((status) => normalizeStatusName(status))
+    .sort();
+
+  return useQuery<number, Error>({
+    queryKey: ['account-projects-count-by-status', params, normalizedStatuses],
+    queryFn: () => fetchProjectsCountByStatus(params, normalizedStatuses),
+    retry: 0,
+    gcTime: 0,
+    enabled:
+      !!params.account_rid &&
+      params.fiscal_year !== undefined &&
+      params.fiscal_year !== null &&
+      !!shouldFetchCount,
   });
 };
 export const useInteractionListModel = (
