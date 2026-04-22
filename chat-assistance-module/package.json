@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {
-    "start": "nodemon src/index.ts",
+    "start": "node api.js && nodemon src/index.ts",
     "build": "tsc"
   },
   "keywords": [],

@@ -138,7 +138,8 @@ export const filtersColumns: Record<string, string> =
   interaction_assessment_source_rid: "interaction_assessment_source_rid",
   interaction_batch_id: "interaction_batch_id",
   four_part_r_number: "four_part_r_number",
-  is_primary: "is_primary"
+  is_primary: "is_primary",
+  interaction_status_rid: "interaction_status_rid"
 }
 
 export const templatefiltersColumns: Record<string, string> =
@@ -187,7 +188,8 @@ export const filterTypes: Record<string, any> =
   interaction_assessment_source_rid: "string",
   interaction_batch_id: "string",
   four_part_r_number: "string",
-  is_primary: "boolean"
+  is_primary: "boolean",
+  interaction_status_rid: "string"
 }
 
 export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {
@@ -386,16 +388,20 @@ export const rawQueries = {
     mainSequelize: Sequelize
   ): Promise<any> {
     let checkIsSeparateDb: any = await mainSequelize.query(
-      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+      `SELECT rid, r_number, account_name, storage_type, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
-    if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
+    const account = checkIsSeparateDb[0][0];
+    if (!account) {
+      throw new Error(`Account not found for rid: ${accountRid}`);
+    }
+    if (account.storage_type == STATUS_MESSAGE.separateDb || !account.parent_account_rid) {
       return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
       SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -490,7 +496,7 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid: string, schemaName: string) {
     return `
-    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
+    SELECT rid, account_rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
   fetchProjectTypeNames(ids: string[]) {
     console.log(ids);
@@ -751,25 +757,24 @@ export const rawQueries = {
     ) AS recipient_available
   `;
   },
-  fetchInteractionRecipient(projectFiscalRid: string, statusRid: string, schemaName: string) {
+  fetchInteractionRecipient(projectFiscalRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and include_in_communication is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and include_in_communication is true and entity_rid = '${projectFiscalRid}'`;
   },
   fetchInteractionRecipientProject(
     projectFiscalRid: string,
-    statusRid: string,
     schemaName: string
   ) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`;
   },
-  fetchInteractionRecipientAccount(accountRid: string, statusRid: string, schemaName: string) {
+  fetchInteractionRecipientAccount(accountRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}'`;
   },
-  fetchInteractionCCRecipientAccount(accountRid: string, statusRid: string, schemaName: string) {
+  fetchInteractionCCRecipientAccount(accountRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and (interaction_cc_recipient is true or include_in_communication is true) and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and (interaction_cc_recipient is true or include_in_communication is true) and entity_rid = '${accountRid}'`;
   },
   fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
     return `
