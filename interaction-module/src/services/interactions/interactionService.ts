@@ -115,8 +115,6 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     try {
-      const dbInit = await this.interactionModelService.getSequelize();
-      const transaction = await dbInit.transaction();
       interactionData.created_by = userId;
       const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -155,13 +153,24 @@ export class InteractionService {
         interactionData.interaction_source_rid = intSource || "";
         interactionData.interaction_type_rid = intType || "";
 
-        await this.interactionSchemaService.createBulkInteractions(
+        const queuedEmails = await this.interactionSchemaService.createBulkInteractions(
           accountNumber,
           interactionData,
           userId,
           parentAccountId,
           intLevel!
         );
+        if (interactionData.trigger_send) {
+          for (const emailData of queuedEmails) {
+            try {
+              await this.processSingleEmail(emailData);
+            } catch (e: any) {
+              logMessage(
+                `[createAccountInteraction] processSingleEmail failed for ${emailData.interaction_rid}: ${e?.message}`
+              );
+            }
+          }
+        }
       }
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -208,6 +217,38 @@ export class InteractionService {
 
       if (!rNumber) {
         throw new Error(`Invalid account ID — r_number missing for account_rid: ${interactionData.account_rid}`);
+      }
+
+      // Normalize and validate project mapping for project-level interactions.
+      // This prevents FK violations in interaction_items when client sends an
+      // incorrect project_rid for a valid project_fiscal_rid.
+      if (intLevel.toLowerCase() === "project") {
+        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(
+          rNumber,
+          interactionData.project_fiscal_rid
+        );
+
+        if (!projectInfo?.project_rid) {
+          throw new Error(
+            `Invalid project_fiscal_rid: ${interactionData.project_fiscal_rid}`
+          );
+        }
+
+        if (
+          projectInfo.account_rid &&
+          projectInfo.account_rid !== interactionData.account_rid
+        ) {
+          throw new Error(
+            `project_fiscal_rid ${interactionData.project_fiscal_rid} does not belong to account ${interactionData.account_rid}`
+          );
+        }
+
+        if (interactionData.project_rid !== projectInfo.project_rid) {
+          logMessage(
+            `[createInteraction] Overriding project_rid from ${interactionData.project_rid} to ${projectInfo.project_rid} based on project_fiscal_rid ${interactionData.project_fiscal_rid}`
+          );
+        }
+        interactionData.project_rid = projectInfo.project_rid;
       }
 
       // Sync tables to ensure they exist in the database before transaction
@@ -331,10 +372,23 @@ export class InteractionService {
       }
 
       logMessage(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
-      if ((interactionStatus === statusAction.DRAFT && (isEmailRecipientAvailable || interactionData.email_info?.email)) || interactionData.trigger_send)
-        await this.checkAutoSendEnabled(parentData[0][0].r_number, interactionData, interaction.rid, userId, interactionData?.account_rid, intLevel, parentData[0][0].rid);
-      else {
-        if (!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
+      // Save should only persist as draft. Only explicit Save-and-Send
+      // (trigger_send=true) is allowed to queue/send.
+      if (interactionData.trigger_send) {
+        if (
+          interactionStatus === statusAction.DRAFT &&
+          (isEmailRecipientAvailable || interactionData.email_info?.email)
+        ) {
+          await this.checkAutoSendEnabled(
+            parentData[0][0].r_number,
+            interactionData,
+            interaction.rid,
+            userId,
+            interactionData?.account_rid,
+            intLevel,
+            parentData[0][0].rid
+          );
+        } else if (!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT) {
           return {
             statusCode: HttpStatus.SUCCESS,
             message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
@@ -342,6 +396,7 @@ export class InteractionService {
               interactions: interaction,
             },
           };
+        }
       }
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -351,14 +406,15 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      logMessage(`Error creating interaction, ${err}`);
+      const errMsg = (err as Error)?.message || String(err);
+      logMessage(`Error creating interaction, ${errMsg}`);
       if (transaction) {
         await transaction.rollback();
       }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.interactionFailed,
+        errorMessage: `${STATUS_MESSAGE.interactionFailed}: ${errMsg}`,
       };
     }
   }
@@ -1840,10 +1896,13 @@ export class InteractionService {
                 email = fetchResNameEmail[0][0].key_contact_email
                 name = fetchResNameEmail[0][0].key_contact_name
               }
+              data.email = email;
+              data.name = name;
               logMessage(`Email info to be sent: ${JSON.stringify(data)}`);
               await this.interactionSchemaService.insertEmailInfoDatas(data);
               await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
               await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
+              await this.processSingleEmail(data);
             }
           }
           else {
@@ -1858,10 +1917,13 @@ export class InteractionService {
                 name = fetchResNameEmail[0][0].key_contact_name
 
               }
+              data.email = email;
+              data.name = name;
               logMessage(`Email info to be sent: ${JSON.stringify(data)}`);
               await this.interactionSchemaService.insertEmailInfoDatas(data);
               await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
               await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
+              await this.processSingleEmail(data);
             }
           }
         }
@@ -1870,6 +1932,7 @@ export class InteractionService {
           await this.interactionSchemaService.insertEmailInfoDatas(data);
           await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
           await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+          await this.processSingleEmail(data);
         }
         interactionResponse.push({
           interactionRid: interaction_rid,
@@ -2312,6 +2375,9 @@ export class InteractionService {
     let schemaName = rawQueries.fetchSchemaName(
       fetchParentAccount[0][0].r_number
     );
+    // Ensure the org schema has all current model columns (e.g. is_primary) before
+    // running the interaction list query which references those columns directly in SQL.
+    await this.interactionModelService.syncOrgDbModels(fetchParentAccount[0][0].r_number);
     let createdByFilter;
     let createdByConditions;
     let modifiedByFilter;
@@ -2342,6 +2408,49 @@ export class InteractionService {
     if (requestFilters.interaction_source_name) {
       sourceFilter = requestFilters.interaction_source_name;
       sourceConditions = detectConditions(sourceFilter);
+    }
+
+    // Translate status_name filter (e.g. { in: ['Sent'] }) to status_rid
+    // so it is applied at the SQL level via the existing filterTypes/filtersColumns path.
+    if (requestFilters.status_name) {
+      const statusNameCondition = detectConditions(requestFilters.status_name);
+      const normalizedNames = (values: any): string[] => {
+        const list = Array.isArray(values) ? values : [values];
+        return [...new Set(
+          list
+            .map((value: any) => String(value ?? "").trim())
+            .filter((value: string) => value.length > 0)
+        )];
+      };
+
+      let names: string[] = [];
+      if (statusNameCondition === ALPHANUMERIC_CONDITIONS.in) {
+        names = normalizedNames(
+          requestFilters.status_name[ALPHANUMERIC_CONDITIONS.in]
+        );
+      } else if (statusNameCondition === ALPHANUMERIC_CONDITIONS.equals) {
+        names = normalizedNames(
+          requestFilters.status_name[ALPHANUMERIC_CONDITIONS.equals]
+        );
+      }
+
+      if (names.length > 0) {
+        const statusRows: any[] = await mainDb.query(
+          `SELECT rid
+             FROM trd365.interaction_status
+            WHERE LOWER(status_name) IN (:names)`,
+          {
+            replacements: { names: names.map((name) => name.toLowerCase()) },
+            type: QueryTypes.SELECT,
+          }
+        );
+        const rids = statusRows.map((row: any) => row.rid);
+        requestFilters.status_rid = {
+          in: rids.length > 0 ? rids : ["__NO_MATCH_STATUS__"],
+        };
+      }
+
+      delete requestFilters.status_name;
     }
 
     [
@@ -2590,6 +2699,10 @@ export class InteractionService {
             );
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             return data.filter((d: any) => d[field] == null);
+          case ALPHANUMERIC_CONDITIONS.in: {
+            const inVals: string[] = (Array.isArray(val) ? val : [val]).map((v: string) => v?.toLowerCase());
+            return data.filter((d: any) => inVals.includes(d[field]?.toLowerCase()));
+          }
           default:
             return data;
         }
@@ -4127,7 +4240,37 @@ export class InteractionService {
       }
     }
 
-    for (const data of fetchEmailInfo[0]) {
+    // Sync org DB schemas for all unique accounts in the batch so that any
+    // missing columns (e.g. is_primary) are added before processing.
+    const uniqueAccountNumbers: Set<string> = new Set(
+      fetchEmailInfo[0]
+        .map((d: any) => d.account_rnumber)
+        .filter(Boolean)
+    );
+    for (const accountNumber of uniqueAccountNumbers) {
+      try {
+        await this.interactionModelService.syncOrgDbModels(accountNumber);
+      } catch (syncErr: any) {
+        logMessage(`[BATCH EMAIL] Schema sync warning for account ${accountNumber}: ${syncErr?.message}`);
+      }
+    }
+
+    // Deduplicate by interaction_rid to prevent the same interaction from being
+    // sent multiple times when both an auto-create record (email="") and a
+    // manual-send record (email=address) exist in send_email_info.
+    // Prefer records that already have an email address so the key-contact
+    // lookup in processSingleEmail is skipped when possible.
+    const seenInteractions = new Map<string, any>();
+    for (const d of fetchEmailInfo[0]) {
+      const existing = seenInteractions.get(d.interaction_rid);
+      if (!existing || (!existing.email && d.email)) {
+        seenInteractions.set(d.interaction_rid, d);
+      }
+    }
+    const deduplicatedEmails = Array.from(seenInteractions.values());
+    logMessage(`[BATCH EMAIL] After dedup: ${deduplicatedEmails.length} unique interactions (${fetchEmailInfo[0].length} raw records).`);
+
+    for (const data of deduplicatedEmails) {
       const interaction_rid = data.interaction_rid;
 
       try {
@@ -4208,10 +4351,23 @@ export class InteractionService {
 
     logMessage(`[SEND] Sending to: "${resolvedEmail}", CC: ${JSON.stringify(sendEmailInfo.ccEmails)} for interaction ${interaction_rid}`);
 
-    const [interactionItems, interactionInfo] = await Promise.all([
-      this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber, interaction_rid),
-      this.interactionSchemaService.fetchInteractionInfo(interaction_rid, accountNumber),
-    ]);
+    let interactionItems: any[];
+    let interactionInfo: any;
+    try {
+      [interactionItems, interactionInfo] = await Promise.all([
+        this.interactionSchemaService.fetchInteractionQuestionsById(accountNumber, interaction_rid),
+        this.interactionSchemaService.fetchInteractionInfo(interaction_rid, accountNumber),
+      ]);
+    } catch (lookupErr: any) {
+      if (lookupErr?.message?.includes('Interaction not found')) {
+        // Stale queue record — the interaction was deleted or never created in this schema.
+        // Mark it as done so the scheduler stops retrying it.
+        logMessage(`[SKIP] Interaction ${interaction_rid} not found in schema for account ${accountNumber}. Marking as done to stop retrying.`);
+        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid);
+        return 'skipped';
+      }
+      throw lookupErr;
+    }
 
     const [interactionLink, senderEmailInfo, excelBuffer] = await Promise.all([
       this.generateInteractionLink(

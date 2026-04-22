@@ -1400,7 +1400,7 @@ const buildStringFilterCondition = (
       return `${columnRef} IS NULL`;
     case ALPHANUMERIC_CONDITIONS.contains:
       return `${columnRef} ILIKE '%${values}%'`;
-    case ALPHANUMERIC_CONDITIONS.IN:
+    case ALPHANUMERIC_CONDITIONS.in:
       return `${columnRef} IN (${values.map((d: any) => `'${d}'`).join(",")})`;
     default:
       return '';
