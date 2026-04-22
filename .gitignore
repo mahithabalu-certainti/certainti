@@ -51,7 +51,6 @@ Thumbs.db
 *.wmv
 
 #env
-.env
 del-nginx.md
 del-vm.md
 del-worflow.md
@@ -76,3 +75,4 @@ del-reprot-worflow.md
 del-vm-docker.md
 
 *.md
+config.bat
