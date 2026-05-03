@@ -1,0 +1,31 @@
+{
+    "project": {
+        "Sr No": "sr_no",
+        "Entity": "entity",
+        "Project ID": "project_id",
+        "Project Name": "project_name",
+        "Project Description": "project_description",
+        "FTE Cost": "fte_cost",
+        "Sub-Con Cost": "sub_con_cost",
+        "Total Project Cost": "total_project_cost",
+        "SPOC Name (PM-DM)": "spoc_name_pm_dm",
+        "SPOC Email": "spoc_email"
+    },
+    "project_resource": {
+        "Sr No": "sr_no",
+        "Company Code": "company_code",
+        "Resource ID": "resource_id",
+        "Resource Name": "resource_name",
+        "Resource Role": "resource_role",
+        "Resource Type": "resource_type",
+        "Project ID": "project_id",
+        "State (if US)": "state_if_us",
+        "State (if US).1": "state_if_us_dup", 
+        "NI Cost For UK": "ni_cost_for_uk",
+        "Pension Cost for UK": "pension_cost_for_uk",
+        "Total Hours": "total_hours",
+        "Total Cost": "total_cost",
+        "Remarks": "remarks",
+        "Remark -2": "remark_2"
+    }
+}
