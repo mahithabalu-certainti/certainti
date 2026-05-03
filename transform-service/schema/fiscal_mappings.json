@@ -1,0 +1,95 @@
+{
+  "entity_mappings": {
+    "project": {
+        "field_mappings": {
+          "project_code": "project_code",
+          "project_rid": "project_rid",
+          "account_rid": "account_rid",
+          "project_name": "project_name",
+          "project_type_rid" : "project_type_rid",
+          "project_startdate": "project_startdate",
+          "project_enddate": "project_enddate",
+          "status_rid": "status_rid",
+          "country_rid": "country_rid",
+          "region_rid": "region_rid",
+          "currency_rid": "currency_rid",
+          "total_cost": "total_cost_prj",
+          "industry_rid": "industry_rid",
+          "industry_name": "industry_name",
+          "project_group" : "project_group",
+          "program_name" : "program_name",
+          "project_client_group": "project_client_group",
+          "project_classification_rid": "project_classification_rid",
+          "project_classification_other": "project_classification_other",
+          "total_effort": "total_effort_prj",
+          "total_fte": "total_fte_prj",
+          "total_subcon": "total_subcon_prj",
+          "total_nonlabor": "total_nonlabor_prj",
+          "total_cost_nonlabor": "total_cost_nonlabor_prj",
+          "total_effort_fte": "total_effort_fte_prj",
+          "total_effort_subcon": "total_effort_subcon_prj",
+          "total_cost_fte": "total_cost_fte_prj",
+          "total_cost_subcon": "total_cost_subcon_prj",
+          "auto_send_ai_interaction": "auto_send_ai_interaction",
+          "auto_access_rd": "auto_access_rd",
+          "max_ai_interaction": "max_ai_interaction",
+          "assessment_status": "assessment_status",
+          "comments" : "comments",
+          "project_description" : "project_description",
+          "project_tech_poc_name": "project_tech_poc_name",
+          "project_tech_poc_email":"project_tech_poc_email",
+          "project_delivery_head_name": "project_delivery_head_name",
+          "project_delivery_head_email": "project_delivery_head_email",
+          "spoc_name": "spoc_name",
+          "spoc_email": "spoc_email"
+        },
+        "missing_columns": [
+        ]
+    },
+    "resource": {
+      "field_mappings": {
+        "resource_code": "resource_code",
+        "resource_rid": "resource_rid",
+        "account_rid": "account_rid",
+        "resource_type_rid": "resource_type_rid",
+        "resource_startdate": "effective_date",
+        "resource_enddate": "end_date",
+        "country_rid": "country_rid",
+        "region_rid": "country_region_rid"
+      },
+      "missing_columns": [
+      ]
+    },
+    "resource_skill": {
+      "field_mappings": {
+        "resource_code": "resource_code",
+        "resource_rid": "resource_rid",
+        "account_rid": "account_rid",
+        "resource_type_rid": "resource_type_rid"
+      },
+      "missing_columns": [
+      ]
+    },
+    "project_resource": {
+      "field_mappings": {
+        "resource_code": "resource_code",
+        "project_code": "project_code",
+        "resource_rid": "resource_rid",
+        "resource_name": "resource_name",
+        "project_rid": "project_rid",
+        "account_rid": "account_rid",
+        "resource_type_rid": "resource_type_rid",
+        "resource_role": "resource_role",
+        "designation": "designation",
+        "total_hours_pro_res": "total_hours_pro_res",
+        "total_cost_pro_res": "total_cost_pro_res",
+        "country_rid": "country_rid",
+        "currency_rid":"currency_rid",
+        "description": "description",
+        "region_rid": "region_rid"
+      },
+      "missing_columns": [
+      ]
+    }
+  }
+}

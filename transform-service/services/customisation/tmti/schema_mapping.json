@@ -1,0 +1,115 @@
+{
+  "full_time": {
+    "resource": {
+      "field_mappings": {
+        "employee_id": "resource_code",
+        "resource_type": "resource_type",
+        "current_work_location": "region_rid"
+      },
+      "missing_columns": [
+        "status_rid",
+        "resource_name",
+        "resource_designation",
+        "resource_role",
+        "resource_total_experience",
+        "country_rid",
+        "city_rid"
+      ]
+    },
+    "project": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "project_description": "project_name",
+        "contract_type": "project_type",
+        "current_work_location": "region_rid"
+      },
+      "missing_columns": [
+        "status_rid",
+        "auto_send_ai_interaction",
+        "max_ai_interaction",
+        "project_enddate",
+        "currency_rid",
+        "country_rid",
+        "comments"
+      ]
+    },
+    "project_resource": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "check_date": "start_date",
+        "employee_id": "resource_code",
+        "resource_type": "resource_type",
+        "taxable_gross": "total_cost_pro_res",
+        "current_work_location": "region_rid"
+      },
+      "missing_columns": [
+        "status_rid",
+        "end_date",
+        "resource_name",
+        "designation",
+        "resource_role",
+        "total_hours_pro_res",
+        "currency_rid",
+        "description",
+        "country_rid"
+      ]
+    }
+  },
+  "sub_con": {
+    "resource": {
+      "field_mappings": {
+        "subcon_id": "resource_code",
+        "resource_type": "resource_type"
+      },
+      "missing_columns": [
+        "status_rid",
+        "resource_name",
+        "resource_designation",
+        "resource_role",
+        "resource_total_experience",
+        "country_rid",
+        "city_rid",
+        "region_rid"
+      ]
+    },
+    "project": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "project_description": "project_name",
+        "contract_type": "project_type",
+        "fiscal_year_period": "project_startdate"
+      },
+      "missing_columns": [
+        "status_rid",
+        "auto_send_ai_interaction",
+        "max_ai_interaction",
+        "project_enddate",
+        "currency_rid",
+        "country_rid",
+        "region_rid",
+        "comments"
+      ]
+    },
+    "project_resource": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "fiscal_year_period": "start_date",
+        "subcon_id": "resource_code",
+        "resource_type": "resource_type",
+        "*1000000$": "total_cost_pro_res"
+      },
+      "missing_columns": [
+        "status_rid",
+        "end_date",
+        "resource_name",
+        "designation",
+        "resource_role",
+        "total_hours_pro_res",
+        "currency_rid",
+        "description",
+        "country_rid",
+        "region_rid"
+      ]
+    }
+  }
+}

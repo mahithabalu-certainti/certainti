@@ -1,0 +1,19 @@
+{
+  "resource_cost": {
+    "field_mappings": {
+      "emp_num": "resource_code",
+      "company_code": "resource_orgname",
+      "name": "resource_name",
+      "resource_type": "resource_type",
+      "currency": "currency_rid",
+      "month": "effective_from",
+      "amount": "resource_cost",
+      "gl_code": "gl_code",
+      "gl_text": "gl_text",
+      "remark": "comments"
+    },
+    "missing_columns": [
+      "status_rid"
+    ]
+  }
+}

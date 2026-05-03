@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pyspark==3.5.0
+psycopg2-binary==2.9.9
+azure-storage-blob
+python-dotenv
+confluent-kafka==2.3.0
+sqlalchemy
+azure-identity==1.23.0
+azure-keyvault-secrets==4.8.0
+pandas
+six>=1.16.0
+apscheduler==3.10.4
