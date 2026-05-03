@@ -1,0 +1,59 @@
+{
+    "resource": {
+      "field_mappings": {
+        "resource_id": "resource_code",
+        "resource_name": "resource_name",
+        "resource_type": "resource_type",
+        "resource_designation": "resource_designation",
+        "resource_role" : "resource_role",
+        "total_experience": "resource_total_experience"
+      },
+      "missing_columns": [
+        "status_rid",
+        "country_rid",
+        "city_rid",
+        "region_rid"
+      ]
+    },
+    "project": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "project_name": "project_name",
+        "project_type" : "project_type",
+        "currency": "currency_rid",
+        "country": "country_rid",
+        "resource_state_province": "region_rid",
+        "project_description": "comments"
+      },
+      "missing_columns": [
+        "status_rid",
+        "auto_send_ai_interaction",
+        "max_ai_interaction",
+        "project_startdate",
+        "project_enddate"
+      ]
+    },
+    "project_resource": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "project_name": "project_name",
+        "project_description": "project_description",
+        "start_date":"start_date",
+        "end_date":"end_date",
+        "resource_id": "resource_code",
+        "resource_name": "resource_name",
+        "resource_type": "resource_type",
+        "resource_designation": "designation",
+        "resource_role": "resource_role",
+        "total_hours": "total_hours_pro_res",
+        "total_cost": "total_cost_pro_res",
+        "currency": "currency_rid",
+        "project_resource_description": "description",
+        "resource_country": "country_rid",
+        "resource_state_province" : "region_rid"
+      },
+      "missing_columns": [
+        "status_rid"
+      ]
+    }
+  }

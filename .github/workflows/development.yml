@@ -1,0 +1,604 @@
+name: Deploy thinkrd365 Development ETL Services
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - file-ingest-service/**
+      - extract-service/**
+      - import-service/**
+      - transform-service/**
+env:
+  ENVIRONMENT: development
+
+jobs:
+  # JOB to run change detection
+  changes:
+    runs-on: ubuntu-latest
+    # Set job outputs to values from filter step
+    outputs:
+      file-ingest-service: ${{ steps.filter.outputs.file-ingest-service }}
+      extract-service: ${{ steps.filter.outputs.extract-service }}
+      import-service: ${{ steps.filter.outputs.import-service }}
+      transform-service: ${{ steps.filter.outputs.transform-service }}
+    # For pull requests it's not necessary to checkout the code
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            file-ingest-service:
+              - 'file-ingest-service/**'
+            extract-service:
+              - 'extract-service/**'
+            import-service:
+              - 'import-service/**'
+            transform-service:
+              - 'transform-service/**'
+
+  # JOB to build ETL file-ingest-service code
+  file-ingest-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.file-ingest-service == 'true' }}
+    name: Build and Deploy File-ingest Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+        working-directory: file-ingest-service
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/file-ingest-service:${{ env.IMAGE_TAG }} .
+        working-directory: file-ingest-service
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/file-ingest-service:${{ env.IMAGE_TAG }}
+        working-directory: file-ingest-service
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          REPO_NAME="file-ingest-service"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_ETL_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: file-ingest-service
+        run: |
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
+          ENV_FILE=".env.fileingestservice"
+          
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+            exit 1
+          fi
+          
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          # Add other service-specific secrets here
+          
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5002
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          UPLOADED_BY_USER_ID=D001-477aac5d-3d92-4420-8e65-4153af4f3aed
+          PYTHON_API_URL=http://import-service:5004/api/process-file
+          KAFKA_BROKER=${{ SECRETS.DEVELOPMENT_KAFKA_BROKER }}
+          MAINDB_NAME="main-database-name"
+          MAINDB_PASSWORD="main-db-admin-password"
+          MAINDB_USERNAME="main-db-admin-username"
+          MAINDB_ENDPOINT="main-db-endpoint"
+          EOF
+          
+          echo "$ENV_FILE file created successfully!"
+          ls -la
+      - name: Copy .env file to VM
+        run: |
+          scp -v -o StrictHostKeyChecking=no .env.fileingestservice adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }}:/tmp/
+        working-directory: file-ingest-service
+
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/services
+
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
+          
+            # Move .env file with sudo
+            sudo mv /tmp/.env.fileingestservice /app/services/.env.fileingestservice
+            echo ".env file moved successfully!"
+          
+            # Update only the file-ingest-service image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*file-ingest-service:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/file-ingest-service:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
+          
+            # Login to ACR 
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
+          
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps file-ingest-service; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
+
+  # JOB to build ETL extract-service code
+  extract-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.extract-service == 'true' }}
+    name: Build and Deploy Extract Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+        working-directory: extract-service
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/extract-service:${{ env.IMAGE_TAG }} .
+        working-directory: extract-service
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/extract-service:${{ env.IMAGE_TAG }}
+        working-directory: extract-service
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          REPO_NAME="extract-service"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_ETL_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: extract-service
+        run: |
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
+          ENV_FILE=".env.extractservice"
+          
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+            exit 1
+          fi
+          
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+
+          # Add other service-specific secrets here
+          
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5003
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          MAINDB_NAME="main-database-name"
+          MAINDB_PASSWORD="main-db-admin-password"
+          MAINDB_USERNAME="main-db-admin-username"
+          MAINDB_ENDPOINT="main-db-endpoint"
+          ORGDB_NAME="org-database-name"
+          ORGDB_PASSWORD="org-db-admin-password"
+          ORGDB_USERNAME="org-db-admin-username"
+          ORGDB_ENDPOINT="org-db-endpoint"
+          STORAGE_ACCOUNT_NAME = "storage-account-name"
+          STORAGE_ACCOUNT_KEY = "storage-account-primary-key"
+          AZURE_CONTAINER_NAME = "etl-container-name"
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          MAIL_TENANT_ID= "mail-app-tenant-id"
+          MAIL_CLIENT_ID= "mail-app-client-id"
+          MAIL_CLIENT_SECRET= "mail-app-client-secret"
+          EMAIL_FROM=interactions@certainti.ai
+          UUID_PREFIX = "D001"
+          KAFKA_BROKER=${{ SECRETS.DEVELOPMENT_KAFKA_BROKER }}
+          EOF
+          
+          echo "$ENV_FILE file created successfully!"
+          ls -la
+      - name: Copy .env file to VM
+        run: |
+          scp -v -o StrictHostKeyChecking=no .env.extractservice adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }}:/tmp/
+        working-directory: extract-service
+
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/services
+
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
+          
+            # Move .env file with sudo
+            sudo mv /tmp/.env.extractservice /app/services/.env.extractservice
+            echo ".env file moved successfully!"
+          
+            # Update only the extract-service image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*extract-service:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/extract-service:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
+          
+            # Login to ACR 
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
+          
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps extract-service; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
+
+  # JOB to build ETL import-service code
+  import-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.import-service == 'true' }}
+    name: Build and Deploy Import Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+        working-directory: import-service
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/import-service:${{ env.IMAGE_TAG }} .
+        working-directory: import-service
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/import-service:${{ env.IMAGE_TAG }}
+        working-directory: import-service
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          REPO_NAME="import-service"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_ETL_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: import-service
+        run: |
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
+          ENV_FILE=".env.importservice"
+          
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+            exit 1
+          fi
+          
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+
+          # Add other service-specific secrets here
+          
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5004
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME="org-database-name"
+          ORGDB_PASSWORD="org-db-admin-password"
+          ORGDB_USERNAME="org-db-admin-username"
+          ORGDB_ENDPOINT="org-db-endpoint"
+          STORAGE_ACCOUNT_NAME = "storage-account-name"
+          STORAGE_ACCOUNT_KEY = "storage-account-primary-key"
+          AZURE_CONTAINER_NAME = "etl-container-name"
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string" 
+          MAIL_TENANT_ID= "mail-app-tenant-id"
+          MAIL_CLIENT_ID= "mail-app-client-id"
+          MAIL_CLIENT_SECRET= "mail-app-client-secret"
+          EMAIL_FROM=interactions@certainti.ai
+          KAFKA_BOOTSTRAP_SERVERS=kafka:9092  
+          KAFKA_TOPIC=stg_resource
+          SERVICE_NAME=document-importer
+          # FastAPI Specific
+          APP_DEBUG=false
+          APP_RELOAD=false
+          # 4MB
+          CHUNK_SIZE=4194304
+          UUID_PREFIX = "D001"
+          KAFKA_BROKER=${{ SECRETS.DEVELOPMENT_KAFKA_BROKER }}
+          EOF
+          
+          echo "$ENV_FILE file created successfully!"
+          ls -la
+      - name: Copy .env file to VM
+        run: |
+          scp -v -o StrictHostKeyChecking=no .env.importservice adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }}:/tmp/
+        working-directory: import-service
+        
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/services
+
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
+          
+            # Move .env file with sudo
+            sudo mv /tmp/.env.importservice /app/services/.env.importservice
+            echo ".env file moved successfully!"
+          
+            # Update only the import-service image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*import-service:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/import-service:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
+          
+            # Login to ACR 
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
+          
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps import-service; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
+
+  # JOB to build ETL transform-service code
+  transform-service:
+    needs: changes
+    if: ${{ needs.changes.outputs.transform-service == 'true' }}
+    name: Build and Deploy Transform Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+        working-directory: transform-service
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/transform-service:${{ env.IMAGE_TAG }} .
+        working-directory: transform-service
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/transform-service:${{ env.IMAGE_TAG }}
+        working-directory: transform-service
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          REPO_NAME="transform-service"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_ETL_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: transform-service
+        run: |
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
+          ENV_FILE=".env.transformservice"
+          
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+            exit 1
+          fi
+          
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+
+          # Add other service-specific secrets here
+          
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5005
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          MAINDB_NAME="main-database-name"
+          MAINDB_PASSWORD="main-db-admin-password"
+          MAINDB_USERNAME="main-db-admin-username"
+          MAINDB_ENDPOINT="main-db-endpoint"          
+          ORGDB_NAME="org-database-name"
+          ORGDB_PASSWORD="org-db-admin-password"
+          ORGDB_USERNAME="org-db-admin-username"
+          ORGDB_ENDPOINT="org-db-endpoint"
+          MAIL_TENANT_ID= "mail-app-tenant-id"
+          MAIL_CLIENT_ID= "mail-app-client-id"
+          MAIL_CLIENT_SECRET= "mail-app-client-secret"
+          EMAIL_FROM=interactions@certainti.ai
+          UUID_PREFIX = "D001"
+          KAFKA_BROKER=${{ SECRETS.DEVELOPMENT_KAFKA_BROKER }}
+          ACCOUNT_TM_CA = "Teck Mahindra-CA"
+          ACCOUNT_TM_US = "Teck Mahindra-US"
+          ACCOUNT_BS = "Birlasoft Cust child"
+          ACCOUNT_MASTEK_UK = "Mastek - United Kingdom"
+          ACCOUNT_TM_UK = "Teck Mahindra-UK"
+          ACCOUNT_TM_IR = "Teck Mahindra-IR"
+          ACCOUNT_TM_AU = "Teck Mahindra-AU"
+          ACCOUNT_TMTI = "Teck Mahindra-TMTI"
+          ACCOUNT_TM_ALLYIS = "Teck Mahindra-ALLYIS"
+          EOF
+          
+          echo "$ENV_FILE file created successfully!"
+          ls -la
+      - name: Copy .env file to VM
+        run: |
+          scp -v -o StrictHostKeyChecking=no .env.transformservice adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }}:/tmp/
+        working-directory: transform-service
+
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_ETL_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/services
+
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
+          
+            # Move .env file with sudo
+            sudo mv /tmp/.env.transformservice /app/services/.env.transformservice
+            echo ".env file moved successfully!"
+          
+            # Update only the transform-service image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*transform-service:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/transform-service:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
+          
+            # Login to ACR 
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
+          
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps transform-service; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
