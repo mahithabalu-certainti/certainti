@@ -1,0 +1,41 @@
+{
+    "project_resource": {
+        "full-time": {
+            "Allyis ID": "allyis_id",
+            "First Name": "first_name",
+            "Last Name": "last_name",
+            "Apr-24": "apr_24",
+            "May-24": "may_24",
+            "Jun-24": "jun_24",
+            "Jul-24": "jul_24",
+            "Aug-24": "aug_24",
+            "Sep-24": "sep_24",
+            "Oct-24": "oct_24",
+            "Nov-24": "nov_24",
+            "Dec-24": "dec_24",
+            "Jan-25": "jan_25",
+            "Feb-25": "feb_25",
+            "Mar-25": "mar_25",
+            "Grand Total": "grand_total",
+            "Project ID": "project_id",
+            "PO Name": "po_name",
+            "Contract Type": "contract_type",
+            "Project Type": "project_type",
+            "Customer": "customer",
+            "Program Manager": "program_manager",
+            "PM Email": "pm_email",
+            "Comments": "comments",
+            "Exit Date": "exit_date"
+        },
+        "sub-con": {        
+            "Emp ID": "emp_id",
+            "Name": "name",
+            "Manager Name": "manager_name",
+            "Total": "total",
+            "PO Name": "po_name",
+            "PO #": "po_number",
+            "PID": "pid",
+            "Customer Name": "customer_name"
+        }
+    }
+}

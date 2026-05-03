@@ -1,0 +1,41 @@
+# Logs
+*.log
+*.log.*
+
+transform-service/.env
+# Logger files
+logs/
+logger.log
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# IDE and editor settings
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*.env
+docker-compose.yml
+
+file-ingest-service/target/*  # Specific to your request
+**/target/                   # All Maven target directories
+**/build/                    # Gradle build directories
+**/out/                      # IntelliJ compilation output
+
+# By convention, add your own specific file paths here if needed
+config.bat
+node_modules

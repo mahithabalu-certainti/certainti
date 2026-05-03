@@ -1,0 +1,105 @@
+{
+    "project": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "project_name": "project_name",
+        "project_description": "project_description",
+        "fte_cost": "total_cost_fte",
+        "sub_con_cost": "total_cost_subcon",
+        "total_project_cost": "total_cost",
+        "spoc_name_pm_dm": "spoc_name",
+        "spoc_email": "spoc_email",
+        "project_type": "project_type"
+      },
+      "missing_columns": [
+        "qre",
+        "auto_send_ai_interaction",
+        "auto_access_rd",
+        "max_ai_interaction",
+        "blended_rate_fte",
+        "blended_rate_subcon",
+        "blended_rate",
+        "assessment_status",
+        "status_rid",
+        "total_effort",
+        "project_startdate",
+        "project_enddate",
+        "currency_rid",
+        "industry_name",
+        "program_name",
+        "country_rid",
+        "region_rid",
+        "project_tech_poc_name",
+        "project_tech_poc_email",
+        "project_delivery_head_name",
+        "project_delivery_head_email",
+        "project_classification",
+        "project_client_group",
+        "project_group",
+        "total_fte",
+        "total_subcon",
+        "total_effort_fte",
+        "total_effort_subcon",
+        "total_cost_nonlabor",
+        "comments"
+
+      ]
+    },
+    
+    "project_resource_resource": {
+      "field_mappings": {
+        "resource_id": "resource_code",
+        "resource_name": "resource_name",
+        "resource_role": "resource_role",
+        "resource_type": "resource_type",
+        "state_if_us": "region_rid"
+      },
+      "missing_columns": [
+        "resource_designation",
+        "resource_total_experience",
+        "country_rid",
+        "city_rid"
+      ]
+    },
+
+    "project_resource_project": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "project_type": "project_type",
+        "state_if_us": "region_rid"
+      },
+      "missing_columns": [
+        "status_rid",
+        "auto_send_ai_interaction",
+        "max_ai_interaction",
+        "project_name",
+        "project_enddate",
+        "project_startdate",
+        "currency_rid",
+        "project_description"
+      ]
+    },
+
+    "project_resource": {
+      "field_mappings": {
+        "project_id": "project_code",
+        "resource_id": "resource_code",
+        "resource_name" : "resource_name",
+        "resource_role" : "resource_role",
+        "resource_type": "resource_type",
+        "total_hours" : "total_hours_pro_res",
+        "total_cost": "total_cost_pro_res",
+        "state_if_us": "region_rid"
+      },
+      "missing_columns": [
+        "status_rid",
+        "end_date",
+        "designation",
+        "description",
+        "country_rid",
+        "start_date",
+        "currency_rid"
+      ]
+    
+  }
+}

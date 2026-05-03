@@ -1,0 +1,44 @@
+{
+    "project_resource": {
+        "full-time":{
+            "EmpID": "emp_id",
+            "Month": "month",
+            "PP": "pp",
+            "GROSS PAY": "gross_pay",
+            "CURRENT WORK LOCATION": "current_work_location",
+            "PROJECT ID": "project_id",
+            "PROJECT DESCRIPTION": "project_description",
+            "PROJECT TYPE": "project_type",
+            "CONTRACT TYPE": "contract_type",
+            "CUST NAME": "cust_name",
+            "PROGRAM MANAGER ID": "program_manager_id",
+            "PROGRAM MANAGER NAME": "program_manager_name",
+            "resource_type": "resource_type"
+        },
+        "sub-con":{
+            "Fiscal year / period": "fiscal_year_period",
+            "Company Code": "company_code",
+            "Company Code.1": "company_code_full",
+            "Cost Group": "cost_group",
+            "Target Account": "target_account",
+            "G/L Account": "gl_account",
+            "G/L Account.1": "gl_account_no",
+            "Document ID": "document_id",
+            "Project ID": "project_id",
+            "Employee": "employee",
+            "Line Item": "line_item",
+            "Customer Name": "customer_name",
+            "* 1,000,000 $": "*1000000$",
+            "Customer ID": "customer_id",
+            "Project Type": "project_type",
+            "Project Description": "project_description",
+            "Contract type": "contract_type",
+            "PGM Manager Name": "pgm_manager_name",
+            "PGM Manager mail id": "pgm_manager_mail_id",
+            "Project Start Date": "project_start_date",
+            "Project End Date": "project_end_date",
+            "resource_type": "resource_type"
+        }
+    }
+}
+

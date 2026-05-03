@@ -1,0 +1,42 @@
+{
+    "project_resource": {
+        "full-time": {
+            "Employee ID" : "employee_id",
+            "Check Date" : "check_date",
+            "Taxable Gross" : "taxable_gross",
+            "PP" : "pp",
+            "CURRENT WORK LOCATION" : "current_work_location",
+            "PROJECT ID" : "project_id",
+            "PROJECT DESCRIPTION" : "project_description",
+            "PROJECT TYPE" : "project_type",
+            "CONTRACT TYPE" : "contract_type",
+            "CUST NAME" : "cust_name",
+            "PROGRAM MANAGER" : "program_manager",
+            "PROGRAM MANAGER ID" : "program_manager_id",
+            "JOB ROLE" : "job_role",
+            "PROJECT START DATE" : "project_start_date",
+            "PROJECT END DATE" : "project_end_date"
+        },
+        "sub-con": {        
+            "Fiscal year / period": "fiscal_year_period",
+            "Company Code": "company_code",
+            "Company Code.1": "company_code_full",
+            "Cost Group": "cost_group",
+            "Target Account": "target_account",
+            "G/L Account": "gl_account",
+            "G/L Account.1": "gl_account_no",   
+            "Document ID": "document_id",
+            "Project ID": "project_id",
+            "Project ID.1": "project_id_dup",
+            "Employee": "employee",
+            "Employee.1": "employee_dup",
+            "Subcon ID": "subcon_id",
+            "Line Item": "line_item",
+            "Customer Name": "customer_name",
+            "* 1,000,000 $": "amount",
+            "Project Description": "project_description",
+            "Project type": "project_type",
+            "Contract type": "contract_type"
+        }
+    }
+}

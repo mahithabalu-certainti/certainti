@@ -1,0 +1,9 @@
+database:
+  host: ${DB_HOST:localhost}
+  port: ${DB_PORT:5432}
+  name: file_transfer
+  user: postgres
+  password: postgres
+
+kafka:
+  bootstrap_servers: ${KAFKA_BROKER:localhost:9092}
